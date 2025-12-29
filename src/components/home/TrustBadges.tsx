@@ -1,20 +1,20 @@
-import { Truck, RotateCcw, Shield, Headphones } from "lucide-react";
+import { Truck, Shield, Headphones } from "lucide-react";
 
 const badges = [
   {
     icon: Truck,
-    title: "Nemokamas pristatymas",
-    description: "Į paštomatą Lietuvoje – visada nemokamai.",
+    title: "Nemokamas pristatymas LT",
+    description: "Į paštomatą – nemokamai. Kurjeris pagal poreikį. Siuntos sekimas visada.",
   },
   {
     icon: Shield,
-    title: "Sąžiningas pre-order",
-    description: "Aiškus terminas. Atšaukimas bet kada iki išsiuntimo.",
+    title: "Aiškus pre-order",
+    description: "Terminas nurodytas prie kiekvieno modelio. Atšaukti galima bet kada iki išsiuntimo.",
   },
   {
     icon: Headphones,
-    title: "Pagalba LT + detalės",
-    description: "Lietuviška pagalba ir trūkstamų detalių sprendimas.",
+    title: "Pagalba + trūkstamos detalės",
+    description: "Jei kažko trūksta rinkinyje – parašote, ir nemokamai atsiunčiam trūkstamą detalę.",
   },
 ];
 

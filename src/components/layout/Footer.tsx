@@ -6,7 +6,7 @@ const footerTrustBadges = [
   { icon: Truck, title: "Nemokamas pristatymas", description: "Į paštomatą Lietuvoje" },
   { icon: RotateCcw, title: "Grąžinimas per 14 d.", description: "Be papildomų klausimų" },
   { icon: Shield, title: "Saugūs mokėjimai", description: "SSL šifravimas" },
-  { icon: CreditCard, title: "Patogūs mokėjimai", description: "Kortelė, bankas, PayPal" },
+  { icon: CreditCard, title: "Patogūs mokėjimai", description: "Kortelė, bankas" },
 ];
 
 const footerLinks = {
@@ -17,16 +17,16 @@ const footerLinks = {
     { name: "Kontaktai", href: "/kontaktai" },
   ],
   informacija: [
-    { name: "Pristatymas", href: "/pagalba/pristatymas" },
-    { name: "Grąžinimai", href: "/pagalba/grazinimai" },
-    { name: "Garantija", href: "/pagalba/garantija" },
-    { name: "Trūkstamos detalės", href: "/pagalba/trukstamos-detales" },
+    { name: "Pristatymas", href: "/pristatymas" },
+    { name: "Grąžinimai", href: "/grazinimai" },
+    { name: "Garantija", href: "/garantija" },
+    { name: "Trūkstamos detalės", href: "/trukstamos-detales" },
     { name: "Privatumo politika", href: "/privatumo-politika" },
     { name: "Taisyklės ir sąlygos", href: "/taisykles" },
   ],
 };
 
-const paymentMethods = ["Visa", "Mastercard", "PayPal", "Bankai"];
+const paymentMethods = ["Visa", "Mastercard"];
 const shippingPartners = ["Omniva", "LP EXPRESS", "DPD"];
 
 export function Footer() {
@@ -57,10 +57,11 @@ export function Footer() {
           {/* Brand */}
           <div>
             <Link to="/" className="inline-block mb-4">
-              <img src={logo} alt="Ibrix.lt" className="h-8 w-auto brightness-0 invert" />
+              <img src={logo} alt="IBRIX" className="h-8 w-auto brightness-0 invert" />
             </Link>
             <p className="text-footer-foreground/70 text-sm leading-relaxed mb-6">
-              Techninių konstruktorių kolekcija mechanikos fanams. Varikliai, kurie juda.
+              IBRIX – judantys mechaniniai konstruktoriai mechanikos fanams. Aiškus pre-order, 
+              pristatymas Lietuvoje ir pagalba lietuviškai.
             </p>
             
             {/* Payment methods */}
@@ -164,12 +165,9 @@ export function Footer() {
         </div>
 
         {/* Bottom */}
-        <div className="mt-12 pt-8 border-t border-footer-foreground/10 flex flex-col md:flex-row items-center justify-between gap-4">
-          <p className="text-xs text-footer-foreground/50">
-            © {new Date().getFullYear()} Ibrix. Visos teisės saugomos.
-          </p>
-          <p className="text-xs text-footer-foreground/40">
-            Įmonės rekvizitai bus paskelbti netrukus
+        <div className="mt-12 pt-8 border-t border-footer-foreground/10">
+          <p className="text-xs text-footer-foreground/50 text-center">
+            © {new Date().getFullYear()} IBRIX. Visos teisės saugomos.
           </p>
         </div>
       </div>
