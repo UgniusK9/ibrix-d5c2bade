@@ -16,23 +16,23 @@ import {
 } from "@/components/ui/accordion";
 
 const trustItems = [
-  { icon: Truck, text: "Nemokamas siuntimas" },
-  { icon: RotateCcw, text: "14 d. grąžinimai" },
-  { icon: CreditCard, text: "Saugūs mokėjimai" },
+  { icon: Truck, text: "Nemokamas pristatymas" },
+  { icon: RotateCcw, text: "14 d. grąžinimas" },
+  { icon: Puzzle, text: "Trūkstamos detalės – nemokamai" },
 ];
 
 const productSpecs = [
   { label: "Detalių skaičius", getValue: (p: MockProduct) => `${p.detailsCount} vnt.` },
-  { label: "Lygis", getValue: () => "Pažengusiems" },
+  { label: "Sudėtingumas", getValue: () => "Pažengusiems" },
   { label: "Amžiaus grupė", getValue: () => "16+" },
-  { label: "Sukimo laikas", getValue: () => "~20-30 val." },
+  { label: "Surinkimo laikas", getValue: () => "~20–30 val." },
 ];
 
 const boxContents = [
-  "Visos konstrukcinės detalės",
-  "Iliustruota instrukcija (EN)",
-  "Atsarginės detalės",
-  "Rėmelis/stovas eksponavimui",
+  "Visos konstrukcinės detalės (pilnas komplektas)",
+  "Iliustruota surinkimo instrukcija (EN)",
+  "Atsarginės smulkios detalės",
+  "Stovas ekspozicijai",
 ];
 
 const productFAQ = [
@@ -256,6 +256,13 @@ export default function Produktas() {
               <ShoppingCart className="w-5 h-5 mr-2" />
               {isPreOrder ? "Užsisakyti (pre-order)" : "Į krepšelį"}
             </Button>
+            
+            {/* CTA subtext */}
+            {isPreOrder && (
+              <p className="text-center text-sm text-muted-foreground mt-3">
+                Atšaukti galima iki išsiuntimo. Grąžiname pilną sumą.
+              </p>
+            )}
 
             {/* Short Description */}
             <p className="text-muted-foreground mt-6 leading-relaxed">
@@ -317,14 +324,16 @@ export default function Produktas() {
               </AccordionTrigger>
               <AccordionContent className="pb-6">
                 <p className="text-muted-foreground mb-4">
-                  Visi rinkiniai tikrinami prieš išsiuntimą, tačiau jei vis dėlto pastebėsite, 
-                  kad trūksta detalės:
+                  Rinkinius patikriname prieš išsiuntimą. Jei vis dėlto trūktų detalės, išspręsime nemokamai:
                 </p>
                 <ol className="space-y-2 text-muted-foreground">
-                  <li>1. Susisiekite su mumis per kontaktų formą arba el. paštu</li>
-                  <li>2. Nurodykite rinkinio pavadinimą ir trūkstamos detalės numerį</li>
-                  <li>3. Išsiųsime trūkstamą detalę per 5 darbo dienas – nemokamai</li>
+                  <li>1. Parašykite per kontaktų formą arba el. paštu</li>
+                  <li>2. Nurodykite modelio pavadinimą ir detalės numerį</li>
+                  <li>3. Trūkstamą detalę išsiunčiame per 5 darbo dienas</li>
                 </ol>
+                <p className="text-sm text-muted-foreground mt-4">
+                  Rašykite: <a href="mailto:support@ibrix.lt" className="text-primary hover:underline">support@ibrix.lt</a>
+                </p>
               </AccordionContent>
             </AccordionItem>
 
@@ -333,7 +342,7 @@ export default function Produktas() {
               <AccordionTrigger className="hover:no-underline py-5">
                 <span className="flex items-center gap-3 font-heading font-semibold">
                   <HelpCircle className="w-5 h-5 text-primary" />
-                  Dažnai klausiama
+                  Dažnai užduodami klausimai
                 </span>
               </AccordionTrigger>
               <AccordionContent className="pb-6">

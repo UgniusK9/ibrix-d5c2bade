@@ -7,11 +7,11 @@ const expectations = [
   {
     icon: Clock,
     title: "Aiškus pre-order",
-    description: "Visada žinosite, kada tikėtis savo produkto. Terminai nurodyti kiekvieno produkto puslapyje.",
+    description: "Visada žinosite, kada tikėtis produkto. Terminai nurodyti kiekvieno modelio puslapyje.",
   },
   {
     icon: Truck,
-    title: "Nemokamas siuntimas į paštomatą",
+    title: "Nemokamas pristatymas į paštomatą",
     description: "Pristatome nemokamai į bet kurį paštomatą Lietuvoje – Omniva, LP Express ar DPD.",
   },
   {
@@ -21,7 +21,7 @@ const expectations = [
   },
   {
     icon: Puzzle,
-    title: "Trūkstamos detalės sprendžiamos",
+    title: "Trūkstamos detalės išsprendžiamos",
     description: "Jei jūsų rinkinyje trūksta detalės – išspręsime per 5 darbo dienas, nemokamai.",
   },
 ];
@@ -34,28 +34,26 @@ export default function Apie() {
           <div className="max-w-3xl mx-auto">
             {/* Header */}
             <h1 className="font-heading text-4xl md:text-5xl font-bold mb-8">
-              Apie ibrix
+              Apie IBRIX
             </h1>
 
             {/* Story */}
             <div className="prose prose-lg max-w-none mb-16">
               <p className="text-lg text-muted-foreground leading-relaxed mb-6">
-                Ibrix – tai techninių konstruktorių parduotuvė, sukurta mechanikos fanams Lietuvoje. 
-                Mūsų tikslas – atnešti sudėtingus, detalizuotus ir funkcionalius variklio modelius 
-                tiems, kurie vertina inžinerinį grožį.
+                IBRIX – judančių mechaninių variklių modelių parduotuvė Lietuvoje. 
+                Mūsų fokusas – judantys variklių modeliai, kurie ne tik gražiai atrodo, bet ir realiai juda.
               </p>
               
               <p className="text-lg text-muted-foreground leading-relaxed mb-6">
-                Lietuvoje tokių modelių pasiūla visada buvo ribota – dauguma entuziastų turėjo 
-                užsisakyti iš užsienio, mokėti muitus ir laukti neaiškius terminus. 
-                Mes nusprendėme tai pakeisti.
+                Tokie modeliai dažnai užsakomi iš užsienio su neaiškiais terminais ir jokios pagalbos. 
+                Mes norėjome, kad būtų paprasčiau: aiškus pre-order, normalus aptarnavimas ir sprendimai, 
+                jei kažkas ne taip.
               </p>
 
               <p className="text-lg text-muted-foreground leading-relaxed">
-                Dirbame tiesiogiai su gamintojais, kad galėtume pasiūlyti konkurencingas kainas, 
-                aiškius pristatymo terminus ir lietuvišką aptarnavimą. Kiekvienas produktas 
-                atitinka mūsų kokybės standartus, o jei kas nors ne taip – sprendžiame greitai 
-                ir be bereikalingų formalumų.
+                Dirbame su tiekėjais taip, kad galėtume nurodyti realius terminus. 
+                Jei trūksta detalės – ją atsiunčiame. Jei persigalvojote iki išsiuntimo – atšaukiate. 
+                Jei prekė netinka – grąžinate per 14 dienų.
               </p>
             </div>
 
@@ -83,7 +81,7 @@ export default function Apie() {
             {/* CTA */}
             <div className="mt-12 text-center">
               <p className="text-muted-foreground mb-6">
-                Turite klausimų? Susisiekite su mumis arba peržiūrėkite mūsų kolekciją.
+                Turite klausimų? Parašykite mums arba peržiūrėkite kolekciją.
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
                 <Button asChild size="lg" className="bg-accent hover:bg-accent/90 text-accent-foreground">
