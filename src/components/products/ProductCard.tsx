@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { ShoppingCart, Eye } from "lucide-react";
+import { ShoppingCart, Package, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ShopifyProduct, formatPrice } from "@/lib/shopify";
@@ -8,9 +8,10 @@ import { toast } from "sonner";
 
 interface ProductCardProps {
   product: ShopifyProduct;
+  index?: number;
 }
 
-export function ProductCard({ product }: ProductCardProps) {
+export function ProductCard({ product, index = 0 }: ProductCardProps) {
   const addItem = useCartStore((state) => state.addItem);
   const { node } = product;
   
@@ -19,8 +20,11 @@ export function ProductCard({ product }: ProductCardProps) {
   const price = node.priceRange.minVariantPrice;
   const isAvailable = firstVariant?.availableForSale ?? false;
   
-  // Determine status (for demo - in production this would come from metafields)
+  // Determine status
   const isPreOrder = !isAvailable || node.title.toLowerCase().includes('pre-order');
+  
+  // Generate SKU-like code
+  const skuCode = `ORB-ENG-${10168 + index}`;
 
   const handleAddToCart = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -46,10 +50,10 @@ export function ProductCard({ product }: ProductCardProps) {
   return (
     <Link
       to={`/produktas/${node.handle}`}
-      className="group block bg-card rounded-xl overflow-hidden shadow-premium hover:shadow-premium-lg transition-all duration-300 hover-lift"
+      className="group block bg-card rounded-2xl overflow-hidden border border-border hover:border-primary/30 hover:shadow-premium-lg transition-all duration-300"
     >
       {/* Image */}
-      <div className="relative aspect-square bg-secondary/50 overflow-hidden">
+      <div className="relative aspect-square bg-gradient-to-br from-secondary/30 to-muted/20 overflow-hidden">
         {image ? (
           <img
             src={image.url}
@@ -57,14 +61,14 @@ export function ProductCard({ product }: ProductCardProps) {
             className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
           />
         ) : (
-          <div className="w-full h-full flex items-center justify-center text-muted-foreground">
-            Nėra nuotraukos
+          <div className="w-full h-full flex items-center justify-center text-muted-foreground/50">
+            <Package className="w-16 h-16" strokeWidth={1} />
           </div>
         )}
         
         {/* Status Badge */}
         <Badge 
-          className={`absolute top-3 left-3 ${
+          className={`absolute top-3 left-3 text-xs font-semibold px-2.5 py-1 ${
             isPreOrder 
               ? "bg-primary text-primary-foreground" 
               : "bg-success text-success-foreground"
@@ -72,45 +76,41 @@ export function ProductCard({ product }: ProductCardProps) {
         >
           {isPreOrder ? "PRE-ORDER" : "SANDĖLYJE"}
         </Badge>
-
-        {/* Hover Overlay */}
-        <div className="absolute inset-0 bg-foreground/0 group-hover:bg-foreground/10 transition-colors duration-300 flex items-center justify-center">
-          <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-            <div className="flex items-center gap-2 px-4 py-2 bg-card rounded-lg shadow-lg">
-              <Eye className="h-4 w-4" />
-              <span className="text-sm font-medium">Peržiūrėti</span>
-            </div>
-          </div>
-        </div>
       </div>
 
       {/* Content */}
-      <div className="p-4">
-        <h3 className="font-heading font-semibold text-lg mb-2 line-clamp-2 group-hover:text-primary transition-colors">
+      <div className="p-5">
+        {/* SKU Code */}
+        <p className="text-xs text-muted-foreground font-mono mb-1.5">
+          {skuCode}
+        </p>
+        
+        <h3 className="font-heading font-semibold text-base mb-3 line-clamp-2 group-hover:text-primary transition-colors">
           {node.title}
         </h3>
 
         {/* Chips */}
-        <div className="flex flex-wrap gap-2 mb-3">
-          <span className="px-2 py-1 text-xs bg-secondary rounded-md text-muted-foreground">
-            {isPreOrder ? "8–10 sav." : "1–2 d.d."}
+        <div className="flex items-center gap-3 text-xs text-muted-foreground mb-4">
+          <span className="flex items-center gap-1.5">
+            <Package className="w-3.5 h-3.5" />
+            2899 det.
+          </span>
+          <span className="flex items-center gap-1.5">
+            <Clock className="w-3.5 h-3.5" />
+            {isPreOrder ? "→ 8-10 sav." : "1-2 d.d."}
           </span>
         </div>
 
-        {/* Price & Add to Cart */}
+        {/* Price */}
         <div className="flex items-center justify-between">
-          <div>
-            <p className="font-heading font-bold text-xl">
-              {formatPrice(price.amount, price.currencyCode)}
-            </p>
-            <p className="text-xs text-muted-foreground">
-              Nemokamas siuntimas
-            </p>
-          </div>
+          <p className="font-heading font-bold text-xl text-accent">
+            {formatPrice(price.amount, price.currencyCode)}
+          </p>
           
           <Button
-            size="icon"
-            className="bg-accent hover:bg-accent/90 text-accent-foreground"
+            size="sm"
+            variant="ghost"
+            className="h-9 w-9 p-0 hover:bg-accent/10 hover:text-accent"
             onClick={handleAddToCart}
           >
             <ShoppingCart className="h-4 w-4" />

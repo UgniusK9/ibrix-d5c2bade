@@ -7,52 +7,52 @@ import {
 
 const faqs = [
   {
-    question: "Kas yra pre-order?",
-    answer: "Pre-order – tai išankstinis užsakymas. Rezervuojate produktą iš artimiausios partijos, kurią atvešime. Terminas visada nurodytas produkto puslapyje. Galite atšaukti bet kada iki išsiuntimo ir grąžiname pilną sumą.",
+    question: "Kiek laiko užtrunka surinkti?",
+    answer: "Priklausomai nuo modelio sudėtingumo, surinkimas užtrunka nuo 4 iki 12 valandų. Sudėtingesni modeliai kaip V8 gali užtrukti ilgiau, bet instrukcijos aiškios ir procesas malonus.",
   },
   {
-    question: "Kiek laiko užtrunka pristatymas?",
-    answer: "Pre-order produktai pristatomi per 8–10 savaičių. Sandėlyje esantys produktai išsiunčiami per 1–2 darbo dienas. Pristatymas į paštomatą Lietuvoje – nemokamas.",
+    question: "Ar tai suderinama su kitomis kaladėlėmis?",
+    answer: "Taip, mūsų modeliai naudoja standartines kaladėles, kurios suderinamos su populiariais techniniais konstruktoriais. Galite kombinuoti su turimomis detalėmis.",
   },
   {
-    question: "Ar galiu grąžinti produktą?",
-    answer: "Taip, turite 14 dienų grąžinimo teisę nuo prekės gavimo dienos. Produktas turi būti nenaudotas ir originalioje pakuotėje. Pre-order užsakymus galite atšaukti bet kada iki išsiuntimo.",
+    question: "Ar galima atšaukti pre-order?",
+    answer: "Taip, galite atšaukti pre-order bet kada iki išsiuntimo ir grąžiname pilną sumą. Jokių papildomų mokesčių ar sąlygų.",
+  },
+  {
+    question: "Kaip veikia pristatymas?",
+    answer: "Pristatymas į paštomatą Lietuvoje yra nemokamas. Sandėlyje esančios prekės išsiunčiamos per 1-2 darbo dienas. Pre-order užsakymai siunčiami iškart kai gauna partiją.",
   },
   {
     question: "Ką daryti, jei trūksta detalių?",
-    answer: "Susisiekite su mumis el. paštu info@ibrix.lt su užsakymo numeriu ir trūkstamų detalių nuotraukomis. Trūkstamas detales išsiunčiame nemokamai.",
-  },
-  {
-    question: "Ar produktai turi garantiją?",
-    answer: "Taip, visiems produktams taikoma 24 mėnesių garantija gamybos defektams. Jei pastebėjote defektą, susisiekite su mumis per 14 dienų nuo prekės gavimo.",
+    answer: "Susisiekite su mumis el. paštu su užsakymo numeriu ir trūkstamų detalių nuotraukomis. Trūkstamas detales išsiunčiame nemokamai per 5-7 darbo dienas.",
   },
 ];
 
 export function FAQSection() {
   return (
-    <section className="py-16 md:py-24 bg-muted/30">
+    <section className="py-16 md:py-24 bg-background">
       <div className="container">
         <div className="max-w-3xl mx-auto">
           <div className="text-center mb-10">
-            <h2 className="font-heading text-3xl md:text-4xl font-bold mb-4">
+            <span className="text-xs font-semibold text-accent uppercase tracking-widest mb-2 block">
+              D.U.K
+            </span>
+            <h2 className="font-heading text-3xl md:text-4xl font-bold">
               Dažnai užduodami klausimai
             </h2>
-            <p className="text-muted-foreground">
-              Turite klausimų? Radome atsakymus į dažniausiai užduodamus
-            </p>
           </div>
 
-          <Accordion type="single" collapsible className="space-y-4">
+          <Accordion type="single" collapsible className="space-y-3">
             {faqs.map((faq, index) => (
               <AccordionItem
                 key={index}
                 value={`item-${index}`}
-                className="bg-card rounded-xl px-6 border border-border shadow-sm"
+                className="bg-card rounded-xl px-6 border border-border data-[state=open]:border-primary/20 data-[state=open]:shadow-premium transition-all"
               >
-                <AccordionTrigger className="text-left font-heading font-semibold hover:no-underline py-5">
+                <AccordionTrigger className="text-left font-medium hover:no-underline py-5 text-[15px]">
                   {faq.question}
                 </AccordionTrigger>
-                <AccordionContent className="text-muted-foreground pb-5">
+                <AccordionContent className="text-muted-foreground pb-5 text-sm leading-relaxed">
                   {faq.answer}
                 </AccordionContent>
               </AccordionItem>
