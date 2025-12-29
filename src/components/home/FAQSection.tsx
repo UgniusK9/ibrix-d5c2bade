@@ -8,43 +8,43 @@ import {
 const faqs = [
   {
     question: "Kiek laiko užtrunka surinkti?",
-    answer: "Priklauso nuo modelio. Prie kiekvieno produkto nurodomas orientacinis surinkimo laikas (pvz., 8-10 val. arba 20-30 val.).",
+    answer: "Dažniausiai 20–30 val., priklauso nuo modelio ir patirties. Rekomenduojame rinkti etapais.",
   },
   {
     question: "Ar modelis tikrai juda?",
-    answer: "Taip. Mechanizmas veikia - juda stūmokliai, alkūninis velenas ir kitos dalys. Tai ne dekoracija - tai judantis modelis.",
+    answer: "Taip. Mechanizmas juda realiai: stūmokliai, alkūninis velenas ir kitos dalys dirba sinchroniškai.",
   },
   {
     question: "Ar reikia specialių įrankių?",
-    answer: "Ne. Pagrindiniai įrankiai dažniausiai įtraukti. Jei norisi - galima naudoti pincetą, bet tai nebūtina.",
+    answer: "Ne. Reikalingi įrankiai įtraukti. Jei norite patogiau – pravers smulkus pincetas.",
   },
   {
-    question: "Kuo skiriasi Sandėlyje ir Pre-order?",
-    answer: "Sandėlyje - išsiunčiam per 1-2 d. Pre-order - rezervuojate artimiausią partiją su aiškiu terminu, kuris nurodytas prie produkto.",
+    question: 'Kuo skiriasi "Sandėlyje" ir "Pre-order"?',
+    answer: '"Sandėlyje" – išsiunčiame per 1–2 d. "Pre-order" – rezervuojate modelį siuntoje, pristatymas per nurodytą terminą.',
   },
   {
     question: "Ar galima atšaukti pre-order?",
-    answer: "Taip. Iki išsiuntimo galite atšaukti ir atgausite pilną sumą.",
+    answer: "Taip, iki išsiuntimo. Grąžiname pilną sumą.",
   },
   {
     question: "Kas jei trūksta detalės?",
-    answer: "Parašote mums, nurodote modelį ir detalės numerį. Trūkstamą detalę atsiunčiame nemokamai per 5 darbo dienas.",
+    answer: "Parašote mums, nurodote modelį ir detalės numerį – nemokamai išsiunčiame per 5 darbo dienas.",
   },
   {
     question: "Ar tinka dovanai?",
-    answer: "Taip. Tai premium tipo dovana mechanikos fanui. Rinkinys atrodo gerai net dėžėje, o surinktas modelis tinka ekspozicijai.",
+    answer: "Taip. Tai puiki dovana technikos fanams – ypač jei patinka rinkti ir turėti ekspozicijoje.",
   },
   {
     question: "Kokiam amžiui tinka?",
-    answer: "Prie kiekvieno produkto nurodoma amžiaus rekomendacija (pvz., 14+ arba 16+). Sudėtingesniems modeliams rekomenduojame kantrybę ir laiką.",
+    answer: "Rekomenduojame 16+ (smulkios detalės ir surinkimo sudėtingumas).",
   },
   {
     question: "Kaip veikia grąžinimas?",
-    answer: "Galite grąžinti per 14 dienų. Svarbu, kad prekė būtų nenaudota ir originalioje pakuotėje (detalės nesumaišytos).",
+    answer: "Per 14 dienų galite grąžinti. Susisiekite – atsiųsime instrukciją.",
   },
   {
     question: "Ar mokėjimai saugūs?",
-    answer: "Taip. Naudojame saugius mokėjimų būdus - kortelė, bankas.",
+    answer: "Taip. Naudojame saugius atsiskaitymo sprendimus, SSL šifravimą.",
   },
 ];
 

@@ -29,16 +29,16 @@ export function HeroSection() {
           <div className="text-primary-foreground">
             {/* Micro label */}
             <span className="text-xs font-semibold text-accent uppercase tracking-widest mb-4 block">
-              IBRIX / 2025 KOLEKCIJA
+              IBRIX · 2025 kolekcija
             </span>
 
             <h1 className="font-heading text-4xl md:text-5xl lg:text-[3.5rem] font-bold leading-[1.1] mb-6">
-              Judantys variklių modeliai, kuriuos norisi laikyti ant stalo.
+              Judantys variklių modeliai, kurie atrodo įspūdingai ant stalo.
             </h1>
             
             <p className="text-lg md:text-xl text-primary-foreground/75 mb-8 max-w-lg leading-relaxed">
-              Rinkitės iš kolekcijos. Užsisakykite iš sandėlio arba pre-order su aiškiu terminu. 
-              Jei trūksta detalės – išsprendžiam nemokamai.
+              Išsirinkite modelį iš sandėlio arba pre-order su aiškiu terminu. 
+              Jei trūks detalės – išspręsime nemokamai.
             </p>
 
             <div className="flex flex-col sm:flex-row gap-4 mb-8">
@@ -64,7 +64,7 @@ export function HeroSection() {
                     <circle cx="12" cy="12" r="10" />
                     <path d="M12 6v6l4 2" />
                   </svg>
-                  Kaip veikia Pre-Order
+                  Kaip veikia pre-order
                 </Link>
               </Button>
             </div>
@@ -73,7 +73,7 @@ export function HeroSection() {
             <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-sm text-primary-foreground/60">
               <span className="flex items-center gap-1.5">
                 <Truck className="w-4 h-4" />
-                Nemokamas pristatymas LT
+                Nemokamas pristatymas LT į paštomatą
               </span>
               <span className="flex items-center gap-1.5">
                 <RotateCcw className="w-4 h-4" />
@@ -116,14 +116,14 @@ export function HeroSection() {
                 <div className="p-5">
                   <h3 className="font-heading font-bold text-lg mb-2">{featuredProduct.title}</h3>
                   <p className="text-sm text-muted-foreground mb-3">
-                    {featuredProduct.detailsCount} detalių · 16+ · 20–30 val.
+                    {featuredProduct.detailsCount} detalių · 16+ · ~20–30 val.
                   </p>
                   <div className="flex items-center justify-between">
                     <span className="bg-primary/10 text-primary text-xs font-semibold px-3 py-1.5 rounded-lg">
-                      Pre-order: {featuredProduct.eta}
+                      Pre-order · pristatymas per {featuredProduct.eta}
                     </span>
                     <Button size="sm" className="bg-accent hover:bg-accent/90 text-accent-foreground">
-                      Peržiūrėti
+                      Žiūrėti modelį
                     </Button>
                   </div>
                 </div>

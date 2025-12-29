@@ -5,19 +5,19 @@ const steps = [
     number: "01",
     icon: Search,
     title: "Išsirenkate modelį",
-    description: "Pasirenkate pagal tipą, detalių skaičių ir statusą: sandėlyje arba pre-order.",
+    description: "Pasirenkate pagal tipą, detalių skaičių ir pristatymo statusą: sandėlyje arba pre-order.",
   },
   {
     number: "02",
     icon: ShoppingCart,
     title: "Užsisakote",
-    description: "Apmokate saugiai. Pre-order atveju – terminas aiškiai nurodytas prie produkto.",
+    description: "Apmokate saugiai. Jei tai pre-order – terminas aiškiai nurodytas prie produkto.",
   },
   {
     number: "03",
     icon: Wrench,
-    title: "Surenkate ir demonstruojate",
-    description: "Gavę rinkinį, surenkate ir turite judantį modelį, kuris atrodo įspūdingai ant stalo.",
+    title: "Surenkate ir paleidžiate",
+    description: "Surenkate modelį, paleidžiate mechanizmą ir turite judantį variklį ekspozicijai.",
   },
 ];
 
@@ -67,7 +67,7 @@ export function HowItWorks() {
 
           {/* Trust line after steps */}
           <p className="text-center text-sm text-muted-foreground mt-10 pt-8 border-t border-border">
-            Jei trūksta detalės – išsprendžiam per 5 darbo dienas, nemokamai.
+            Jei trūks detalės – nemokamai išsiunčiame per 5 darbo dienas.
           </p>
         </div>
       </div>

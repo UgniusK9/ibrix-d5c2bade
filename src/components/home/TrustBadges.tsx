@@ -3,18 +3,18 @@ import { Truck, Shield, Headphones } from "lucide-react";
 const badges = [
   {
     icon: Truck,
-    title: "Nemokamas pristatymas LT",
-    description: "Į paštomatą – nemokamai. Kurjeris pagal poreikį. Siuntos sekimas visada.",
+    title: "Nemokamas pristatymas į paštomatą (LT)",
+    description: "Į paštomatą Lietuvoje – visada nemokamai. Kurjeris – pagal poreikį.",
   },
   {
     icon: Shield,
     title: "Aiškus pre-order",
-    description: "Terminas nurodytas prie kiekvieno modelio. Atšaukti galima bet kada iki išsiuntimo.",
+    description: "Terminas aiškiai nurodytas prie kiekvieno modelio. Atšaukti galima iki išsiuntimo.",
   },
   {
     icon: Headphones,
-    title: "Pagalba + trūkstamos detalės",
-    description: "Jei kažko trūksta rinkinyje – parašote, ir nemokamai atsiunčiam trūkstamą detalę.",
+    title: "Pagalba lietuviškai + trūkstamos detalės",
+    description: "Jei trūksta detalės – parašote, ir nemokamai išsiunčiame trūkstamą dalį.",
   },
 ];
 

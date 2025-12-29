@@ -10,7 +10,7 @@ import logo from "@/assets/logo.png";
 
 const navigation = [
   { name: "Varikliai", href: "/varikliai" },
-  { name: "Kaip veikia Pre-Order", href: "/pre-order" },
+  { name: "Kaip veikia pre-order", href: "/pre-order" },
   { name: "Pagalba", href: "/pagalba" },
   { name: "Apie mus", href: "/apie" },
   { name: "Kontaktai", href: "/kontaktai" },
@@ -18,8 +18,8 @@ const navigation = [
 
 const topBarItems = [
   { icon: Truck, text: "Nemokamas pristatymas LT į paštomatą" },
-  { icon: Clock, text: "Pre-order su aiškiu terminu" },
-  { icon: Headphones, text: "Pagalba lietuviškai + trūkstamos detalės" },
+  { icon: Clock, text: "Pre-order su aiškiu pristatymo terminu" },
+  { icon: Headphones, text: "Pagalba lietuviškai + trūkstamų detalių sprendimas" },
 ];
 
 export function Header() {
