@@ -36,13 +36,13 @@ export function ProductsSection() {
               Varikliai
             </h2>
             <p className="text-muted-foreground mt-2 max-w-md">
-              Rinkitės pagal tipą, sudėtingumą ir pristatymo statusą.
+              Filtruokite pagal tipą, sudėtingumą, detalių skaičių ir pristatymo statusą.
             </p>
           </div>
           
           <Button asChild variant="outline" className="w-fit h-10 px-5">
             <Link to="/varikliai">
-              Visi varikliai
+              Peržiūrėti visus
               <ArrowRight className="ml-2 h-4 w-4" />
             </Link>
           </Button>
@@ -64,7 +64,7 @@ export function ProductsSection() {
             ))}
           </div>
         ) : products.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 [&>*:last-child:nth-child(3n-1)]:lg:col-start-2 [&>*:last-child:nth-child(3n-2)]:lg:col-start-2">
             {products.slice(0, 6).map((product, index) => {
               const { node } = product;
               const firstVariant = node.variants.edges[0]?.node;
@@ -126,7 +126,7 @@ export function ProductsSection() {
             })}
           </div>
         ) : displayProducts ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 [&>*:last-child:nth-child(3n-1)]:lg:col-start-2 [&>*:last-child:nth-child(3n-2)]:lg:col-start-2">
             {displayProducts.map((product) => (
               <Link
                 key={product.id}
