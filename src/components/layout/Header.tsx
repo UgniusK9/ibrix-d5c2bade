@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { Menu, X, Search, ShoppingCart } from "lucide-react";
+import { Menu, Search, ShoppingCart, Truck, Clock, Headphones } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
@@ -10,16 +10,16 @@ import logo from "@/assets/logo.png";
 
 const navigation = [
   { name: "Varikliai", href: "/varikliai" },
-  { name: "Kaip veikia Pre-order", href: "/pre-order" },
+  { name: "Kaip veikia Pre-Order", href: "/pre-order" },
   { name: "Pagalba", href: "/pagalba" },
   { name: "Apie mus", href: "/apie" },
   { name: "Kontaktai", href: "/kontaktai" },
 ];
 
-const topBarMessages = [
-  "Nemokamas pristatymas į paštomatą Lietuvoje",
-  "Pre-order aiškiai ir sąžiningai",
-  "Pagalba lietuviškai",
+const topBarItems = [
+  { icon: Truck, text: "Nemokamas pristatymas į paštomatą Lietuvoje" },
+  { icon: Clock, text: "Pre-order aiškiai ir sąžiningai" },
+  { icon: Headphones, text: "Pagalba lietuviškai" },
 ];
 
 export function Header() {
@@ -35,25 +35,29 @@ export function Header() {
       {/* Top Bar */}
       <div className="bg-primary text-primary-foreground">
         <div className="container">
-          <div className="flex items-center justify-center gap-6 py-2 text-xs md:text-sm">
-            {topBarMessages.map((message, index) => (
-              <span key={index} className="hidden md:inline-flex items-center">
-                {index > 0 && <span className="mx-4 h-1 w-1 rounded-full bg-primary-foreground/40" />}
-                {message}
+          <div className="flex items-center justify-center gap-8 py-2 text-xs md:text-sm overflow-hidden">
+            {topBarItems.map((item, index) => (
+              <span key={index} className="hidden md:inline-flex items-center gap-2 whitespace-nowrap">
+                <item.icon className="h-3.5 w-3.5" strokeWidth={1.5} />
+                {item.text}
               </span>
             ))}
-            <span className="md:hidden">{topBarMessages[0]}</span>
+            {/* Mobile - show only first item */}
+            <span className="md:hidden inline-flex items-center gap-2">
+              <Truck className="h-3.5 w-3.5" strokeWidth={1.5} />
+              {topBarItems[0].text}
+            </span>
           </div>
         </div>
       </div>
 
       {/* Main Header */}
-      <div className="bg-card/95 backdrop-blur-md border-b border-border">
+      <div className="bg-card border-b border-border">
         <div className="container">
-          <div className="flex items-center justify-between h-16 md:h-20">
+          <div className="flex items-center justify-between h-16">
             {/* Logo */}
             <Link to="/" className="flex-shrink-0">
-              <img src={logo} alt="Ibrix.lt" className="h-8 md:h-10 w-auto" />
+              <img src={logo} alt="Ibrix.lt" className="h-7 md:h-8 w-auto" />
             </Link>
 
             {/* Desktop Navigation */}
@@ -64,8 +68,8 @@ export function Header() {
                   to={item.href}
                   className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
                     isActive(item.href)
-                      ? "bg-primary/10 text-primary"
-                      : "text-foreground/80 hover:text-foreground hover:bg-muted"
+                      ? "text-primary"
+                      : "text-muted-foreground hover:text-foreground"
                   }`}
                 >
                   {item.name}
@@ -74,12 +78,7 @@ export function Header() {
             </nav>
 
             {/* Right Actions */}
-            <div className="flex items-center gap-2">
-              {/* Search */}
-              <Button variant="ghost" size="icon" className="hidden md:flex">
-                <Search className="h-5 w-5" />
-              </Button>
-
+            <div className="flex items-center gap-1">
               {/* Cart */}
               <Button
                 variant="ghost"
@@ -89,7 +88,7 @@ export function Header() {
               >
                 <ShoppingCart className="h-5 w-5" />
                 {totalItems > 0 && (
-                  <Badge className="absolute -top-1 -right-1 h-5 w-5 rounded-full p-0 flex items-center justify-center text-xs bg-accent text-accent-foreground">
+                  <Badge className="absolute -top-1 -right-1 h-5 w-5 rounded-full p-0 flex items-center justify-center text-xs bg-accent text-accent-foreground border-2 border-card">
                     {totalItems}
                   </Badge>
                 )}
@@ -103,7 +102,7 @@ export function Header() {
                   </Button>
                 </SheetTrigger>
                 <SheetContent side="right" className="w-[300px] sm:w-[350px]">
-                  <nav className="flex flex-col gap-2 mt-8">
+                  <nav className="flex flex-col gap-1 mt-8">
                     {navigation.map((item) => (
                       <Link
                         key={item.name}
@@ -112,7 +111,7 @@ export function Header() {
                         className={`px-4 py-3 text-base font-medium rounded-lg transition-colors ${
                           isActive(item.href)
                             ? "bg-primary/10 text-primary"
-                            : "text-foreground/80 hover:text-foreground hover:bg-muted"
+                            : "text-muted-foreground hover:text-foreground hover:bg-muted"
                         }`}
                       >
                         {item.name}

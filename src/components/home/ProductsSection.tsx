@@ -20,22 +20,22 @@ export function ProductsSection() {
   }, []);
 
   return (
-    <section className="py-16 md:py-24">
+    <section className="py-16 md:py-24 bg-background">
       <div className="container">
         {/* Header */}
         <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4 mb-10">
           <div>
-            <h2 className="font-heading text-3xl md:text-4xl font-bold mb-2">
+            <span className="text-xs font-semibold text-accent uppercase tracking-widest mb-2 block">
+              KOLEKCIJA
+            </span>
+            <h2 className="font-heading text-3xl md:text-4xl font-bold">
               Varikliai
             </h2>
-            <p className="text-muted-foreground max-w-lg">
-              Premium techninių konstruktorių modeliai, kurie atgauna garsias automobilių variklio architektūras
-            </p>
           </div>
           
-          <Button asChild variant="outline" className="w-fit">
+          <Button asChild variant="outline" className="w-fit h-10 px-5">
             <Link to="/varikliai">
-              Visi varikliai
+              Visi modeliai
               <ArrowRight className="ml-2 h-4 w-4" />
             </Link>
           </Button>
@@ -45,25 +45,26 @@ export function ProductsSection() {
         {loading ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {[...Array(3)].map((_, i) => (
-              <div key={i} className="bg-card rounded-xl overflow-hidden animate-pulse">
+              <div key={i} className="bg-card rounded-2xl overflow-hidden animate-pulse border border-border">
                 <div className="aspect-square bg-muted" />
-                <div className="p-4 space-y-3">
-                  <div className="h-6 bg-muted rounded w-3/4" />
+                <div className="p-5 space-y-3">
+                  <div className="h-3 bg-muted rounded w-20" />
+                  <div className="h-5 bg-muted rounded w-3/4" />
                   <div className="h-4 bg-muted rounded w-1/2" />
-                  <div className="h-8 bg-muted rounded w-1/3" />
+                  <div className="h-6 bg-muted rounded w-1/3" />
                 </div>
               </div>
             ))}
           </div>
         ) : products.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {products.map((product) => (
-              <ProductCard key={product.node.id} product={product} />
+            {products.map((product, index) => (
+              <ProductCard key={product.node.id} product={product} index={index} />
             ))}
           </div>
         ) : (
-          <div className="bg-card rounded-2xl p-12 text-center">
-            <Package className="h-16 w-16 text-muted-foreground/50 mx-auto mb-4" />
+          <div className="bg-card rounded-2xl p-12 text-center border border-border">
+            <Package className="h-16 w-16 text-muted-foreground/30 mx-auto mb-4" strokeWidth={1} />
             <h3 className="font-heading text-xl font-semibold mb-2">
               Produktų dar nėra
             </h3>
