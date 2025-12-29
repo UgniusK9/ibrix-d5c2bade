@@ -3,10 +3,10 @@ import { CheckCircle2, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 const benefits = [
-  "Rezervuojate rinkinį iš artimiausios partijos",
-  "Terminas visada aiškiai nurodytas (pvz., 8–10 savaičių)",
-  "Galite atšaukti bet kada iki išsiuntimo ir atgausite pilną sumą",
-  "Rūšiuojame modelius Lietuvoje – tik tada, kai realiai reikia",
+  "Rezervuojate artimiausią partiją",
+  "Terminas matomas prie produkto (pvz., 8–10 sav.)",
+  "Atšaukti galima bet kada iki išsiuntimo",
+  "Modelius atvežame tik tada, kai realiai reikia",
 ];
 
 export function PreOrderSection() {
@@ -28,12 +28,13 @@ export function PreOrderSection() {
             </span>
             
             <h2 className="font-heading text-3xl md:text-4xl font-bold mb-6 leading-tight">
-              Sąžiningas ir aiškus pre-order modelis
+              Pre-order, kuris normaliai paaiškintas.
             </h2>
             
             <p className="text-primary-foreground/75 mb-8 text-lg leading-relaxed">
-              Pre-order reiškia, kad rezervuojate rinkinį iš artimiausios atvežimo partijos. 
-              Taip galime pasiūlyti modelius, kurių Lietuvoje kitaip nebūtų.
+              Pre-order reiškia, kad rezervuojate rinkinį iš artimiausios partijos. 
+              Terminas visada nurodytas prie produkto. Iki išsiuntimo galite atšaukti 
+              ir atgausite pilną sumą.
             </p>
 
             <ul className="space-y-4 mb-8">
@@ -50,7 +51,7 @@ export function PreOrderSection() {
               className="bg-accent hover:bg-accent/90 text-accent-foreground font-semibold h-11 px-6"
             >
               <Link to="/pre-order">
-                Sužinoti daugiau
+                Sužinoti daugiau apie pre-order
                 <ArrowRight className="ml-2 h-4 w-4" />
               </Link>
             </Button>

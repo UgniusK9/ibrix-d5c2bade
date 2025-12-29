@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { Menu, Search, ShoppingCart, Truck, Clock, Headphones } from "lucide-react";
+import { Menu, ShoppingCart, Truck, Clock, Headphones, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
@@ -17,9 +17,9 @@ const navigation = [
 ];
 
 const topBarItems = [
-  { icon: Truck, text: "Nemokamas pristatymas į paštomatą Lietuvoje" },
-  { icon: Clock, text: "Pre-order aiškiai ir sąžiningai" },
-  { icon: Headphones, text: "Pagalba lietuviškai" },
+  { icon: Truck, text: "Nemokamas pristatymas LT į paštomatą" },
+  { icon: Clock, text: "Pre-order su aiškiu terminu" },
+  { icon: Headphones, text: "Pagalba lietuviškai + trūkstamos detalės" },
 ];
 
 export function Header() {
@@ -57,7 +57,7 @@ export function Header() {
           <div className="flex items-center justify-between h-16">
             {/* Logo */}
             <Link to="/" className="flex-shrink-0">
-              <img src={logo} alt="Ibrix.lt" className="h-7 md:h-8 w-auto" />
+              <img src={logo} alt="IBRIX" className="h-7 md:h-8 w-auto" />
             </Link>
 
             {/* Desktop Navigation */}
@@ -68,8 +68,8 @@ export function Header() {
                   to={item.href}
                   className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
                     isActive(item.href)
-                      ? "text-primary"
-                      : "text-muted-foreground hover:text-foreground"
+                      ? "text-primary bg-primary/5"
+                      : "text-muted-foreground hover:text-foreground hover:bg-muted"
                   }`}
                 >
                   {item.name}
@@ -78,7 +78,15 @@ export function Header() {
             </nav>
 
             {/* Right Actions */}
-            <div className="flex items-center gap-1">
+            <div className="flex items-center gap-2">
+              {/* CTA Button - Desktop only */}
+              <Button asChild size="sm" className="hidden lg:flex bg-accent hover:bg-accent/90 text-accent-foreground h-9 px-4">
+                <Link to="/varikliai">
+                  Peržiūrėti variklius
+                  <ArrowRight className="ml-1.5 h-4 w-4" />
+                </Link>
+              </Button>
+
               {/* Cart */}
               <Button
                 variant="ghost"
@@ -118,6 +126,15 @@ export function Header() {
                       </Link>
                     ))}
                   </nav>
+                  
+                  <div className="mt-6 px-4">
+                    <Button asChild className="w-full bg-accent hover:bg-accent/90 text-accent-foreground">
+                      <Link to="/varikliai" onClick={() => setMobileMenuOpen(false)}>
+                        Peržiūrėti variklius
+                        <ArrowRight className="ml-2 h-4 w-4" />
+                      </Link>
+                    </Button>
+                  </div>
                 </SheetContent>
               </Sheet>
             </div>

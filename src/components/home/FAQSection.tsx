@@ -8,23 +8,43 @@ import {
 const faqs = [
   {
     question: "Kiek laiko užtrunka surinkti?",
-    answer: "Priklausomai nuo modelio sudėtingumo, surinkimas užtrunka nuo 4 iki 12 valandų. Sudėtingesni modeliai kaip V8 gali užtrukti ilgiau, bet instrukcijos aiškios ir procesas malonus.",
+    answer: "Priklauso nuo modelio. Prie kiekvieno produkto nurodomas orientacinis surinkimo laikas (pvz., 8-10 val. arba 20-30 val.).",
   },
   {
-    question: "Ar tai suderinama su kitomis kaladėlėmis?",
-    answer: "Taip, mūsų modeliai naudoja standartines kaladėles, kurios suderinamos su populiariais techniniais konstruktoriais. Galite kombinuoti su turimomis detalėmis.",
+    question: "Ar modelis tikrai juda?",
+    answer: "Taip. Mechanizmas veikia - juda stūmokliai, alkūninis velenas ir kitos dalys. Tai ne dekoracija - tai judantis modelis.",
+  },
+  {
+    question: "Ar reikia specialių įrankių?",
+    answer: "Ne. Pagrindiniai įrankiai dažniausiai įtraukti. Jei norisi - galima naudoti pincetą, bet tai nebūtina.",
+  },
+  {
+    question: "Kuo skiriasi Sandėlyje ir Pre-order?",
+    answer: "Sandėlyje - išsiunčiam per 1-2 d. Pre-order - rezervuojate artimiausią partiją su aiškiu terminu, kuris nurodytas prie produkto.",
   },
   {
     question: "Ar galima atšaukti pre-order?",
-    answer: "Taip, galite atšaukti pre-order bet kada iki išsiuntimo ir grąžiname pilną sumą. Jokių papildomų mokesčių ar sąlygų.",
+    answer: "Taip. Iki išsiuntimo galite atšaukti ir atgausite pilną sumą.",
   },
   {
-    question: "Kaip veikia pristatymas?",
-    answer: "Pristatymas į paštomatą Lietuvoje yra nemokamas. Sandėlyje esančios prekės išsiunčiamos per 1-2 darbo dienas. Pre-order užsakymai siunčiami iškart kai gauna partiją.",
+    question: "Kas jei trūksta detalės?",
+    answer: "Parašote mums, nurodote modelį ir detalės numerį. Trūkstamą detalę atsiunčiame nemokamai per 5 darbo dienas.",
   },
   {
-    question: "Ką daryti, jei trūksta detalių?",
-    answer: "Susisiekite su mumis el. paštu su užsakymo numeriu ir trūkstamų detalių nuotraukomis. Trūkstamas detales išsiunčiame nemokamai per 5-7 darbo dienas.",
+    question: "Ar tinka dovanai?",
+    answer: "Taip. Tai premium tipo dovana mechanikos fanui. Rinkinys atrodo gerai net dėžėje, o surinktas modelis tinka ekspozicijai.",
+  },
+  {
+    question: "Kokiam amžiui tinka?",
+    answer: "Prie kiekvieno produkto nurodoma amžiaus rekomendacija (pvz., 14+ arba 16+). Sudėtingesniems modeliams rekomenduojame kantrybę ir laiką.",
+  },
+  {
+    question: "Kaip veikia grąžinimas?",
+    answer: "Galite grąžinti per 14 dienų. Svarbu, kad prekė būtų nenaudota ir originalioje pakuotėje (detalės nesumaišytos).",
+  },
+  {
+    question: "Ar mokėjimai saugūs?",
+    answer: "Taip. Naudojame saugius mokėjimų būdus - kortelė, bankas.",
   },
 ];
 

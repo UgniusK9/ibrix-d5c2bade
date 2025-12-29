@@ -4,20 +4,20 @@ const steps = [
   {
     number: "01",
     icon: Search,
-    title: "Pasirenkate modelį",
-    description: "Peržiūrėkite kolekciją ir išsirinkite norimą variklio modelį.",
+    title: "Išsirenkate modelį",
+    description: "Pasirenkate pagal tipą, detalių skaičių ir statusą: sandėlyje arba pre-order.",
   },
   {
     number: "02",
     icon: ShoppingCart,
     title: "Užsisakote",
-    description: "Pre-order arba iš sandėlio – aiškiai parodome statusą.",
+    description: "Apmokate saugiai. Pre-order atveju – terminas aiškiai nurodytas prie produkto.",
   },
   {
     number: "03",
     icon: Wrench,
-    title: "Surenkate",
-    description: "Gavę rinkinį, surenkate ir turite display variklį.",
+    title: "Surenkate ir demonstruojate",
+    description: "Gavę rinkinį, surenkate ir turite judantį modelį, kuris atrodo įspūdingai ant stalo.",
   },
 ];
 
@@ -58,12 +58,17 @@ export function HowItWorks() {
                 <h3 className="font-heading text-lg font-semibold mb-2">
                   {step.title}
                 </h3>
-                <p className="text-sm text-muted-foreground leading-relaxed max-w-[250px]">
+                <p className="text-sm text-muted-foreground leading-relaxed max-w-[280px]">
                   {step.description}
                 </p>
               </div>
             ))}
           </div>
+
+          {/* Trust line after steps */}
+          <p className="text-center text-sm text-muted-foreground mt-10 pt-8 border-t border-border">
+            Jei trūksta detalės – išsprendžiam per 5 darbo dienas, nemokamai.
+          </p>
         </div>
       </div>
     </section>
