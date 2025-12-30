@@ -1,49 +1,38 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
-import { MockProduct } from '@/data/mockProducts';
-
-// Generate or get session ID
-function getSessionId(): string {
-  const key = 'ibrix-session-id';
-  let sessionId = localStorage.getItem(key);
-  if (!sessionId) {
-    sessionId = crypto.randomUUID();
-    localStorage.setItem(key, sessionId);
-  }
-  return sessionId;
-}
+import { ShopifyProduct, createStorefrontCheckout } from '@/lib/shopify';
 
 export interface CartItem {
-  id: string; // cart_item id from DB (used for local state only)
+  variantId: string; // Shopify variant ID (gid://shopify/ProductVariant/...)
   productId: string;
+  productHandle: string;
   title: string;
-  slug: string;
+  variantTitle: string;
   image: string;
-  priceCents: number;
-  currency: string;
+  price: {
+    amount: string;
+    currencyCode: string;
+  };
   quantity: number;
-  type: 'in_stock' | 'pre_order';
-  eta?: string;
-  sku: string;
+  availableForSale: boolean;
 }
 
 interface CartStore {
   items: CartItem[];
   isLoading: boolean;
   isOpen: boolean;
-  sessionId: string;
+  checkoutUrl: string | null;
   
   // Actions
-  addItem: (product: MockProduct, quantity?: number) => void;
-  updateQuantity: (itemId: string, quantity: number) => void;
-  removeItem: (itemId: string) => void;
+  addItem: (product: ShopifyProduct, variantId?: string, quantity?: number) => void;
+  updateQuantity: (variantId: string, quantity: number) => void;
+  removeItem: (variantId: string) => void;
   clearCart: () => void;
   setLoading: (loading: boolean) => void;
   setOpen: (open: boolean) => void;
   getTotalItems: () => number;
   getTotalPrice: () => number;
-  getTotalPriceCents: () => number;
-  getSessionId: () => string;
+  createCheckout: () => Promise<string | null>;
 }
 
 export const useCartStore = create<CartStore>()(
@@ -52,33 +41,45 @@ export const useCartStore = create<CartStore>()(
       items: [],
       isLoading: false,
       isOpen: false,
-      sessionId: '',
+      checkoutUrl: null,
 
-      addItem: (product, quantity = 1) => {
+      addItem: (product, variantId, quantity = 1) => {
         const { items } = get();
-        const existingItem = items.find(i => i.productId === product.id);
+        const { node } = product;
+        
+        // Use first variant if not specified
+        const selectedVariant = variantId 
+          ? node.variants.edges.find(v => v.node.id === variantId)?.node
+          : node.variants.edges[0]?.node;
+        
+        if (!selectedVariant) {
+          console.error('No variant found');
+          return;
+        }
+        
+        const existingItem = items.find(i => i.variantId === selectedVariant.id);
         
         if (existingItem) {
           set({
             items: items.map(i =>
-              i.productId === product.id
+              i.variantId === selectedVariant.id
                 ? { ...i, quantity: i.quantity + quantity }
                 : i
             )
           });
         } else {
+          const image = node.images.edges[0]?.node?.url || '';
+          
           const newItem: CartItem = {
-            id: crypto.randomUUID(),
-            productId: product.id,
-            title: product.title,
-            slug: product.handle,
-            image: product.image,
-            priceCents: Math.round(product.price * 100),
-            currency: product.currency,
+            variantId: selectedVariant.id,
+            productId: node.id,
+            productHandle: node.handle,
+            title: node.title,
+            variantTitle: selectedVariant.title,
+            image,
+            price: selectedVariant.price,
             quantity,
-            type: product.status === 'pre-order' ? 'pre_order' : 'in_stock',
-            eta: product.eta,
-            sku: product.sku,
+            availableForSale: selectedVariant.availableForSale,
           };
           set({ items: [...items, newItem] });
         }
@@ -87,27 +88,27 @@ export const useCartStore = create<CartStore>()(
         set({ isOpen: true });
       },
 
-      updateQuantity: (itemId, quantity) => {
+      updateQuantity: (variantId, quantity) => {
         if (quantity <= 0) {
-          get().removeItem(itemId);
+          get().removeItem(variantId);
           return;
         }
         
         set({
           items: get().items.map(item =>
-            item.id === itemId ? { ...item, quantity } : item
+            item.variantId === variantId ? { ...item, quantity } : item
           )
         });
       },
 
-      removeItem: (itemId) => {
+      removeItem: (variantId) => {
         set({
-          items: get().items.filter(item => item.id !== itemId)
+          items: get().items.filter(item => item.variantId !== variantId)
         });
       },
 
       clearCart: () => {
-        set({ items: [] });
+        set({ items: [], checkoutUrl: null });
       },
 
       setLoading: (isLoading) => set({ isLoading }),
@@ -118,15 +119,30 @@ export const useCartStore = create<CartStore>()(
       },
 
       getTotalPrice: () => {
-        return get().items.reduce((sum, item) => sum + ((item.priceCents / 100) * item.quantity), 0);
+        return get().items.reduce((sum, item) => 
+          sum + (parseFloat(item.price.amount) * item.quantity), 0);
       },
 
-      getTotalPriceCents: () => {
-        return get().items.reduce((sum, item) => sum + (item.priceCents * item.quantity), 0);
-      },
+      createCheckout: async () => {
+        const { items, setLoading } = get();
+        if (items.length === 0) return null;
 
-      getSessionId: () => {
-        return getSessionId();
+        setLoading(true);
+        try {
+          const checkoutItems = items.map(item => ({
+            variantId: item.variantId,
+            quantity: item.quantity,
+          }));
+          
+          const checkoutUrl = await createStorefrontCheckout(checkoutItems);
+          set({ checkoutUrl });
+          return checkoutUrl;
+        } catch (error) {
+          console.error('Failed to create checkout:', error);
+          return null;
+        } finally {
+          setLoading(false);
+        }
       },
     }),
     {
@@ -138,9 +154,10 @@ export const useCartStore = create<CartStore>()(
 );
 
 // Helper to format price
-export function formatCartPrice(cents: number, currency: string = 'EUR'): string {
+export function formatCartPrice(amount: number | string, currencyCode: string = 'EUR'): string {
+  const numAmount = typeof amount === 'string' ? parseFloat(amount) : amount;
   return new Intl.NumberFormat('lt-LT', {
     style: 'currency',
-    currency: currency,
-  }).format(cents / 100);
+    currency: currencyCode,
+  }).format(numAmount);
 }

@@ -1,11 +1,11 @@
 import { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
-import { ArrowLeft, Package, Clock, Truck, RotateCcw, Shield, CreditCard, ShoppingCart, ChevronDown, Puzzle, HelpCircle } from "lucide-react";
+import { ArrowLeft, Package, Clock, Truck, RotateCcw, Shield, ShoppingCart, Puzzle, HelpCircle } from "lucide-react";
 import { PageLayout } from "@/components/layout/PageLayout";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { fetchProductByHandle, formatPrice } from "@/lib/shopify";
-import { mockProducts, getMockProduct, formatMockPrice, MockProduct } from "@/data/mockProducts";
+import { fetchProductByHandle, formatPrice, ShopifyProduct } from "@/lib/shopify";
+import { mockProducts, getMockProduct, formatMockPrice } from "@/data/mockProducts";
 import { useCartStore } from "@/stores/cartStore";
 import { toast } from "sonner";
 import {
@@ -22,10 +22,10 @@ const trustItems = [
 ];
 
 const productSpecs = [
-  { label: "Detalių skaičius", getValue: (p: MockProduct) => `${p.detailsCount} vnt.` },
-  { label: "Sudėtingumas", getValue: () => "Pažengusiems" },
-  { label: "Amžiaus grupė", getValue: () => "16+" },
-  { label: "Surinkimo laikas", getValue: () => "~20–30 val." },
+  { label: "Detalių skaičius", value: "2899 vnt." },
+  { label: "Sudėtingumas", value: "Pažengusiems" },
+  { label: "Amžiaus grupė", value: "16+" },
+  { label: "Surinkimo laikas", value: "~20–30 val." },
 ];
 
 const boxContents = [
@@ -74,32 +74,20 @@ export default function Produktas() {
   const hasShopifyProduct = !!shopifyProduct;
 
   const handleAddToCart = () => {
-    // Use mock product for cart (unified cart system)
-    if (mockProduct) {
-      addItem(mockProduct);
-      toast.success("Pridėta į krepšelį", {
-        description: mockProduct.title,
-        position: "top-center",
-      });
-    } else if (hasShopifyProduct) {
-      // Convert Shopify product to MockProduct format
-      const variant = shopifyProduct.variants.edges[0]?.node;
-      const shopifyAsMock: MockProduct = {
-        id: shopifyProduct.id,
-        handle: shopifyProduct.handle,
-        title: shopifyProduct.title,
-        description: shopifyProduct.description || '',
-        price: parseFloat(shopifyProduct.priceRange.minVariantPrice.amount),
-        currency: shopifyProduct.priceRange.minVariantPrice.currencyCode,
-        image: shopifyProduct.images.edges[0]?.node.url || '',
-        status: variant?.availableForSale ? 'in-stock' : 'pre-order',
-        detailsCount: 2899,
-        sku: `ORB-ENG-${shopifyProduct.id.slice(-5)}`,
-        eta: '8–10 sav.',
+    if (hasShopifyProduct) {
+      // Create ShopifyProduct structure for the cart
+      const productForCart: ShopifyProduct = {
+        node: shopifyProduct
       };
-      addItem(shopifyAsMock);
+      addItem(productForCart);
       toast.success("Pridėta į krepšelį", {
         description: shopifyProduct.title,
+        position: "top-center",
+      });
+    } else if (mockProduct) {
+      // For mock products, show message that Shopify products are needed
+      toast.info("Produktas dar neprijungtas", {
+        description: "Šis produktas bus prieinamas kai bus pridėtas į Shopify",
         position: "top-center",
       });
     }
@@ -157,13 +145,13 @@ export default function Produktas() {
   const isPreOrder = hasShopifyProduct 
     ? !shopifyProduct.variants.edges[0]?.node.availableForSale
     : mockProduct!.status === "pre-order";
-  const eta = isPreOrder ? (mockProduct?.eta || "8–10 sav.") : "1–2 d.d.";
+  const eta = isPreOrder ? "8–10 sav." : "1–2 d.d.";
   const sku = mockProduct?.sku || "ORB-ENG-10168";
   const detailsCount = mockProduct?.detailsCount || 2899;
   
   const images = hasShopifyProduct && shopifyProduct.images.edges.length > 0
     ? shopifyProduct.images.edges.map((e: any) => e.node.url)
-    : [mockProduct!.image];
+    : mockProduct ? [mockProduct.image] : [];
 
   return (
     <PageLayout>
@@ -182,11 +170,17 @@ export default function Produktas() {
           {/* Images */}
           <div className="space-y-4">
             <div className="aspect-square rounded-2xl overflow-hidden bg-gradient-to-br from-secondary/30 to-muted/20 border border-border">
-              <img
-                src={images[selectedImage]}
-                alt={title}
-                className="w-full h-full object-cover"
-              />
+              {images[selectedImage] ? (
+                <img
+                  src={images[selectedImage]}
+                  alt={title}
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center text-muted-foreground">
+                  <Package className="w-16 h-16" />
+                </div>
+              )}
             </div>
             {images.length > 1 && (
               <div className="flex gap-2">
@@ -261,6 +255,7 @@ export default function Produktas() {
               size="lg" 
               className="w-full bg-accent hover:bg-accent/90 text-accent-foreground h-14 text-base"
               onClick={handleAddToCart}
+              disabled={!hasShopifyProduct}
             >
               <ShoppingCart className="w-5 h-5 mr-2" />
               {isPreOrder ? "Užsisakyti (pre-order)" : "Į krepšelį"}
@@ -270,6 +265,12 @@ export default function Produktas() {
             {isPreOrder && (
               <p className="text-center text-sm text-muted-foreground mt-3">
                 Atšaukti galima iki išsiuntimo. Grąžiname pilną sumą.
+              </p>
+            )}
+
+            {!hasShopifyProduct && (
+              <p className="text-center text-sm text-muted-foreground mt-3">
+                Produktas bus prieinamas kai bus pridėtas į Shopify
               </p>
             )}
 
@@ -296,7 +297,7 @@ export default function Produktas() {
                   {productSpecs.map((spec) => (
                     <div key={spec.label}>
                       <dt className="text-sm text-muted-foreground">{spec.label}</dt>
-                      <dd className="font-medium">{mockProduct ? spec.getValue(mockProduct) : spec.getValue(mockProducts[0])}</dd>
+                      <dd className="font-medium">{spec.value}</dd>
                     </div>
                   ))}
                 </dl>
