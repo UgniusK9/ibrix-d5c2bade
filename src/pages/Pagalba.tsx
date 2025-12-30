@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import { Truck, RotateCcw, Shield, Puzzle, Clock, Phone, ArrowRight } from "lucide-react";
 import { PageLayout } from "@/components/layout/PageLayout";
 import { Button } from "@/components/ui/button";
+import { FAQSection } from "@/components/home/FAQSection";
 
 const helpCards = [
   {
@@ -113,6 +114,11 @@ export default function Pagalba() {
           </div>
         </div>
       </section>
+
+      {/* FAQ Section */}
+      <div id="faq">
+        <FAQSection />
+      </div>
     </PageLayout>
   );
 }
