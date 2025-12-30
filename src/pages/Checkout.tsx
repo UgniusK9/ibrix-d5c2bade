@@ -1,6 +1,6 @@
-import { useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
-import { ArrowLeft, Package, Clock, Truck, MapPin, Loader2, AlertCircle, CreditCard } from "lucide-react";
+import { useState, useEffect } from "react";
+import { useNavigate, Link, useSearchParams } from "react-router-dom";
+import { ArrowLeft, Package, Clock, Truck, MapPin, Loader2, AlertCircle, CreditCard, CheckCircle2 } from "lucide-react";
 import { PageLayout } from "@/components/layout/PageLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,6 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useCartStore, formatCartPrice } from "@/stores/cartStore";
+import { StripePayment } from "@/components/checkout/StripePayment";
 import { toast } from "sonner";
 import { z } from "zod";
 
@@ -41,6 +42,8 @@ const shippingMethods = [
 
 type ShippingMethod = typeof shippingMethods[number]['id'];
 
+type CheckoutStep = 'details' | 'payment' | 'success';
+
 const checkoutSchema = z.object({
   firstName: z.string().min(2, "Vardas per trumpas").max(50),
   lastName: z.string().min(2, "Pavardė per trumpa").max(50),
@@ -56,8 +59,12 @@ const checkoutSchema = z.object({
 
 export default function Checkout() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { items, getTotalPriceCents, clearCart, getSessionId } = useCartStore();
   
+  const [step, setStep] = useState<CheckoutStep>('details');
+  const [orderId, setOrderId] = useState<string | null>(null);
+  const [orderNumber, setOrderNumber] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   
@@ -73,6 +80,17 @@ export default function Checkout() {
     postalCode: '',
     notes: '',
   });
+
+  // Check for payment success redirect
+  useEffect(() => {
+    const paymentStatus = searchParams.get('payment');
+    const redirectStatus = searchParams.get('redirect_status');
+    
+    if (paymentStatus === 'success' || redirectStatus === 'succeeded') {
+      clearCart();
+      setStep('success');
+    }
+  }, [searchParams, clearCart]);
 
   const selectedShipping = shippingMethods.find(m => m.id === formData.shippingMethod)!;
   const subtotalCents = getTotalPriceCents();
@@ -171,9 +189,10 @@ export default function Checkout() {
         throw new Error(data.error || 'Nepavyko sukurti užsakymo');
       }
 
-      // Success - redirect to confirmation page
-      clearCart();
-      navigate(`/uzsakymas?order=${data.order.orderNumber}`);
+      // Success - move to payment step
+      setOrderId(data.order.id);
+      setOrderNumber(data.order.orderNumber);
+      setStep('payment');
     } catch (error) {
       console.error('Checkout error:', error);
       toast.error("Klaida", {
@@ -185,8 +204,40 @@ export default function Checkout() {
     }
   };
 
-  // Empty cart
-  if (items.length === 0) {
+  const handlePaymentSuccess = () => {
+    clearCart();
+    setStep('success');
+  };
+
+  const handlePaymentError = (error: string) => {
+    console.error('Payment error:', error);
+    // Error is shown in StripePayment component
+  };
+
+  // Success step
+  if (step === 'success') {
+    return (
+      <PageLayout>
+        <div className="container py-16 max-w-lg mx-auto text-center">
+          <div className="w-20 h-20 rounded-full bg-success/10 flex items-center justify-center mx-auto mb-6">
+            <CheckCircle2 className="w-10 h-10 text-success" />
+          </div>
+          <h1 className="font-heading text-2xl font-bold mb-2">
+            Užsakymas patvirtintas!
+          </h1>
+          <p className="text-muted-foreground mb-6">
+            Dėkojame už pirkimą. Siuntos sekimo nuorodą gausite el. paštu.
+          </p>
+          <Button asChild>
+            <Link to="/varikliai">Tęsti apsipirkimą</Link>
+          </Button>
+        </div>
+      </PageLayout>
+    );
+  }
+
+  // Empty cart (only for details step)
+  if (items.length === 0 && step === 'details') {
     return (
       <PageLayout>
         <div className="container py-16 max-w-lg mx-auto text-center">
@@ -200,6 +251,77 @@ export default function Checkout() {
           <Button asChild>
             <Link to="/varikliai">Peržiūrėti variklius</Link>
           </Button>
+        </div>
+      </PageLayout>
+    );
+  }
+
+  // Payment step
+  if (step === 'payment' && orderId) {
+    return (
+      <PageLayout>
+        <div className="container py-8 md:py-12">
+          <button
+            onClick={() => setStep('details')}
+            className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground transition-colors mb-8"
+          >
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Grįžti prie duomenų
+          </button>
+
+          <h1 className="font-heading text-3xl font-bold mb-2">Apmokėjimas</h1>
+          <p className="text-muted-foreground mb-8">Užsakymas #{orderNumber}</p>
+
+          <div className="grid lg:grid-cols-3 gap-8">
+            <div className="lg:col-span-2">
+              <div className="bg-card border border-border rounded-xl p-6">
+                <h2 className="font-heading text-lg font-semibold mb-4">Mokėjimo informacija</h2>
+                <StripePayment
+                  orderId={orderId}
+                  amount={totalCents}
+                  onSuccess={handlePaymentSuccess}
+                  onError={handlePaymentError}
+                />
+              </div>
+
+              <div className="mt-6 bg-muted/30 rounded-xl p-4">
+                <p className="text-sm text-muted-foreground text-center">
+                  🔒 Mokėjimai apdorojami saugiai per Stripe
+                </p>
+              </div>
+            </div>
+
+            <div className="lg:col-span-1">
+              <div className="bg-card border border-border rounded-xl p-6 sticky top-24">
+                <h2 className="font-heading text-lg font-semibold mb-4">Užsakymas</h2>
+                <div className="space-y-2 mb-4">
+                  {items.slice(0, 3).map((item) => (
+                    <div key={item.id} className="flex justify-between text-sm">
+                      <span className="truncate flex-1 mr-2">{item.title} × {item.quantity}</span>
+                      <span className="font-medium">{formatCartPrice(item.priceCents * item.quantity, item.currency)}</span>
+                    </div>
+                  ))}
+                  {items.length > 3 && (
+                    <p className="text-sm text-muted-foreground">...ir dar {items.length - 3} prekės</p>
+                  )}
+                </div>
+                <div className="border-t border-border pt-4 space-y-2">
+                  <div className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">Tarpinė suma</span>
+                    <span>{formatCartPrice(subtotalCents, 'EUR')}</span>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">Pristatymas</span>
+                    <span>{shippingCents === 0 ? 'Nemokama' : formatCartPrice(shippingCents, 'EUR')}</span>
+                  </div>
+                  <div className="flex justify-between text-lg font-bold pt-2 border-t border-border">
+                    <span>Viso</span>
+                    <span className="font-heading">{formatCartPrice(totalCents, 'EUR')}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </PageLayout>
     );
