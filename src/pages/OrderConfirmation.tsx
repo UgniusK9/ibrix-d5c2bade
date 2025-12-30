@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
-import { useSearchParams, Link } from "react-router-dom";
-import { CheckCircle2, Package, Clock, Truck, Mail, ArrowRight } from "lucide-react";
+import { useSearchParams, Link, useNavigate } from "react-router-dom";
+import { CheckCircle2, Package, Clock, Truck, Mail, ArrowRight, Loader2 } from "lucide-react";
 import { PageLayout } from "@/components/layout/PageLayout";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -27,13 +27,15 @@ interface Order {
   subtotal_cents: number;
   shipping_cents: number;
   shipping_method: string;
-  shipping_address_json: any;
+  shipping_address_json: Record<string, string>;
   created_at: string;
 }
 
 export default function OrderConfirmation() {
   const [searchParams] = useSearchParams();
-  const orderNumber = searchParams.get('order');
+  const navigate = useNavigate();
+  const orderId = searchParams.get('order');
+  const trackingToken = searchParams.get('token');
   
   const [order, setOrder] = useState<Order | null>(null);
   const [items, setItems] = useState<OrderItem[]>([]);
@@ -42,36 +44,65 @@ export default function OrderConfirmation() {
 
   useEffect(() => {
     async function loadOrder() {
-      if (!orderNumber) {
-        setError('Užsakymo numeris nepateiktas');
+      // Validate required parameters
+      if (!orderId || !trackingToken) {
+        setError('Trūksta užsakymo informacijos');
         setLoading(false);
         return;
       }
 
       try {
-        // Fetch order by order_number (public access for now)
-        const { data: orderData, error: orderError } = await supabase
-          .from('orders')
-          .select('*')
-          .eq('order_number', orderNumber)
-          .single();
+        // Use the tracking edge function which properly validates tokens server-side
+        const { data, error: fnError } = await supabase.functions.invoke('tracking', {
+          body: { 
+            orderId,
+            trackingToken
+          }
+        });
 
-        if (orderError || !orderData) {
-          setError('Užsakymas nerastas');
+        if (fnError) {
+          console.error('Tracking function error:', fnError);
+          setError('Nepavyko užkrauti užsakymo');
           setLoading(false);
           return;
         }
 
-        setOrder(orderData);
+        if (!data?.success || !data?.order) {
+          setError(data?.error || 'Užsakymas nerastas arba nuoroda nebegalioja');
+          setLoading(false);
+          return;
+        }
 
-        // Fetch order items
-        const { data: itemsData } = await supabase
-          .from('order_items')
-          .select('*')
-          .eq('order_id', orderData.id);
+        // Map the tracking response to our order format
+        const orderData = data.order;
+        setOrder({
+          id: orderData.id,
+          order_number: orderData.order_number,
+          status: orderData.status,
+          first_name: orderData.first_name,
+          last_name: orderData.last_name,
+          email: orderData.email,
+          total_cents: orderData.total_cents,
+          subtotal_cents: orderData.subtotal_cents,
+          shipping_cents: orderData.shipping_cents,
+          shipping_method: orderData.shipping_method,
+          shipping_address_json: orderData.shipping_address_json,
+          created_at: orderData.created_at,
+        });
 
-        setItems(itemsData || []);
+        // Map order items from tracking response
+        if (data.items && Array.isArray(data.items)) {
+          setItems(data.items.map((item: Record<string, unknown>) => ({
+            id: item.id as string,
+            title_snapshot: item.title_snapshot as string,
+            quantity: item.quantity as number,
+            unit_price_cents: item.unit_price_cents as number,
+            type: item.type as 'in_stock' | 'pre_order',
+            preorder_eta_weeks_snapshot: item.preorder_eta_weeks_snapshot as number | null,
+          })));
+        }
       } catch (err) {
+        console.error('Order load error:', err);
         setError('Klaida kraunant užsakymą');
       } finally {
         setLoading(false);
@@ -79,7 +110,7 @@ export default function OrderConfirmation() {
     }
 
     loadOrder();
-  }, [orderNumber]);
+  }, [orderId, trackingToken]);
 
   const hasPreorder = items.some(item => item.type === 'pre_order');
   const maxEtaWeeks = items.reduce((max, item) => {
@@ -99,14 +130,19 @@ export default function OrderConfirmation() {
     return methods[method] || method;
   };
 
+  const handleTrackOrder = () => {
+    if (orderId && trackingToken) {
+      navigate(`/siuntos-sekimas?order=${orderId}&token=${trackingToken}`);
+    }
+  };
+
   if (loading) {
     return (
       <PageLayout>
         <div className="container py-16 max-w-2xl mx-auto">
-          <div className="animate-pulse space-y-4">
-            <div className="h-20 w-20 bg-muted rounded-full mx-auto" />
-            <div className="h-8 w-64 bg-muted rounded mx-auto" />
-            <div className="h-4 w-48 bg-muted rounded mx-auto" />
+          <div className="flex flex-col items-center justify-center gap-4">
+            <Loader2 className="w-10 h-10 animate-spin text-primary" />
+            <p className="text-muted-foreground">Kraunamas užsakymas...</p>
           </div>
         </div>
       </PageLayout>
@@ -122,7 +158,7 @@ export default function OrderConfirmation() {
             {error || 'Užsakymas nerastas'}
           </h1>
           <p className="text-muted-foreground mb-6">
-            Patikrinkite užsakymo numerį arba susisiekite su mumis.
+            Patikrinkite nuorodą arba susisiekite su mumis.
           </p>
           <Button asChild>
             <Link to="/varikliai">Grįžti į parduotuvę</Link>
@@ -248,8 +284,12 @@ export default function OrderConfirmation() {
           )}
         </div>
 
-        {/* CTA */}
-        <div className="text-center">
+        {/* CTAs */}
+        <div className="flex flex-col sm:flex-row gap-3 justify-center">
+          <Button onClick={handleTrackOrder} variant="outline" size="lg">
+            <Truck className="w-4 h-4 mr-2" />
+            Sekti siuntą
+          </Button>
           <Button asChild size="lg">
             <Link to="/varikliai">
               Tęsti apsipirkimą

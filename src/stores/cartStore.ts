@@ -1,38 +1,33 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
-import { ShopifyProduct, createStorefrontCheckout } from '@/lib/shopify';
+import { MockProduct } from '@/data/mockProducts';
 
 export interface CartItem {
-  variantId: string; // Shopify variant ID (gid://shopify/ProductVariant/...)
   productId: string;
   productHandle: string;
   title: string;
-  variantTitle: string;
   image: string;
-  price: {
-    amount: string;
-    currencyCode: string;
-  };
+  price: number; // price in cents
+  currency: string;
   quantity: number;
-  availableForSale: boolean;
+  status: 'in-stock' | 'pre-order';
+  eta?: string;
 }
 
 interface CartStore {
   items: CartItem[];
   isLoading: boolean;
   isOpen: boolean;
-  checkoutUrl: string | null;
   
   // Actions
-  addItem: (product: ShopifyProduct, variantId?: string, quantity?: number) => void;
-  updateQuantity: (variantId: string, quantity: number) => void;
-  removeItem: (variantId: string) => void;
+  addItem: (product: MockProduct, quantity?: number) => void;
+  updateQuantity: (productId: string, quantity: number) => void;
+  removeItem: (productId: string) => void;
   clearCart: () => void;
   setLoading: (loading: boolean) => void;
   setOpen: (open: boolean) => void;
   getTotalItems: () => number;
   getTotalPrice: () => number;
-  createCheckout: () => Promise<string | null>;
 }
 
 export const useCartStore = create<CartStore>()(
@@ -41,45 +36,31 @@ export const useCartStore = create<CartStore>()(
       items: [],
       isLoading: false,
       isOpen: false,
-      checkoutUrl: null,
 
-      addItem: (product, variantId, quantity = 1) => {
+      addItem: (product, quantity = 1) => {
         const { items } = get();
-        const { node } = product;
         
-        // Use first variant if not specified
-        const selectedVariant = variantId 
-          ? node.variants.edges.find(v => v.node.id === variantId)?.node
-          : node.variants.edges[0]?.node;
-        
-        if (!selectedVariant) {
-          console.error('No variant found');
-          return;
-        }
-        
-        const existingItem = items.find(i => i.variantId === selectedVariant.id);
+        const existingItem = items.find(i => i.productId === product.id);
         
         if (existingItem) {
           set({
             items: items.map(i =>
-              i.variantId === selectedVariant.id
+              i.productId === product.id
                 ? { ...i, quantity: i.quantity + quantity }
                 : i
             )
           });
         } else {
-          const image = node.images.edges[0]?.node?.url || '';
-          
           const newItem: CartItem = {
-            variantId: selectedVariant.id,
-            productId: node.id,
-            productHandle: node.handle,
-            title: node.title,
-            variantTitle: selectedVariant.title,
-            image,
-            price: selectedVariant.price,
+            productId: product.id,
+            productHandle: product.handle,
+            title: product.title,
+            image: product.image,
+            price: product.price,
+            currency: product.currency,
             quantity,
-            availableForSale: selectedVariant.availableForSale,
+            status: product.status,
+            eta: product.eta,
           };
           set({ items: [...items, newItem] });
         }
@@ -88,27 +69,27 @@ export const useCartStore = create<CartStore>()(
         set({ isOpen: true });
       },
 
-      updateQuantity: (variantId, quantity) => {
+      updateQuantity: (productId, quantity) => {
         if (quantity <= 0) {
-          get().removeItem(variantId);
+          get().removeItem(productId);
           return;
         }
         
         set({
           items: get().items.map(item =>
-            item.variantId === variantId ? { ...item, quantity } : item
+            item.productId === productId ? { ...item, quantity } : item
           )
         });
       },
 
-      removeItem: (variantId) => {
+      removeItem: (productId) => {
         set({
-          items: get().items.filter(item => item.variantId !== variantId)
+          items: get().items.filter(item => item.productId !== productId)
         });
       },
 
       clearCart: () => {
-        set({ items: [], checkoutUrl: null });
+        set({ items: [] });
       },
 
       setLoading: (isLoading) => set({ isLoading }),
@@ -120,32 +101,10 @@ export const useCartStore = create<CartStore>()(
 
       getTotalPrice: () => {
         return get().items.reduce((sum, item) => {
-          const amount = item?.price?.amount ? parseFloat(item.price.amount) : 0;
+          const price = item?.price || 0;
           const quantity = item?.quantity || 0;
-          return sum + (amount * quantity);
+          return sum + (price * quantity);
         }, 0);
-      },
-
-      createCheckout: async () => {
-        const { items, setLoading } = get();
-        if (items.length === 0) return null;
-
-        setLoading(true);
-        try {
-          const checkoutItems = items.map(item => ({
-            variantId: item.variantId,
-            quantity: item.quantity,
-          }));
-          
-          const checkoutUrl = await createStorefrontCheckout(checkoutItems);
-          set({ checkoutUrl });
-          return checkoutUrl;
-        } catch (error) {
-          console.error('Failed to create checkout:', error);
-          return null;
-        } finally {
-          setLoading(false);
-        }
       },
     }),
     {
@@ -156,11 +115,13 @@ export const useCartStore = create<CartStore>()(
   )
 );
 
-// Helper to format price
-export function formatCartPrice(amount: number | string, currencyCode: string = 'EUR'): string {
-  const numAmount = typeof amount === 'string' ? parseFloat(amount) : amount;
+// Helper to format price (cents to formatted price)
+export function formatCartPrice(amountCents: number | string, currencyCode: string = 'EUR'): string {
+  const numAmount = typeof amountCents === 'string' ? parseFloat(amountCents) : amountCents;
+  // If amount is already in cents, convert to currency units
+  const displayAmount = numAmount > 1000 ? numAmount / 100 : numAmount;
   return new Intl.NumberFormat('lt-LT', {
     style: 'currency',
     currency: currencyCode,
-  }).format(numAmount);
+  }).format(displayAmount);
 }
