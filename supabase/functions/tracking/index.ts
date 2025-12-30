@@ -98,11 +98,22 @@ Deno.serve(async (req) => {
       events = eventsData || [];
     }
 
-    // Fetch order items
+    // Fetch order items with prices
     const { data: orderItems } = await supabase
       .from('order_items')
-      .select('title_snapshot, quantity')
+      .select('title_snapshot, quantity, unit_price_cents')
       .eq('order_id', orderId);
+
+    // Fetch order totals
+    const { data: orderTotals } = await supabase
+      .from('orders')
+      .select('subtotal_cents, shipping_cents, total_cents')
+      .eq('id', orderId)
+      .single();
+
+    // Get current location from latest carrier event
+    const carrierEvents = events.filter((e: any) => e.source === 'carrier' && e.location);
+    const currentLocation = carrierEvents.length > 0 ? carrierEvents[0].location : null;
 
     // Build response
     const response = {
@@ -118,7 +129,11 @@ Deno.serve(async (req) => {
         shipped_at: shipment?.shipped_at || null,
         delivered_at: shipment?.delivered_at || null,
         last_update: shipment?.updated_at || order.created_at,
-        events: events.map(e => ({
+        current_location: currentLocation,
+        subtotal_cents: orderTotals?.subtotal_cents,
+        shipping_cents: orderTotals?.shipping_cents,
+        total_cents: orderTotals?.total_cents,
+        events: events.map((e: any) => ({
           id: e.id,
           status_code: e.status_code,
           description: e.description,
@@ -126,9 +141,10 @@ Deno.serve(async (req) => {
           occurred_at: e.occurred_at,
           source: e.source,
         })),
-        items: (orderItems || []).map(item => ({
+        items: (orderItems || []).map((item: any) => ({
           title: item.title_snapshot,
           quantity: item.quantity,
+          unit_price_cents: item.unit_price_cents,
         })),
       },
     };
