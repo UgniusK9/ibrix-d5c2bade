@@ -1,5 +1,6 @@
-import { ShoppingCart, Minus, Plus, Trash2, ExternalLink, Loader2 } from "lucide-react";
+import { ShoppingCart, Minus, Plus, Trash2, ArrowRight, Loader2, Package, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import {
   Sheet,
   SheetContent,
@@ -7,10 +8,11 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
-import { useCartStore } from "@/stores/cartStore";
-import { formatPrice } from "@/lib/shopify";
+import { useCartStore, formatCartPrice } from "@/stores/cartStore";
+import { useNavigate } from "react-router-dom";
 
 export function CartDrawer() {
+  const navigate = useNavigate();
   const { 
     items, 
     isLoading,
@@ -18,23 +20,16 @@ export function CartDrawer() {
     setOpen,
     updateQuantity, 
     removeItem, 
-    createCheckout,
     getTotalPrice,
   } = useCartStore();
   
   const totalItems = items.reduce((sum, item) => sum + item.quantity, 0);
   const totalPrice = getTotalPrice();
+  const hasPreorder = items.some(item => item.type === 'pre_order');
 
-  const handleCheckout = async () => {
-    try {
-      const checkoutUrl = await createCheckout();
-      if (checkoutUrl) {
-        window.open(checkoutUrl, '_blank');
-        setOpen(false);
-      }
-    } catch (error) {
-      console.error('Checkout failed:', error);
-    }
+  const handleCheckout = () => {
+    setOpen(false);
+    navigate('/checkout');
   };
 
   return (
@@ -67,28 +62,35 @@ export function CartDrawer() {
               <div className="flex-1 overflow-y-auto pr-2 min-h-0">
                 <div className="space-y-4">
                   {items.map((item) => (
-                    <div key={item.variantId} className="flex gap-4 p-3 bg-muted/30 rounded-lg">
+                    <div key={item.id} className="flex gap-4 p-3 bg-muted/30 rounded-lg">
                       <div className="w-20 h-20 bg-secondary rounded-lg overflow-hidden flex-shrink-0">
-                        {item.product.node.images?.edges?.[0]?.node && (
-                          <img
-                            src={item.product.node.images.edges[0].node.url}
-                            alt={item.product.node.title}
-                            className="w-full h-full object-cover"
-                          />
-                        )}
+                        <img
+                          src={item.image}
+                          alt={item.title}
+                          className="w-full h-full object-cover"
+                        />
                       </div>
                       
                       <div className="flex-1 min-w-0">
                         <h4 className="font-medium text-sm truncate">
-                          {item.product.node.title}
+                          {item.title}
                         </h4>
-                        {item.variantTitle !== "Default Title" && (
-                          <p className="text-xs text-muted-foreground mt-0.5">
-                            {item.variantTitle}
-                          </p>
-                        )}
+                        <div className="flex items-center gap-2 mt-1">
+                          <Badge 
+                            variant="outline" 
+                            className={`text-xs ${item.type === 'pre_order' ? 'border-primary/50 text-primary' : 'border-success/50 text-success'}`}
+                          >
+                            {item.type === 'pre_order' ? 'Pre-order' : 'Sandėlyje'}
+                          </Badge>
+                          {item.type === 'pre_order' && item.eta && (
+                            <span className="flex items-center gap-1 text-xs text-muted-foreground">
+                              <Clock className="w-3 h-3" />
+                              {item.eta}
+                            </span>
+                          )}
+                        </div>
                         <p className="font-semibold text-sm mt-1">
-                          {formatPrice(item.price.amount, item.price.currencyCode)}
+                          {formatCartPrice(item.priceCents, item.currency)}
                         </p>
                       </div>
                       
@@ -97,7 +99,7 @@ export function CartDrawer() {
                           variant="ghost"
                           size="icon"
                           className="h-7 w-7 text-muted-foreground hover:text-destructive"
-                          onClick={() => removeItem(item.variantId)}
+                          onClick={() => removeItem(item.id)}
                         >
                           <Trash2 className="h-4 w-4" />
                         </Button>
@@ -107,7 +109,7 @@ export function CartDrawer() {
                             variant="outline"
                             size="icon"
                             className="h-7 w-7"
-                            onClick={() => updateQuantity(item.variantId, item.quantity - 1)}
+                            onClick={() => updateQuantity(item.id, item.quantity - 1)}
                           >
                             <Minus className="h-3 w-3" />
                           </Button>
@@ -118,7 +120,7 @@ export function CartDrawer() {
                             variant="outline"
                             size="icon"
                             className="h-7 w-7"
-                            onClick={() => updateQuantity(item.variantId, item.quantity + 1)}
+                            onClick={() => updateQuantity(item.id, item.quantity + 1)}
                           >
                             <Plus className="h-3 w-3" />
                           </Button>
@@ -129,12 +131,22 @@ export function CartDrawer() {
                 </div>
               </div>
               
+              {/* Pre-order notice */}
+              {hasPreorder && (
+                <div className="flex-shrink-0 bg-primary/5 border border-primary/20 rounded-lg p-3 mt-4">
+                  <p className="text-xs text-muted-foreground">
+                    <Clock className="w-3 h-3 inline mr-1" />
+                    Pre-order prekės bus pristatytos per nurodytą laiką. Atšaukti galima iki išsiuntimo.
+                  </p>
+                </div>
+              )}
+              
               {/* Fixed checkout section */}
               <div className="flex-shrink-0 space-y-4 pt-4 border-t bg-background mt-4">
                 <div className="flex justify-between items-center">
                   <span className="text-base font-medium">Viso</span>
                   <span className="text-xl font-bold font-heading">
-                    {formatPrice(totalPrice.toString(), 'EUR')}
+                    {formatCartPrice(totalPrice * 100, 'EUR')}
                   </span>
                 </div>
                 
@@ -151,12 +163,12 @@ export function CartDrawer() {
                   {isLoading ? (
                     <>
                       <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                      Ruošiamas apmokėjimas...
+                      Kraunama...
                     </>
                   ) : (
                     <>
-                      <ExternalLink className="w-4 h-4 mr-2" />
                       Pereiti į apmokėjimą
+                      <ArrowRight className="w-4 h-4 ml-2" />
                     </>
                   )}
                 </Button>
