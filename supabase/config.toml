@@ -25,3 +25,6 @@ verify_jwt = false
 
 [functions.checkout]
 verify_jwt = false
+
+[functions.tracking]
+verify_jwt = false
