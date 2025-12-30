@@ -18,6 +18,8 @@ import TrukstamosDetales from "./pages/TrukstamosDetales";
 import PrivatumoPolitika from "./pages/PrivatumoPolitika";
 import Taisykles from "./pages/Taisykles";
 import Checkout from "./pages/Checkout";
+import OrderConfirmation from "./pages/OrderConfirmation";
+import Admin from "./pages/Admin";
 
 const queryClient = new QueryClient();
 
@@ -42,6 +44,8 @@ const App = () => (
           <Route path="/privatumo-politika" element={<PrivatumoPolitika />} />
           <Route path="/taisykles" element={<Taisykles />} />
           <Route path="/checkout" element={<Checkout />} />
+          <Route path="/uzsakymas" element={<OrderConfirmation />} />
+          <Route path="/admin" element={<Admin />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>

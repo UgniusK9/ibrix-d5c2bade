@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import { ArrowLeft, Package, Clock, Truck, MapPin, CreditCard, Loader2, AlertCircle, CheckCircle2 } from "lucide-react";
+import { ArrowLeft, Package, Clock, Truck, MapPin, Loader2, AlertCircle, CreditCard } from "lucide-react";
 import { PageLayout } from "@/components/layout/PageLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -39,8 +39,6 @@ export default function Checkout() {
   const { items, getTotalPriceCents, clearCart, getSessionId } = useCartStore();
   
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [orderComplete, setOrderComplete] = useState(false);
-  const [orderNumber, setOrderNumber] = useState<string | null>(null);
   const [errors, setErrors] = useState<Record<string, string>>({});
   
   const [formData, setFormData] = useState({
@@ -146,15 +144,9 @@ export default function Checkout() {
         throw new Error(data.error || 'Nepavyko sukurti užsakymo');
       }
 
-      // Success!
-      setOrderNumber(data.order.orderNumber);
-      setOrderComplete(true);
+      // Success - redirect to confirmation page
       clearCart();
-      
-      toast.success("Užsakymas sukurtas!", {
-        description: `Užsakymo numeris: ${data.order.orderNumber}`,
-        position: "top-center",
-      });
+      navigate(`/uzsakymas?order=${data.order.orderNumber}`);
     } catch (error) {
       console.error('Checkout error:', error);
       toast.error("Klaida", {
@@ -165,41 +157,6 @@ export default function Checkout() {
       setIsSubmitting(false);
     }
   };
-
-  // Order complete view
-  if (orderComplete) {
-    return (
-      <PageLayout>
-        <div className="container py-16 max-w-lg mx-auto text-center">
-          <div className="bg-success/10 rounded-full w-20 h-20 flex items-center justify-center mx-auto mb-6">
-            <CheckCircle2 className="w-10 h-10 text-success" />
-          </div>
-          <h1 className="font-heading text-3xl font-bold mb-4">
-            Ačiū už užsakymą!
-          </h1>
-          <p className="text-muted-foreground mb-2">
-            Užsakymo numeris:
-          </p>
-          <p className="font-heading text-2xl font-bold text-primary mb-6">
-            {orderNumber}
-          </p>
-          <p className="text-muted-foreground mb-8">
-            Užsakymo patvirtinimą išsiųsime el. paštu. 
-            {hasPreorder && ` Pre-order prekės bus pristatytos per ${maxEta} savaites.`}
-          </p>
-          <div className="bg-primary/5 border border-primary/20 rounded-xl p-4 mb-8 text-left">
-            <p className="text-sm font-medium mb-2">Kas toliau?</p>
-            <p className="text-sm text-muted-foreground">
-              Šiuo metu mokėjimai nėra prijungti. Susisieksime su jumis dėl apmokėjimo artimiausiomis dienomis.
-            </p>
-          </div>
-          <Button asChild size="lg">
-            <Link to="/varikliai">Grįžti į parduotuvę</Link>
-          </Button>
-        </div>
-      </PageLayout>
-    );
-  }
 
   // Empty cart
   if (items.length === 0) {
