@@ -131,12 +131,14 @@ export function CartDrawer() {
                 </div>
               </div>
               
-              {/* Pre-order notice */}
+              {/* Pre-order notice - process, not dates */}
               {hasPreorder && (
                 <div className="flex-shrink-0 bg-primary/5 border border-primary/20 rounded-lg p-3 mt-4">
+                  <p className="text-xs text-primary font-medium mb-1">
+                    Pre-order: siuntos kelias
+                  </p>
                   <p className="text-xs text-muted-foreground">
-                    <Clock className="w-3 h-3 inline mr-1" />
-                    Pre-order prekės bus pristatytos per nurodytą laiką. Atšaukti galima iki išsiuntimo.
+                    Užsakymas patvirtinamas iš karto → gamyba → pristatymas. Sekimo nuorodą gausi el. paštu. Atšaukti galima bet kada.
                   </p>
                 </div>
               )}

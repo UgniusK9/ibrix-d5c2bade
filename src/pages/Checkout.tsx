@@ -440,21 +440,35 @@ export default function Checkout() {
                   ))}
                 </div>
 
-                {/* Pre-order info block - separate from shipping */}
+                {/* Pre-order info block - "Siuntos kelias" process description */}
                 {hasPreorder && (
                   <div className="bg-primary/10 border border-primary/30 rounded-lg p-4 mb-4">
                     <div className="flex items-start gap-2">
                       <Clock className="w-4 h-4 text-primary flex-shrink-0 mt-0.5" />
                       <div>
-                        <p className="font-medium text-sm text-primary">Pre-order informacija</p>
-                        <p className="text-sm text-muted-foreground mt-1">
-                          Šiame užsakyme yra pre-order prekių.
+                        <p className="font-medium text-sm text-primary">Siuntos kelias (pre-order)</p>
+                        <p className="text-sm text-muted-foreground mt-2">
+                          Užsakymas patvirtinamas iš karto. Tuomet matysi siuntos eigą:
                         </p>
-                        <p className="text-sm font-medium mt-1">
-                          Išsiųsime per: {minEta === maxEta ? `${maxEta}` : `${minEta}–${maxEta}`} savaičių
+                        <ul className="text-sm text-muted-foreground mt-2 space-y-1.5">
+                          <li className="flex items-center gap-2">
+                            <span className="w-1.5 h-1.5 rounded-full bg-primary/50" />
+                            Partija ruošiama (gamyba / surinkimas)
+                          </li>
+                          <li className="flex items-center gap-2">
+                            <span className="w-1.5 h-1.5 rounded-full bg-primary/50" />
+                            Atvyksta į Lietuvą
+                          </li>
+                          <li className="flex items-center gap-2">
+                            <span className="w-1.5 h-1.5 rounded-full bg-primary/50" />
+                            Išsiunčiama tau
+                          </li>
+                        </ul>
+                        <p className="text-xs text-muted-foreground mt-3 bg-muted/50 rounded px-2 py-1">
+                          Orientacinis laikas: {minEta === maxEta ? `${maxEta}` : `${minEta}–${maxEta}`} sav. Kai turėsime siuntos numerį, gausi nuorodą į sekimą realiu laiku.
                         </p>
-                        <p className="text-xs text-muted-foreground mt-2">
-                          Apmokate dabar. Atšaukti galima iki išsiuntimo.
+                        <p className="text-xs text-primary font-medium mt-2">
+                          Atšaukti galima bet kada iki išsiuntimo.
                         </p>
                         {hasInStock && hasPreorder && (
                           <p className="text-xs text-muted-foreground mt-1 italic">
