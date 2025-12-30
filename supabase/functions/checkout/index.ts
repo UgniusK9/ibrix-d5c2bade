@@ -1,26 +1,43 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.49.1';
+import { z } from 'https://deno.land/x/zod@v3.22.4/mod.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-interface CheckoutRequest {
-  firstName: string;
-  lastName: string;
-  email: string;
-  phone?: string;
-  shippingMethod: 'omniva_locker' | 'lp_express_locker' | 'dpd_locker' | 'courier';
-  shippingAddress: {
-    lockerAddress?: string;
-    lockerId?: string;
-    street?: string;
-    city?: string;
-    postalCode?: string;
-    country?: string;
-  };
-  notes?: string;
-}
+// Validation schemas
+const shippingAddressSchema = z.object({
+  lockerAddress: z.string().max(200).optional(),
+  lockerId: z.string().max(50).optional(),
+  street: z.string().max(100).optional(),
+  city: z.string().max(50).optional(),
+  postalCode: z.string().max(10).optional(),
+  country: z.string().max(50).optional(),
+});
+
+const checkoutSchema = z.object({
+  firstName: z.string()
+    .min(1, 'Vardas privalomas')
+    .max(50, 'Vardas per ilgas')
+    .regex(/^[a-zA-ZąčęėįšųūžĄČĘĖĮŠŲŪŽ\s\-']+$/, 'Netinkamas vardo formatas'),
+  lastName: z.string()
+    .min(1, 'Pavardė privaloma')
+    .max(50, 'Pavardė per ilga')
+    .regex(/^[a-zA-ZąčęėįšųūžĄČĘĖĮŠŲŪŽ\s\-']+$/, 'Netinkamas pavardės formatas'),
+  email: z.string()
+    .email('Neteisingas el. pašto adresas')
+    .max(100, 'El. paštas per ilgas'),
+  phone: z.string()
+    .regex(/^\+?[0-9\s\-]{8,20}$/, 'Neteisingas telefono numeris')
+    .optional()
+    .or(z.literal('')),
+  shippingMethod: z.enum(['omniva_locker', 'lp_express_locker', 'dpd_locker', 'courier'], {
+    errorMap: () => ({ message: 'Netinkamas pristatymo būdas' })
+  }),
+  shippingAddress: shippingAddressSchema,
+  notes: z.string().max(500, 'Pastabos per ilgos').optional(),
+});
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -53,15 +70,24 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const body: CheckoutRequest = await req.json();
+    const rawBody = await req.json();
     
-    // Validate required fields
-    if (!body.firstName || !body.lastName || !body.email || !body.shippingMethod) {
+    // Validate request body with Zod
+    const validationResult = checkoutSchema.safeParse(rawBody);
+    
+    if (!validationResult.success) {
+      const firstError = validationResult.error.issues[0];
+      console.log('Validation error:', validationResult.error.issues);
       return new Response(
-        JSON.stringify({ error: 'Prašome užpildyti visus privalomus laukus' }),
+        JSON.stringify({ 
+          error: firstError.message,
+          field: firstError.path.join('.')
+        }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
+    
+    const body = validationResult.data;
 
     // Get cart
     let cartQuery = supabase.from('carts').select(`
@@ -128,16 +154,19 @@ Deno.serve(async (req) => {
     // Generate order number
     const { data: orderNumber } = await supabase.rpc('generate_order_number');
 
+    // Sanitize notes (trim and limit length)
+    const sanitizedNotes = body.notes?.trim().slice(0, 500) || null;
+
     // Create order
     const { data: order, error: orderError } = await supabase
       .from('orders')
       .insert({
         order_number: orderNumber,
         user_id: userId,
-        email: body.email,
-        phone: body.phone,
-        first_name: body.firstName,
-        last_name: body.lastName,
+        email: body.email.trim().toLowerCase(),
+        phone: body.phone?.trim() || null,
+        first_name: body.firstName.trim(),
+        last_name: body.lastName.trim(),
         status: 'pending_payment',
         subtotal_cents: subtotalCents,
         shipping_cents: shippingCents,
@@ -145,7 +174,7 @@ Deno.serve(async (req) => {
         currency: 'EUR',
         shipping_method: body.shippingMethod,
         shipping_address_json: body.shippingAddress,
-        notes: body.notes,
+        notes: sanitizedNotes,
       })
       .select()
       .single();

@@ -1,14 +1,16 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { z } from 'https://deno.land/x/zod@v3.22.4/mod.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-interface TrackingRequest {
-  orderId: string;
-  token: string;
-}
+// Validation schema
+const trackingRequestSchema = z.object({
+  orderId: z.string().uuid('Neteisingas užsakymo ID formatas'),
+  token: z.string().min(32, 'Neteisingas sekimo kodas').max(128, 'Neteisingas sekimo kodas'),
+});
 
 // Simple hash function for token validation
 async function hashToken(token: string): Promise<string> {
@@ -30,14 +32,21 @@ Deno.serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
-    const { orderId, token }: TrackingRequest = await req.json();
-
-    if (!orderId || !token) {
+    const rawBody = await req.json();
+    
+    // Validate request body with Zod
+    const validationResult = trackingRequestSchema.safeParse(rawBody);
+    
+    if (!validationResult.success) {
+      const firstError = validationResult.error.issues[0];
+      console.log('Validation error:', validationResult.error.issues);
       return new Response(
-        JSON.stringify({ success: false, error: 'Trūksta duomenų' }),
+        JSON.stringify({ success: false, error: firstError.message }),
         { status: 400, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
       );
     }
+    
+    const { orderId, token } = validationResult.data;
 
     // Hash the provided token and check against stored hash
     const tokenHash = await hashToken(token);
