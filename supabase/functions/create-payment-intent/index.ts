@@ -3,11 +3,20 @@ import Stripe from 'https://esm.sh/stripe@14.21.0?target=deno';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-tracking-token',
 };
 
 interface PaymentIntentRequest {
   orderId: string;
+}
+
+// Hash function to validate tracking tokens
+async function hashToken(token: string): Promise<string> {
+  const encoder = new TextEncoder();
+  const data = encoder.encode(token);
+  const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
 }
 
 Deno.serve(async (req) => {
@@ -48,6 +57,67 @@ Deno.serve(async (req) => {
         { status: 404, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
       );
     }
+
+    // Authorization check
+    const authHeader = req.headers.get('authorization');
+    const trackingToken = req.headers.get('x-tracking-token');
+
+    if (order.user_id) {
+      // Order belongs to an authenticated user - require JWT auth
+      if (!authHeader) {
+        return new Response(
+          JSON.stringify({ error: 'Reikalingas autorizacijos raktas' }),
+          { status: 401, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
+        );
+      }
+
+      const token = authHeader.replace('Bearer ', '');
+      const { data: { user }, error: authError } = await supabase.auth.getUser(token);
+
+      if (authError || !user) {
+        console.error('Auth error:', authError);
+        return new Response(
+          JSON.stringify({ error: 'Neteisingas autorizacijos raktas' }),
+          { status: 401, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
+        );
+      }
+
+      // Verify the order belongs to the authenticated user
+      if (order.user_id !== user.id) {
+        console.error('User ID mismatch:', { orderUserId: order.user_id, authUserId: user.id });
+        return new Response(
+          JSON.stringify({ error: 'Neturite prieigos prie šio užsakymo' }),
+          { status: 403, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
+        );
+      }
+    } else {
+      // Guest order - require tracking token
+      if (!trackingToken) {
+        return new Response(
+          JSON.stringify({ error: 'Reikalingas sekimo kodas' }),
+          { status: 401, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
+        );
+      }
+
+      // Validate tracking token
+      const tokenHash = await hashToken(trackingToken);
+      const { data: validToken, error: tokenError } = await supabase
+        .from('tracking_tokens')
+        .select('order_id')
+        .eq('order_id', orderId)
+        .eq('token_hash', tokenHash)
+        .maybeSingle();
+
+      if (tokenError || !validToken) {
+        console.error('Invalid tracking token:', tokenError);
+        return new Response(
+          JSON.stringify({ error: 'Neteisingas sekimo kodas' }),
+          { status: 403, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
+        );
+      }
+    }
+
+    console.log(`Authorization passed for order ${order.order_number}`);
 
     // Check if already has payment intent
     if (order.payment_intent_id) {
