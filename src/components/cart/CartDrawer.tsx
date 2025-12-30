@@ -1,4 +1,4 @@
-import { ShoppingCart, Minus, Plus, Trash2, ArrowRight, Loader2, ExternalLink } from "lucide-react";
+import { ShoppingCart, Minus, Plus, Trash2, ArrowRight, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -9,9 +9,10 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 import { useCartStore, formatCartPrice } from "@/stores/cartStore";
-import { toast } from "sonner";
+import { useNavigate } from "react-router-dom";
 
 export function CartDrawer() {
+  const navigate = useNavigate();
   const { 
     items, 
     isLoading,
@@ -20,33 +21,15 @@ export function CartDrawer() {
     updateQuantity, 
     removeItem, 
     getTotalPrice,
-    createCheckout,
+    getTotalItems,
   } = useCartStore();
   
-  // Filter out any invalid items that might be in localStorage
-  const validItems = items.filter(item => item?.price?.amount && item?.variantId);
-  const totalItems = validItems.reduce((sum, item) => sum + (item?.quantity || 0), 0);
+  const totalItems = getTotalItems();
   const totalPrice = getTotalPrice();
 
-  const handleCheckout = async () => {
-    try {
-      const checkoutUrl = await createCheckout();
-      if (checkoutUrl) {
-        setOpen(false);
-        window.open(checkoutUrl, '_blank');
-      } else {
-        toast.error("Nepavyko sukurti užsakymo", {
-          description: "Bandykite dar kartą",
-          position: "top-center",
-        });
-      }
-    } catch (error) {
-      console.error('Checkout failed:', error);
-      toast.error("Klaida", {
-        description: "Nepavyko sukurti užsakymo",
-        position: "top-center",
-      });
-    }
+  const handleCheckout = () => {
+    setOpen(false);
+    navigate('/checkout');
   };
 
   return (
@@ -78,8 +61,8 @@ export function CartDrawer() {
               {/* Scrollable items area */}
               <div className="flex-1 overflow-y-auto pr-2 min-h-0">
                 <div className="space-y-4">
-                  {validItems.map((item) => (
-                    <div key={item.variantId} className="flex gap-4 p-3 bg-muted/30 rounded-lg">
+                  {items.map((item) => (
+                    <div key={item.productId} className="flex gap-4 p-3 bg-muted/30 rounded-lg">
                       <div className="w-20 h-20 bg-secondary rounded-lg overflow-hidden flex-shrink-0">
                         {item.image ? (
                           <img
@@ -98,21 +81,21 @@ export function CartDrawer() {
                         <h4 className="font-medium text-sm truncate">
                           {item.title}
                         </h4>
-                        {item.variantTitle && item.variantTitle !== 'Default Title' && (
+                        {item.eta && (
                           <p className="text-xs text-muted-foreground mt-0.5">
-                            {item.variantTitle}
+                            Pristatymas: {item.eta}
                           </p>
                         )}
                         <div className="flex items-center gap-2 mt-1">
                           <Badge 
                             variant="outline" 
-                            className={`text-xs ${item.availableForSale ? 'border-success/50 text-success' : 'border-primary/50 text-primary'}`}
+                            className={`text-xs ${item.status === 'in-stock' ? 'border-success/50 text-success' : 'border-primary/50 text-primary'}`}
                           >
-                            {item.availableForSale ? 'Sandėlyje' : 'Pre-order'}
+                            {item.status === 'in-stock' ? 'Sandėlyje' : 'Pre-order'}
                           </Badge>
                         </div>
                         <p className="font-semibold text-sm mt-1">
-                          {formatCartPrice(item.price?.amount || '0', item.price?.currencyCode || 'EUR')}
+                          {formatCartPrice(item.price, item.currency)}
                         </p>
                       </div>
                       
@@ -121,7 +104,7 @@ export function CartDrawer() {
                           variant="ghost"
                           size="icon"
                           className="h-7 w-7 text-muted-foreground hover:text-destructive"
-                          onClick={() => removeItem(item.variantId)}
+                          onClick={() => removeItem(item.productId)}
                         >
                           <Trash2 className="h-4 w-4" />
                         </Button>
@@ -131,7 +114,7 @@ export function CartDrawer() {
                             variant="outline"
                             size="icon"
                             className="h-7 w-7"
-                            onClick={() => updateQuantity(item.variantId, item.quantity - 1)}
+                            onClick={() => updateQuantity(item.productId, item.quantity - 1)}
                           >
                             <Minus className="h-3 w-3" />
                           </Button>
@@ -142,7 +125,7 @@ export function CartDrawer() {
                             variant="outline"
                             size="icon"
                             className="h-7 w-7"
-                            onClick={() => updateQuantity(item.variantId, item.quantity + 1)}
+                            onClick={() => updateQuantity(item.productId, item.quantity + 1)}
                           >
                             <Plus className="h-3 w-3" />
                           </Button>
@@ -179,7 +162,7 @@ export function CartDrawer() {
                     </>
                   ) : (
                     <>
-                      <ExternalLink className="w-4 h-4 mr-2" />
+                      <ArrowRight className="w-4 h-4 mr-2" />
                       Pereiti į apmokėjimą
                     </>
                   )}
