@@ -359,6 +359,7 @@ export type Database = {
           created_at: string
           expires_at: string | null
           id: string
+          last_accessed_at: string | null
           order_id: string
           token_hash: string
         }
@@ -366,6 +367,7 @@ export type Database = {
           created_at?: string
           expires_at?: string | null
           id?: string
+          last_accessed_at?: string | null
           order_id: string
           token_hash: string
         }
@@ -373,6 +375,7 @@ export type Database = {
           created_at?: string
           expires_at?: string | null
           id?: string
+          last_accessed_at?: string | null
           order_id?: string
           token_hash?: string
         }
