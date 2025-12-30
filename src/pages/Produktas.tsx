@@ -1,10 +1,8 @@
-import { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { ArrowLeft, Package, Clock, Truck, RotateCcw, Shield, ShoppingCart, Puzzle, HelpCircle } from "lucide-react";
 import { PageLayout } from "@/components/layout/PageLayout";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { fetchProductByHandle, formatPrice, ShopifyProduct } from "@/lib/shopify";
 import { mockProducts, getMockProduct, formatMockPrice } from "@/data/mockProducts";
 import { useCartStore } from "@/stores/cartStore";
 import { toast } from "sonner";
@@ -52,70 +50,23 @@ const productFAQ = [
 
 export default function Produktas() {
   const { handle } = useParams<{ handle: string }>();
-  const [shopifyProduct, setShopifyProduct] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
-  const [selectedImage, setSelectedImage] = useState(0);
   const addItem = useCartStore((state) => state.addItem);
 
-  useEffect(() => {
-    async function loadProduct() {
-      if (!handle) return;
-      setLoading(true);
-      
-      const data = await fetchProductByHandle(handle);
-      setShopifyProduct(data);
-      setLoading(false);
-    }
-    loadProduct();
-  }, [handle]);
-
-  // Use mock product if Shopify product not found
-  const mockProduct = handle ? getMockProduct(handle) : undefined;
-  const hasShopifyProduct = !!shopifyProduct;
+  // Get product from mock data
+  const product = handle ? getMockProduct(handle) : undefined;
 
   const handleAddToCart = () => {
-    if (hasShopifyProduct) {
-      // Create ShopifyProduct structure for the cart
-      const productForCart: ShopifyProduct = {
-        node: shopifyProduct
-      };
-      addItem(productForCart);
+    if (product) {
+      addItem(product);
       toast.success("Pridėta į krepšelį", {
-        description: shopifyProduct.title,
-        position: "top-center",
-      });
-    } else if (mockProduct) {
-      // For mock products, show message that Shopify products are needed
-      toast.info("Produktas dar neprijungtas", {
-        description: "Šis produktas bus prieinamas kai bus pridėtas į Shopify",
+        description: product.title,
         position: "top-center",
       });
     }
   };
 
-  if (loading) {
-    return (
-      <PageLayout>
-        <div className="container py-16">
-          <div className="animate-pulse">
-            <div className="h-6 w-32 bg-muted rounded mb-8" />
-            <div className="grid lg:grid-cols-2 gap-12">
-              <div className="aspect-square bg-muted rounded-2xl" />
-              <div className="space-y-4">
-                <div className="h-4 w-24 bg-muted rounded" />
-                <div className="h-8 w-3/4 bg-muted rounded" />
-                <div className="h-6 w-32 bg-muted rounded" />
-                <div className="h-12 w-full bg-muted rounded mt-8" />
-              </div>
-            </div>
-          </div>
-        </div>
-      </PageLayout>
-    );
-  }
-
-  // Show not found if neither Shopify nor mock product exists
-  if (!hasShopifyProduct && !mockProduct) {
+  // Show not found if product doesn't exist
+  if (!product) {
     return (
       <PageLayout>
         <div className="container py-16">
@@ -136,22 +87,8 @@ export default function Produktas() {
     );
   }
 
-  // Use Shopify data if available, otherwise mock data
-  const title = hasShopifyProduct ? shopifyProduct.title : mockProduct!.title;
-  const description = hasShopifyProduct ? shopifyProduct.description : mockProduct!.description;
-  const price = hasShopifyProduct 
-    ? formatPrice(shopifyProduct.priceRange.minVariantPrice.amount, shopifyProduct.priceRange.minVariantPrice.currencyCode)
-    : formatMockPrice(mockProduct!.price, mockProduct!.currency);
-  const isPreOrder = hasShopifyProduct 
-    ? !shopifyProduct.variants.edges[0]?.node.availableForSale
-    : mockProduct!.status === "pre-order";
-  const eta = isPreOrder ? "8–10 sav." : "1–2 d.d.";
-  const sku = mockProduct?.sku || "ORB-ENG-10168";
-  const detailsCount = mockProduct?.detailsCount || 2899;
-  
-  const images = hasShopifyProduct && shopifyProduct.images.edges.length > 0
-    ? shopifyProduct.images.edges.map((e: any) => e.node.url)
-    : mockProduct ? [mockProduct.image] : [];
+  const isPreOrder = product.status === "pre-order";
+  const eta = product.eta;
 
   return (
     <PageLayout>
@@ -170,48 +107,27 @@ export default function Produktas() {
           {/* Images */}
           <div className="space-y-4">
             <div className="aspect-square rounded-2xl overflow-hidden bg-gradient-to-br from-secondary/30 to-muted/20 border border-border">
-              {images[selectedImage] ? (
-                <img
-                  src={images[selectedImage]}
-                  alt={title}
-                  className="w-full h-full object-cover"
-                />
-              ) : (
-                <div className="w-full h-full flex items-center justify-center text-muted-foreground">
-                  <Package className="w-16 h-16" />
-                </div>
-              )}
+              <img
+                src={product.image}
+                alt={product.title}
+                className="w-full h-full object-cover"
+              />
             </div>
-            {images.length > 1 && (
-              <div className="flex gap-2">
-                {images.map((img: string, idx: number) => (
-                  <button
-                    key={idx}
-                    onClick={() => setSelectedImage(idx)}
-                    className={`w-20 h-20 rounded-lg overflow-hidden border-2 transition-colors ${
-                      selectedImage === idx ? "border-primary" : "border-border hover:border-primary/50"
-                    }`}
-                  >
-                    <img src={img} alt="" className="w-full h-full object-cover" />
-                  </button>
-                ))}
-              </div>
-            )}
           </div>
 
           {/* Product Info */}
           <div>
             {/* SKU */}
-            <p className="text-sm text-muted-foreground font-mono mb-2">{sku}</p>
+            <p className="text-sm text-muted-foreground font-mono mb-2">{product.sku}</p>
             
             {/* Title */}
             <h1 className="font-heading text-3xl md:text-4xl font-bold mb-4">
-              {title}
+              {product.title}
             </h1>
 
             {/* Price */}
             <p className="font-heading text-3xl font-bold text-accent mb-4">
-              {price}
+              {formatMockPrice(product.price, product.currency)}
             </p>
 
             {/* Status Badge */}
@@ -221,7 +137,7 @@ export default function Produktas() {
               </Badge>
               <span className="flex items-center gap-1.5 text-sm text-muted-foreground">
                 <Package className="w-4 h-4" />
-                {detailsCount} detalių
+                {product.detailsCount} detalių
               </span>
             </div>
 
@@ -255,7 +171,6 @@ export default function Produktas() {
               size="lg" 
               className="w-full bg-accent hover:bg-accent/90 text-accent-foreground h-14 text-base"
               onClick={handleAddToCart}
-              disabled={!hasShopifyProduct}
             >
               <ShoppingCart className="w-5 h-5 mr-2" />
               {isPreOrder ? "Užsisakyti (pre-order)" : "Į krepšelį"}
@@ -268,15 +183,9 @@ export default function Produktas() {
               </p>
             )}
 
-            {!hasShopifyProduct && (
-              <p className="text-center text-sm text-muted-foreground mt-3">
-                Produktas bus prieinamas kai bus pridėtas į Shopify
-              </p>
-            )}
-
             {/* Short Description */}
             <p className="text-muted-foreground mt-6 leading-relaxed">
-              {description}
+              {product.description}
             </p>
           </div>
         </div>
