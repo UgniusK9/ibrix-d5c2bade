@@ -146,7 +146,7 @@ export function CartDrawer() {
                 <div className="flex justify-between items-center">
                   <span className="text-base font-medium">Viso</span>
                   <span className="text-xl font-bold font-heading">
-                    {formatCartPrice(totalPrice * 100, 'EUR')}
+                    {formatCartPrice(Math.round(totalPrice * 100), 'EUR')}
                   </span>
                 </div>
                 
