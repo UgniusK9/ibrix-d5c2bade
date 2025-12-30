@@ -13,10 +13,30 @@ import { toast } from "sonner";
 import { z } from "zod";
 
 const shippingMethods = [
-  { id: 'omniva_locker', name: 'Omniva paštomatas', price: 0, eta: '1–2 d.d.' },
-  { id: 'lp_express_locker', name: 'LP EXPRESS paštomatas', price: 0, eta: '1–2 d.d.' },
-  { id: 'dpd_locker', name: 'DPD paštomatas', price: 0, eta: '1–3 d.d.' },
-  { id: 'courier', name: 'Kurjeris į namus', price: 499, eta: '1–3 d.d.' },
+  { 
+    id: 'omniva_locker', 
+    name: 'Omniva paštomatas', 
+    price: 0, 
+    description: 'Siunta bus pristatyta į pasirinktą paštomatą. Gausite sekimo numerį ir SMS.',
+  },
+  { 
+    id: 'lp_express_locker', 
+    name: 'LP EXPRESS paštomatas', 
+    price: 0, 
+    description: 'Siunta bus pristatyta į pasirinktą LP EXPRESS terminalą. Gausite sekimo numerį.',
+  },
+  { 
+    id: 'dpd_locker', 
+    name: 'DPD paštomatas', 
+    price: 0, 
+    description: 'Siunta bus pristatyta į pasirinktą DPD terminalą. Gausite sekimo numerį.',
+  },
+  { 
+    id: 'courier', 
+    name: 'Kurjeris į namus', 
+    price: 499, 
+    description: 'Siunta bus pristatyta kurjeriu į nurodytą adresą. Gausite sekimo numerį.',
+  },
 ] as const;
 
 type ShippingMethod = typeof shippingMethods[number]['id'];
@@ -60,13 +80,20 @@ export default function Checkout() {
   const totalCents = subtotalCents + shippingCents;
   
   const hasPreorder = items.some(item => item.type === 'pre_order');
-  const maxEta = items.reduce((max, item) => {
-    if (item.type === 'pre_order' && item.eta) {
-      const weeks = parseInt(item.eta.split('–')[1] || item.eta);
-      return Math.max(max, weeks);
-    }
-    return max;
-  }, 0);
+  const hasInStock = items.some(item => item.type === 'in_stock');
+  
+  // Calculate pre-order ETA range from items
+  const preorderEtas = items
+    .filter(item => item.type === 'pre_order' && item.eta)
+    .map(item => {
+      const match = item.eta?.match(/(\d+)–(\d+)/);
+      if (match) return { min: parseInt(match[1]), max: parseInt(match[2]) };
+      const single = parseInt(item.eta || '0');
+      return { min: single, max: single };
+    });
+  
+  const minEta = preorderEtas.length > 0 ? Math.min(...preorderEtas.map(e => e.min)) : 0;
+  const maxEta = preorderEtas.length > 0 ? Math.max(...preorderEtas.map(e => e.max)) : 0;
 
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -259,25 +286,29 @@ export default function Checkout() {
                   {shippingMethods.map((method) => (
                     <div
                       key={method.id}
-                      className={`flex items-center justify-between p-4 rounded-lg border cursor-pointer transition-colors ${
+                      className={`p-4 rounded-lg border cursor-pointer transition-colors ${
                         formData.shippingMethod === method.id 
                           ? 'border-primary bg-primary/5' 
                           : 'border-border hover:border-primary/50'
                       }`}
                       onClick={() => handleInputChange('shippingMethod', method.id)}
                     >
-                      <div className="flex items-center gap-3">
-                        <RadioGroupItem value={method.id} id={method.id} />
-                        <div>
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          <RadioGroupItem value={method.id} id={method.id} />
                           <Label htmlFor={method.id} className="cursor-pointer font-medium">
                             {method.name}
                           </Label>
-                          <p className="text-xs text-muted-foreground">{method.eta}</p>
                         </div>
+                        <span className="font-medium">
+                          {method.price === 0 ? 'Nemokama' : formatCartPrice(method.price, 'EUR')}
+                        </span>
                       </div>
-                      <span className="font-medium">
-                        {method.price === 0 ? 'Nemokama' : formatCartPrice(method.price, 'EUR')}
-                      </span>
+                      {formData.shippingMethod === method.id && (
+                        <p className="text-xs text-muted-foreground mt-2 ml-7">
+                          {method.description}
+                        </p>
+                      )}
                     </div>
                   ))}
                 </RadioGroup>
@@ -409,12 +440,29 @@ export default function Checkout() {
                   ))}
                 </div>
 
+                {/* Pre-order info block - separate from shipping */}
                 {hasPreorder && (
-                  <div className="bg-primary/5 border border-primary/20 rounded-lg p-3 mb-4">
-                    <p className="text-xs text-muted-foreground flex items-center gap-1">
-                      <Clock className="w-3 h-3" />
-                      Pre-order prekės bus pristatytos per {maxEta} sav.
-                    </p>
+                  <div className="bg-primary/10 border border-primary/30 rounded-lg p-4 mb-4">
+                    <div className="flex items-start gap-2">
+                      <Clock className="w-4 h-4 text-primary flex-shrink-0 mt-0.5" />
+                      <div>
+                        <p className="font-medium text-sm text-primary">Pre-order informacija</p>
+                        <p className="text-sm text-muted-foreground mt-1">
+                          Šiame užsakyme yra pre-order prekių.
+                        </p>
+                        <p className="text-sm font-medium mt-1">
+                          Išsiųsime per: {minEta === maxEta ? `${maxEta}` : `${minEta}–${maxEta}`} savaičių
+                        </p>
+                        <p className="text-xs text-muted-foreground mt-2">
+                          Apmokate dabar. Atšaukti galima iki išsiuntimo.
+                        </p>
+                        {hasInStock && hasPreorder && (
+                          <p className="text-xs text-muted-foreground mt-1 italic">
+                            Užsakymą išsiųsime, kai bus paruoštos visos prekės.
+                          </p>
+                        )}
+                      </div>
+                    </div>
                   </div>
                 )}
 
