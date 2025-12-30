@@ -115,12 +115,15 @@ export const useCartStore = create<CartStore>()(
       setOpen: (isOpen) => set({ isOpen }),
 
       getTotalItems: () => {
-        return get().items.reduce((sum, item) => sum + item.quantity, 0);
+        return get().items.reduce((sum, item) => sum + (item?.quantity || 0), 0);
       },
 
       getTotalPrice: () => {
-        return get().items.reduce((sum, item) => 
-          sum + (parseFloat(item.price.amount) * item.quantity), 0);
+        return get().items.reduce((sum, item) => {
+          const amount = item?.price?.amount ? parseFloat(item.price.amount) : 0;
+          const quantity = item?.quantity || 0;
+          return sum + (amount * quantity);
+        }, 0);
       },
 
       createCheckout: async () => {
