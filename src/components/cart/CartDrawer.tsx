@@ -23,7 +23,9 @@ export function CartDrawer() {
     createCheckout,
   } = useCartStore();
   
-  const totalItems = items.reduce((sum, item) => sum + item.quantity, 0);
+  // Filter out any invalid items that might be in localStorage
+  const validItems = items.filter(item => item?.price?.amount && item?.variantId);
+  const totalItems = validItems.reduce((sum, item) => sum + (item?.quantity || 0), 0);
   const totalPrice = getTotalPrice();
 
   const handleCheckout = async () => {
@@ -76,7 +78,7 @@ export function CartDrawer() {
               {/* Scrollable items area */}
               <div className="flex-1 overflow-y-auto pr-2 min-h-0">
                 <div className="space-y-4">
-                  {items.map((item) => (
+                  {validItems.map((item) => (
                     <div key={item.variantId} className="flex gap-4 p-3 bg-muted/30 rounded-lg">
                       <div className="w-20 h-20 bg-secondary rounded-lg overflow-hidden flex-shrink-0">
                         {item.image ? (
@@ -110,7 +112,7 @@ export function CartDrawer() {
                           </Badge>
                         </div>
                         <p className="font-semibold text-sm mt-1">
-                          {formatCartPrice(item.price.amount, item.price.currencyCode)}
+                          {formatCartPrice(item.price?.amount || '0', item.price?.currencyCode || 'EUR')}
                         </p>
                       </div>
                       
