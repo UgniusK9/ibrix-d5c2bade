@@ -1,14 +1,16 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import Stripe from 'https://esm.sh/stripe@14.21.0?target=deno';
+import { z } from 'https://deno.land/x/zod@v3.22.4/mod.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-tracking-token',
 };
 
-interface PaymentIntentRequest {
-  orderId: string;
-}
+// Validation schema
+const paymentIntentRequestSchema = z.object({
+  orderId: z.string().uuid('Neteisingas užsakymo ID formatas'),
+});
 
 // Hash function to validate tracking tokens
 async function hashToken(token: string): Promise<string> {
@@ -34,14 +36,21 @@ Deno.serve(async (req) => {
       apiVersion: '2023-10-16',
     });
 
-    const { orderId }: PaymentIntentRequest = await req.json();
-
-    if (!orderId) {
+    const rawBody = await req.json();
+    
+    // Validate request body with Zod
+    const validationResult = paymentIntentRequestSchema.safeParse(rawBody);
+    
+    if (!validationResult.success) {
+      const firstError = validationResult.error.issues[0];
+      console.log('Validation error:', validationResult.error.issues);
       return new Response(
-        JSON.stringify({ error: 'Trūksta užsakymo ID' }),
+        JSON.stringify({ error: firstError.message }),
         { status: 400, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
       );
     }
+    
+    const { orderId } = validationResult.data;
 
     // Fetch order
     const { data: order, error: orderError } = await supabase
@@ -55,6 +64,28 @@ Deno.serve(async (req) => {
       return new Response(
         JSON.stringify({ error: 'Užsakymas nerastas' }),
         { status: 404, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
+      );
+    }
+
+    // Check order status - prevent payment for already paid or cancelled orders
+    if (order.status === 'paid' || order.paid_at) {
+      return new Response(
+        JSON.stringify({ error: 'Užsakymas jau apmokėtas' }),
+        { status: 400, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
+      );
+    }
+
+    if (order.status === 'cancelled') {
+      return new Response(
+        JSON.stringify({ error: 'Užsakymas atšauktas' }),
+        { status: 400, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
+      );
+    }
+
+    if (order.status === 'refunded') {
+      return new Response(
+        JSON.stringify({ error: 'Užsakymas grąžintas' }),
+        { status: 400, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
       );
     }
 
@@ -173,20 +204,25 @@ Deno.serve(async (req) => {
       stripeCustomerId = customer.id;
     }
 
-    // Create payment intent
-    const paymentIntent = await stripe.paymentIntents.create({
-      amount: order.total_cents,
-      currency: order.currency.toLowerCase(),
-      customer: stripeCustomerId,
-      description: itemsDescription.slice(0, 500),
-      metadata: {
-        order_id: orderId,
-        order_number: order.order_number,
+    // Create payment intent with idempotency key to prevent race conditions
+    const paymentIntent = await stripe.paymentIntents.create(
+      {
+        amount: order.total_cents,
+        currency: order.currency.toLowerCase(),
+        customer: stripeCustomerId,
+        description: itemsDescription.slice(0, 500),
+        metadata: {
+          order_id: orderId,
+          order_number: order.order_number,
+        },
+        automatic_payment_methods: {
+          enabled: true,
+        },
       },
-      automatic_payment_methods: {
-        enabled: true,
-      },
-    });
+      {
+        idempotencyKey: `order-${orderId}-payment-intent`,
+      }
+    );
 
     // Update order with payment intent id
     await supabase

@@ -1,14 +1,22 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.49.1';
+import { z } from 'https://deno.land/x/zod@v3.22.4/mod.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-interface CartItemRequest {
-  productId: string;
-  quantity: number;
-}
+// Validation schemas
+const cartItemRequestSchema = z.object({
+  productId: z.string().uuid('Neteisingas produkto ID'),
+  quantity: z.number().int().min(1, 'Kiekis turi būti bent 1').max(100, 'Maksimalus kiekis: 100').default(1),
+});
+
+const updateQuantitySchema = z.object({
+  quantity: z.number().int().min(0, 'Kiekis negali būti neigiamas').max(100, 'Maksimalus kiekis: 100'),
+});
+
+const uuidSchema = z.string().uuid('Neteisingas ID formatas');
 
 Deno.serve(async (req) => {
   // Handle CORS preflight
@@ -49,7 +57,16 @@ Deno.serve(async (req) => {
       
       if (pathParts.includes('items')) {
         // POST /cart/items - Add item to cart
-        return await addToCart(supabase, userId, sessionId, body as CartItemRequest, corsHeaders);
+        // Validate request body
+        const validationResult = cartItemRequestSchema.safeParse(body);
+        if (!validationResult.success) {
+          const firstError = validationResult.error.issues[0];
+          return new Response(
+            JSON.stringify({ error: firstError.message }),
+            { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
+        }
+        return await addToCart(supabase, userId, sessionId, validationResult.data, corsHeaders);
       }
       
       if (pathParts.includes('clear')) {
@@ -64,13 +81,44 @@ Deno.serve(async (req) => {
     if (req.method === 'PATCH') {
       // PATCH /cart/items/:id - Update item quantity
       const itemId = pathParts[pathParts.length - 1];
+      
+      // Validate item ID
+      const itemIdResult = uuidSchema.safeParse(itemId);
+      if (!itemIdResult.success) {
+        return new Response(
+          JSON.stringify({ error: 'Neteisingas prekės ID' }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+      
       const body = await req.json();
-      return await updateCartItem(supabase, userId, sessionId, itemId, body.quantity, corsHeaders);
+      
+      // Validate quantity
+      const quantityResult = updateQuantitySchema.safeParse(body);
+      if (!quantityResult.success) {
+        const firstError = quantityResult.error.issues[0];
+        return new Response(
+          JSON.stringify({ error: firstError.message }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+      
+      return await updateCartItem(supabase, userId, sessionId, itemId, quantityResult.data.quantity, corsHeaders);
     }
     
     if (req.method === 'DELETE') {
       // DELETE /cart/items/:id - Remove item
       const itemId = pathParts[pathParts.length - 1];
+      
+      // Validate item ID
+      const itemIdResult = uuidSchema.safeParse(itemId);
+      if (!itemIdResult.success) {
+        return new Response(
+          JSON.stringify({ error: 'Neteisingas prekės ID' }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+      
       return await removeCartItem(supabase, userId, sessionId, itemId, corsHeaders);
     }
 
@@ -188,15 +236,13 @@ async function createCart(supabase: any, userId: string | null, sessionId: strin
   );
 }
 
+interface CartItemRequest {
+  productId: string;
+  quantity: number;
+}
+
 async function addToCart(supabase: any, userId: string | null, sessionId: string | null, body: CartItemRequest, headers: Record<string, string>) {
   const { productId, quantity = 1 } = body;
-  
-  if (!productId) {
-    return new Response(
-      JSON.stringify({ error: 'Product ID is required' }),
-      { status: 400, headers: { ...headers, 'Content-Type': 'application/json' } }
-    );
-  }
   
   // Get product
   const { data: product, error: productError } = await supabase
