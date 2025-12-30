@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Package, Truck, CheckCircle2, Box } from "lucide-react";
+import { Package, Truck, CheckCircle2, Box, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -43,6 +43,17 @@ const CARRIERS: { value: CarrierCode; label: string }[] = [
   { value: 'other', label: 'Kitas' },
 ];
 
+async function callAdminApi(action: string, data: Record<string, unknown> = {}) {
+  const { data: result, error } = await supabase.functions.invoke('admin', {
+    body: { action, ...data },
+  });
+  
+  if (error) throw new Error(error.message);
+  if (!result?.success) throw new Error(result?.error || 'Unknown error');
+  
+  return result;
+}
+
 export function ShipmentManager({ orderId, orderNumber, shipment, onUpdate }: ShipmentManagerProps) {
   const [loading, setLoading] = useState(false);
   const [carrier, setCarrier] = useState<CarrierCode>(shipment?.carrier_code || 'omniva');
@@ -51,19 +62,12 @@ export function ShipmentManager({ orderId, orderNumber, shipment, onUpdate }: Sh
   const createShipment = async () => {
     setLoading(true);
     try {
-      const { error } = await supabase
-        .from('shipments')
-        .insert({
-          order_id: orderId,
-          carrier_code: carrier,
-          status: 'pending',
-        });
-
-      if (error) throw error;
+      await callAdminApi('create_shipment', { orderId, carrierCode: carrier });
       toast.success('Siunta sukurta');
       onUpdate();
-    } catch (e: any) {
-      toast.error('Klaida kuriant siuntą: ' + e.message);
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : 'Unknown error';
+      toast.error('Klaida kuriant siuntą: ' + msg);
     } finally {
       setLoading(false);
     }
@@ -73,29 +77,12 @@ export function ShipmentManager({ orderId, orderNumber, shipment, onUpdate }: Sh
     if (!shipment) return;
     setLoading(true);
     try {
-      const { error: shipmentError } = await supabase
-        .from('shipments')
-        .update({ 
-          status: 'packed',
-          packed_at: new Date().toISOString(),
-        })
-        .eq('id', shipment.id);
-
-      if (shipmentError) throw shipmentError;
-
-      // Add event
-      await supabase.from('shipment_events').insert({
-        shipment_id: shipment.id,
-        source: 'internal',
-        status_code: 'packed',
-        description: 'Užsakymas supakuotas',
-        occurred_at: new Date().toISOString(),
-      });
-
+      await callAdminApi('mark_packed', { shipmentId: shipment.id });
       toast.success('Pažymėta kaip supakuota');
       onUpdate();
-    } catch (e: any) {
-      toast.error('Klaida: ' + e.message);
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : 'Unknown error';
+      toast.error('Klaida: ' + msg);
     } finally {
       setLoading(false);
     }
@@ -110,31 +97,16 @@ export function ShipmentManager({ orderId, orderNumber, shipment, onUpdate }: Sh
     
     setLoading(true);
     try {
-      const { error: shipmentError } = await supabase
-        .from('shipments')
-        .update({ 
-          status: 'shipped',
-          shipped_at: new Date().toISOString(),
-          tracking_number: trackingNumber.trim(),
-          carrier_code: carrier,
-        })
-        .eq('id', shipment.id);
-
-      if (shipmentError) throw shipmentError;
-
-      // Add event
-      await supabase.from('shipment_events').insert({
-        shipment_id: shipment.id,
-        source: 'internal',
-        status_code: 'shipped',
-        description: `Išsiųsta per ${CARRIERS.find(c => c.value === carrier)?.label}`,
-        occurred_at: new Date().toISOString(),
+      await callAdminApi('mark_shipped', { 
+        shipmentId: shipment.id, 
+        trackingNumber: trackingNumber.trim(),
+        carrierCode: carrier,
       });
-
       toast.success('Pažymėta kaip išsiųsta');
       onUpdate();
-    } catch (e: any) {
-      toast.error('Klaida: ' + e.message);
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : 'Unknown error';
+      toast.error('Klaida: ' + msg);
     } finally {
       setLoading(false);
     }
@@ -144,29 +116,12 @@ export function ShipmentManager({ orderId, orderNumber, shipment, onUpdate }: Sh
     if (!shipment) return;
     setLoading(true);
     try {
-      const { error: shipmentError } = await supabase
-        .from('shipments')
-        .update({ 
-          status: 'delivered',
-          delivered_at: new Date().toISOString(),
-        })
-        .eq('id', shipment.id);
-
-      if (shipmentError) throw shipmentError;
-
-      // Add event
-      await supabase.from('shipment_events').insert({
-        shipment_id: shipment.id,
-        source: 'internal',
-        status_code: 'delivered',
-        description: 'Pristatyta',
-        occurred_at: new Date().toISOString(),
-      });
-
+      await callAdminApi('mark_delivered', { shipmentId: shipment.id });
       toast.success('Pažymėta kaip pristatyta');
       onUpdate();
-    } catch (e: any) {
-      toast.error('Klaida: ' + e.message);
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : 'Unknown error';
+      toast.error('Klaida: ' + msg);
     } finally {
       setLoading(false);
     }
@@ -179,7 +134,7 @@ export function ShipmentManager({ orderId, orderNumber, shipment, onUpdate }: Sh
       'shipped': { label: 'Išsiųsta', className: 'bg-primary/10 text-primary border-primary/30' },
       'in_transit': { label: 'Kelyje', className: 'bg-primary/10 text-primary border-primary/30' },
       'out_for_delivery': { label: 'Pristatoma', className: 'bg-accent/10 text-accent border-accent/30' },
-      'delivered': { label: 'Pristatyta', className: 'bg-success/10 text-success border-success/30' },
+      'delivered': { label: 'Pristatyta', className: 'bg-green-500/10 text-green-600 border-green-500/30' },
       'exception': { label: 'Nesklandumas', className: 'bg-destructive/10 text-destructive border-destructive/30' },
     };
     return (
@@ -215,7 +170,7 @@ export function ShipmentManager({ orderId, orderNumber, shipment, onUpdate }: Sh
             </Select>
           </div>
           <Button onClick={createShipment} disabled={loading} className="w-full">
-            <Package className="w-4 h-4 mr-2" />
+            {loading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Package className="w-4 h-4 mr-2" />}
             Sukurti siuntą
           </Button>
         </div>
@@ -273,7 +228,7 @@ export function ShipmentManager({ orderId, orderNumber, shipment, onUpdate }: Sh
               variant="outline"
               size="sm"
             >
-              <Box className="w-4 h-4 mr-1" />
+              {loading ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <Box className="w-4 h-4 mr-1" />}
               Supakuota
             </Button>
           )}
@@ -284,7 +239,7 @@ export function ShipmentManager({ orderId, orderNumber, shipment, onUpdate }: Sh
               disabled={loading || !trackingNumber.trim()}
               size="sm"
             >
-              <Truck className="w-4 h-4 mr-1" />
+              {loading ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <Truck className="w-4 h-4 mr-1" />}
               Išsiųsta
             </Button>
           )}
@@ -295,9 +250,9 @@ export function ShipmentManager({ orderId, orderNumber, shipment, onUpdate }: Sh
               disabled={loading}
               variant="outline"
               size="sm"
-              className="border-success/50 text-success hover:bg-success/10"
+              className="border-green-500/50 text-green-600 hover:bg-green-500/10"
             >
-              <CheckCircle2 className="w-4 h-4 mr-1" />
+              {loading ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <CheckCircle2 className="w-4 h-4 mr-1" />}
               Pristatyta
             </Button>
           )}
