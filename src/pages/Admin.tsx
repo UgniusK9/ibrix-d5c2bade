@@ -73,15 +73,20 @@ export default function Admin() {
 
   const loadOrders = async () => {
     setLoading(true);
-    const { data, error } = await supabase
-      .from('orders')
-      .select('*')
-      .order('created_at', { ascending: false });
+    try {
+      const { data, error } = await supabase.functions.invoke('admin', {
+        body: { action: 'list_orders' }
+      });
 
-    if (!error && data) {
-      setOrders(data);
+      if (error) throw error;
+      if (data?.orders) {
+        setOrders(data.orders);
+      }
+    } catch (e) {
+      console.error('Failed to load orders:', e);
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   useEffect(() => {
@@ -92,32 +97,38 @@ export default function Admin() {
     setSelectedOrder(order);
     setDetailsOpen(true);
     setOrderShipment(null);
+    setOrderItems([]);
 
-    // Load items
-    const { data: itemsData } = await supabase
-      .from('order_items')
-      .select('*')
-      .eq('order_id', order.id);
-    setOrderItems(itemsData || []);
+    try {
+      const { data, error } = await supabase.functions.invoke('admin', {
+        body: { action: 'get_order', orderId: order.id }
+      });
 
-    // Load shipment
-    const { data: shipmentData } = await supabase
-      .from('shipments')
-      .select('*')
-      .eq('order_id', order.id)
-      .maybeSingle();
-    setOrderShipment(shipmentData);
+      if (error) throw error;
+      if (data) {
+        setOrderItems(data.items || []);
+        setOrderShipment(data.shipment || null);
+      }
+    } catch (e) {
+      console.error('Failed to load order details:', e);
+    }
   };
 
   const refreshOrderDetails = async () => {
     if (!selectedOrder) return;
     
-    const { data: shipmentData } = await supabase
-      .from('shipments')
-      .select('*')
-      .eq('order_id', selectedOrder.id)
-      .maybeSingle();
-    setOrderShipment(shipmentData);
+    try {
+      const { data, error } = await supabase.functions.invoke('admin', {
+        body: { action: 'get_order', orderId: selectedOrder.id }
+      });
+
+      if (error) throw error;
+      if (data) {
+        setOrderShipment(data.shipment || null);
+      }
+    } catch (e) {
+      console.error('Failed to refresh order details:', e);
+    }
   };
 
   const getStatusBadge = (status: string) => {
