@@ -96,11 +96,12 @@ function PaymentForm({ orderId, onSuccess, onError }: PaymentFormProps) {
 interface StripePaymentProps {
   orderId: string;
   amount: number;
+  trackingToken?: string;
   onSuccess: () => void;
   onError: (error: string) => void;
 }
 
-export function StripePayment({ orderId, amount, onSuccess, onError }: StripePaymentProps) {
+export function StripePayment({ orderId, amount, trackingToken, onSuccess, onError }: StripePaymentProps) {
   const [clientSecret, setClientSecret] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -108,8 +109,15 @@ export function StripePayment({ orderId, amount, onSuccess, onError }: StripePay
   useEffect(() => {
     const createPaymentIntent = async () => {
       try {
+        // Build headers with tracking token for guest orders
+        const headers: Record<string, string> = {};
+        if (trackingToken) {
+          headers['x-tracking-token'] = trackingToken;
+        }
+
         const { data, error: fnError } = await supabase.functions.invoke('create-payment-intent', {
           body: { orderId },
+          headers,
         });
 
         if (fnError) {
@@ -135,7 +143,7 @@ export function StripePayment({ orderId, amount, onSuccess, onError }: StripePay
     };
 
     createPaymentIntent();
-  }, [orderId, onError]);
+  }, [orderId, trackingToken, onError]);
 
   if (isLoading) {
     return (
