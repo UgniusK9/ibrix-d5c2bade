@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
-import { Mail, MapPin, Clock, Truck, RotateCcw, Shield, CreditCard } from "lucide-react";
+import { Mail, MapPin, Clock, Truck, RotateCcw, Shield, CreditCard, Cookie } from "lucide-react";
 import logo from "@/assets/logo.png";
+import { useCookieConsentStore } from "@/stores/cookieConsentStore";
 
 const footerTrustBadges = [
   { icon: Truck, title: "Nemokamas pristatymas", description: "Į paštomatą Lietuvoje" },
@@ -22,6 +23,7 @@ const footerLinks = {
     { name: "Garantija", href: "/garantija" },
     { name: "Trūkstamos detalės", href: "/trukstamos-detales" },
     { name: "Privatumo politika", href: "/privatumo-politika" },
+    { name: "Slapukų politika", href: "/slapukai" },
     { name: "Taisyklės ir sąlygos", href: "/taisykles" },
   ],
 };
@@ -30,6 +32,8 @@ const paymentMethods = ["Visa", "Mastercard"];
 const shippingPartners = ["Omniva", "LP EXPRESS", "DPD"];
 
 export function Footer() {
+  const { openModal } = useCookieConsentStore();
+  
   return (
     <footer className="bg-footer text-footer-foreground">
       {/* Trust badges bar */}
@@ -166,9 +170,18 @@ export function Footer() {
 
         {/* Bottom */}
         <div className="mt-12 pt-8 border-t border-footer-foreground/10">
-          <p className="text-xs text-footer-foreground/50 text-center">
-            © {new Date().getFullYear()} IBRIX. Visos teisės saugomos.
-          </p>
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+            <p className="text-xs text-footer-foreground/50">
+              © {new Date().getFullYear()} IBRIX. Visos teisės saugomos.
+            </p>
+            <button
+              onClick={openModal}
+              className="flex items-center gap-2 text-xs text-footer-foreground/50 hover:text-footer-foreground transition-colors"
+            >
+              <Cookie className="h-3.5 w-3.5" />
+              Slapukų nustatymai
+            </button>
+          </div>
         </div>
       </div>
     </footer>
