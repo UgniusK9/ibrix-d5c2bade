@@ -134,7 +134,7 @@ Deno.serve(async (req) => {
       const tokenHash = await hashToken(trackingToken);
       const { data: validToken, error: tokenError } = await supabase
         .from('tracking_tokens')
-        .select('order_id')
+        .select('order_id, expires_at')
         .eq('order_id', orderId)
         .eq('token_hash', tokenHash)
         .maybeSingle();
@@ -143,6 +143,14 @@ Deno.serve(async (req) => {
         console.error('Invalid tracking token:', tokenError);
         return new Response(
           JSON.stringify({ error: 'Neteisingas sekimo kodas' }),
+          { status: 403, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
+        );
+      }
+
+      // Check if token expired
+      if (validToken.expires_at && new Date(validToken.expires_at) < new Date()) {
+        return new Response(
+          JSON.stringify({ error: 'Sekimo kodas pasibaigė. Susisiekite su mumis.' }),
           { status: 403, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
         );
       }

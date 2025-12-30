@@ -74,6 +74,19 @@ Deno.serve(async (req) => {
       );
     }
 
+    // Update last access time for monitoring (non-blocking, fire-and-forget)
+    (async () => {
+      try {
+        await supabase
+          .from('tracking_tokens')
+          .update({ last_accessed_at: new Date().toISOString() })
+          .eq('order_id', orderId)
+          .eq('token_hash', tokenHash);
+      } catch (err) {
+        console.warn('Failed to update token access time:', err);
+      }
+    })();
+
     // Fetch order data
     const { data: order, error: orderError } = await supabase
       .from('orders')

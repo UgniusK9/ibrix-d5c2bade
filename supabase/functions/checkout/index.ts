@@ -224,9 +224,9 @@ Deno.serve(async (req) => {
       .map(b => b.toString(16).padStart(2, '0'))
       .join('');
 
-    // Store token hash (expires in 90 days)
+    // Store token hash (expires in 7 days for security - shorter exposure window)
     const expiresAt = new Date();
-    expiresAt.setDate(expiresAt.getDate() + 90);
+    expiresAt.setDate(expiresAt.getDate() + 7);
     
     await supabase.from('tracking_tokens').insert({
       order_id: order.id,
