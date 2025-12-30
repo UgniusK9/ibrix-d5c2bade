@@ -17,6 +17,7 @@ import Garantija from "./pages/Garantija";
 import TrukstamosDetales from "./pages/TrukstamosDetales";
 import PrivatumoPolitika from "./pages/PrivatumoPolitika";
 import Taisykles from "./pages/Taisykles";
+import Checkout from "./pages/Checkout";
 
 const queryClient = new QueryClient();
 
@@ -40,6 +41,7 @@ const App = () => (
           <Route path="/trukstamos-detales" element={<TrukstamosDetales />} />
           <Route path="/privatumo-politika" element={<PrivatumoPolitika />} />
           <Route path="/taisykles" element={<Taisykles />} />
+          <Route path="/checkout" element={<Checkout />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>

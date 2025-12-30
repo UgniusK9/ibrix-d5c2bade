@@ -74,23 +74,32 @@ export default function Produktas() {
   const hasShopifyProduct = !!shopifyProduct;
 
   const handleAddToCart = () => {
-    if (hasShopifyProduct && shopifyProduct.variants.edges[0]) {
-      const variant = shopifyProduct.variants.edges[0].node;
-      addItem({
-        product: { node: shopifyProduct },
-        variantId: variant.id,
-        variantTitle: variant.title,
-        price: variant.price,
-        quantity: 1,
-        selectedOptions: variant.selectedOptions || [],
-      });
-      toast.success("Pridėta į krepšelį", {
-        description: shopifyProduct.title,
-        position: "top-center",
-      });
-    } else if (mockProduct) {
+    // Use mock product for cart (unified cart system)
+    if (mockProduct) {
+      addItem(mockProduct);
       toast.success("Pridėta į krepšelį", {
         description: mockProduct.title,
+        position: "top-center",
+      });
+    } else if (hasShopifyProduct) {
+      // Convert Shopify product to MockProduct format
+      const variant = shopifyProduct.variants.edges[0]?.node;
+      const shopifyAsMock: MockProduct = {
+        id: shopifyProduct.id,
+        handle: shopifyProduct.handle,
+        title: shopifyProduct.title,
+        description: shopifyProduct.description || '',
+        price: parseFloat(shopifyProduct.priceRange.minVariantPrice.amount),
+        currency: shopifyProduct.priceRange.minVariantPrice.currencyCode,
+        image: shopifyProduct.images.edges[0]?.node.url || '',
+        status: variant?.availableForSale ? 'in-stock' : 'pre-order',
+        detailsCount: 2899,
+        sku: `ORB-ENG-${shopifyProduct.id.slice(-5)}`,
+        eta: '8–10 sav.',
+      };
+      addItem(shopifyAsMock);
+      toast.success("Pridėta į krepšelį", {
+        description: shopifyProduct.title,
         position: "top-center",
       });
     }
