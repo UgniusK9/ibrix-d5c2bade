@@ -1,4 +1,4 @@
-import { ShoppingCart, Minus, Plus, Trash2, ArrowRight, Loader2, Package, Clock } from "lucide-react";
+import { ShoppingCart, Minus, Plus, Trash2, ArrowRight, Loader2, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -9,10 +9,9 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 import { useCartStore, formatCartPrice } from "@/stores/cartStore";
-import { useNavigate } from "react-router-dom";
+import { toast } from "sonner";
 
 export function CartDrawer() {
-  const navigate = useNavigate();
   const { 
     items, 
     isLoading,
@@ -21,15 +20,31 @@ export function CartDrawer() {
     updateQuantity, 
     removeItem, 
     getTotalPrice,
+    createCheckout,
   } = useCartStore();
   
   const totalItems = items.reduce((sum, item) => sum + item.quantity, 0);
   const totalPrice = getTotalPrice();
-  const hasPreorder = items.some(item => item.type === 'pre_order');
 
-  const handleCheckout = () => {
-    setOpen(false);
-    navigate('/checkout');
+  const handleCheckout = async () => {
+    try {
+      const checkoutUrl = await createCheckout();
+      if (checkoutUrl) {
+        setOpen(false);
+        window.open(checkoutUrl, '_blank');
+      } else {
+        toast.error("Nepavyko sukurti užsakymo", {
+          description: "Bandykite dar kartą",
+          position: "top-center",
+        });
+      }
+    } catch (error) {
+      console.error('Checkout failed:', error);
+      toast.error("Klaida", {
+        description: "Nepavyko sukurti užsakymo",
+        position: "top-center",
+      });
+    }
   };
 
   return (
@@ -62,35 +77,40 @@ export function CartDrawer() {
               <div className="flex-1 overflow-y-auto pr-2 min-h-0">
                 <div className="space-y-4">
                   {items.map((item) => (
-                    <div key={item.id} className="flex gap-4 p-3 bg-muted/30 rounded-lg">
+                    <div key={item.variantId} className="flex gap-4 p-3 bg-muted/30 rounded-lg">
                       <div className="w-20 h-20 bg-secondary rounded-lg overflow-hidden flex-shrink-0">
-                        <img
-                          src={item.image}
-                          alt={item.title}
-                          className="w-full h-full object-cover"
-                        />
+                        {item.image ? (
+                          <img
+                            src={item.image}
+                            alt={item.title}
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center text-muted-foreground">
+                            <ShoppingCart className="w-6 h-6" />
+                          </div>
+                        )}
                       </div>
                       
                       <div className="flex-1 min-w-0">
                         <h4 className="font-medium text-sm truncate">
                           {item.title}
                         </h4>
+                        {item.variantTitle && item.variantTitle !== 'Default Title' && (
+                          <p className="text-xs text-muted-foreground mt-0.5">
+                            {item.variantTitle}
+                          </p>
+                        )}
                         <div className="flex items-center gap-2 mt-1">
                           <Badge 
                             variant="outline" 
-                            className={`text-xs ${item.type === 'pre_order' ? 'border-primary/50 text-primary' : 'border-success/50 text-success'}`}
+                            className={`text-xs ${item.availableForSale ? 'border-success/50 text-success' : 'border-primary/50 text-primary'}`}
                           >
-                            {item.type === 'pre_order' ? 'Pre-order' : 'Sandėlyje'}
+                            {item.availableForSale ? 'Sandėlyje' : 'Pre-order'}
                           </Badge>
-                          {item.type === 'pre_order' && item.eta && (
-                            <span className="flex items-center gap-1 text-xs text-muted-foreground">
-                              <Clock className="w-3 h-3" />
-                              {item.eta}
-                            </span>
-                          )}
                         </div>
                         <p className="font-semibold text-sm mt-1">
-                          {formatCartPrice(item.priceCents, item.currency)}
+                          {formatCartPrice(item.price.amount, item.price.currencyCode)}
                         </p>
                       </div>
                       
@@ -99,7 +119,7 @@ export function CartDrawer() {
                           variant="ghost"
                           size="icon"
                           className="h-7 w-7 text-muted-foreground hover:text-destructive"
-                          onClick={() => removeItem(item.id)}
+                          onClick={() => removeItem(item.variantId)}
                         >
                           <Trash2 className="h-4 w-4" />
                         </Button>
@@ -109,7 +129,7 @@ export function CartDrawer() {
                             variant="outline"
                             size="icon"
                             className="h-7 w-7"
-                            onClick={() => updateQuantity(item.id, item.quantity - 1)}
+                            onClick={() => updateQuantity(item.variantId, item.quantity - 1)}
                           >
                             <Minus className="h-3 w-3" />
                           </Button>
@@ -120,7 +140,7 @@ export function CartDrawer() {
                             variant="outline"
                             size="icon"
                             className="h-7 w-7"
-                            onClick={() => updateQuantity(item.id, item.quantity + 1)}
+                            onClick={() => updateQuantity(item.variantId, item.quantity + 1)}
                           >
                             <Plus className="h-3 w-3" />
                           </Button>
@@ -131,24 +151,12 @@ export function CartDrawer() {
                 </div>
               </div>
               
-              {/* Pre-order notice - process, not dates */}
-              {hasPreorder && (
-                <div className="flex-shrink-0 bg-primary/5 border border-primary/20 rounded-lg p-3 mt-4">
-                  <p className="text-xs text-primary font-medium mb-1">
-                    Pre-order: siuntos kelias
-                  </p>
-                  <p className="text-xs text-muted-foreground">
-                    Užsakymas patvirtinamas iš karto → gamyba → pristatymas. Sekimo nuorodą gausi el. paštu. Atšaukti galima bet kada.
-                  </p>
-                </div>
-              )}
-              
               {/* Fixed checkout section */}
               <div className="flex-shrink-0 space-y-4 pt-4 border-t bg-background mt-4">
                 <div className="flex justify-between items-center">
                   <span className="text-base font-medium">Viso</span>
                   <span className="text-xl font-bold font-heading">
-                    {formatCartPrice(Math.round(totalPrice * 100), 'EUR')}
+                    {formatCartPrice(totalPrice, 'EUR')}
                   </span>
                 </div>
                 
@@ -169,8 +177,8 @@ export function CartDrawer() {
                     </>
                   ) : (
                     <>
+                      <ExternalLink className="w-4 h-4 mr-2" />
                       Pereiti į apmokėjimą
-                      <ArrowRight className="w-4 h-4 ml-2" />
                     </>
                   )}
                 </Button>

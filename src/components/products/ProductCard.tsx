@@ -4,7 +4,6 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ShopifyProduct, formatPrice } from "@/lib/shopify";
 import { useCartStore } from "@/stores/cartStore";
-import { MockProduct } from "@/data/mockProducts";
 import { toast } from "sonner";
 
 interface ProductCardProps {
@@ -31,22 +30,8 @@ export function ProductCard({ product, index = 0 }: ProductCardProps) {
     e.preventDefault();
     e.stopPropagation();
     
-    // Convert Shopify product to MockProduct format for unified cart
-    const mockProduct: MockProduct = {
-      id: node.id,
-      handle: node.handle,
-      title: node.title,
-      description: node.description || '',
-      price: parseFloat(price.amount),
-      currency: price.currencyCode,
-      image: image?.url || '',
-      status: isPreOrder ? 'pre-order' : 'in-stock',
-      detailsCount: 2899,
-      sku: skuCode,
-      eta: '8–10 sav.',
-    };
-
-    addItem(mockProduct);
+    // Add Shopify product directly to cart
+    addItem(product);
 
     toast.success("Pridėta į krepšelį", {
       description: node.title,
