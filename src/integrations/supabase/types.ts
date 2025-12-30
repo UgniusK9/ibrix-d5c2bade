@@ -150,6 +150,7 @@ export type Database = {
           last_name: string
           notes: string | null
           order_number: string
+          paid_at: string | null
           payment_intent_id: string | null
           payment_provider: string | null
           phone: string | null
@@ -171,6 +172,7 @@ export type Database = {
           last_name: string
           notes?: string | null
           order_number: string
+          paid_at?: string | null
           payment_intent_id?: string | null
           payment_provider?: string | null
           phone?: string | null
@@ -192,6 +194,7 @@ export type Database = {
           last_name?: string
           notes?: string | null
           order_number?: string
+          paid_at?: string | null
           payment_intent_id?: string | null
           payment_provider?: string | null
           phone?: string | null
@@ -257,6 +260,132 @@ export type Database = {
         }
         Relationships: []
       }
+      shipment_events: {
+        Row: {
+          carrier_event_id: string | null
+          created_at: string
+          description: string
+          id: string
+          location: string | null
+          occurred_at: string
+          shipment_id: string
+          source: Database["public"]["Enums"]["event_source"]
+          status_code: string
+        }
+        Insert: {
+          carrier_event_id?: string | null
+          created_at?: string
+          description: string
+          id?: string
+          location?: string | null
+          occurred_at?: string
+          shipment_id: string
+          source?: Database["public"]["Enums"]["event_source"]
+          status_code: string
+        }
+        Update: {
+          carrier_event_id?: string | null
+          created_at?: string
+          description?: string
+          id?: string
+          location?: string | null
+          occurred_at?: string
+          shipment_id?: string
+          source?: Database["public"]["Enums"]["event_source"]
+          status_code?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "shipment_events_shipment_id_fkey"
+            columns: ["shipment_id"]
+            isOneToOne: false
+            referencedRelation: "shipments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      shipments: {
+        Row: {
+          carrier_code: Database["public"]["Enums"]["carrier_code"]
+          created_at: string
+          delivered_at: string | null
+          id: string
+          last_carrier_sync_at: string | null
+          order_id: string
+          packed_at: string | null
+          shipped_at: string | null
+          status: Database["public"]["Enums"]["shipment_status"]
+          tracking_number: string | null
+          updated_at: string
+        }
+        Insert: {
+          carrier_code: Database["public"]["Enums"]["carrier_code"]
+          created_at?: string
+          delivered_at?: string | null
+          id?: string
+          last_carrier_sync_at?: string | null
+          order_id: string
+          packed_at?: string | null
+          shipped_at?: string | null
+          status?: Database["public"]["Enums"]["shipment_status"]
+          tracking_number?: string | null
+          updated_at?: string
+        }
+        Update: {
+          carrier_code?: Database["public"]["Enums"]["carrier_code"]
+          created_at?: string
+          delivered_at?: string | null
+          id?: string
+          last_carrier_sync_at?: string | null
+          order_id?: string
+          packed_at?: string | null
+          shipped_at?: string | null
+          status?: Database["public"]["Enums"]["shipment_status"]
+          tracking_number?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "shipments_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tracking_tokens: {
+        Row: {
+          created_at: string
+          expires_at: string | null
+          id: string
+          order_id: string
+          token_hash: string
+        }
+        Insert: {
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          order_id: string
+          token_hash: string
+        }
+        Update: {
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          order_id?: string
+          token_hash?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tracking_tokens_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
@@ -265,7 +394,9 @@ export type Database = {
       generate_order_number: { Args: never; Returns: string }
     }
     Enums: {
+      carrier_code: "omniva" | "lp_express" | "dpd" | "courier" | "other"
       cart_item_type: "in_stock" | "pre_order"
+      event_source: "internal" | "carrier"
       order_status:
         | "draft"
         | "pending_payment"
@@ -274,6 +405,14 @@ export type Database = {
         | "refunded"
         | "failed"
       product_status: "in_stock" | "pre_order"
+      shipment_status:
+        | "pending"
+        | "packed"
+        | "shipped"
+        | "in_transit"
+        | "out_for_delivery"
+        | "delivered"
+        | "exception"
       shipping_method:
         | "omniva_locker"
         | "lp_express_locker"
@@ -406,7 +545,9 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      carrier_code: ["omniva", "lp_express", "dpd", "courier", "other"],
       cart_item_type: ["in_stock", "pre_order"],
+      event_source: ["internal", "carrier"],
       order_status: [
         "draft",
         "pending_payment",
@@ -416,6 +557,15 @@ export const Constants = {
         "failed",
       ],
       product_status: ["in_stock", "pre_order"],
+      shipment_status: [
+        "pending",
+        "packed",
+        "shipped",
+        "in_transit",
+        "out_for_delivery",
+        "delivered",
+        "exception",
+      ],
       shipping_method: [
         "omniva_locker",
         "lp_express_locker",
