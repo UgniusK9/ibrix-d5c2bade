@@ -180,7 +180,32 @@ Deno.serve(async (req) => {
     // Clear cart
     await supabase.from('cart_items').delete().eq('cart_id', cart.id);
 
-    console.log(`Order ${orderNumber} created successfully`);
+    // Generate tracking token
+    const tokenBytes = new Uint8Array(32);
+    crypto.getRandomValues(tokenBytes);
+    const trackingToken = Array.from(tokenBytes)
+      .map(b => b.toString(16).padStart(2, '0'))
+      .join('');
+    
+    // Hash the token for storage
+    const encoder = new TextEncoder();
+    const tokenData = encoder.encode(trackingToken);
+    const hashBuffer = await crypto.subtle.digest('SHA-256', tokenData);
+    const tokenHash = Array.from(new Uint8Array(hashBuffer))
+      .map(b => b.toString(16).padStart(2, '0'))
+      .join('');
+
+    // Store token hash (expires in 90 days)
+    const expiresAt = new Date();
+    expiresAt.setDate(expiresAt.getDate() + 90);
+    
+    await supabase.from('tracking_tokens').insert({
+      order_id: order.id,
+      token_hash: tokenHash,
+      expires_at: expiresAt.toISOString(),
+    });
+
+    console.log(`Order ${orderNumber} created successfully with tracking token`);
 
     // Check if cart has pre-order items
     const hasPreorder = cart.cart_items.some((item: any) => item.type === 'pre_order');
@@ -201,6 +226,7 @@ Deno.serve(async (req) => {
           status: order.status,
           hasPreorder,
           maxEtaWeeks: maxEtaWeeks > 0 ? maxEtaWeeks : null,
+          trackingToken, // Return plain token for email/redirect
         },
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }

@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { formatCartPrice } from "@/stores/cartStore";
+import { ShipmentManager } from "@/components/admin/ShipmentManager";
 import {
   Table,
   TableBody,
@@ -21,6 +22,10 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import type { Database } from "@/integrations/supabase/types";
+
+type CarrierCode = Database["public"]["Enums"]["carrier_code"];
+type ShipmentStatus = Database["public"]["Enums"]["shipment_status"];
 
 interface Order {
   id: string;
@@ -48,11 +53,22 @@ interface OrderItem {
   preorder_eta_weeks_snapshot: number | null;
 }
 
+interface Shipment {
+  id: string;
+  carrier_code: CarrierCode;
+  tracking_number: string | null;
+  status: ShipmentStatus;
+  packed_at: string | null;
+  shipped_at: string | null;
+  delivered_at: string | null;
+}
+
 export default function Admin() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [orderItems, setOrderItems] = useState<OrderItem[]>([]);
+  const [orderShipment, setOrderShipment] = useState<Shipment | null>(null);
   const [detailsOpen, setDetailsOpen] = useState(false);
 
   const loadOrders = async () => {
@@ -75,13 +91,33 @@ export default function Admin() {
   const openOrderDetails = async (order: Order) => {
     setSelectedOrder(order);
     setDetailsOpen(true);
+    setOrderShipment(null);
 
-    const { data } = await supabase
+    // Load items
+    const { data: itemsData } = await supabase
       .from('order_items')
       .select('*')
       .eq('order_id', order.id);
+    setOrderItems(itemsData || []);
 
-    setOrderItems(data || []);
+    // Load shipment
+    const { data: shipmentData } = await supabase
+      .from('shipments')
+      .select('*')
+      .eq('order_id', order.id)
+      .maybeSingle();
+    setOrderShipment(shipmentData);
+  };
+
+  const refreshOrderDetails = async () => {
+    if (!selectedOrder) return;
+    
+    const { data: shipmentData } = await supabase
+      .from('shipments')
+      .select('*')
+      .eq('order_id', selectedOrder.id)
+      .maybeSingle();
+    setOrderShipment(shipmentData);
   };
 
   const getStatusBadge = (status: string) => {
@@ -302,7 +338,14 @@ export default function Admin() {
                   </div>
                 </div>
 
-                {/* Totals */}
+                {/* Shipment Manager */}
+                <ShipmentManager
+                  orderId={selectedOrder.id}
+                  orderNumber={selectedOrder.order_number}
+                  shipment={orderShipment}
+                  onUpdate={refreshOrderDetails}
+                />
+
                 <div className="bg-muted/30 rounded-lg p-4">
                   <div className="space-y-2">
                     <div className="flex justify-between text-sm">
