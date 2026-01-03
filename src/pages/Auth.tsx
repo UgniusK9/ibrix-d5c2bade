@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams, Link } from 'react-router-dom';
-import { Mail, Loader2, CheckCircle2, Lock, Eye, EyeOff, ArrowLeft } from 'lucide-react';
+import { Mail, Loader2, CheckCircle2, Lock, Eye, EyeOff, ArrowLeft, User, KeyRound } from 'lucide-react';
 import { PageLayout } from '@/components/layout/PageLayout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 import { z } from 'zod';
@@ -19,6 +20,8 @@ export default function Auth() {
   const [searchParams] = useSearchParams();
   const { user, isLoading, signInWithPassword, signInWithMagicLink, signUp, resetPassword } = useAuth();
   
+  const [activeTab, setActiveTab] = useState<'login' | 'register'>('login');
+  const [loginMethod, setLoginMethod] = useState<'password' | 'magic-link'>('password');
   const [mode, setMode] = useState<AuthMode>('login');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -44,7 +47,7 @@ export default function Auth() {
       newErrors.email = emailResult.error.errors[0].message;
     }
 
-    if (mode === 'login' || mode === 'register') {
+    if ((mode === 'login' && loginMethod === 'password') || mode === 'register') {
       const passResult = passwordSchema.safeParse(password);
       if (!passResult.success) {
         newErrors.password = passResult.error.errors[0].message;
@@ -68,59 +71,51 @@ export default function Auth() {
     try {
       let result: { error: Error | null };
 
-      switch (mode) {
-        case 'login':
-          result = await signInWithPassword(email, password);
-          if (result.error) {
-            if (result.error.message.includes('Invalid login')) {
-              toast.error('Neteisingas el. paštas arba slaptažodis');
-            } else if (result.error.message.includes('Email not confirmed')) {
-              toast.error('Patvirtinkite el. paštą prieš prisijungdami');
-            } else {
-              toast.error('Prisijungti nepavyko. Bandykite dar kartą.');
-            }
+      if (mode === 'login' && loginMethod === 'password') {
+        result = await signInWithPassword(email, password);
+        if (result.error) {
+          if (result.error.message.includes('Invalid login')) {
+            toast.error('Neteisingas el. paštas arba slaptažodis');
+          } else if (result.error.message.includes('Email not confirmed')) {
+            toast.error('Patvirtinkite el. paštą prieš prisijungdami');
           } else {
-            toast.success('Sėkmingai prisijungėte!');
+            toast.error('Prisijungti nepavyko. Bandykite dar kartą.');
           }
-          break;
-
-        case 'register':
-          result = await signUp(email, password);
-          if (result.error) {
-            if (result.error.message.includes('already registered')) {
-              toast.error('Šis el. paštas jau užregistruotas');
-            } else {
-              toast.error('Registracija nepavyko. Bandykite dar kartą.');
-            }
+        } else {
+          toast.success('Sėkmingai prisijungėte!');
+        }
+      } else if (mode === 'login' && loginMethod === 'magic-link') {
+        result = await signInWithMagicLink(email);
+        if (result.error) {
+          if (result.error.message.includes('rate limit')) {
+            toast.error('Per daug bandymų. Palaukite ir bandykite vėliau.');
           } else {
-            setEmailSent(true);
-            toast.success('Paskyra sukurta! Patikrinkite el. paštą.');
-          }
-          break;
-
-        case 'forgot':
-          result = await resetPassword(email);
-          if (result.error) {
             toast.error('Nepavyko išsiųsti. Bandykite dar kartą.');
-          } else {
-            setEmailSent(true);
-            toast.success('Slaptažodžio atkūrimo nuoroda išsiųsta!');
           }
-          break;
-
-        case 'magic-link':
-          result = await signInWithMagicLink(email);
-          if (result.error) {
-            if (result.error.message.includes('rate limit')) {
-              toast.error('Per daug bandymų. Palaukite ir bandykite vėliau.');
-            } else {
-              toast.error('Nepavyko išsiųsti. Bandykite dar kartą.');
-            }
+        } else {
+          setEmailSent(true);
+          toast.success('Prisijungimo nuoroda išsiųsta!');
+        }
+      } else if (mode === 'register') {
+        result = await signUp(email, password);
+        if (result.error) {
+          if (result.error.message.includes('already registered')) {
+            toast.error('Šis el. paštas jau užregistruotas');
           } else {
-            setEmailSent(true);
-            toast.success('Prisijungimo nuoroda išsiųsta!');
+            toast.error('Registracija nepavyko. Bandykite dar kartą.');
           }
-          break;
+        } else {
+          setEmailSent(true);
+          toast.success('Paskyra sukurta! Patikrinkite el. paštą.');
+        }
+      } else if (mode === 'forgot') {
+        result = await resetPassword(email);
+        if (result.error) {
+          toast.error('Nepavyko išsiųsti. Bandykite dar kartą.');
+        } else {
+          setEmailSent(true);
+          toast.success('Slaptažodžio atkūrimo nuoroda išsiųsta!');
+        }
       }
     } catch (e) {
       toast.error('Įvyko klaida. Bandykite dar kartą.');
@@ -137,9 +132,16 @@ export default function Auth() {
     setEmailSent(false);
   };
 
-  const switchMode = (newMode: AuthMode) => {
+  const switchToForgot = () => {
     resetForm();
-    setMode(newMode);
+    setMode('forgot');
+  };
+
+  const backToLogin = () => {
+    resetForm();
+    setMode('login');
+    setActiveTab('login');
+    setLoginMethod('password');
   };
 
   if (isLoading) {
@@ -157,25 +159,31 @@ export default function Auth() {
     return (
       <PageLayout>
         <div className="min-h-[60vh] flex items-center justify-center py-12 px-4">
-          <div className="w-full max-w-sm">
-            <div className="bg-card border border-border rounded-xl p-6 shadow-premium text-center">
-              <div className="w-14 h-14 rounded-full bg-success/10 flex items-center justify-center mx-auto mb-4">
-                <CheckCircle2 className="w-7 h-7 text-success" />
+          <div className="w-full max-w-md">
+            <div className="bg-card border border-border rounded-2xl p-8 shadow-premium text-center">
+              <div className="w-16 h-16 rounded-full bg-success/10 flex items-center justify-center mx-auto mb-5">
+                <CheckCircle2 className="w-8 h-8 text-success" />
               </div>
-              <h1 className="font-heading text-xl font-bold mb-2">
-                {mode === 'register' ? 'Paskyra sukurta!' : 'Patikrinkite el. paštą'}
+              <h1 className="font-heading text-2xl font-bold mb-3">
+                {mode === 'register' ? 'Paskyra sukurta!' : 
+                 mode === 'forgot' ? 'Nuoroda išsiųsta!' : 
+                 'Patikrinkite el. paštą'}
               </h1>
-              <p className="text-sm text-muted-foreground mb-4">
-                Išsiuntėme {mode === 'forgot' ? 'slaptažodžio atkūrimo' : 'patvirtinimo'} nuorodą į{' '}
-                <strong className="text-foreground">{email}</strong>
+              <p className="text-muted-foreground mb-2">
+                {mode === 'register' 
+                  ? 'Išsiuntėme patvirtinimo nuorodą į' 
+                  : mode === 'forgot'
+                  ? 'Išsiuntėme slaptažodžio atkūrimo nuorodą į'
+                  : 'Išsiuntėme prisijungimo nuorodą į'}
               </p>
-              <p className="text-xs text-muted-foreground mb-6">
-                Neradote? Patikrinkite spam aplanką.
+              <p className="font-semibold text-foreground mb-6">{email}</p>
+              <p className="text-sm text-muted-foreground mb-6">
+                Neradote laiško? Patikrinkite spam/šlamšto aplanką.
               </p>
               <Button
                 variant="outline"
                 className="w-full"
-                onClick={() => switchMode('login')}
+                onClick={backToLogin}
               >
                 <ArrowLeft className="w-4 h-4 mr-2" />
                 Grįžti į prisijungimą
@@ -187,207 +195,322 @@ export default function Auth() {
     );
   }
 
-  const getTitle = () => {
-    switch (mode) {
-      case 'login': return 'Prisijungti';
-      case 'register': return 'Sukurti paskyrą';
-      case 'forgot': return 'Atkurti slaptažodį';
-      case 'magic-link': return 'Prisijungti nuoroda';
-    }
-  };
-
-  const getSubtitle = () => {
-    switch (mode) {
-      case 'login': return 'Įveskite prisijungimo duomenis';
-      case 'register': return 'Užsiregistruokite per 30 sekundžių';
-      case 'forgot': return 'Išsiųsime slaptažodžio atkūrimo nuorodą';
-      case 'magic-link': return 'Gaukite prisijungimo nuorodą el. paštu';
-    }
-  };
-
-  return (
-    <PageLayout>
-      <div className="min-h-[60vh] flex items-center justify-center py-12 px-4">
-        <div className="w-full max-w-sm">
-          <div className="bg-card border border-border rounded-xl p-6 shadow-premium">
-            {/* Header */}
-            <div className="text-center mb-6">
-              <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-3">
-                {mode === 'magic-link' ? (
-                  <Mail className="w-6 h-6 text-primary" />
-                ) : (
-                  <Lock className="w-6 h-6 text-primary" />
-                )}
-              </div>
-              <h1 className="font-heading text-xl font-bold">{getTitle()}</h1>
-              <p className="text-sm text-muted-foreground mt-1">{getSubtitle()}</p>
-            </div>
-
-            {/* Form */}
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div>
-                <Label htmlFor="email" className="text-sm">El. paštas</Label>
-                <Input
-                  id="email"
-                  type="email"
-                  placeholder="jusu@pastas.lt"
-                  value={email}
-                  onChange={(e) => {
-                    setEmail(e.target.value);
-                    setErrors((prev) => ({ ...prev, email: undefined }));
-                  }}
-                  disabled={loading}
-                  className="mt-1.5"
-                />
-                {errors.email && (
-                  <p className="text-xs text-destructive mt-1">{errors.email}</p>
-                )}
-              </div>
-
-              {(mode === 'login' || mode === 'register') && (
-                <div>
-                  <Label htmlFor="password" className="text-sm">Slaptažodis</Label>
-                  <div className="relative mt-1.5">
-                    <Input
-                      id="password"
-                      type={showPassword ? 'text' : 'password'}
-                      placeholder="••••••••"
-                      value={password}
-                      onChange={(e) => {
-                        setPassword(e.target.value);
-                        setErrors((prev) => ({ ...prev, password: undefined }));
-                      }}
-                      disabled={loading}
-                      className="pr-10"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                    >
-                      {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                    </button>
-                  </div>
-                  {errors.password && (
-                    <p className="text-xs text-destructive mt-1">{errors.password}</p>
-                  )}
+  // Forgot password screen
+  if (mode === 'forgot') {
+    return (
+      <PageLayout>
+        <div className="min-h-[60vh] flex items-center justify-center py-12 px-4">
+          <div className="w-full max-w-md">
+            <div className="bg-card border border-border rounded-2xl p-8 shadow-premium">
+              <div className="text-center mb-6">
+                <div className="w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-4">
+                  <KeyRound className="w-7 h-7 text-primary" />
                 </div>
-              )}
+                <h1 className="font-heading text-2xl font-bold">Atkurti slaptažodį</h1>
+                <p className="text-muted-foreground mt-2">
+                  Įveskite savo el. paštą ir atsiųsime slaptažodžio atkūrimo nuorodą
+                </p>
+              </div>
 
-              {mode === 'register' && (
+              <form onSubmit={handleSubmit} className="space-y-5">
                 <div>
-                  <Label htmlFor="confirm" className="text-sm">Pakartokite slaptažodį</Label>
+                  <Label htmlFor="email" className="text-sm font-medium">El. paštas</Label>
                   <Input
-                    id="confirm"
-                    type="password"
-                    placeholder="••••••••"
-                    value={confirmPassword}
+                    id="email"
+                    type="email"
+                    placeholder="jusu@pastas.lt"
+                    value={email}
                     onChange={(e) => {
-                      setConfirmPassword(e.target.value);
-                      setErrors((prev) => ({ ...prev, confirm: undefined }));
+                      setEmail(e.target.value);
+                      setErrors((prev) => ({ ...prev, email: undefined }));
                     }}
                     disabled={loading}
-                    className="mt-1.5"
+                    className="mt-2 h-12"
                   />
-                  {errors.confirm && (
-                    <p className="text-xs text-destructive mt-1">{errors.confirm}</p>
+                  {errors.email && (
+                    <p className="text-sm text-destructive mt-1.5">{errors.email}</p>
                   )}
                 </div>
-              )}
 
-              <Button type="submit" className="w-full" disabled={loading}>
-                {loading ? (
-                  <>
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    Palaukite...
-                  </>
-                ) : (
-                  <>
-                    {mode === 'login' && 'Prisijungti'}
-                    {mode === 'register' && 'Sukurti paskyrą'}
-                    {mode === 'forgot' && 'Siųsti nuorodą'}
-                    {mode === 'magic-link' && 'Gauti nuorodą'}
-                  </>
-                )}
-              </Button>
-            </form>
+                <Button type="submit" className="w-full h-12 text-base" disabled={loading}>
+                  {loading ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      Siunčiama...
+                    </>
+                  ) : (
+                    'Siųsti atkūrimo nuorodą'
+                  )}
+                </Button>
+              </form>
 
-            {/* Mode switches */}
-            <div className="mt-5 pt-5 border-t border-border space-y-3">
-              {mode === 'login' && (
-                <>
-                  <button
-                    type="button"
-                    onClick={() => switchMode('forgot')}
-                    className="text-sm text-muted-foreground hover:text-primary w-full text-center"
-                  >
-                    Pamiršote slaptažodį?
-                  </button>
-                  <div className="flex items-center gap-2">
-                    <div className="flex-1 h-px bg-border" />
-                    <span className="text-xs text-muted-foreground">arba</span>
-                    <div className="flex-1 h-px bg-border" />
-                  </div>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    className="w-full"
-                    onClick={() => switchMode('magic-link')}
-                  >
-                    <Mail className="w-4 h-4 mr-2" />
-                    Prisijungti el. paštu (be slaptažodžio)
-                  </Button>
-                  <p className="text-sm text-center text-muted-foreground">
-                    Neturite paskyros?{' '}
-                    <button
-                      type="button"
-                      onClick={() => switchMode('register')}
-                      className="text-primary hover:underline font-medium"
-                    >
-                      Registruotis
-                    </button>
-                  </p>
-                </>
-              )}
-
-              {mode === 'register' && (
-                <p className="text-sm text-center text-muted-foreground">
-                  Jau turite paskyrą?{' '}
-                  <button
-                    type="button"
-                    onClick={() => switchMode('login')}
-                    className="text-primary hover:underline font-medium"
-                  >
-                    Prisijungti
-                  </button>
-                </p>
-              )}
-
-              {(mode === 'forgot' || mode === 'magic-link') && (
+              <div className="mt-6 text-center">
                 <button
                   type="button"
-                  onClick={() => switchMode('login')}
-                  className="text-sm text-muted-foreground hover:text-primary w-full text-center flex items-center justify-center gap-2"
+                  onClick={backToLogin}
+                  className="text-sm text-muted-foreground hover:text-primary transition-colors inline-flex items-center gap-2"
                 >
                   <ArrowLeft className="w-4 h-4" />
                   Grįžti į prisijungimą
                 </button>
-              )}
+              </div>
+            </div>
+          </div>
+        </div>
+      </PageLayout>
+    );
+  }
+
+  return (
+    <PageLayout>
+      <div className="min-h-[60vh] flex items-center justify-center py-12 px-4">
+        <div className="w-full max-w-md">
+          <div className="bg-card border border-border rounded-2xl p-8 shadow-premium">
+            {/* Logo / Brand */}
+            <div className="text-center mb-6">
+              <h1 className="font-heading text-2xl font-bold tracking-tight">
+                IBRIX
+              </h1>
+              <p className="text-muted-foreground mt-1">
+                Premium LEGO® variklių modeliai
+              </p>
             </div>
 
-            {/* Terms */}
-            {mode === 'register' && (
-              <p className="text-xs text-center text-muted-foreground mt-4">
-                Registruodamiesi sutinkate su{' '}
-                <Link to="/taisykles" className="text-primary hover:underline">
-                  taisyklėmis
-                </Link>{' '}
-                ir{' '}
-                <Link to="/privatumo-politika" className="text-primary hover:underline">
-                  privatumo politika
-                </Link>
-              </p>
-            )}
+            {/* Tabs: Login / Register */}
+            <Tabs value={activeTab} onValueChange={(v) => {
+              setActiveTab(v as 'login' | 'register');
+              setMode(v as 'login' | 'register');
+              resetForm();
+            }}>
+              <TabsList className="grid w-full grid-cols-2 mb-6">
+                <TabsTrigger value="login" className="text-sm font-medium">
+                  Prisijungti
+                </TabsTrigger>
+                <TabsTrigger value="register" className="text-sm font-medium">
+                  Registruotis
+                </TabsTrigger>
+              </TabsList>
+
+              {/* LOGIN TAB */}
+              <TabsContent value="login" className="space-y-5 mt-0">
+                {/* Login method selector */}
+                <div className="grid grid-cols-2 gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setLoginMethod('password')}
+                    className={`flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all ${
+                      loginMethod === 'password' 
+                        ? 'border-primary bg-primary/5' 
+                        : 'border-border hover:border-primary/50'
+                    }`}
+                  >
+                    <Lock className={`w-5 h-5 ${loginMethod === 'password' ? 'text-primary' : 'text-muted-foreground'}`} />
+                    <span className={`text-sm font-medium ${loginMethod === 'password' ? 'text-primary' : 'text-muted-foreground'}`}>
+                      Slaptažodžiu
+                    </span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setLoginMethod('magic-link')}
+                    className={`flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all ${
+                      loginMethod === 'magic-link' 
+                        ? 'border-primary bg-primary/5' 
+                        : 'border-border hover:border-primary/50'
+                    }`}
+                  >
+                    <Mail className={`w-5 h-5 ${loginMethod === 'magic-link' ? 'text-primary' : 'text-muted-foreground'}`} />
+                    <span className={`text-sm font-medium ${loginMethod === 'magic-link' ? 'text-primary' : 'text-muted-foreground'}`}>
+                      El. paštu
+                    </span>
+                  </button>
+                </div>
+
+                <form onSubmit={handleSubmit} className="space-y-4">
+                  <div>
+                    <Label htmlFor="login-email" className="text-sm font-medium">El. paštas</Label>
+                    <Input
+                      id="login-email"
+                      type="email"
+                      placeholder="jusu@pastas.lt"
+                      value={email}
+                      onChange={(e) => {
+                        setEmail(e.target.value);
+                        setErrors((prev) => ({ ...prev, email: undefined }));
+                      }}
+                      disabled={loading}
+                      className="mt-2 h-12"
+                    />
+                    {errors.email && (
+                      <p className="text-sm text-destructive mt-1.5">{errors.email}</p>
+                    )}
+                  </div>
+
+                  {loginMethod === 'password' && (
+                    <div>
+                      <div className="flex items-center justify-between">
+                        <Label htmlFor="login-password" className="text-sm font-medium">Slaptažodis</Label>
+                        <button
+                          type="button"
+                          onClick={switchToForgot}
+                          className="text-xs text-primary hover:underline"
+                        >
+                          Pamiršote?
+                        </button>
+                      </div>
+                      <div className="relative mt-2">
+                        <Input
+                          id="login-password"
+                          type={showPassword ? 'text' : 'password'}
+                          placeholder="••••••••"
+                          value={password}
+                          onChange={(e) => {
+                            setPassword(e.target.value);
+                            setErrors((prev) => ({ ...prev, password: undefined }));
+                          }}
+                          disabled={loading}
+                          className="h-12 pr-12"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowPassword(!showPassword)}
+                          className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                        >
+                          {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                        </button>
+                      </div>
+                      {errors.password && (
+                        <p className="text-sm text-destructive mt-1.5">{errors.password}</p>
+                      )}
+                    </div>
+                  )}
+
+                  <Button type="submit" className="w-full h-12 text-base" disabled={loading}>
+                    {loading ? (
+                      <>
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        Palaukite...
+                      </>
+                    ) : loginMethod === 'password' ? (
+                      'Prisijungti'
+                    ) : (
+                      <>
+                        <Mail className="w-4 h-4 mr-2" />
+                        Gauti prisijungimo nuorodą
+                      </>
+                    )}
+                  </Button>
+                </form>
+
+                {loginMethod === 'password' && (
+                  <p className="text-center text-sm text-muted-foreground">
+                    Nenorite prisiminti slaptažodžio?{' '}
+                    <button
+                      type="button"
+                      onClick={() => setLoginMethod('magic-link')}
+                      className="text-primary hover:underline font-medium"
+                    >
+                      Prisijunkite el. paštu
+                    </button>
+                  </p>
+                )}
+              </TabsContent>
+
+              {/* REGISTER TAB */}
+              <TabsContent value="register" className="space-y-5 mt-0">
+                <form onSubmit={handleSubmit} className="space-y-4">
+                  <div>
+                    <Label htmlFor="register-email" className="text-sm font-medium">El. paštas</Label>
+                    <Input
+                      id="register-email"
+                      type="email"
+                      placeholder="jusu@pastas.lt"
+                      value={email}
+                      onChange={(e) => {
+                        setEmail(e.target.value);
+                        setErrors((prev) => ({ ...prev, email: undefined }));
+                      }}
+                      disabled={loading}
+                      className="mt-2 h-12"
+                    />
+                    {errors.email && (
+                      <p className="text-sm text-destructive mt-1.5">{errors.email}</p>
+                    )}
+                  </div>
+
+                  <div>
+                    <Label htmlFor="register-password" className="text-sm font-medium">Slaptažodis</Label>
+                    <div className="relative mt-2">
+                      <Input
+                        id="register-password"
+                        type={showPassword ? 'text' : 'password'}
+                        placeholder="Bent 6 simboliai"
+                        value={password}
+                        onChange={(e) => {
+                          setPassword(e.target.value);
+                          setErrors((prev) => ({ ...prev, password: undefined }));
+                        }}
+                        disabled={loading}
+                        className="h-12 pr-12"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                      >
+                        {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                      </button>
+                    </div>
+                    {errors.password && (
+                      <p className="text-sm text-destructive mt-1.5">{errors.password}</p>
+                    )}
+                  </div>
+
+                  <div>
+                    <Label htmlFor="register-confirm" className="text-sm font-medium">Pakartokite slaptažodį</Label>
+                    <Input
+                      id="register-confirm"
+                      type="password"
+                      placeholder="••••••••"
+                      value={confirmPassword}
+                      onChange={(e) => {
+                        setConfirmPassword(e.target.value);
+                        setErrors((prev) => ({ ...prev, confirm: undefined }));
+                      }}
+                      disabled={loading}
+                      className="mt-2 h-12"
+                    />
+                    {errors.confirm && (
+                      <p className="text-sm text-destructive mt-1.5">{errors.confirm}</p>
+                    )}
+                  </div>
+
+                  <Button type="submit" className="w-full h-12 text-base" disabled={loading}>
+                    {loading ? (
+                      <>
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        Kuriama...
+                      </>
+                    ) : (
+                      <>
+                        <User className="w-4 h-4 mr-2" />
+                        Sukurti paskyrą
+                      </>
+                    )}
+                  </Button>
+                </form>
+
+                <p className="text-xs text-center text-muted-foreground">
+                  Registruodamiesi sutinkate su{' '}
+                  <Link to="/taisykles" className="text-primary hover:underline">
+                    taisyklėmis
+                  </Link>{' '}
+                  ir{' '}
+                  <Link to="/privatumo-politika" className="text-primary hover:underline">
+                    privatumo politika
+                  </Link>
+                </p>
+              </TabsContent>
+            </Tabs>
           </div>
         </div>
       </div>
