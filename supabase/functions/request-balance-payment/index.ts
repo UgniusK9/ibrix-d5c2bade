@@ -6,11 +6,17 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-const log = (step: string, details?: any) => {
-  console.log(`[REQUEST-BALANCE] ${step}`, details ? JSON.stringify(details) : '');
+// Generate request ID for tracing
+const generateRequestId = () => crypto.randomUUID().slice(0, 8);
+
+const log = (requestId: string, step: string, details?: any) => {
+  const timestamp = new Date().toISOString();
+  console.log(`[REQUEST-BALANCE][${requestId}][${timestamp}] ${step}`, details ? JSON.stringify(details) : '');
 };
 
 Deno.serve(async (req) => {
+  const requestId = generateRequestId();
+  
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
@@ -28,6 +34,7 @@ Deno.serve(async (req) => {
     // Verify admin auth
     const authHeader = req.headers.get('authorization');
     if (!authHeader?.startsWith('Bearer ')) {
+      log(requestId, 'No auth header');
       return new Response(JSON.stringify({ error: 'Unauthorized' }), {
         status: 401,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -38,13 +45,14 @@ Deno.serve(async (req) => {
     const { data: { user }, error: authError } = await supabase.auth.getUser(token);
     
     if (authError || !user) {
+      log(requestId, 'Auth failed', { error: authError?.message });
       return new Response(JSON.stringify({ error: 'Unauthorized' }), {
         status: 401,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
 
-    // Check admin role
+    // Check admin role - MUST verify server-side
     const { data: userData } = await supabase
       .from('users')
       .select('role')
@@ -52,6 +60,7 @@ Deno.serve(async (req) => {
       .single();
 
     if (userData?.role !== 'admin') {
+      log(requestId, 'Non-admin access attempt', { userId: user.id, role: userData?.role });
       return new Response(JSON.stringify({ error: 'Admin access required' }), {
         status: 403,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -59,7 +68,7 @@ Deno.serve(async (req) => {
     }
 
     const { orderId } = await req.json();
-    log('Balance payment request', { orderId, adminId: user.id });
+    log(requestId, 'Balance payment request', { orderId, adminId: user.id, adminEmail: user.email });
 
     // Fetch order
     const { data: order, error: orderError } = await supabase
@@ -69,14 +78,22 @@ Deno.serve(async (req) => {
       .single();
 
     if (orderError || !order) {
+      log(requestId, 'Order not found', { orderId, error: orderError });
       return new Response(JSON.stringify({ error: 'Order not found' }), {
         status: 404,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
 
+    log(requestId, 'Order found', { 
+      orderNumber: order.order_number, 
+      status: order.status,
+      balanceEur: order.balance_total_eur 
+    });
+
     // Validate order status
     if (order.status !== 'deposit_paid' && order.status !== 'awaiting_balance') {
+      log(requestId, 'Invalid order status', { status: order.status });
       return new Response(JSON.stringify({ 
         error: `Cannot request balance for order with status: ${order.status}` 
       }), {
@@ -87,13 +104,14 @@ Deno.serve(async (req) => {
 
     // Check if balance already paid
     if (order.balance_paid_at) {
+      log(requestId, 'Balance already paid', { balancePaidAt: order.balance_paid_at });
       return new Response(JSON.stringify({ error: 'Balance already paid' }), {
         status: 400,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
 
-    // Check for existing pending balance payment
+    // Check for existing pending balance payment with valid session
     const { data: existingPayment } = await supabase
       .from('payments')
       .select('stripe_checkout_session_id')
@@ -103,11 +121,10 @@ Deno.serve(async (req) => {
       .maybeSingle();
 
     if (existingPayment?.stripe_checkout_session_id) {
-      // Return existing session URL
       try {
         const existingSession = await stripe.checkout.sessions.retrieve(existingPayment.stripe_checkout_session_id);
         if (existingSession.url && existingSession.status === 'open') {
-          log('Returning existing session', { sessionId: existingSession.id });
+          log(requestId, 'Returning existing valid session', { sessionId: existingSession.id });
           return new Response(JSON.stringify({
             success: true,
             paymentUrl: existingSession.url,
@@ -117,8 +134,7 @@ Deno.serve(async (req) => {
           });
         }
       } catch (e) {
-        // Session expired, create new one
-        log('Existing session expired, creating new', e);
+        log(requestId, 'Existing session expired, creating new', { error: e });
       }
     }
 
@@ -177,10 +193,13 @@ Deno.serve(async (req) => {
       },
     });
 
-    log('Balance checkout session created', { sessionId: session.id });
+    log(requestId, 'Balance checkout session created', { 
+      sessionId: session.id, 
+      url: session.url?.substring(0, 50) + '...' 
+    });
 
     // Create pending payment record
-    await supabase.from('payments').insert({
+    const { error: paymentError } = await supabase.from('payments').insert({
       order_id: orderId,
       type: 'balance',
       status: 'pending',
@@ -188,15 +207,37 @@ Deno.serve(async (req) => {
       stripe_checkout_session_id: session.id,
     });
 
+    if (paymentError) {
+      log(requestId, 'Failed to create payment record', paymentError);
+    }
+
     // Update order status to awaiting_balance
-    await supabase
+    const { error: updateError } = await supabase
       .from('orders')
       .update({ status: 'awaiting_balance' })
       .eq('id', orderId);
 
+    if (updateError) {
+      log(requestId, 'Failed to update order status', updateError);
+    }
+
+    // Track balance_requested event
+    await supabase.from('events').insert({
+      name: 'balance_requested',
+      user_id: order.user_id,
+      properties: {
+        order_id: orderId,
+        order_number: order.order_number,
+        balance_eur: order.balance_total_eur,
+        requested_by: user.id,
+      },
+    });
+
+    log(requestId, 'Balance requested event tracked');
+
     // Send email with payment link
     try {
-      await fetch(
+      const emailResponse = await fetch(
         `${Deno.env.get('SUPABASE_URL')}/functions/v1/send-email`,
         {
           method: 'POST',
@@ -214,9 +255,14 @@ Deno.serve(async (req) => {
           }),
         }
       );
-      log('Balance request email sent');
+      const emailData = await emailResponse.json();
+      log(requestId, 'Balance request email sent', { 
+        status: emailResponse.status, 
+        success: emailData.success,
+        fallback: emailData.fallback 
+      });
     } catch (emailError) {
-      log('Email send failed (non-blocking)', emailError);
+      log(requestId, 'Email send failed (non-blocking)', emailError);
     }
 
     return new Response(JSON.stringify({
@@ -227,7 +273,7 @@ Deno.serve(async (req) => {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   } catch (error: any) {
-    log('Error', error);
+    log(requestId, 'Error', { error: error.message, stack: error.stack });
     return new Response(JSON.stringify({ error: error.message }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },

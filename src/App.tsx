@@ -28,6 +28,7 @@ import Admin from "./pages/Admin";
 import SiuntosSekimas from "./pages/SiuntosSekimas";
 import Auth from "./pages/Auth";
 import Account from "./pages/Account";
+import AdminVerification from "./pages/AdminVerification";
 
 const queryClient = new QueryClient();
 
@@ -72,6 +73,11 @@ const App = () => (
               <Route path="/admin" element={
                 <ProtectedRoute requireAdmin>
                   <Admin />
+                </ProtectedRoute>
+              } />
+              <Route path="/admin/verification" element={
+                <ProtectedRoute requireAdmin>
+                  <AdminVerification />
                 </ProtectedRoute>
               } />
               <Route path="/admin/*" element={

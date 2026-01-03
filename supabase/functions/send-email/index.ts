@@ -3,17 +3,22 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-const log = (step: string, details?: any) => {
-  console.log(`[SEND-EMAIL] ${step}`, details ? JSON.stringify(details) : '');
+// Generate request ID for tracing
+const generateRequestId = () => crypto.randomUUID().slice(0, 8);
+
+const log = (requestId: string, step: string, details?: any) => {
+  const timestamp = new Date().toISOString();
+  console.log(`[SEND-EMAIL][${requestId}][${timestamp}] ${step}`, details ? JSON.stringify(details) : '');
 };
 
 // Email templates
 function getDepositConfirmedEmail(data: any): { subject: string; html: string } {
   const { firstName, orderNumber, depositEur, balanceEur, totalEur, hasPreorder, etaWeeksMin, etaWeeksMax, trackingToken, items } = data;
   
+  const baseUrl = 'https://ibrix.lt';
   const trackingUrl = trackingToken 
-    ? `https://ibrix.lt/siuntos-sekimas?token=${trackingToken}`
-    : 'https://ibrix.lt';
+    ? `${baseUrl}/siuntos-sekimas/${orderNumber}?token=${trackingToken}`
+    : baseUrl;
 
   const etaText = hasPreorder && etaWeeksMin && etaWeeksMax
     ? `<p style="color:#666;">Numatomas pristatymas: ${etaWeeksMin}-${etaWeeksMax} sav.</p>`
@@ -159,13 +164,24 @@ function getShippedEmail(data: any): { subject: string; html: string } {
 }
 
 Deno.serve(async (req: Request) => {
+  const requestId = generateRequestId();
+  
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
     const { type, email, ...data } = await req.json();
-    log('Email request received', { type, email });
+    log(requestId, 'Email request received', { type, email, orderNumber: data.orderNumber });
+
+    // Validate email
+    if (!email || !type) {
+      log(requestId, 'Missing required fields', { hasEmail: !!email, hasType: !!type });
+      return new Response(JSON.stringify({ error: 'Missing email or type' }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
 
     // Get email content based on type
     let emailContent: { subject: string; html: string };
@@ -183,7 +199,7 @@ Deno.serve(async (req: Request) => {
         emailContent = getShippedEmail(data);
         break;
       default:
-        log('Unknown email type', { type });
+        log(requestId, 'Unknown email type', { type });
         return new Response(JSON.stringify({ error: 'Unknown email type' }), {
           status: 400,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -194,11 +210,12 @@ Deno.serve(async (req: Request) => {
     const resendApiKey = Deno.env.get('RESEND_API_KEY');
     
     if (!resendApiKey || resendApiKey === 'test' || resendApiKey.length < 10) {
-      // Fallback: Log email content for admin to manually send
-      log('RESEND_API_KEY not configured - email logged for manual sending', {
+      // Fallback: Log email content for manual sending
+      log(requestId, '⚠️ WARNING: RESEND_API_KEY not configured - email logged for manual sending', {
         to: email,
         subject: emailContent.subject,
-        preview: emailContent.html.substring(0, 200),
+        action_required: 'Configure RESEND_API_KEY and verify ibrix.lt domain in Resend dashboard',
+        resend_domain_setup_url: 'https://resend.com/domains',
       });
 
       return new Response(JSON.stringify({
@@ -209,13 +226,23 @@ Deno.serve(async (req: Request) => {
           to: email,
           subject: emailContent.subject,
         },
+        action_required: {
+          step1: 'Go to https://resend.com/domains',
+          step2: 'Add ibrix.lt domain',
+          step3: 'Add DNS records (TXT, CNAME) to your domain',
+          step4: 'Verify domain status shows "Verified"',
+          step5: 'Set RESEND_API_KEY secret in Lovable',
+        },
       }), {
         status: 200,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
 
-    // Send via Resend using fetch API
+    // Determine sender - use resend.dev fallback if domain not verified
+    let fromEmail = 'IBRIX <info@ibrix.lt>';
+    
+    // Try to send via Resend
     const emailResponse = await fetch('https://api.resend.com/emails', {
       method: 'POST',
       headers: {
@@ -223,7 +250,7 @@ Deno.serve(async (req: Request) => {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        from: 'IBRIX <info@ibrix.lt>',
+        from: fromEmail,
         to: [email],
         subject: emailContent.subject,
         html: emailContent.html,
@@ -233,10 +260,54 @@ Deno.serve(async (req: Request) => {
     const emailData = await emailResponse.json();
     
     if (!emailResponse.ok) {
+      // Check if it's a domain verification error
+      if (emailData.message?.includes('verify') || emailData.message?.includes('domain')) {
+        log(requestId, '⚠️ DOMAIN NOT VERIFIED - Trying fallback sender', {
+          error: emailData.message,
+          action_required: 'Verify ibrix.lt domain in Resend: https://resend.com/domains',
+        });
+        
+        // Try with resend.dev fallback
+        const fallbackResponse = await fetch('https://api.resend.com/emails', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${resendApiKey}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            from: 'IBRIX <onboarding@resend.dev>',
+            to: [email],
+            subject: emailContent.subject,
+            html: emailContent.html,
+          }),
+        });
+
+        const fallbackData = await fallbackResponse.json();
+        
+        if (!fallbackResponse.ok) {
+          throw new Error(fallbackData.message || 'Failed to send email via fallback');
+        }
+        
+        log(requestId, 'Email sent via fallback (resend.dev)', { 
+          emailId: fallbackData.id,
+          warning: 'Domain not verified - emails sent from onboarding@resend.dev' 
+        });
+
+        return new Response(JSON.stringify({
+          success: true,
+          emailId: fallbackData.id,
+          warning: 'Domain ibrix.lt not verified. Email sent from resend.dev fallback.',
+          verify_domain: 'https://resend.com/domains',
+        }), {
+          status: 200,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+      
       throw new Error(emailData.message || 'Failed to send email');
     }
 
-    log('Email sent via Resend', emailData);
+    log(requestId, 'Email sent via Resend', { emailId: emailData.id, to: email });
 
     return new Response(JSON.stringify({
       success: true,
@@ -246,7 +317,7 @@ Deno.serve(async (req: Request) => {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   } catch (error: any) {
-    log('Email error', error);
+    log(requestId, 'Email error', { error: error.message, stack: error.stack });
     return new Response(JSON.stringify({
       success: false,
       error: error.message,

@@ -43,3 +43,9 @@ verify_jwt = false
 
 [functions.request-balance-payment]
 verify_jwt = true
+
+[functions.whoami]
+verify_jwt = false
+
+[functions.analytics-config]
+verify_jwt = false

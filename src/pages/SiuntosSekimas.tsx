@@ -1,10 +1,11 @@
 import { useEffect, useState } from "react";
 import { useParams, useSearchParams } from "react-router-dom";
-import { Package, CheckCircle2, Truck, MapPin, AlertCircle, Box, CreditCard, Clock, DollarSign } from "lucide-react";
+import { Package, CheckCircle2, Truck, MapPin, AlertCircle, Box, CreditCard, Clock, DollarSign, Bug } from "lucide-react";
 import { PageLayout } from "@/components/layout/PageLayout";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { TrackingMap } from "@/components/tracking/TrackingMap";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface ShipmentEvent {
   id: string;
@@ -74,6 +75,8 @@ export default function SiuntosSekimas() {
   const { orderId } = useParams();
   const [searchParams] = useSearchParams();
   const token = searchParams.get('token');
+  const showDebug = searchParams.get('debug') === 'true';
+  const { isAdmin } = useAuth();
   
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -464,6 +467,19 @@ export default function SiuntosSekimas() {
                     </div>
                   )}
                 </div>
+              </div>
+            )}
+
+            {/* Admin Debug Panel */}
+            {isAdmin && showDebug && (
+              <div className="bg-card border border-yellow-500/30 rounded-2xl p-6 shadow-premium">
+                <h3 className="font-heading font-semibold mb-4 flex items-center gap-2 text-yellow-600">
+                  <Bug className="w-5 h-5" />
+                  Debug Data (Admin Only)
+                </h3>
+                <pre className="text-xs bg-muted p-3 rounded overflow-x-auto max-h-96">
+                  {JSON.stringify(shipment, null, 2)}
+                </pre>
               </div>
             )}
           </div>

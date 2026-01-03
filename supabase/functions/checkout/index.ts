@@ -7,6 +7,9 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+// Generate request ID for tracing
+const generateRequestId = () => crypto.randomUUID().slice(0, 8);
+
 // Validation schemas
 const shippingAddressSchema = z.object({
   lockerAddress: z.string().max(200).optional(),
@@ -43,15 +46,17 @@ const checkoutSchema = z.object({
   }),
   shippingAddress: shippingAddressSchema,
   notes: z.string().max(500, 'Pastabos per ilgos').optional(),
-  // Cart items from localStorage (for anonymous users)
   items: z.array(cartItemSchema).min(1, 'Krepšelis tuščias'),
 });
 
-const log = (step: string, details?: any) => {
-  console.log(`[CHECKOUT] ${step}`, details ? JSON.stringify(details) : '');
+const log = (requestId: string, step: string, details?: any) => {
+  const timestamp = new Date().toISOString();
+  console.log(`[CHECKOUT][${requestId}][${timestamp}] ${step}`, details ? JSON.stringify(details) : '');
 };
 
 Deno.serve(async (req) => {
+  const requestId = generateRequestId();
+  
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
@@ -84,14 +89,18 @@ Deno.serve(async (req) => {
 
   try {
     const rawBody = await req.json();
-    log('Request received', { userId, itemCount: rawBody.items?.length });
+    log(requestId, 'Request received', { 
+      userId, 
+      itemCount: rawBody.items?.length,
+      email: rawBody.email?.substring(0, 5) + '***' 
+    });
     
     // Validate request body
     const validationResult = checkoutSchema.safeParse(rawBody);
     
     if (!validationResult.success) {
       const firstError = validationResult.error.issues[0];
-      log('Validation error', validationResult.error.issues);
+      log(requestId, 'Validation error', validationResult.error.issues);
       return new Response(
         JSON.stringify({ 
           error: firstError.message,
@@ -112,7 +121,7 @@ Deno.serve(async (req) => {
       .eq('status', 'active');
 
     if (productsError || !products?.length) {
-      log('Products fetch error', productsError);
+      log(requestId, 'Products fetch error', productsError);
       return new Response(
         JSON.stringify({ error: 'Produktai nerasti' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -123,6 +132,7 @@ Deno.serve(async (req) => {
     const productMap = new Map(products.map(p => [p.id, p]));
     for (const item of body.items) {
       if (!productMap.has(item.productId)) {
+        log(requestId, 'Product not found', { productId: item.productId });
         return new Response(
           JSON.stringify({ error: `Produktas nerastas: ${item.productId}` }),
           { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -178,11 +188,17 @@ Deno.serve(async (req) => {
     const totalEur = subtotalEur + shippingEur - discountEur;
     const balanceTotalEur = totalEur - depositTotalEur;
 
-    log('Totals calculated', { subtotalEur, depositTotalEur, balanceTotalEur, totalEur });
+    log(requestId, 'Totals calculated', { 
+      subtotalEur, 
+      depositTotalEur, 
+      balanceTotalEur, 
+      totalEur,
+      hasPreorder 
+    });
 
     // Generate order number
     const { data: orderNumber } = await supabase.rpc('generate_order_number');
-    log('Order number generated', { orderNumber });
+    log(requestId, 'Order number generated', { orderNumber });
 
     // Create order
     const { data: order, error: orderError } = await supabase
@@ -213,11 +229,11 @@ Deno.serve(async (req) => {
       .single();
 
     if (orderError) {
-      log('Order creation error', orderError);
+      log(requestId, 'Order creation error', orderError);
       throw new Error(`Nepavyko sukurti užsakymo: ${orderError.message}`);
     }
 
-    log('Order created', { orderId: order.id });
+    log(requestId, 'Order created', { orderId: order.id, orderNumber: order.order_number });
 
     // Create order items
     const orderItems = orderItemsData.map(item => ({
@@ -236,12 +252,12 @@ Deno.serve(async (req) => {
       .insert(orderItems);
 
     if (itemsError) {
-      log('Order items creation error', itemsError);
+      log(requestId, 'Order items creation error', itemsError);
       await supabase.from('orders').delete().eq('id', order.id);
       throw new Error(`Nepavyko sukurti užsakymo prekių: ${itemsError.message}`);
     }
 
-    log('Order items created', { count: orderItems.length });
+    log(requestId, 'Order items created', { count: orderItems.length });
 
     // Create Stripe Checkout Session for DEPOSIT only
     const lineItems = orderItemsData.map(item => ({
@@ -296,7 +312,11 @@ Deno.serve(async (req) => {
       },
     });
 
-    log('Stripe session created', { sessionId: session.id, url: session.url });
+    log(requestId, 'Stripe session created', { 
+      sessionId: session.id, 
+      url: session.url?.substring(0, 50) + '...',
+      depositAmountCents: Math.round(depositTotalEur * 100)
+    });
 
     return new Response(
       JSON.stringify({
@@ -316,7 +336,7 @@ Deno.serve(async (req) => {
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   } catch (error: unknown) {
-    log('Checkout error', error);
+    log(requestId, 'Checkout error', error);
     const message = error instanceof Error ? error.message : 'Checkout klaida';
     return new Response(
       JSON.stringify({ error: message }),
