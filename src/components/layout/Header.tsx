@@ -1,11 +1,12 @@
 import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { Menu, ShoppingCart, Truck, Clock, Headphones, ArrowRight } from "lucide-react";
+import { Menu, ShoppingCart, Truck, Clock, Headphones, ArrowRight, User, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { useCartStore } from "@/stores/cartStore";
 import { CartDrawer } from "@/components/cart/CartDrawer";
+import { useAuth } from "@/contexts/AuthContext";
 import logo from "@/assets/logo.png";
 
 const navigation = [
@@ -27,6 +28,7 @@ export function Header() {
   const location = useLocation();
   const totalItems = useCartStore((state) => state.getTotalItems());
   const setCartOpen = useCartStore((state) => state.setOpen);
+  const { user, isAdmin, signOut } = useAuth();
 
   const isActive = (href: string) => location.pathname === href;
 
@@ -87,6 +89,29 @@ export function Header() {
                 </Link>
               </Button>
 
+              {/* User Account */}
+              {user ? (
+                <div className="hidden lg:flex items-center gap-1">
+                  {isAdmin && (
+                    <Button asChild variant="ghost" size="sm">
+                      <Link to="/admin">Admin</Link>
+                    </Button>
+                  )}
+                  <Button asChild variant="ghost" size="icon">
+                    <Link to="/account">
+                      <User className="h-5 w-5" />
+                    </Link>
+                  </Button>
+                </div>
+              ) : (
+                <Button asChild variant="ghost" size="sm" className="hidden lg:flex">
+                  <Link to="/auth">
+                    <User className="h-4 w-4 mr-2" />
+                    Prisijungti
+                  </Link>
+                </Button>
+              )}
+
               {/* Cart */}
               <Button
                 variant="ghost"
@@ -127,13 +152,42 @@ export function Header() {
                     ))}
                   </nav>
                   
-                  <div className="mt-6 px-4">
+                  <div className="mt-6 px-4 space-y-3">
                     <Button asChild className="w-full bg-accent hover:bg-accent/90 text-accent-foreground">
                       <Link to="/varikliai" onClick={() => setMobileMenuOpen(false)}>
                         Peržiūrėti variklius
                         <ArrowRight className="ml-2 h-4 w-4" />
                       </Link>
                     </Button>
+                    
+                    {user ? (
+                      <>
+                        <Button asChild variant="outline" className="w-full">
+                          <Link to="/account" onClick={() => setMobileMenuOpen(false)}>
+                            <User className="h-4 w-4 mr-2" />
+                            Mano paskyra
+                          </Link>
+                        </Button>
+                        {isAdmin && (
+                          <Button asChild variant="outline" className="w-full">
+                            <Link to="/admin" onClick={() => setMobileMenuOpen(false)}>
+                              Admin
+                            </Link>
+                          </Button>
+                        )}
+                        <Button variant="ghost" className="w-full" onClick={() => { signOut(); setMobileMenuOpen(false); }}>
+                          <LogOut className="h-4 w-4 mr-2" />
+                          Atsijungti
+                        </Button>
+                      </>
+                    ) : (
+                      <Button asChild variant="outline" className="w-full">
+                        <Link to="/auth" onClick={() => setMobileMenuOpen(false)}>
+                          <User className="h-4 w-4 mr-2" />
+                          Prisijungti
+                        </Link>
+                      </Button>
+                    )}
                   </div>
                 </SheetContent>
               </Sheet>

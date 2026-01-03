@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
 import { ArrowLeft, Package, Clock, Truck, RotateCcw, Shield, ShoppingCart, Puzzle, HelpCircle } from "lucide-react";
 import { PageLayout } from "@/components/layout/PageLayout";
@@ -6,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { mockProducts, getMockProduct, formatMockPrice } from "@/data/mockProducts";
 import { useCartStore } from "@/stores/cartStore";
 import { toast } from "sonner";
+import { trackViewContentEvent } from "@/hooks/useAnalytics";
 import {
   Accordion,
   AccordionContent,
@@ -54,6 +56,19 @@ export default function Produktas() {
 
   // Get product from mock data
   const product = handle ? getMockProduct(handle) : undefined;
+
+  // Track ViewContent when product loads
+  useEffect(() => {
+    if (product) {
+      trackViewContentEvent({
+        id: product.id,
+        name: product.title,
+        price: product.price * 100, // convert to cents
+        currency: product.currency,
+        category: 'engines',
+      });
+    }
+  }, [product]);
 
   const handleAddToCart = () => {
     if (product) {
