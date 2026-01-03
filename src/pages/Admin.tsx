@@ -1,10 +1,11 @@
 import { useEffect, useState } from "react";
-import { Package, Clock, CheckCircle2, XCircle, AlertCircle, ChevronRight, RefreshCw, CreditCard, DollarSign } from "lucide-react";
+import { Package, Clock, CheckCircle2, XCircle, AlertCircle, ChevronRight, RefreshCw, CreditCard, DollarSign, Copy, ExternalLink } from "lucide-react";
 import { PageLayout } from "@/components/layout/PageLayout";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { ShipmentManager } from "@/components/admin/ShipmentManager";
+import { toast } from "sonner";
 import {
   Table,
   TableBody,
@@ -70,6 +71,15 @@ interface Shipment {
   delivered_at: string | null;
 }
 
+interface Payment {
+  id: string;
+  type: 'deposit' | 'balance' | 'refund';
+  status: 'pending' | 'succeeded' | 'failed';
+  amount_eur: number;
+  stripe_checkout_session_id: string | null;
+  created_at: string;
+}
+
 const formatPrice = (amount: number) => {
   return new Intl.NumberFormat('lt-LT', {
     style: 'currency',
@@ -83,7 +93,10 @@ export default function Admin() {
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [orderItems, setOrderItems] = useState<OrderItem[]>([]);
   const [orderShipment, setOrderShipment] = useState<Shipment | null>(null);
+  const [orderPayments, setOrderPayments] = useState<Payment[]>([]);
   const [detailsOpen, setDetailsOpen] = useState(false);
+  const [requestingBalance, setRequestingBalance] = useState(false);
+  const [balancePaymentUrl, setBalancePaymentUrl] = useState<string | null>(null);
 
   const loadOrders = async () => {
     setLoading(true);
@@ -112,6 +125,8 @@ export default function Admin() {
     setDetailsOpen(true);
     setOrderShipment(null);
     setOrderItems([]);
+    setOrderPayments([]);
+    setBalancePaymentUrl(null);
 
     try {
       const { data, error } = await supabase.functions.invoke('admin', {
@@ -122,6 +137,7 @@ export default function Admin() {
       if (data) {
         setOrderItems(data.items || []);
         setOrderShipment(data.shipment || null);
+        setOrderPayments(data.payments || []);
       }
     } catch (e) {
       console.error('Failed to load order details:', e);
@@ -139,10 +155,47 @@ export default function Admin() {
       if (error) throw error;
       if (data) {
         setOrderShipment(data.shipment || null);
+        setOrderPayments(data.payments || []);
+        // Refresh order status
+        setSelectedOrder(prev => prev ? { ...prev, status: data.order?.status || prev.status } : null);
       }
     } catch (e) {
       console.error('Failed to refresh order details:', e);
     }
+  };
+
+  const requestBalancePayment = async () => {
+    if (!selectedOrder) return;
+    
+    setRequestingBalance(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('request-balance-payment', {
+        body: { orderId: selectedOrder.id }
+      });
+
+      if (error) throw error;
+      
+      if (data?.success && data?.paymentUrl) {
+        setBalancePaymentUrl(data.paymentUrl);
+        toast.success('Mokėjimo nuoroda sukurta!');
+        // Refresh order details to show updated status
+        await refreshOrderDetails();
+        // Also refresh the orders list
+        await loadOrders();
+      } else {
+        toast.error(data?.error || 'Nepavyko sukurti mokėjimo nuorodos');
+      }
+    } catch (e: any) {
+      console.error('Failed to request balance payment:', e);
+      toast.error(e.message || 'Klaida kuriant mokėjimo nuorodą');
+    } finally {
+      setRequestingBalance(false);
+    }
+  };
+
+  const copyToClipboard = (text: string) => {
+    navigator.clipboard.writeText(text);
+    toast.success('Nukopijuota!');
   };
 
   const getStatusBadge = (status: OrderStatus) => {
@@ -347,20 +400,94 @@ export default function Admin() {
                     </div>
                     <div>
                       <span className="text-sm text-muted-foreground">Likutis</span>
-                      <p className="font-semibold text-yellow-600">{formatPrice(selectedOrder.balance_total_eur)}</p>
-                      {selectedOrder.balance_paid_at && (
-                        <p className="text-xs text-muted-foreground">
-                          Sumokėtas: {formatDate(selectedOrder.balance_paid_at)}
+                      <p className={`font-semibold ${selectedOrder.balance_paid_at ? 'text-green-600' : 'text-yellow-600'}`}>
+                        {formatPrice(selectedOrder.balance_total_eur)}
+                      </p>
+                      {selectedOrder.balance_paid_at ? (
+                        <p className="text-xs text-green-600">
+                          ✓ Sumokėtas: {formatDate(selectedOrder.balance_paid_at)}
+                        </p>
+                      ) : (
+                        <p className="text-xs text-yellow-600">
+                          Nesumokėtas
                         </p>
                       )}
                     </div>
                   </div>
                   
-                  {selectedOrder.status === 'awaiting_balance' && (
-                    <Button size="sm" className="mt-3 w-full" variant="outline">
-                      <CreditCard className="w-4 h-4 mr-2" />
-                      Siųsti likučio apmokėjimo prašymą
-                    </Button>
+                  {/* Request Balance Button - show for deposit_paid or awaiting_balance */}
+                  {(selectedOrder.status === 'deposit_paid' || selectedOrder.status === 'awaiting_balance') && !selectedOrder.balance_paid_at && (
+                    <div className="mt-4 space-y-3">
+                      <Button 
+                        size="sm" 
+                        className="w-full" 
+                        onClick={requestBalancePayment}
+                        disabled={requestingBalance}
+                      >
+                        {requestingBalance ? (
+                          <>
+                            <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                            Kuriama nuoroda...
+                          </>
+                        ) : (
+                          <>
+                            <CreditCard className="w-4 h-4 mr-2" />
+                            Generuoti likučio apmokėjimo nuorodą
+                          </>
+                        )}
+                      </Button>
+                      
+                      {balancePaymentUrl && (
+                        <div className="bg-background border border-border rounded-lg p-3 space-y-2">
+                          <p className="text-xs text-muted-foreground">Mokėjimo nuoroda:</p>
+                          <div className="flex gap-2">
+                            <input 
+                              type="text" 
+                              readOnly 
+                              value={balancePaymentUrl}
+                              className="flex-1 text-xs bg-muted px-2 py-1 rounded font-mono truncate"
+                            />
+                            <Button 
+                              size="sm" 
+                              variant="outline"
+                              onClick={() => copyToClipboard(balancePaymentUrl)}
+                            >
+                              <Copy className="w-3 h-3" />
+                            </Button>
+                            <Button 
+                              size="sm" 
+                              variant="outline"
+                              onClick={() => window.open(balancePaymentUrl, '_blank')}
+                            >
+                              <ExternalLink className="w-3 h-3" />
+                            </Button>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Show payments list */}
+                  {orderPayments.length > 0 && (
+                    <div className="mt-4 pt-3 border-t border-border">
+                      <p className="text-xs text-muted-foreground mb-2">Mokėjimų istorija:</p>
+                      <div className="space-y-1">
+                        {orderPayments.map((payment) => (
+                          <div key={payment.id} className="flex justify-between text-xs">
+                            <span className="capitalize">
+                              {payment.type === 'deposit' ? 'Depozitas' : payment.type === 'balance' ? 'Likutis' : 'Grąžinimas'}
+                            </span>
+                            <span className={
+                              payment.status === 'succeeded' ? 'text-green-600' : 
+                              payment.status === 'pending' ? 'text-yellow-600' : 
+                              'text-red-600'
+                            }>
+                              {formatPrice(payment.amount_eur)} • {payment.status === 'succeeded' ? '✓' : payment.status === 'pending' ? '⏳' : '✗'}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
                   )}
                 </div>
 

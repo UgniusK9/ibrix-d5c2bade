@@ -6,20 +6,15 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-// Validation schema
+// Validation schema - orderId can be order UUID or order_number
 const trackingRequestSchema = z.object({
-  orderId: z.string().uuid('Neteisingas užsakymo ID formatas'),
-  token: z.string().min(32, 'Neteisingas sekimo kodas').max(128, 'Neteisingas sekimo kodas'),
+  orderId: z.string().min(1, 'Užsakymo ID privalomas'),
+  token: z.string().min(16, 'Neteisingas sekimo kodas').max(128, 'Neteisingas sekimo kodas'),
 });
 
-// Simple hash function for token validation
-async function hashToken(token: string): Promise<string> {
-  const encoder = new TextEncoder();
-  const data = encoder.encode(token);
-  const hashBuffer = await crypto.subtle.digest('SHA-256', data);
-  const hashArray = Array.from(new Uint8Array(hashBuffer));
-  return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-}
+const log = (step: string, details?: any) => {
+  console.log(`[TRACKING] ${step}`, details ? JSON.stringify(details) : '');
+};
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -33,13 +28,14 @@ Deno.serve(async (req) => {
     );
 
     const rawBody = await req.json();
+    log('Request received', { orderId: rawBody.orderId });
     
-    // Validate request body with Zod
+    // Validate request body
     const validationResult = trackingRequestSchema.safeParse(rawBody);
     
     if (!validationResult.success) {
       const firstError = validationResult.error.issues[0];
-      console.log('Validation error:', validationResult.error.issues);
+      log('Validation error', validationResult.error.issues);
       return new Response(
         JSON.stringify({ success: false, error: firstError.message }),
         { status: 400, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
@@ -48,135 +44,128 @@ Deno.serve(async (req) => {
     
     const { orderId, token } = validationResult.data;
 
-    // Hash the provided token and check against stored hash
-    const tokenHash = await hashToken(token);
-
-    const { data: tokenData, error: tokenError } = await supabase
-      .from('tracking_tokens')
-      .select('order_id, expires_at')
-      .eq('order_id', orderId)
-      .eq('token_hash', tokenHash)
+    // First, find the shipment by tracking_token
+    const { data: shipment, error: shipmentError } = await supabase
+      .from('shipments')
+      .select('*, orders!inner(*)')
+      .eq('tracking_token', token)
       .maybeSingle();
 
-    if (tokenError || !tokenData) {
-      console.log('Token validation failed:', tokenError);
+    if (shipmentError || !shipment) {
+      log('Shipment not found by token', { token: token.substring(0, 8) + '...' });
       return new Response(
         JSON.stringify({ success: false, error: 'Nuoroda negalioja arba pasibaigė.' }),
         { status: 403, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
       );
     }
 
-    // Check if token expired
-    if (tokenData.expires_at && new Date(tokenData.expires_at) < new Date()) {
+    // Verify the orderId matches (can be UUID or order_number)
+    const order = shipment.orders;
+    if (order.id !== orderId && order.order_number !== orderId) {
+      log('Order ID mismatch', { expected: order.id, got: orderId });
       return new Response(
-        JSON.stringify({ success: false, error: 'Nuoroda pasibaigė. Susisiekite su mumis.' }),
+        JSON.stringify({ success: false, error: 'Nuoroda negalioja.' }),
         { status: 403, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
       );
     }
 
-    // Update last access time for monitoring (non-blocking, fire-and-forget)
-    (async () => {
-      try {
-        await supabase
-          .from('tracking_tokens')
-          .update({ last_accessed_at: new Date().toISOString() })
-          .eq('order_id', orderId)
-          .eq('token_hash', tokenHash);
-      } catch (err) {
-        console.warn('Failed to update token access time:', err);
-      }
-    })();
+    log('Token validated', { orderId: order.id, orderNumber: order.order_number });
 
-    // Fetch order data
-    const { data: order, error: orderError } = await supabase
-      .from('orders')
-      .select('id, order_number, status, created_at, paid_at')
-      .eq('id', orderId)
-      .single();
-
-    if (orderError || !order) {
-      return new Response(
-        JSON.stringify({ success: false, error: 'Užsakymas nerastas.' }),
-        { status: 404, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
-      );
-    }
-
-    // Fetch shipment data
-    const { data: shipment } = await supabase
-      .from('shipments')
+    // Fetch shipment events
+    const { data: events } = await supabase
+      .from('shipment_events')
       .select('*')
-      .eq('order_id', orderId)
-      .maybeSingle();
+      .eq('shipment_id', shipment.id)
+      .order('occurred_at', { ascending: false });
 
-    // Fetch shipment events if shipment exists
-    let events: any[] = [];
-    if (shipment) {
-      const { data: eventsData } = await supabase
-        .from('shipment_events')
-        .select('*')
-        .eq('shipment_id', shipment.id)
-        .order('occurred_at', { ascending: false });
-      
-      events = eventsData || [];
-    }
-
-    // Fetch order items with prices
+    // Fetch order items
     const { data: orderItems } = await supabase
       .from('order_items')
-      .select('title_snapshot, quantity, unit_price_cents')
-      .eq('order_id', orderId);
+      .select('title_snapshot, quantity, unit_price_eur, unit_deposit_eur')
+      .eq('order_id', order.id);
 
-    // Fetch order totals
-    const { data: orderTotals } = await supabase
-      .from('orders')
-      .select('subtotal_cents, shipping_cents, total_cents')
-      .eq('id', orderId)
-      .single();
+    // Get payments info
+    const { data: payments } = await supabase
+      .from('payments')
+      .select('type, status, amount_eur, created_at')
+      .eq('order_id', order.id)
+      .order('created_at', { ascending: true });
 
     // Get current location from latest carrier event
-    const carrierEvents = events.filter((e: any) => e.source === 'carrier' && e.location);
-    const currentLocation = carrierEvents.length > 0 ? carrierEvents[0].location : null;
+    const carrierEvents = (events || []).filter((e: any) => e.source === 'carrier' && e.location_label);
+    const currentLocation = carrierEvents.length > 0 ? carrierEvents[0].location_label : null;
+    const coordinates = carrierEvents.length > 0 && carrierEvents[0].lat && carrierEvents[0].lng
+      ? { lat: carrierEvents[0].lat, lng: carrierEvents[0].lng }
+      : null;
+
+    // Build deposit/balance info
+    const depositPayment = payments?.find(p => p.type === 'deposit' && p.status === 'succeeded');
+    const balancePayment = payments?.find(p => p.type === 'balance');
 
     // Build response
     const response = {
       success: true,
       data: {
         order_number: order.order_number,
-        status: shipment?.status || 'pending',
-        carrier_code: shipment?.carrier_code || null,
-        tracking_number: shipment?.tracking_number || null,
+        order_status: order.status,
+        shipment_status: shipment.status,
+        carrier_code: shipment.carrier_code,
+        tracking_number: shipment.tracking_number,
         created_at: order.created_at,
-        paid_at: order.paid_at,
-        packed_at: shipment?.packed_at || null,
-        shipped_at: shipment?.shipped_at || null,
-        delivered_at: shipment?.delivered_at || null,
-        last_update: shipment?.updated_at || order.created_at,
+        // Payment info
+        deposit_eur: order.deposit_total_eur,
+        balance_eur: order.balance_total_eur,
+        total_eur: order.total_eur,
+        deposit_paid_at: order.paid_at,
+        balance_paid_at: order.balance_paid_at,
+        // Shipment dates
+        packed_at: shipment.packed_at,
+        shipped_at: shipment.shipped_at,
+        delivered_at: shipment.delivered_at,
+        last_update: shipment.updated_at || order.updated_at,
+        // Location
         current_location: currentLocation,
-        subtotal_cents: orderTotals?.subtotal_cents,
-        shipping_cents: orderTotals?.shipping_cents,
-        total_cents: orderTotals?.total_cents,
-        events: events.map((e: any) => ({
+        coordinates: coordinates,
+        // Preorder info
+        preorder_flag: order.preorder_flag,
+        eta_weeks_min: order.preorder_eta_weeks_min,
+        eta_weeks_max: order.preorder_eta_weeks_max,
+        // Events
+        events: (events || []).map((e: any) => ({
           id: e.id,
           status_code: e.status_code,
           description: e.description,
-          location: e.location,
+          location: e.location_label,
           occurred_at: e.occurred_at,
           source: e.source,
+          lat: e.lat,
+          lng: e.lng,
         })),
+        // Items
         items: (orderItems || []).map((item: any) => ({
           title: item.title_snapshot,
           quantity: item.quantity,
-          unit_price_cents: item.unit_price_cents,
+          unit_price_eur: item.unit_price_eur,
+          unit_deposit_eur: item.unit_deposit_eur,
+        })),
+        // Payments
+        payments: (payments || []).map((p: any) => ({
+          type: p.type,
+          status: p.status,
+          amount_eur: p.amount_eur,
+          created_at: p.created_at,
         })),
       },
     };
+
+    log('Returning tracking data', { orderNumber: order.order_number, status: shipment.status });
 
     return new Response(
       JSON.stringify(response),
       { status: 200, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
     );
   } catch (error) {
-    console.error('Tracking error:', error);
+    log('Error', error);
     return new Response(
       JSON.stringify({ success: false, error: 'Serverio klaida' }),
       { status: 500, headers: { 'Content-Type': 'application/json', ...corsHeaders } }

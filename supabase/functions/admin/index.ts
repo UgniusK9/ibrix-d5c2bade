@@ -143,7 +143,13 @@ Deno.serve(async (req) => {
           .eq('order_id', validatedBody.orderId)
           .maybeSingle();
 
-        return new Response(JSON.stringify({ success: true, order, items: items || [], shipment }), {
+        const { data: payments } = await supabase
+          .from('payments')
+          .select('*')
+          .eq('order_id', validatedBody.orderId)
+          .order('created_at', { ascending: true });
+
+        return new Response(JSON.stringify({ success: true, order, items: items || [], shipment, payments: payments || [] }), {
           headers: { 'Content-Type': 'application/json', ...corsHeaders },
         });
       }
