@@ -10,12 +10,49 @@ const supabase = createClient(
   Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
 );
 
-const log = (step: string, details?: any) => {
-  console.log(`[STRIPE-WEBHOOK] ${step}`, details ? JSON.stringify(details) : '');
+// Generate request ID for tracing
+const generateRequestId = () => crypto.randomUUID().slice(0, 8);
+
+const log = (requestId: string, step: string, details?: any) => {
+  const timestamp = new Date().toISOString();
+  console.log(`[STRIPE-WEBHOOK][${requestId}][${timestamp}] ${step}`, details ? JSON.stringify(details) : '');
 };
 
+// Check if event was already processed (idempotency)
+async function isEventProcessed(requestId: string, eventId: string): Promise<boolean> {
+  const { data, error } = await supabase
+    .from('webhook_events')
+    .select('id')
+    .eq('stripe_event_id', eventId)
+    .maybeSingle();
+  
+  if (error) {
+    log(requestId, 'Idempotency check error', error);
+    return false; // Proceed with caution
+  }
+  
+  return !!data;
+}
+
+// Record event as processed
+async function recordEventProcessed(requestId: string, eventId: string, eventType: string, orderId?: string, summary?: any) {
+  const { error } = await supabase
+    .from('webhook_events')
+    .insert({
+      stripe_event_id: eventId,
+      event_type: eventType,
+      order_id: orderId,
+      payload_summary: summary,
+    });
+  
+  if (error) {
+    log(requestId, 'Failed to record event', error);
+    // Don't throw - this is non-blocking
+  }
+}
+
 // Send email via send-email function (fire-and-forget)
-async function sendEmail(type: string, data: any) {
+async function sendEmail(requestId: string, type: string, data: any) {
   try {
     const response = await fetch(
       `${Deno.env.get('SUPABASE_URL')}/functions/v1/send-email`,
@@ -28,16 +65,15 @@ async function sendEmail(type: string, data: any) {
         body: JSON.stringify({ type, ...data }),
       }
     );
-    log('Email sent', { type, status: response.status });
+    log(requestId, 'Email sent', { type, status: response.status });
   } catch (err) {
-    log('Email send failed (non-blocking)', err);
+    log(requestId, 'Email send failed (non-blocking)', err);
   }
 }
 
 // Track analytics event server-side
-async function trackEvent(name: string, orderId: string, properties: any) {
+async function trackEvent(requestId: string, name: string, orderId: string, properties: any) {
   try {
-    // Get order to find user_id
     const { data: order } = await supabase
       .from('orders')
       .select('user_id')
@@ -52,19 +88,42 @@ async function trackEvent(name: string, orderId: string, properties: any) {
         ...properties,
       },
     });
-    log('Event tracked', { name, orderId });
+    log(requestId, 'Event tracked', { name, orderId });
   } catch (err) {
-    log('Event tracking failed (non-blocking)', err);
+    log(requestId, 'Event tracking failed (non-blocking)', err);
   }
 }
 
 Deno.serve(async (req) => {
+  const requestId = generateRequestId();
+  const url = new URL(req.url);
+  
+  // Health check endpoint
+  if (url.pathname.endsWith('/health') || url.searchParams.has('health')) {
+    const config = {
+      stripe_secret_configured: !!Deno.env.get('STRIPE_SECRET_KEY'),
+      webhook_secret_configured: !!Deno.env.get('STRIPE_WEBHOOK_SECRET'),
+      supabase_url_configured: !!Deno.env.get('SUPABASE_URL'),
+      service_role_configured: !!Deno.env.get('SUPABASE_SERVICE_ROLE_KEY'),
+      resend_configured: !!Deno.env.get('RESEND_API_KEY'),
+    };
+    log(requestId, 'Health check', config);
+    return new Response(JSON.stringify({
+      status: 'ok',
+      timestamp: new Date().toISOString(),
+      config,
+    }), {
+      status: 200,
+      headers: { 'Content-Type': 'application/json' },
+    });
+  }
+  
   const signature = req.headers.get('stripe-signature');
   const webhookSecret = Deno.env.get('STRIPE_WEBHOOK_SECRET');
   
   if (!signature || !webhookSecret) {
-    log('Missing signature or webhook secret');
-    return new Response('Missing signature', { status: 400 });
+    log(requestId, 'Missing signature or webhook secret', { hasSignature: !!signature, hasSecret: !!webhookSecret });
+    return new Response('Missing signature or webhook secret', { status: 400 });
   }
 
   let event: Stripe.Event;
@@ -73,12 +132,25 @@ Deno.serve(async (req) => {
     const body = await req.text();
     event = stripe.webhooks.constructEvent(body, signature, webhookSecret);
   } catch (err: unknown) {
-    log('Webhook signature verification failed', err);
+    log(requestId, 'Webhook signature verification failed', err);
     const errorMessage = err instanceof Error ? err.message : 'Unknown error';
     return new Response(`Webhook Error: ${errorMessage}`, { status: 400 });
   }
 
-  log('Received webhook event', { type: event.type });
+  log(requestId, 'Received webhook event', { 
+    type: event.type, 
+    eventId: event.id,
+    livemode: event.livemode 
+  });
+
+  // IDEMPOTENCY CHECK - Skip if already processed
+  if (await isEventProcessed(requestId, event.id)) {
+    log(requestId, 'Event already processed, skipping', { eventId: event.id });
+    return new Response(JSON.stringify({ received: true, skipped: true }), {
+      status: 200,
+      headers: { 'Content-Type': 'application/json' },
+    });
+  }
 
   try {
     switch (event.type) {
@@ -89,11 +161,17 @@ Deno.serve(async (req) => {
         const orderNumber = session.metadata?.order_number;
 
         if (!orderId) {
-          log('No order_id in session metadata');
+          log(requestId, 'No order_id in session metadata', { sessionId: session.id });
           break;
         }
 
-        log('Processing checkout.session.completed', { orderId, paymentType, orderNumber });
+        log(requestId, 'Processing checkout.session.completed', { 
+          orderId, 
+          paymentType, 
+          orderNumber,
+          sessionId: session.id,
+          paymentIntentId: session.payment_intent 
+        });
 
         if (paymentType === 'deposit') {
           // DEPOSIT PAYMENT - Create order items, shipment, update status
@@ -108,47 +186,66 @@ Deno.serve(async (req) => {
             .eq('id', orderId);
 
           if (updateError) {
-            log('Failed to update order status', updateError);
+            log(requestId, 'Failed to update order status', updateError);
             throw new Error('Failed to update order status');
           }
 
-          // Create payment record
-          await supabase.from('payments').insert({
+          // Create payment record with stripe_event_id for idempotency
+          const { error: paymentError } = await supabase.from('payments').insert({
             order_id: orderId,
             type: 'deposit',
             status: 'succeeded',
             amount_eur: (session.amount_total || 0) / 100,
             stripe_checkout_session_id: session.id,
             stripe_payment_intent_id: session.payment_intent as string,
+            stripe_event_id: event.id,
           });
 
-          // Create shipment with tracking token
+          if (paymentError) {
+            log(requestId, 'Failed to create payment record', paymentError);
+            // Check if it's a duplicate key error (already processed)
+            if (paymentError.code === '23505') {
+              log(requestId, 'Payment already exists, skipping', { eventId: event.id });
+              break;
+            }
+            throw new Error('Failed to create payment record');
+          }
+
+          // Create shipment with tracking token if not exists
           const { data: existingShipment } = await supabase
             .from('shipments')
-            .select('id')
+            .select('id, tracking_token')
             .eq('order_id', orderId)
             .maybeSingle();
 
+          let trackingToken: string | null = existingShipment?.tracking_token || null;
+
           if (!existingShipment) {
-            await supabase.from('shipments').insert({
+            const { data: newShipment } = await supabase.from('shipments').insert({
               order_id: orderId,
               status: 'pending',
-            });
+            }).select('tracking_token').single();
+            
+            trackingToken = newShipment?.tracking_token || null;
+            log(requestId, 'Shipment created', { orderId, hasToken: !!trackingToken });
           }
 
-          // Get shipment for tracking token
-          const { data: shipment } = await supabase
-            .from('shipments')
-            .select('tracking_token')
-            .eq('order_id', orderId)
-            .single();
-
-          log('Deposit payment processed', { orderId, orderNumber });
+          log(requestId, 'Deposit payment processed', { 
+            orderId, 
+            orderNumber,
+            amountEur: (session.amount_total || 0) / 100 
+          });
 
           // Track deposit_paid event
-          await trackEvent('deposit_paid', orderId, {
+          await trackEvent(requestId, 'deposit_paid', orderId, {
             order_number: orderNumber,
             amount_eur: (session.amount_total || 0) / 100,
+            stripe_session_id: session.id,
+          });
+
+          // Track order_created event
+          await trackEvent(requestId, 'order_created', orderId, {
+            order_number: orderNumber,
           });
 
           // Send deposit confirmation email
@@ -159,7 +256,7 @@ Deno.serve(async (req) => {
             .single();
 
           if (order) {
-            await sendEmail('deposit_confirmed', {
+            await sendEmail(requestId, 'deposit_confirmed', {
               email: order.email,
               firstName: order.first_name,
               orderNumber: order.order_number,
@@ -169,10 +266,17 @@ Deno.serve(async (req) => {
               hasPreorder: order.preorder_flag,
               etaWeeksMin: order.preorder_eta_weeks_min,
               etaWeeksMax: order.preorder_eta_weeks_max,
-              trackingToken: shipment?.tracking_token,
+              trackingToken: trackingToken,
               items: order.order_items,
             });
           }
+          
+          // Record event as processed
+          await recordEventProcessed(requestId, event.id, event.type, orderId, {
+            payment_type: 'deposit',
+            amount_eur: (session.amount_total || 0) / 100,
+          });
+
         } else if (paymentType === 'balance') {
           // BALANCE PAYMENT - Update order to balance_paid
           
@@ -185,24 +289,37 @@ Deno.serve(async (req) => {
             .eq('id', orderId);
 
           if (updateError) {
-            log('Failed to update order for balance payment', updateError);
+            log(requestId, 'Failed to update order for balance payment', updateError);
             throw new Error('Failed to update order status');
           }
 
           // Update pending balance payment to succeeded
-          await supabase
+          const { error: paymentUpdateError } = await supabase
             .from('payments')
-            .update({ status: 'succeeded' })
+            .update({ 
+              status: 'succeeded',
+              stripe_payment_intent_id: session.payment_intent as string,
+              stripe_event_id: event.id,
+            })
             .eq('order_id', orderId)
             .eq('type', 'balance')
             .eq('stripe_checkout_session_id', session.id);
 
-          log('Balance payment processed', { orderId, orderNumber });
+          if (paymentUpdateError) {
+            log(requestId, 'Failed to update balance payment', paymentUpdateError);
+          }
 
-          // Track balance_paid and purchase events
-          await trackEvent('balance_paid', orderId, {
+          log(requestId, 'Balance payment processed', { 
+            orderId, 
+            orderNumber,
+            amountEur: (session.amount_total || 0) / 100 
+          });
+
+          // Track balance_paid event
+          await trackEvent(requestId, 'balance_paid', orderId, {
             order_number: orderNumber,
             amount_eur: (session.amount_total || 0) / 100,
+            stripe_session_id: session.id,
           });
 
           // Get full order for purchase event
@@ -213,20 +330,27 @@ Deno.serve(async (req) => {
             .single();
 
           if (order) {
-            await trackEvent('purchase', orderId, {
+            // Track purchase event (full payment complete)
+            await trackEvent(requestId, 'purchase', orderId, {
               order_number: orderNumber,
               total_eur: order.total_eur,
               currency: 'EUR',
             });
 
             // Send balance paid confirmation email
-            await sendEmail('balance_paid', {
+            await sendEmail(requestId, 'balance_paid', {
               email: order.email,
               firstName: order.first_name,
               orderNumber: order.order_number,
               amountEur: order.balance_total_eur,
             });
           }
+          
+          // Record event as processed
+          await recordEventProcessed(requestId, event.id, event.type, orderId, {
+            payment_type: 'balance',
+            amount_eur: (session.amount_total || 0) / 100,
+          });
         }
         break;
       }
@@ -236,14 +360,23 @@ Deno.serve(async (req) => {
         const orderId = paymentIntent.metadata.order_id;
         const paymentType = paymentIntent.metadata.payment_type;
 
+        log(requestId, 'Payment failed', { 
+          orderId, 
+          paymentType,
+          paymentIntentId: paymentIntent.id,
+          errorMessage: paymentIntent.last_payment_error?.message 
+        });
+
         if (orderId) {
-          // Update payment record to failed
           await supabase
             .from('payments')
             .update({ status: 'failed' })
             .eq('stripe_payment_intent_id', paymentIntent.id);
-
-          log('Payment failed', { orderId, paymentType });
+          
+          await recordEventProcessed(requestId, event.id, event.type, orderId, {
+            payment_type: paymentType,
+            error: paymentIntent.last_payment_error?.message,
+          });
         }
         break;
       }
@@ -252,7 +385,12 @@ Deno.serve(async (req) => {
         const charge = event.data.object as Stripe.Charge;
         const paymentIntentId = charge.payment_intent as string;
 
-        // Find order by payment intent
+        log(requestId, 'Refund received', { 
+          paymentIntentId,
+          amountRefunded: charge.amount_refunded,
+          fullyRefunded: charge.refunded 
+        });
+
         const { data: payment } = await supabase
           .from('payments')
           .select('order_id')
@@ -267,6 +405,7 @@ Deno.serve(async (req) => {
             status: 'succeeded',
             amount_eur: (charge.amount_refunded || 0) / 100,
             stripe_payment_intent_id: paymentIntentId,
+            stripe_event_id: event.id,
           });
 
           // Update order status if fully refunded
@@ -277,21 +416,30 @@ Deno.serve(async (req) => {
               .eq('id', payment.order_id);
           }
 
-          log('Refund processed', { orderId: payment.order_id });
+          log(requestId, 'Refund processed', { orderId: payment.order_id });
+          
+          await recordEventProcessed(requestId, event.id, event.type, payment.order_id, {
+            amount_refunded: (charge.amount_refunded || 0) / 100,
+            fully_refunded: charge.refunded,
+          });
         }
         break;
       }
 
       default:
-        log('Unhandled event type', { type: event.type });
+        log(requestId, 'Unhandled event type', { type: event.type });
+        await recordEventProcessed(requestId, event.id, event.type, undefined, { unhandled: true });
     }
 
-    return new Response(JSON.stringify({ received: true }), {
+    return new Response(JSON.stringify({ received: true, requestId }), {
       status: 200,
       headers: { 'Content-Type': 'application/json' },
     });
   } catch (error) {
-    log('Webhook processing error', error);
-    return new Response('Webhook processing failed', { status: 500 });
+    log(requestId, 'Webhook processing error', error);
+    return new Response(JSON.stringify({ error: 'Webhook processing failed', requestId }), { 
+      status: 500,
+      headers: { 'Content-Type': 'application/json' },
+    });
   }
 });

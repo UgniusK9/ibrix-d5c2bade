@@ -6,17 +6,23 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+// Generate request ID for tracing
+const generateRequestId = () => crypto.randomUUID().slice(0, 8);
+
 // Validation schema - orderId can be order UUID or order_number
 const trackingRequestSchema = z.object({
   orderId: z.string().min(1, 'Užsakymo ID privalomas'),
   token: z.string().min(16, 'Neteisingas sekimo kodas').max(128, 'Neteisingas sekimo kodas'),
 });
 
-const log = (step: string, details?: any) => {
-  console.log(`[TRACKING] ${step}`, details ? JSON.stringify(details) : '');
+const log = (requestId: string, step: string, details?: any) => {
+  const timestamp = new Date().toISOString();
+  console.log(`[TRACKING][${requestId}][${timestamp}] ${step}`, details ? JSON.stringify(details) : '');
 };
 
 Deno.serve(async (req) => {
+  const requestId = generateRequestId();
+  
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
@@ -28,14 +34,14 @@ Deno.serve(async (req) => {
     );
 
     const rawBody = await req.json();
-    log('Request received', { orderId: rawBody.orderId });
+    log(requestId, 'Request received', { orderId: rawBody.orderId, tokenPrefix: rawBody.token?.substring(0, 8) });
     
     // Validate request body
     const validationResult = trackingRequestSchema.safeParse(rawBody);
     
     if (!validationResult.success) {
       const firstError = validationResult.error.issues[0];
-      log('Validation error', validationResult.error.issues);
+      log(requestId, 'Validation error', validationResult.error.issues);
       return new Response(
         JSON.stringify({ success: false, error: firstError.message }),
         { status: 400, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
@@ -44,7 +50,7 @@ Deno.serve(async (req) => {
     
     const { orderId, token } = validationResult.data;
 
-    // First, find the shipment by tracking_token
+    // Find the shipment by tracking_token
     const { data: shipment, error: shipmentError } = await supabase
       .from('shipments')
       .select('*, orders!inner(*)')
@@ -52,7 +58,7 @@ Deno.serve(async (req) => {
       .maybeSingle();
 
     if (shipmentError || !shipment) {
-      log('Shipment not found by token', { token: token.substring(0, 8) + '...' });
+      log(requestId, 'Shipment not found by token', { tokenPrefix: token.substring(0, 8), error: shipmentError });
       return new Response(
         JSON.stringify({ success: false, error: 'Nuoroda negalioja arba pasibaigė.' }),
         { status: 403, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
@@ -62,14 +68,14 @@ Deno.serve(async (req) => {
     // Verify the orderId matches (can be UUID or order_number)
     const order = shipment.orders;
     if (order.id !== orderId && order.order_number !== orderId) {
-      log('Order ID mismatch', { expected: order.id, got: orderId });
+      log(requestId, 'Order ID mismatch', { expected: order.id, got: orderId });
       return new Response(
         JSON.stringify({ success: false, error: 'Nuoroda negalioja.' }),
         { status: 403, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
       );
     }
 
-    log('Token validated', { orderId: order.id, orderNumber: order.order_number });
+    log(requestId, 'Token validated', { orderId: order.id, orderNumber: order.order_number });
 
     // Fetch shipment events
     const { data: events } = await supabase
@@ -97,10 +103,6 @@ Deno.serve(async (req) => {
     const coordinates = carrierEvents.length > 0 && carrierEvents[0].lat && carrierEvents[0].lng
       ? { lat: carrierEvents[0].lat, lng: carrierEvents[0].lng }
       : null;
-
-    // Build deposit/balance info
-    const depositPayment = payments?.find(p => p.type === 'deposit' && p.status === 'succeeded');
-    const balancePayment = payments?.find(p => p.type === 'balance');
 
     // Build response
     const response = {
@@ -158,14 +160,19 @@ Deno.serve(async (req) => {
       },
     };
 
-    log('Returning tracking data', { orderNumber: order.order_number, status: shipment.status });
+    log(requestId, 'Returning tracking data', { 
+      orderNumber: order.order_number, 
+      status: shipment.status,
+      itemCount: orderItems?.length || 0,
+      paymentCount: payments?.length || 0
+    });
 
     return new Response(
       JSON.stringify(response),
       { status: 200, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
     );
   } catch (error) {
-    log('Error', error);
+    log(requestId, 'Error', error);
     return new Response(
       JSON.stringify({ success: false, error: 'Serverio klaida' }),
       { status: 500, headers: { 'Content-Type': 'application/json', ...corsHeaders } }

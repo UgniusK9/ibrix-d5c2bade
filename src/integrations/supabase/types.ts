@@ -365,6 +365,7 @@ export type Database = {
           order_id: string
           status: Database["public"]["Enums"]["payment_status"]
           stripe_checkout_session_id: string | null
+          stripe_event_id: string | null
           stripe_payment_intent_id: string | null
           type: Database["public"]["Enums"]["payment_type"]
         }
@@ -375,6 +376,7 @@ export type Database = {
           order_id: string
           status?: Database["public"]["Enums"]["payment_status"]
           stripe_checkout_session_id?: string | null
+          stripe_event_id?: string | null
           stripe_payment_intent_id?: string | null
           type: Database["public"]["Enums"]["payment_type"]
         }
@@ -385,6 +387,7 @@ export type Database = {
           order_id?: string
           status?: Database["public"]["Enums"]["payment_status"]
           stripe_checkout_session_id?: string | null
+          stripe_event_id?: string | null
           stripe_payment_intent_id?: string | null
           type?: Database["public"]["Enums"]["payment_type"]
         }
@@ -674,6 +677,44 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      webhook_events: {
+        Row: {
+          created_at: string
+          event_type: string
+          id: string
+          order_id: string | null
+          payload_summary: Json | null
+          processed_at: string
+          stripe_event_id: string
+        }
+        Insert: {
+          created_at?: string
+          event_type: string
+          id?: string
+          order_id?: string | null
+          payload_summary?: Json | null
+          processed_at?: string
+          stripe_event_id: string
+        }
+        Update: {
+          created_at?: string
+          event_type?: string
+          id?: string
+          order_id?: string | null
+          payload_summary?: Json | null
+          processed_at?: string
+          stripe_event_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "webhook_events_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {
