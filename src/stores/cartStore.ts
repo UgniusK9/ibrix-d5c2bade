@@ -9,6 +9,7 @@ export interface CartItem {
   title: string;
   image: string;
   price: number; // price in cents
+  deposit: number; // deposit in cents (for preorders)
   currency: string;
   quantity: number;
   status: 'in-stock' | 'pre-order';
@@ -29,6 +30,7 @@ interface CartStore {
   setOpen: (open: boolean) => void;
   getTotalItems: () => number;
   getTotalPrice: () => number;
+  getTotalDeposit: () => number;
 }
 
 export const useCartStore = create<CartStore>()(
@@ -52,12 +54,18 @@ export const useCartStore = create<CartStore>()(
             )
           });
         } else {
+          // Calculate deposit (30% for preorder, or use product.deposit if available)
+          const depositAmount = product.status === 'pre-order' 
+            ? Math.round(product.price * 0.3) 
+            : product.price;
+          
           const newItem: CartItem = {
             productId: product.id,
             productHandle: product.handle,
             title: product.title,
             image: product.image,
-            price: product.price,
+            price: Math.round(product.price * 100), // Convert to cents
+            deposit: Math.round(depositAmount * 100), // Convert to cents
             currency: product.currency,
             quantity,
             status: product.status,
@@ -114,6 +122,14 @@ export const useCartStore = create<CartStore>()(
           const price = item?.price || 0;
           const quantity = item?.quantity || 0;
           return sum + (price * quantity);
+        }, 0);
+      },
+
+      getTotalDeposit: () => {
+        return get().items.reduce((sum, item) => {
+          const deposit = item?.deposit || 0;
+          const quantity = item?.quantity || 0;
+          return sum + (deposit * quantity);
         }, 0);
       },
     }),

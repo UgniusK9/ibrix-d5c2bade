@@ -37,3 +37,9 @@ verify_jwt = false
 
 [functions.admin]
 verify_jwt = false
+
+[functions.send-email]
+verify_jwt = false
+
+[functions.request-balance-payment]
+verify_jwt = true
