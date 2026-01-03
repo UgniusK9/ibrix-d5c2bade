@@ -1,60 +1,145 @@
 import { CookieBanner } from './CookieBanner';
 import { CookieSettingsModal } from './CookieSettingsModal';
-import { useHasConsent } from '@/stores/cookieConsentStore';
-import { useEffect } from 'react';
+import { useHasConsent, useCookieConsentStore } from '@/stores/cookieConsentStore';
+import { useEffect, useState } from 'react';
+import { supabase } from '@/integrations/supabase/client';
+
+interface AnalyticsConfig {
+  gaId: string | null;
+  metaPixelId: string | null;
+}
+
+// Declare global types for analytics
+declare global {
+  interface Window {
+    dataLayer: unknown[];
+    gtag: (...args: unknown[]) => void;
+    fbq: (...args: unknown[]) => void;
+    _fbq: unknown;
+  }
+}
 
 // Script injection helper
-const injectScript = (src: string, id: string) => {
-  if (document.getElementById(id)) return;
-  
-  const script = document.createElement('script');
-  script.id = id;
-  script.src = src;
-  script.async = true;
-  document.head.appendChild(script);
+const injectScript = (src: string, id: string): Promise<void> => {
+  return new Promise((resolve, reject) => {
+    if (document.getElementById(id)) {
+      resolve();
+      return;
+    }
+    
+    const script = document.createElement('script');
+    script.id = id;
+    script.src = src;
+    script.async = true;
+    script.onload = () => resolve();
+    script.onerror = () => reject(new Error(`Failed to load script: ${src}`));
+    document.head.appendChild(script);
+  });
 };
 
-// Analytics script loader (placeholder - replace with actual IDs when needed)
+// Google Analytics loader
+const loadGoogleAnalytics = async (gaId: string) => {
+  try {
+    // Initialize dataLayer
+    window.dataLayer = window.dataLayer || [];
+    window.gtag = function gtag() {
+      window.dataLayer.push(arguments);
+    };
+    window.gtag('js', new Date());
+    window.gtag('config', gaId, {
+      anonymize_ip: true, // GDPR compliance
+      cookie_flags: 'SameSite=Lax;Secure',
+    });
+    
+    // Load the GA script
+    await injectScript(`https://www.googletagmanager.com/gtag/js?id=${gaId}`, 'ga-script');
+    console.log('[Cookies] Google Analytics loaded:', gaId);
+  } catch (error) {
+    console.error('[Cookies] Failed to load Google Analytics:', error);
+  }
+};
+
+// Meta Pixel loader
+const loadMetaPixel = (pixelId: string) => {
+  try {
+    // Meta Pixel base code
+    const f = window;
+    const b = document;
+    const e = 'script';
+    
+    if (f.fbq) return;
+    
+    const n: any = f.fbq = function() {
+      n.callMethod ? n.callMethod.apply(n, arguments) : n.queue.push(arguments);
+    };
+    
+    if (!f._fbq) f._fbq = n;
+    n.push = n;
+    n.loaded = true;
+    n.version = '2.0';
+    n.queue = [];
+    
+    const t = b.createElement(e) as HTMLScriptElement;
+    t.async = true;
+    t.src = 'https://connect.facebook.net/en_US/fbevents.js';
+    t.id = 'meta-pixel-script';
+    
+    const s = b.getElementsByTagName(e)[0];
+    if (s && s.parentNode) {
+      s.parentNode.insertBefore(t, s);
+    }
+    
+    window.fbq('init', pixelId);
+    window.fbq('track', 'PageView');
+    
+    console.log('[Cookies] Meta Pixel loaded:', pixelId);
+  } catch (error) {
+    console.error('[Cookies] Failed to load Meta Pixel:', error);
+  }
+};
+
+// Analytics script loader component
 function AnalyticsScripts() {
   const hasAnalyticsConsent = useHasConsent('analytics');
   const hasMarketingConsent = useHasConsent('marketing');
+  const consent = useCookieConsentStore((state) => state.consent);
+  const [config, setConfig] = useState<AnalyticsConfig | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
   
+  // Fetch analytics config from edge function
   useEffect(() => {
-    // Only load analytics scripts if user consented
+    const fetchConfig = async () => {
+      try {
+        const { data, error } = await supabase.functions.invoke('analytics-config');
+        if (error) throw error;
+        setConfig(data);
+      } catch (error) {
+        console.error('[Cookies] Failed to fetch analytics config:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    fetchConfig();
+  }, []);
+  
+  // Load Google Analytics when consent is given
+  useEffect(() => {
+    if (isLoading || !config?.gaId || !consent) return;
+    
     if (hasAnalyticsConsent) {
-      // Example: Google Analytics
-      // Uncomment and replace GA_MEASUREMENT_ID when ready
-      /*
-      window.dataLayer = window.dataLayer || [];
-      function gtag(){dataLayer.push(arguments);}
-      gtag('js', new Date());
-      gtag('config', 'GA_MEASUREMENT_ID');
-      injectScript('https://www.googletagmanager.com/gtag/js?id=GA_MEASUREMENT_ID', 'ga-script');
-      */
-      console.log('[Cookies] Analytics consent given - scripts would load here');
+      loadGoogleAnalytics(config.gaId);
     }
-  }, [hasAnalyticsConsent]);
+  }, [hasAnalyticsConsent, config, consent, isLoading]);
   
+  // Load Meta Pixel when consent is given
   useEffect(() => {
-    // Only load marketing scripts if user consented
+    if (isLoading || !config?.metaPixelId || !consent) return;
+    
     if (hasMarketingConsent) {
-      // Example: Meta Pixel
-      // Uncomment and replace PIXEL_ID when ready
-      /*
-      !function(f,b,e,v,n,t,s)
-      {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
-      n.callMethod.apply(n,arguments):n.queue.push(arguments)};
-      if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
-      n.queue=[];t=b.createElement(e);t.async=!0;
-      t.src=v;s=b.getElementsByTagName(e)[0];
-      s.parentNode.insertBefore(t,s)}(window, document,'script',
-      'https://connect.facebook.net/en_US/fbevents.js');
-      fbq('init', 'PIXEL_ID');
-      fbq('track', 'PageView');
-      */
-      console.log('[Cookies] Marketing consent given - scripts would load here');
+      loadMetaPixel(config.metaPixelId);
     }
-  }, [hasMarketingConsent]);
+  }, [hasMarketingConsent, config, consent, isLoading]);
   
   return null;
 }
