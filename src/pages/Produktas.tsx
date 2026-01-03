@@ -1,10 +1,10 @@
 import { useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
-import { ArrowLeft, Package, Clock, Truck, RotateCcw, Shield, ShoppingCart, Puzzle, HelpCircle } from "lucide-react";
+import { ArrowLeft, Package, Clock, Truck, RotateCcw, Shield, ShoppingCart, Puzzle, HelpCircle, Loader2 } from "lucide-react";
 import { PageLayout } from "@/components/layout/PageLayout";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { mockProducts, getMockProduct, formatMockPrice } from "@/data/mockProducts";
+import { useProduct, formatPrice, getEtaString, getProductImage } from "@/hooks/useProducts";
 import { useCartStore } from "@/stores/cartStore";
 import { toast } from "sonner";
 import { trackViewContentEvent } from "@/hooks/useAnalytics";
@@ -19,13 +19,6 @@ const trustItems = [
   { icon: Truck, text: "Nemokamas pristatymas" },
   { icon: RotateCcw, text: "14 d. grąžinimas" },
   { icon: Puzzle, text: "Trūkstamos detalės – nemokamai" },
-];
-
-const productSpecs = [
-  { label: "Detalių skaičius", value: "2899 vnt." },
-  { label: "Sudėtingumas", value: "Pažengusiems" },
-  { label: "Amžiaus grupė", value: "16+" },
-  { label: "Surinkimo laikas", value: "~20–30 val." },
 ];
 
 const boxContents = [
@@ -53,9 +46,7 @@ const productFAQ = [
 export default function Produktas() {
   const { handle } = useParams<{ handle: string }>();
   const addItem = useCartStore((state) => state.addItem);
-
-  // Get product from mock data
-  const product = handle ? getMockProduct(handle) : undefined;
+  const { data: product, isLoading, error } = useProduct(handle || '');
 
   // Track ViewContent when product loads
   useEffect(() => {
@@ -63,9 +54,9 @@ export default function Produktas() {
       trackViewContentEvent({
         id: product.id,
         name: product.title,
-        price: product.price * 100, // convert to cents
-        currency: product.currency,
-        category: 'engines',
+        price: product.price_eur * 100, // convert to cents
+        currency: 'EUR',
+        category: product.category,
       });
     }
   }, [product]);
@@ -80,8 +71,21 @@ export default function Produktas() {
     }
   };
 
+  // Loading state
+  if (isLoading) {
+    return (
+      <PageLayout>
+        <div className="container py-16">
+          <div className="flex items-center justify-center">
+            <Loader2 className="w-8 h-8 animate-spin text-primary" />
+          </div>
+        </div>
+      </PageLayout>
+    );
+  }
+
   // Show not found if product doesn't exist
-  if (!product) {
+  if (error || !product) {
     return (
       <PageLayout>
         <div className="container py-16">
@@ -102,8 +106,17 @@ export default function Produktas() {
     );
   }
 
-  const isPreOrder = product.status === "pre-order";
-  const eta = product.eta;
+  const isPreOrder = product.stock_status === 'preorder';
+  const eta = getEtaString(product);
+  const image = getProductImage(product);
+  const detailsCount = (product.details_json as Record<string, unknown>)?.detailsCount as number || 0;
+
+  const productSpecs = [
+    { label: "Detalių skaičius", value: detailsCount > 0 ? `${detailsCount} vnt.` : "—" },
+    { label: "Sudėtingumas", value: "Pažengusiems" },
+    { label: "Amžiaus grupė", value: "16+" },
+    { label: "Surinkimo laikas", value: "~20–30 val." },
+  ];
 
   return (
     <PageLayout>
@@ -123,7 +136,7 @@ export default function Produktas() {
           <div className="space-y-4">
             <div className="aspect-square rounded-2xl overflow-hidden bg-gradient-to-br from-secondary/30 to-muted/20 border border-border">
               <img
-                src={product.image}
+                src={image}
                 alt={product.title}
                 className="w-full h-full object-cover"
               />
@@ -142,7 +155,7 @@ export default function Produktas() {
 
             {/* Price */}
             <p className="font-heading text-3xl font-bold text-accent mb-4">
-              {formatMockPrice(product.price, product.currency)}
+              {formatPrice(product.price_eur)}
             </p>
 
             {/* Status Badge */}
@@ -150,10 +163,12 @@ export default function Produktas() {
               <Badge className={`text-sm px-3 py-1 ${isPreOrder ? "bg-primary text-primary-foreground" : "bg-success text-success-foreground"}`}>
                 {isPreOrder ? "PRE-ORDER" : "SANDĖLYJE"}
               </Badge>
-              <span className="flex items-center gap-1.5 text-sm text-muted-foreground">
-                <Package className="w-4 h-4" />
-                {product.detailsCount} detalių
-              </span>
+              {detailsCount > 0 && (
+                <span className="flex items-center gap-1.5 text-sm text-muted-foreground">
+                  <Package className="w-4 h-4" />
+                  {detailsCount} detalių
+                </span>
+              )}
             </div>
 
             {/* ETA Block */}
@@ -199,9 +214,11 @@ export default function Produktas() {
             )}
 
             {/* Short Description */}
-            <p className="text-muted-foreground mt-6 leading-relaxed">
-              {product.description}
-            </p>
+            {product.description && (
+              <p className="text-muted-foreground mt-6 leading-relaxed">
+                {product.description}
+              </p>
+            )}
           </div>
         </div>
 

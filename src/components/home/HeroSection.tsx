@@ -1,12 +1,14 @@
 import { Link } from "react-router-dom";
-import { ArrowRight, Truck, RotateCcw, Shield, Wrench, ChevronDown } from "lucide-react";
+import { ArrowRight, Truck, RotateCcw, Shield, Wrench, ChevronDown, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { mockProducts } from "@/data/mockProducts";
+import { useProducts, getProductImage, getEtaString } from "@/hooks/useProducts";
 
 export function HeroSection() {
-  // Use first mock product for hero card
-  const featuredProduct = mockProducts[0];
-  const secondProduct = mockProducts[1];
+  const { data: products, isLoading } = useProducts();
+  
+  // Use first two products for hero cards
+  const featuredProduct = products?.[0];
+  const secondProduct = products?.[1];
 
   return (
     <section className="relative min-h-[75vh] lg:min-h-[80vh] flex items-center overflow-hidden">
@@ -103,74 +105,76 @@ export function HeroSection() {
 
           {/* Right - Hero Product Cards Stack */}
           <div className="relative hidden lg:flex justify-center items-center">
-            {/* Second card (behind) */}
-            <div className="absolute top-8 right-0 w-[340px] opacity-40 blur-[1px] transform translate-x-6 -translate-y-4 rotate-3">
-              <div className="bg-gradient-to-br from-card/60 to-card/40 backdrop-blur-sm rounded-2xl overflow-hidden border border-primary-foreground/5 shadow-xl">
-                <div className="w-full h-[240px] bg-gradient-to-br from-secondary/30 to-muted/20 overflow-hidden">
-                  <img 
-                    src={secondProduct.image} 
-                    alt={secondProduct.title}
-                    className="w-full h-full object-cover"
-                  />
-                </div>
-                <div className="p-4">
-                  <h3 className="font-heading font-bold text-sm">{secondProduct.title}</h3>
-                </div>
+            {isLoading ? (
+              <div className="flex items-center justify-center h-[400px]">
+                <Loader2 className="w-8 h-8 animate-spin text-accent" />
               </div>
-            </div>
-
-            {/* Main product card */}
-            <div className="relative animate-float">
-              {/* Floating badge */}
-              <div className="absolute -top-3 right-4 z-20">
-                <div className="bg-accent text-accent-foreground rounded-xl px-4 py-2 shadow-premium-lg text-sm font-semibold">
-                  Populiariausias
-                </div>
-              </div>
-
-              <div className="absolute inset-0 bg-accent/10 rounded-3xl blur-3xl transform translate-x-6 translate-y-6" />
-              
-              <Link 
-                to={`/produktas/${featuredProduct.handle}`}
-                className="relative block bg-gradient-to-br from-card/95 to-card/85 backdrop-blur-sm rounded-2xl overflow-hidden border border-primary-foreground/10 shadow-2xl hover:shadow-premium-lg transition-all duration-300 hover:-translate-y-1"
-              >
-                {/* Product image */}
-                <div className="w-[360px] h-[280px] bg-gradient-to-br from-secondary/50 to-muted/30 overflow-hidden">
-                  <img 
-                    src={featuredProduct.image} 
-                    alt={featuredProduct.title}
-                    className="w-full h-full object-cover"
-                  />
-                </div>
-
-                {/* Product info */}
-                <div className="p-5">
-                  <h3 className="font-heading font-bold text-lg mb-2">{featuredProduct.title}</h3>
-                  <p className="text-sm text-muted-foreground mb-3">
-                    {featuredProduct.detailsCount} detalių · 16+ · ~20–30 val.
-                  </p>
-                  <div className="flex items-center justify-between">
-                    <span className="bg-primary/10 text-primary text-xs font-semibold px-3 py-1.5 rounded-lg">
-                      Pre-order · pristatymas per {featuredProduct.eta}
-                    </span>
-                    <Button size="sm" className="bg-accent hover:bg-accent/90 text-accent-foreground">
-                      Žiūrėti modelį
-                    </Button>
+            ) : featuredProduct ? (
+              <>
+                {/* Second card (behind) */}
+                {secondProduct && (
+                  <div className="absolute top-8 right-0 w-[340px] opacity-40 blur-[1px] transform translate-x-6 -translate-y-4 rotate-3">
+                    <div className="bg-gradient-to-br from-card/60 to-card/40 backdrop-blur-sm rounded-2xl overflow-hidden border border-primary-foreground/5 shadow-xl">
+                      <div className="w-full h-[240px] bg-gradient-to-br from-secondary/30 to-muted/20 overflow-hidden">
+                        <img 
+                          src={getProductImage(secondProduct)} 
+                          alt={secondProduct.title}
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+                      <div className="p-4">
+                        <h3 className="font-heading font-bold text-sm">{secondProduct.title}</h3>
+                      </div>
+                    </div>
                   </div>
-                </div>
-              </Link>
+                )}
 
-              {/* Bottom chip */}
-              <div className="absolute -bottom-3 left-4 z-20">
-                <div className="bg-card rounded-xl px-4 py-2.5 shadow-premium-lg flex items-center gap-2">
-                  <svg className="w-5 h-5 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
-                  </svg>
-                  <span className="font-heading font-bold">{featuredProduct.detailsCount}</span>
-                  <span className="text-muted-foreground text-sm">detalių</span>
+                {/* Main product card */}
+                <div className="relative animate-float">
+                  {/* Floating badge */}
+                  <div className="absolute -top-3 right-4 z-20">
+                    <div className="bg-accent text-accent-foreground rounded-xl px-4 py-2 shadow-premium-lg text-sm font-semibold">
+                      Populiariausias
+                    </div>
+                  </div>
+
+                  <div className="absolute inset-0 bg-accent/10 rounded-3xl blur-3xl transform translate-x-6 translate-y-6" />
+                  
+                  <Link 
+                    to={`/produktas/${featuredProduct.slug}`}
+                    className="relative block bg-gradient-to-br from-card/95 to-card/85 backdrop-blur-sm rounded-2xl overflow-hidden border border-primary-foreground/10 shadow-2xl hover:shadow-premium-lg transition-all duration-300 hover:-translate-y-1"
+                  >
+                    {/* Product image */}
+                    <div className="w-[360px] h-[280px] bg-gradient-to-br from-secondary/50 to-muted/30 overflow-hidden">
+                      <img 
+                        src={getProductImage(featuredProduct)} 
+                        alt={featuredProduct.title}
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+
+                    {/* Product info */}
+                    <div className="p-5">
+                      <h3 className="font-heading font-bold text-lg mb-2">{featuredProduct.title}</h3>
+                      <p className="text-sm text-muted-foreground mb-3">
+                        16+ · ~20–30 val.
+                      </p>
+                      <div className="flex items-center justify-between">
+                        <span className="bg-primary/10 text-primary text-xs font-semibold px-3 py-1.5 rounded-lg">
+                          {featuredProduct.stock_status === 'preorder' 
+                            ? `Pre-order · ${getEtaString(featuredProduct)}`
+                            : 'Sandėlyje'
+                          }
+                        </span>
+                        <Button size="sm" className="bg-accent hover:bg-accent/90 text-accent-foreground">
+                          Žiūrėti modelį
+                        </Button>
+                      </div>
+                    </div>
+                  </Link>
                 </div>
-              </div>
-            </div>
+              </>
+            ) : null}
           </div>
         </div>
       </div>
