@@ -18,7 +18,7 @@ const adminRequestSchema = z.discriminatedUnion('action', [
   z.object({
     action: z.literal('create_shipment'),
     orderId: z.string().uuid('Neteisingas užsakymo ID'),
-    carrierCode: z.enum(['omniva', 'lp_express', 'dpd', 'courier', 'other']).optional(),
+    carrierCode: z.enum(['omniva', 'lp_express', 'dpd', 'other']).optional(),
   }),
   z.object({
     action: z.literal('mark_packed'),
@@ -28,7 +28,7 @@ const adminRequestSchema = z.discriminatedUnion('action', [
     action: z.literal('mark_shipped'),
     shipmentId: z.string().uuid('Neteisingas siuntos ID'),
     trackingNumber: z.string().min(1, 'Reikalingas sekimo numeris').max(100, 'Sekimo numeris per ilgas'),
-    carrierCode: z.enum(['omniva', 'lp_express', 'dpd', 'courier', 'other']).optional(),
+    carrierCode: z.enum(['omniva', 'lp_express', 'dpd', 'other']).optional(),
   }),
   z.object({
     action: z.literal('mark_delivered'),
@@ -68,12 +68,11 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Check if user has admin role
-    const { data: adminRole, error: roleError } = await supabase
-      .from('user_roles')
+    // Check if user has admin role (now in users table)
+    const { data: userRecord, error: roleError } = await supabase
+      .from('users')
       .select('role')
-      .eq('user_id', user.id)
-      .eq('role', 'admin')
+      .eq('id', user.id)
       .maybeSingle();
 
     if (roleError) {
@@ -84,7 +83,7 @@ Deno.serve(async (req) => {
       );
     }
 
-    if (!adminRole) {
+    if (!userRecord || userRecord.role !== 'admin') {
       console.log(`[ADMIN] User ${user.id} attempted admin access without admin role`);
       return new Response(
         JSON.stringify({ success: false, error: 'Forbidden - Admin access required' }),
@@ -201,7 +200,6 @@ Deno.serve(async (req) => {
           'omniva': 'Omniva', 
           'lp_express': 'LP EXPRESS', 
           'dpd': 'DPD', 
-          'courier': 'Kurjeris', 
           'other': 'Kitas' 
         }[carrierCode] || carrierCode;
         

@@ -39,7 +39,6 @@ const CARRIERS: { value: CarrierCode; label: string }[] = [
   { value: 'omniva', label: 'Omniva' },
   { value: 'lp_express', label: 'LP EXPRESS' },
   { value: 'dpd', label: 'DPD' },
-  { value: 'courier', label: 'Kurjeris' },
   { value: 'other', label: 'Kitas' },
 ];
 
@@ -133,9 +132,7 @@ export function ShipmentManager({ orderId, orderNumber, shipment, onUpdate }: Sh
       'packed': { label: 'Supakuota', className: 'bg-blue-500/10 text-blue-600 border-blue-500/30' },
       'shipped': { label: 'Išsiųsta', className: 'bg-primary/10 text-primary border-primary/30' },
       'in_transit': { label: 'Kelyje', className: 'bg-primary/10 text-primary border-primary/30' },
-      'out_for_delivery': { label: 'Pristatoma', className: 'bg-accent/10 text-accent border-accent/30' },
       'delivered': { label: 'Pristatyta', className: 'bg-green-500/10 text-green-600 border-green-500/30' },
-      'exception': { label: 'Nesklandumas', className: 'bg-destructive/10 text-destructive border-destructive/30' },
     };
     return (
       <Badge variant="outline" className={config[status].className}>

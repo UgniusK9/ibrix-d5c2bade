@@ -5,6 +5,8 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { CookieConsentProvider } from "@/components/cookies/CookieConsentProvider";
 import { PageViewTracker } from "@/components/analytics/PageViewTracker";
+import { AuthProvider } from "@/contexts/AuthContext";
+import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import Varikliai from "./pages/Varikliai";
@@ -24,6 +26,8 @@ import Checkout from "./pages/Checkout";
 import OrderConfirmation from "./pages/OrderConfirmation";
 import Admin from "./pages/Admin";
 import SiuntosSekimas from "./pages/SiuntosSekimas";
+import Auth from "./pages/Auth";
+import Account from "./pages/Account";
 
 const queryClient = new QueryClient();
 
@@ -33,30 +37,53 @@ const App = () => (
       <Toaster />
       <Sonner position="top-center" />
       <BrowserRouter>
-        <CookieConsentProvider>
-          <PageViewTracker />
-          <Routes>
-            <Route path="/" element={<Index />} />
-            <Route path="/varikliai" element={<Varikliai />} />
-            <Route path="/pre-order" element={<PreOrder />} />
-            <Route path="/pagalba" element={<Pagalba />} />
-            <Route path="/apie" element={<Apie />} />
-            <Route path="/kontaktai" element={<Kontaktai />} />
-            <Route path="/produktas/:handle" element={<Produktas />} />
-            <Route path="/pristatymas" element={<Pristatymas />} />
-            <Route path="/grazinimai" element={<Grazinimai />} />
-            <Route path="/garantija" element={<Garantija />} />
-            <Route path="/trukstamos-detales" element={<TrukstamosDetales />} />
-            <Route path="/privatumo-politika" element={<PrivatumoPolitika />} />
-            <Route path="/slapukai" element={<SlapukaiPolitika />} />
-            <Route path="/taisykles" element={<Taisykles />} />
-            <Route path="/checkout" element={<Checkout />} />
-            <Route path="/uzsakymas" element={<OrderConfirmation />} />
-            <Route path="/admin" element={<Admin />} />
-            <Route path="/siuntos-sekimas/:orderId" element={<SiuntosSekimas />} />
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </CookieConsentProvider>
+        <AuthProvider>
+          <CookieConsentProvider>
+            <PageViewTracker />
+            <Routes>
+              {/* Public routes */}
+              <Route path="/" element={<Index />} />
+              <Route path="/varikliai" element={<Varikliai />} />
+              <Route path="/pre-order" element={<PreOrder />} />
+              <Route path="/pagalba" element={<Pagalba />} />
+              <Route path="/apie" element={<Apie />} />
+              <Route path="/kontaktai" element={<Kontaktai />} />
+              <Route path="/produktas/:handle" element={<Produktas />} />
+              <Route path="/pristatymas" element={<Pristatymas />} />
+              <Route path="/grazinimai" element={<Grazinimai />} />
+              <Route path="/garantija" element={<Garantija />} />
+              <Route path="/trukstamos-detales" element={<TrukstamosDetales />} />
+              <Route path="/privatumo-politika" element={<PrivatumoPolitika />} />
+              <Route path="/slapukai" element={<SlapukaiPolitika />} />
+              <Route path="/taisykles" element={<Taisykles />} />
+              <Route path="/checkout" element={<Checkout />} />
+              <Route path="/uzsakymas" element={<OrderConfirmation />} />
+              <Route path="/siuntos-sekimas/:orderId" element={<SiuntosSekimas />} />
+              <Route path="/auth" element={<Auth />} />
+
+              {/* Protected: Customer account */}
+              <Route path="/account" element={
+                <ProtectedRoute>
+                  <Account />
+                </ProtectedRoute>
+              } />
+
+              {/* Protected: Admin only */}
+              <Route path="/admin" element={
+                <ProtectedRoute requireAdmin>
+                  <Admin />
+                </ProtectedRoute>
+              } />
+              <Route path="/admin/*" element={
+                <ProtectedRoute requireAdmin>
+                  <Admin />
+                </ProtectedRoute>
+              } />
+
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </CookieConsentProvider>
+        </AuthProvider>
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>

@@ -6,6 +6,7 @@ interface ProductData {
   price: number; // in cents
   currency?: string;
   quantity?: number;
+  category?: string;
 }
 
 interface PurchaseData {
@@ -14,6 +15,13 @@ interface PurchaseData {
   items: ProductData[];
   totalCents: number;
   currency?: string;
+}
+
+interface CheckoutData {
+  items: ProductData[];
+  totalCents: number;
+  currency?: string;
+  step?: string; // 'begin_checkout', 'add_shipping_info', 'add_payment_info'
 }
 
 // Get consent status from store (for non-React contexts)
@@ -33,7 +41,44 @@ function getConsentStatus() {
   return { analytics: false, marketing: false };
 }
 
-// Standalone tracking functions (for use in stores/non-React code)
+// ============================================
+// Standalone tracking functions (for stores/non-React code)
+// ============================================
+
+export function trackViewContentEvent(product: ProductData) {
+  const { analytics, marketing } = getConsentStatus();
+  const priceValue = product.price / 100;
+
+  // Google Analytics - view_item
+  if (analytics && window.gtag) {
+    window.gtag('event', 'view_item', {
+      currency: product.currency || 'EUR',
+      value: priceValue,
+      items: [{
+        item_id: product.id,
+        item_name: product.name,
+        price: priceValue,
+        quantity: 1,
+        item_category: product.category,
+      }],
+    });
+    console.log('[Analytics] GA ViewItem:', product.name);
+  }
+
+  // Meta Pixel - ViewContent
+  if (marketing && window.fbq) {
+    window.fbq('track', 'ViewContent', {
+      content_ids: [product.id],
+      content_name: product.name,
+      content_type: 'product',
+      content_category: product.category,
+      value: priceValue,
+      currency: product.currency || 'EUR',
+    });
+    console.log('[Analytics] Meta ViewContent:', product.name);
+  }
+}
+
 export function trackAddToCartEvent(product: ProductData) {
   const { analytics, marketing } = getConsentStatus();
   const priceValue = product.price / 100;
@@ -48,6 +93,7 @@ export function trackAddToCartEvent(product: ProductData) {
         item_name: product.name,
         price: priceValue,
         quantity: product.quantity || 1,
+        item_category: product.category,
       }],
     });
     console.log('[Analytics] GA AddToCart:', product.name);
@@ -59,10 +105,77 @@ export function trackAddToCartEvent(product: ProductData) {
       content_ids: [product.id],
       content_name: product.name,
       content_type: 'product',
+      content_category: product.category,
       value: priceValue,
       currency: product.currency || 'EUR',
     });
     console.log('[Analytics] Meta AddToCart:', product.name);
+  }
+}
+
+export function trackBeginCheckoutEvent(data: CheckoutData) {
+  const { analytics, marketing } = getConsentStatus();
+  const totalValue = data.totalCents / 100;
+  const currency = data.currency || 'EUR';
+
+  // Google Analytics - begin_checkout
+  if (analytics && window.gtag) {
+    window.gtag('event', 'begin_checkout', {
+      currency,
+      value: totalValue,
+      items: data.items.map(item => ({
+        item_id: item.id,
+        item_name: item.name,
+        price: item.price / 100,
+        quantity: item.quantity || 1,
+        item_category: item.category,
+      })),
+    });
+    console.log('[Analytics] GA BeginCheckout:', totalValue);
+  }
+
+  // Meta Pixel - InitiateCheckout
+  if (marketing && window.fbq) {
+    window.fbq('track', 'InitiateCheckout', {
+      content_ids: data.items.map(item => item.id),
+      content_type: 'product',
+      value: totalValue,
+      currency,
+      num_items: data.items.reduce((sum, item) => sum + (item.quantity || 1), 0),
+    });
+    console.log('[Analytics] Meta InitiateCheckout:', totalValue);
+  }
+}
+
+export function trackAddPaymentInfoEvent(data: CheckoutData) {
+  const { analytics, marketing } = getConsentStatus();
+  const totalValue = data.totalCents / 100;
+  const currency = data.currency || 'EUR';
+
+  // Google Analytics - add_payment_info
+  if (analytics && window.gtag) {
+    window.gtag('event', 'add_payment_info', {
+      currency,
+      value: totalValue,
+      items: data.items.map(item => ({
+        item_id: item.id,
+        item_name: item.name,
+        price: item.price / 100,
+        quantity: item.quantity || 1,
+      })),
+    });
+    console.log('[Analytics] GA AddPaymentInfo:', totalValue);
+  }
+
+  // Meta Pixel - AddPaymentInfo
+  if (marketing && window.fbq) {
+    window.fbq('track', 'AddPaymentInfo', {
+      content_ids: data.items.map(item => item.id),
+      content_type: 'product',
+      value: totalValue,
+      currency,
+    });
+    console.log('[Analytics] Meta AddPaymentInfo:', totalValue);
   }
 }
 
@@ -100,7 +213,9 @@ export function trackPurchaseEvent(data: PurchaseData) {
   }
 }
 
+// ============================================
 // React hook version
+// ============================================
 export function useAnalytics() {
   const hasAnalyticsConsent = useHasConsent('analytics');
   const hasMarketingConsent = useHasConsent('marketing');
@@ -120,8 +235,20 @@ export function useAnalytics() {
     }
   };
 
+  const trackViewContent = (product: ProductData) => {
+    trackViewContentEvent(product);
+  };
+
   const trackAddToCart = (product: ProductData) => {
     trackAddToCartEvent(product);
+  };
+
+  const trackBeginCheckout = (data: CheckoutData) => {
+    trackBeginCheckoutEvent(data);
+  };
+
+  const trackAddPaymentInfo = (data: CheckoutData) => {
+    trackAddPaymentInfoEvent(data);
   };
 
   const trackPurchase = (data: PurchaseData) => {
@@ -130,7 +257,10 @@ export function useAnalytics() {
 
   return {
     trackPageView,
+    trackViewContent,
     trackAddToCart,
+    trackBeginCheckout,
+    trackAddPaymentInfo,
     trackPurchase,
   };
 }
