@@ -89,9 +89,9 @@ export function CartDrawer() {
                         <div className="flex items-center gap-2 mt-1">
                           <Badge 
                             variant="outline" 
-                            className={`text-xs ${item.status === 'in-stock' ? 'border-success/50 text-success' : 'border-primary/50 text-primary'}`}
+                            className={`text-xs ${item.status === 'in_stock' ? 'border-success/50 text-success' : 'border-primary/50 text-primary'}`}
                           >
-                            {item.status === 'in-stock' ? 'Sandėlyje' : 'Pre-order'}
+                            {item.status === 'in_stock' ? 'Sandėlyje' : 'Pre-order'}
                           </Badge>
                         </div>
                         <p className="font-semibold text-sm mt-1">

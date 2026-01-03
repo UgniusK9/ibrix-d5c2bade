@@ -1,18 +1,18 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
-import { MockProduct } from '@/data/mockProducts';
 import { trackAddToCartEvent } from '@/hooks/useAnalytics';
+import type { Product } from '@/hooks/useProducts';
 
 export interface CartItem {
-  productId: string;
-  productHandle: string;
+  productId: string; // UUID from Supabase
+  productSlug: string;
   title: string;
   image: string;
   price: number; // price in cents
-  deposit: number; // deposit in cents (for preorders)
+  deposit: number; // deposit in cents
   currency: string;
   quantity: number;
-  status: 'in-stock' | 'pre-order';
+  status: 'in_stock' | 'preorder';
   eta?: string;
 }
 
@@ -22,7 +22,7 @@ interface CartStore {
   isOpen: boolean;
   
   // Actions
-  addItem: (product: MockProduct, quantity?: number) => void;
+  addItem: (product: Product, quantity?: number) => void;
   updateQuantity: (productId: string, quantity: number) => void;
   removeItem: (productId: string) => void;
   clearCart: () => void;
@@ -31,6 +31,25 @@ interface CartStore {
   getTotalItems: () => number;
   getTotalPrice: () => number;
   getTotalDeposit: () => number;
+}
+
+// Helper to get ETA string
+function getEtaString(product: Product): string {
+  if (product.stock_status === 'in_stock') {
+    return '1–2 d.d.';
+  }
+  if (product.preorder_eta_weeks_min && product.preorder_eta_weeks_max) {
+    return `${product.preorder_eta_weeks_min}–${product.preorder_eta_weeks_max} sav.`;
+  }
+  return '8–10 sav.';
+}
+
+// Helper to get product image
+function getProductImage(product: Product): string {
+  if (product.images && product.images.length > 0) {
+    return product.images[0];
+  }
+  return 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=600&h=600&fit=crop';
 }
 
 export const useCartStore = create<CartStore>()(
@@ -54,22 +73,17 @@ export const useCartStore = create<CartStore>()(
             )
           });
         } else {
-          // Calculate deposit (30% for preorder, or use product.deposit if available)
-          const depositAmount = product.status === 'pre-order' 
-            ? Math.round(product.price * 0.3) 
-            : product.price;
-          
           const newItem: CartItem = {
-            productId: product.id,
-            productHandle: product.handle,
+            productId: product.id, // UUID from Supabase
+            productSlug: product.slug,
             title: product.title,
-            image: product.image,
-            price: Math.round(product.price * 100), // Convert to cents
-            deposit: Math.round(depositAmount * 100), // Convert to cents
-            currency: product.currency,
+            image: getProductImage(product),
+            price: Math.round(product.price_eur * 100), // Convert to cents
+            deposit: Math.round(product.deposit_eur * 100), // Deposit from DB in cents
+            currency: 'EUR',
             quantity,
-            status: product.status,
-            eta: product.eta,
+            status: product.stock_status === 'in_stock' ? 'in_stock' : 'preorder',
+            eta: getEtaString(product),
           };
           set({ items: [...items, newItem] });
         }
@@ -78,8 +92,8 @@ export const useCartStore = create<CartStore>()(
         trackAddToCartEvent({
           id: product.id,
           name: product.title,
-          price: product.price,
-          currency: product.currency,
+          price: product.price_eur,
+          currency: 'EUR',
           quantity,
         });
         
@@ -144,8 +158,7 @@ export const useCartStore = create<CartStore>()(
 // Helper to format price (cents to formatted price)
 export function formatCartPrice(amountCents: number | string, currencyCode: string = 'EUR'): string {
   const numAmount = typeof amountCents === 'string' ? parseFloat(amountCents) : amountCents;
-  // If amount is already in cents, convert to currency units
-  const displayAmount = numAmount > 1000 ? numAmount / 100 : numAmount;
+  const displayAmount = numAmount / 100; // Always convert from cents
   return new Intl.NumberFormat('lt-LT', {
     style: 'currency',
     currency: currencyCode,
