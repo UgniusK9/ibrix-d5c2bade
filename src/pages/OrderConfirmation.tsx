@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useSearchParams, Link, useNavigate } from "react-router-dom";
 import { CheckCircle2, Package, Clock, Truck, Mail, ArrowRight, Loader2 } from "lucide-react";
 import { PageLayout } from "@/components/layout/PageLayout";
@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { formatCartPrice } from "@/stores/cartStore";
-
+import { trackPurchaseEvent } from "@/hooks/useAnalytics";
 interface OrderItem {
   id: string;
   title_snapshot: string;
@@ -41,6 +41,26 @@ export default function OrderConfirmation() {
   const [items, setItems] = useState<OrderItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const purchaseTracked = useRef(false);
+
+  // Track purchase event once order is loaded
+  useEffect(() => {
+    if (order && items.length > 0 && !purchaseTracked.current) {
+      purchaseTracked.current = true;
+      trackPurchaseEvent({
+        orderId: order.id,
+        orderNumber: order.order_number,
+        totalCents: order.total_cents,
+        currency: 'EUR',
+        items: items.map(item => ({
+          id: item.id,
+          name: item.title_snapshot,
+          price: item.unit_price_cents,
+          quantity: item.quantity,
+        })),
+      });
+    }
+  }, [order, items]);
 
   useEffect(() => {
     async function loadOrder() {

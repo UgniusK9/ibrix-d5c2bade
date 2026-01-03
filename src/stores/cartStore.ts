@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import { MockProduct } from '@/data/mockProducts';
+import { trackAddToCartEvent } from '@/hooks/useAnalytics';
 
 export interface CartItem {
   productId: string;
@@ -64,6 +65,15 @@ export const useCartStore = create<CartStore>()(
           };
           set({ items: [...items, newItem] });
         }
+        
+        // Track AddToCart event
+        trackAddToCartEvent({
+          id: product.id,
+          name: product.title,
+          price: product.price,
+          currency: product.currency,
+          quantity,
+        });
         
         // Open cart drawer when item is added
         set({ isOpen: true });

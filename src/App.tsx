@@ -4,6 +4,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { CookieConsentProvider } from "@/components/cookies/CookieConsentProvider";
+import { PageViewTracker } from "@/components/analytics/PageViewTracker";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import Varikliai from "./pages/Varikliai";
@@ -33,6 +34,7 @@ const App = () => (
       <Sonner position="top-center" />
       <BrowserRouter>
         <CookieConsentProvider>
+          <PageViewTracker />
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/varikliai" element={<Varikliai />} />
