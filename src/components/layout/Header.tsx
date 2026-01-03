@@ -97,10 +97,19 @@ export function Header() {
                       <Link to="/admin">Admin</Link>
                     </Button>
                   )}
-                  <Button asChild variant="ghost" size="icon">
-                    <Link to="/account">
-                      <User className="h-5 w-5" />
+                  <Button asChild variant="ghost" size="sm">
+                    <Link to="/account" className="flex items-center gap-2">
+                      <User className="h-4 w-4" />
+                      Paskyra
                     </Link>
+                  </Button>
+                  <Button 
+                    variant="ghost" 
+                    size="icon"
+                    onClick={signOut}
+                    title="Atsijungti"
+                  >
+                    <LogOut className="h-4 w-4" />
                   </Button>
                 </div>
               ) : (

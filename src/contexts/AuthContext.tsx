@@ -11,6 +11,10 @@ interface AuthContextType {
   isLoading: boolean;
   isAdmin: boolean;
   signInWithMagicLink: (email: string) => Promise<{ error: Error | null }>;
+  signInWithPassword: (email: string, password: string) => Promise<{ error: Error | null }>;
+  signUp: (email: string, password: string) => Promise<{ error: Error | null }>;
+  resetPassword: (email: string) => Promise<{ error: Error | null }>;
+  updatePassword: (password: string) => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
 }
 
@@ -42,6 +46,34 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const ensureUserExists = async (authUser: User) => {
+    try {
+      // Check if user exists
+      const { data: existingUser } = await supabase
+        .from('users')
+        .select('id')
+        .eq('id', authUser.id)
+        .maybeSingle();
+
+      if (!existingUser) {
+        // Create user with customer role
+        const { error } = await supabase
+          .from('users')
+          .insert({
+            id: authUser.id,
+            email: authUser.email || '',
+            role: 'customer'
+          });
+        
+        if (error) {
+          console.error('Error creating user:', error);
+        }
+      }
+    } catch (e) {
+      console.error('Error in ensureUserExists:', e);
+    }
+  };
+
   useEffect(() => {
     // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
@@ -49,10 +81,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setSession(session);
         setUser(session?.user ?? null);
         
-        // Defer role fetching with setTimeout to avoid deadlock
+        // Defer role fetching and user creation with setTimeout to avoid deadlock
         if (session?.user) {
-          setTimeout(() => {
-            fetchUserRole(session.user.id).then(setRole);
+          setTimeout(async () => {
+            await ensureUserExists(session.user);
+            const userRole = await fetchUserRole(session.user.id);
+            setRole(userRole || 'customer');
           }, 0);
         } else {
           setRole(null);
@@ -68,7 +102,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setUser(session?.user ?? null);
       
       if (session?.user) {
-        fetchUserRole(session.user.id).then(setRole);
+        ensureUserExists(session.user).then(() => {
+          fetchUserRole(session.user.id).then(r => setRole(r || 'customer'));
+        });
       }
       
       setIsLoading(false);
@@ -90,6 +126,47 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return { error: error as Error | null };
   };
 
+  const signInWithPassword = async (email: string, password: string) => {
+    const { error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
+    
+    return { error: error as Error | null };
+  };
+
+  const signUp = async (email: string, password: string) => {
+    const redirectUrl = `${window.location.origin}/`;
+    
+    const { error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        emailRedirectTo: redirectUrl,
+      },
+    });
+    
+    return { error: error as Error | null };
+  };
+
+  const resetPassword = async (email: string) => {
+    const redirectUrl = `${window.location.origin}/auth/reset-password`;
+    
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: redirectUrl,
+    });
+    
+    return { error: error as Error | null };
+  };
+
+  const updatePassword = async (password: string) => {
+    const { error } = await supabase.auth.updateUser({
+      password,
+    });
+    
+    return { error: error as Error | null };
+  };
+
   const signOut = async () => {
     await supabase.auth.signOut();
     setUser(null);
@@ -104,6 +181,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     isLoading,
     isAdmin: role === 'admin',
     signInWithMagicLink,
+    signInWithPassword,
+    signUp,
+    resetPassword,
+    updatePassword,
     signOut,
   };
 
