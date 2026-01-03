@@ -27,6 +27,7 @@ import OrderConfirmation from "./pages/OrderConfirmation";
 import Admin from "./pages/Admin";
 import SiuntosSekimas from "./pages/SiuntosSekimas";
 import Auth from "./pages/Auth";
+import ResetPassword from "./pages/ResetPassword";
 import Account from "./pages/Account";
 import AdminVerification from "./pages/AdminVerification";
 
@@ -60,7 +61,9 @@ const App = () => (
               <Route path="/checkout" element={<Checkout />} />
               <Route path="/uzsakymas" element={<OrderConfirmation />} />
               <Route path="/siuntos-sekimas/:orderId" element={<SiuntosSekimas />} />
+              <Route path="/siuntos-sekimas" element={<SiuntosSekimas />} />
               <Route path="/auth" element={<Auth />} />
+              <Route path="/auth/reset-password" element={<ResetPassword />} />
 
               {/* Protected: Customer account */}
               <Route path="/account" element={

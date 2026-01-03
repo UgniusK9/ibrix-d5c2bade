@@ -72,7 +72,7 @@ const formatPrice = (amount: number) => {
 };
 
 export default function SiuntosSekimas() {
-  const { orderId } = useParams();
+  const { orderId } = useParams(); // Optional - for backwards compat
   const [searchParams] = useSearchParams();
   const token = searchParams.get('token');
   const showDebug = searchParams.get('debug') === 'true';
@@ -84,15 +84,17 @@ export default function SiuntosSekimas() {
 
   useEffect(() => {
     const fetchTracking = async () => {
-      if (!orderId || !token) {
+      // Token is required
+      if (!token) {
         setError("Nuoroda negalioja arba pasibaigė.");
         setLoading(false);
         return;
       }
 
       try {
+        // Token-only request - orderId optional for backwards compat
         const { data, error: fnError } = await supabase.functions.invoke<TrackingResponse>('tracking', {
-          body: { orderId, token }
+          body: { token, ...(orderId && { orderId }) }
         });
 
         if (fnError || !data?.success) {

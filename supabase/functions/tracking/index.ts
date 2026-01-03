@@ -9,10 +9,10 @@ const corsHeaders = {
 // Generate request ID for tracing
 const generateRequestId = () => crypto.randomUUID().slice(0, 8);
 
-// Validation schema - orderId can be order UUID or order_number
+// Validation schema - token only required, orderId optional for backwards compat
 const trackingRequestSchema = z.object({
-  orderId: z.string().min(1, 'Užsakymo ID privalomas'),
   token: z.string().min(16, 'Neteisingas sekimo kodas').max(128, 'Neteisingas sekimo kodas'),
+  orderId: z.string().optional(), // Optional for backwards compatibility
 });
 
 const log = (requestId: string, step: string, details?: any) => {
@@ -34,7 +34,7 @@ Deno.serve(async (req) => {
     );
 
     const rawBody = await req.json();
-    log(requestId, 'Request received', { orderId: rawBody.orderId, tokenPrefix: rawBody.token?.substring(0, 8) });
+    log(requestId, 'Request received', { tokenPrefix: rawBody.token?.substring(0, 8), hasOrderId: !!rawBody.orderId });
     
     // Validate request body
     const validationResult = trackingRequestSchema.safeParse(rawBody);
@@ -48,9 +48,9 @@ Deno.serve(async (req) => {
       );
     }
     
-    const { orderId, token } = validationResult.data;
+    const { token, orderId } = validationResult.data;
 
-    // Find the shipment by tracking_token
+    // Find the shipment by tracking_token ONLY
     const { data: shipment, error: shipmentError } = await supabase
       .from('shipments')
       .select('*, orders!inner(*)')
@@ -65,14 +65,12 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Verify the orderId matches (can be UUID or order_number)
     const order = shipment.orders;
-    if (order.id !== orderId && order.order_number !== orderId) {
-      log(requestId, 'Order ID mismatch', { expected: order.id, got: orderId });
-      return new Response(
-        JSON.stringify({ success: false, error: 'Nuoroda negalioja.' }),
-        { status: 403, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
-      );
+
+    // If orderId provided, verify it matches (backwards compat check only)
+    if (orderId && order.id !== orderId && order.order_number !== orderId) {
+      log(requestId, 'Order ID mismatch (backwards compat)', { expected: order.id, got: orderId });
+      // Still allow access since token is valid - just log the mismatch
     }
 
     log(requestId, 'Token validated', { orderId: order.id, orderNumber: order.order_number });
@@ -109,6 +107,7 @@ Deno.serve(async (req) => {
       success: true,
       data: {
         order_number: order.order_number,
+        order_id: order.id, // Include for any clients that need it
         order_status: order.status,
         shipment_status: shipment.status,
         carrier_code: shipment.carrier_code,
