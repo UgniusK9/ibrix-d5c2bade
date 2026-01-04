@@ -15,6 +15,7 @@ export interface Product {
   category: string;
   category_id: string | null;
   images: string[];
+  badges: string[];
   inventory_qty: number | null;
   preorder_eta_weeks_min: number | null;
   preorder_eta_weeks_max: number | null;
@@ -38,6 +39,19 @@ function transformProduct(dbProduct: Record<string, unknown>): Product {
     }
   }
 
+  const badges = dbProduct.badges as unknown;
+  let badgeArray: string[] = [];
+  
+  if (Array.isArray(badges)) {
+    badgeArray = badges as string[];
+  } else if (typeof badges === 'string') {
+    try {
+      badgeArray = JSON.parse(badges);
+    } catch {
+      badgeArray = [];
+    }
+  }
+
   return {
     id: dbProduct.id as string,
     slug: dbProduct.slug as string,
@@ -52,6 +66,7 @@ function transformProduct(dbProduct: Record<string, unknown>): Product {
     category: dbProduct.category as string,
     category_id: dbProduct.category_id as string | null,
     images: imageArray,
+    badges: badgeArray,
     inventory_qty: dbProduct.inventory_qty as number | null,
     preorder_eta_weeks_min: dbProduct.preorder_eta_weeks_min as number | null,
     preorder_eta_weeks_max: dbProduct.preorder_eta_weeks_max as number | null,

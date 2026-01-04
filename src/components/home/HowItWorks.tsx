@@ -30,7 +30,7 @@ export function HowItWorks() {
             PROCESAS
           </span>
           <h2 className="font-heading text-3xl md:text-4xl font-bold">
-            Kaip tai veikia
+            Kaip veikia pre-order
           </h2>
         </div>
 

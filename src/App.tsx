@@ -10,6 +10,7 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { CartDrawer } from "@/components/cart/CartDrawer";
 import { AddToCartModal } from "@/components/cart/AddToCartModal";
+import { ComparisonDrawer } from "@/components/products/ComparisonDrawer";
 import { useCartStore } from "@/stores/cartStore";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
@@ -49,6 +50,7 @@ function CartComponents() {
         onClose={() => setModalOpen(false)} 
         item={lastAddedItem} 
       />
+      <ComparisonDrawer />
     </>
   );
 }
