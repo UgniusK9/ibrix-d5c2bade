@@ -939,6 +939,7 @@ export type Database = {
           slug: string
           status: Database["public"]["Enums"]["product_status"]
           stock_status: Database["public"]["Enums"]["stock_status"]
+          tags: string[] | null
           title: string
           updated_at: string
         }
@@ -962,6 +963,7 @@ export type Database = {
           slug: string
           status?: Database["public"]["Enums"]["product_status"]
           stock_status?: Database["public"]["Enums"]["stock_status"]
+          tags?: string[] | null
           title: string
           updated_at?: string
         }
@@ -985,6 +987,7 @@ export type Database = {
           slug?: string
           status?: Database["public"]["Enums"]["product_status"]
           stock_status?: Database["public"]["Enums"]["stock_status"]
+          tags?: string[] | null
           title?: string
           updated_at?: string
         }

@@ -46,6 +46,7 @@ interface Product {
   category_id: string | null;
   images: string[];
   badges: string[];
+  tags: string[];
   preorder_eta_weeks_min: number | null;
   preorder_eta_weeks_max: number | null;
   inventory_qty: number | null;
@@ -75,6 +76,8 @@ interface ProductFormData {
   category_id: string;
   images: string[];
   badges: string[];
+  tags: string[];
+  tagsInput: string;
   preorder_eta_weeks_min: string;
   preorder_eta_weeks_max: string;
   inventory_qty: string;
@@ -95,6 +98,8 @@ const emptyFormData: ProductFormData = {
   category_id: '',
   images: [],
   badges: [],
+  tags: [],
+  tagsInput: '',
   preorder_eta_weeks_min: '',
   preorder_eta_weeks_max: '',
   inventory_qty: '0',
@@ -140,13 +145,14 @@ export function ProductsManager() {
 
       if (error) throw error;
       if (data?.products) {
-        // Parse images and badges from JSON to array
+        // Parse images, badges, and tags from JSON to array
         const parsedProducts = data.products.map((p: any) => ({
           ...p,
           images: Array.isArray(p.images) ? p.images : 
                   typeof p.images === 'string' ? JSON.parse(p.images) : [],
           badges: Array.isArray(p.badges) ? p.badges : 
-                  typeof p.badges === 'string' ? JSON.parse(p.badges) : []
+                  typeof p.badges === 'string' ? JSON.parse(p.badges) : [],
+          tags: Array.isArray(p.tags) ? p.tags : []
         }));
         setProducts(parsedProducts);
       }
@@ -201,6 +207,8 @@ export function ProductsManager() {
       category_id: product.category_id || '',
       images: product.images || [],
       badges: product.badges || [],
+      tags: product.tags || [],
+      tagsInput: (product.tags || []).join(', '),
       preorder_eta_weeks_min: product.preorder_eta_weeks_min?.toString() || '',
       preorder_eta_weeks_max: product.preorder_eta_weeks_max?.toString() || '',
       inventory_qty: product.inventory_qty?.toString() || '0',
@@ -272,6 +280,12 @@ export function ProductsManager() {
 
     setSaving(true);
     try {
+      // Parse tags from input
+      const parsedTags = formData.tagsInput
+        .split(',')
+        .map(t => t.trim().toLowerCase())
+        .filter(t => t.length > 0);
+
       const productData = {
         sku: formData.sku.trim(),
         slug: formData.slug.trim(),
@@ -287,6 +301,7 @@ export function ProductsManager() {
         category_id: formData.category_id || null,
         images: formData.images,
         badges: formData.badges,
+        tags: parsedTags,
         preorder_eta_weeks_min: formData.preorder_eta_weeks_min ? parseInt(formData.preorder_eta_weeks_min) : null,
         preorder_eta_weeks_max: formData.preorder_eta_weeks_max ? parseInt(formData.preorder_eta_weeks_max) : null,
         inventory_qty: parseInt(formData.inventory_qty) || 0,
@@ -763,6 +778,20 @@ export function ProductsManager() {
                   );
                 })}
               </div>
+            </div>
+
+            {/* Tags */}
+            <div className="space-y-2">
+              <Label htmlFor="tags">Žymės (atskirtos kableliais)</Label>
+              <Input
+                id="tags"
+                value={formData.tagsInput}
+                onChange={(e) => setFormData(prev => ({ ...prev, tagsInput: e.target.value }))}
+                placeholder="v8, variklis, porsche, klasika"
+              />
+              <p className="text-xs text-muted-foreground">
+                Naudojamos susijusių produktų rekomendacijoms
+              </p>
             </div>
 
             {/* Images */}

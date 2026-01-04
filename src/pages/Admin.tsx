@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Package, Settings, List, BarChart3, Tag, RefreshCw, ShoppingBag, Users, RotateCcw, Layers, Gift, FolderTree, Mail, Image, MessageSquare } from "lucide-react";
+import { Package, Settings, List, BarChart3, Tag, RefreshCw, ShoppingBag, Users, RotateCcw, Layers, Gift, FolderTree, Mail, Image, MessageSquare, Bell } from "lucide-react";
 import { PageLayout } from "@/components/layout/PageLayout";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -16,6 +16,7 @@ import { CategoriesManager } from "@/components/admin/CategoriesManager";
 import { NewsletterManager } from "@/components/admin/NewsletterManager";
 import { PromoBannersManager } from "@/components/admin/PromoBannersManager";
 import { ReviewsManager } from "@/components/admin/ReviewsManager";
+import { StockNotificationsManager } from "@/components/admin/StockNotificationsManager";
 import { supabase } from "@/integrations/supabase/client";
 import { Link } from "react-router-dom";
 
@@ -109,6 +110,10 @@ export default function Admin() {
               <MessageSquare className="w-4 h-4" />
               Atsiliepimai
             </TabsTrigger>
+            <TabsTrigger value="stock-notifications" className="gap-2">
+              <Bell className="w-4 h-4" />
+              Sandėlis
+            </TabsTrigger>
             <TabsTrigger value="setup" className="gap-2">
               <Settings className="w-4 h-4" />
               Nustatymai
@@ -167,6 +172,10 @@ export default function Admin() {
 
           <TabsContent value="reviews">
             <ReviewsManager />
+          </TabsContent>
+
+          <TabsContent value="stock-notifications">
+            <StockNotificationsManager />
           </TabsContent>
 
           <TabsContent value="setup">

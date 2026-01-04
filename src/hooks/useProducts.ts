@@ -17,6 +17,7 @@ export interface Product {
   category_id: string | null;
   images: string[];
   badges: string[];
+  tags: string[];
   inventory_qty: number | null;
   preorder_eta_weeks_min: number | null;
   preorder_eta_weeks_max: number | null;
@@ -53,6 +54,9 @@ export function transformProduct(dbProduct: Record<string, unknown>): Product {
     }
   }
 
+  const tags = dbProduct.tags as unknown;
+  const tagArray: string[] = Array.isArray(tags) ? tags as string[] : [];
+
   return {
     id: dbProduct.id as string,
     slug: dbProduct.slug as string,
@@ -69,6 +73,7 @@ export function transformProduct(dbProduct: Record<string, unknown>): Product {
     category_id: dbProduct.category_id as string | null,
     images: imageArray,
     badges: badgeArray,
+    tags: tagArray,
     inventory_qty: dbProduct.inventory_qty as number | null,
     preorder_eta_weeks_min: dbProduct.preorder_eta_weeks_min as number | null,
     preorder_eta_weeks_max: dbProduct.preorder_eta_weeks_max as number | null,
