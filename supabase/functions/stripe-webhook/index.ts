@@ -80,17 +80,59 @@ async function trackEvent(requestId: string, name: string, orderId: string, prop
       .eq('id', orderId)
       .maybeSingle();
 
+    // Generate event ID for deduplication
+    const eventId = `srv_${Date.now().toString(36)}_${Math.random().toString(36).substring(2, 8)}`;
+
     await supabase.from('events').insert({
       name,
+      event_id: eventId,
+      source: 'server',
       user_id: order?.user_id || null,
       properties: {
         order_id: orderId,
         ...properties,
       },
     });
-    log(requestId, 'Event tracked', { name, orderId });
+    log(requestId, 'Event tracked', { name, orderId, eventId });
+    
+    return eventId;
   } catch (err) {
     log(requestId, 'Event tracking failed (non-blocking)', err);
+    return null;
+  }
+}
+
+// Send server-side Meta CAPI event
+async function sendMetaCapi(requestId: string, eventData: {
+  eventName: string;
+  eventId: string;
+  email?: string;
+  phone?: string;
+  firstName?: string;
+  lastName?: string;
+  orderId?: string;
+  orderNumber?: string;
+  value?: number;
+  currency?: string;
+  contentIds?: string[];
+  sourceUrl?: string;
+}) {
+  try {
+    const response = await fetch(
+      `${Deno.env.get('SUPABASE_URL')}/functions/v1/meta-capi`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')}`,
+        },
+        body: JSON.stringify(eventData),
+      }
+    );
+    const result = await response.json();
+    log(requestId, 'Meta CAPI sent', { eventName: eventData.eventName, success: result.success });
+  } catch (err) {
+    log(requestId, 'Meta CAPI failed (non-blocking)', err);
   }
 }
 
@@ -237,7 +279,7 @@ Deno.serve(async (req) => {
           });
 
           // Track deposit_paid event
-          await trackEvent(requestId, 'deposit_paid', orderId, {
+          const depositEventId = await trackEvent(requestId, 'deposit_paid', orderId, {
             order_number: orderNumber,
             amount_eur: (session.amount_total || 0) / 100,
             stripe_session_id: session.id,
@@ -269,6 +311,23 @@ Deno.serve(async (req) => {
               trackingToken: trackingToken,
               items: order.order_items,
             });
+
+            // Send Meta CAPI Purchase event for deposit
+            if (depositEventId) {
+              await sendMetaCapi(requestId, {
+                eventName: 'Purchase',
+                eventId: depositEventId,
+                email: order.email,
+                phone: order.phone || undefined,
+                firstName: order.first_name,
+                lastName: order.last_name,
+                orderId: order.id,
+                orderNumber: order.order_number,
+                value: order.deposit_total_eur,
+                currency: 'EUR',
+                contentIds: order.order_items?.map((i: any) => i.product_id) || [],
+              });
+            }
           }
           
           // Record event as processed
@@ -316,7 +375,7 @@ Deno.serve(async (req) => {
           });
 
           // Track balance_paid event
-          await trackEvent(requestId, 'balance_paid', orderId, {
+          const balanceEventId = await trackEvent(requestId, 'balance_paid', orderId, {
             order_number: orderNumber,
             amount_eur: (session.amount_total || 0) / 100,
             stripe_session_id: session.id,
@@ -325,13 +384,13 @@ Deno.serve(async (req) => {
           // Get full order for purchase event
           const { data: order } = await supabase
             .from('orders')
-            .select('*')
+            .select('*, order_items(*)')
             .eq('id', orderId)
             .single();
 
           if (order) {
             // Track purchase event (full payment complete)
-            await trackEvent(requestId, 'purchase', orderId, {
+            const purchaseEventId = await trackEvent(requestId, 'purchase', orderId, {
               order_number: orderNumber,
               total_eur: order.total_eur,
               currency: 'EUR',
@@ -344,6 +403,23 @@ Deno.serve(async (req) => {
               orderNumber: order.order_number,
               amountEur: order.balance_total_eur,
             });
+
+            // Send Meta CAPI Purchase event for balance (full purchase complete)
+            if (purchaseEventId) {
+              await sendMetaCapi(requestId, {
+                eventName: 'Purchase',
+                eventId: purchaseEventId,
+                email: order.email,
+                phone: order.phone || undefined,
+                firstName: order.first_name,
+                lastName: order.last_name,
+                orderId: order.id,
+                orderNumber: order.order_number,
+                value: order.total_eur, // Full order value
+                currency: 'EUR',
+                contentIds: order.order_items?.map((i: any) => i.product_id) || [],
+              });
+            }
           }
           
           // Record event as processed
