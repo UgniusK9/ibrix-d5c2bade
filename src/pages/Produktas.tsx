@@ -1,10 +1,12 @@
-import { useEffect } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { useParams, Link } from "react-router-dom";
 import { ArrowLeft, Package, Clock, Truck, RotateCcw, Shield, ShoppingCart, Puzzle, HelpCircle, Loader2, Star } from "lucide-react";
 import { PageLayout } from "@/components/layout/PageLayout";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useProduct, formatPrice, getEtaString, getProductImage } from "@/hooks/useProducts";
+import { useProductVariants, groupVariantsByType, type ProductVariant } from "@/hooks/useProductVariants";
+import { VariantSelector } from "@/components/products/VariantSelector";
 import { useCartStore } from "@/stores/cartStore";
 import { useRecentlyViewed } from "@/hooks/useRecentlyViewed";
 import { toast } from "sonner";
@@ -52,6 +54,46 @@ export default function Produktas() {
   const addItem = useCartStore((state) => state.addItem);
   const { addProduct: addToRecentlyViewed } = useRecentlyViewed();
   const { data: product, isLoading, error } = useProduct(handle || '');
+  const { data: variants = [] } = useProductVariants(product?.id);
+  
+  // Variant selection state
+  const [selectedVariants, setSelectedVariants] = useState<Record<string, string>>({});
+  
+  // Get grouped variants
+  const groupedVariants = useMemo(() => groupVariantsByType(variants), [variants]);
+  
+  // Set default variant selections when variants load
+  useEffect(() => {
+    if (variants.length > 0) {
+      const defaults: Record<string, string> = {};
+      Object.entries(groupedVariants).forEach(([type, typeVariants]) => {
+        // Select first available variant
+        const available = typeVariants.find(v => v.inventory_qty > 0);
+        if (available) {
+          defaults[type] = available.id;
+        } else if (typeVariants[0]) {
+          defaults[type] = typeVariants[0].id;
+        }
+      });
+      setSelectedVariants(defaults);
+    }
+  }, [variants, groupedVariants]);
+  
+  // Calculate selected variant info
+  const selectedVariantDetails = useMemo(() => {
+    const selectedIds = Object.values(selectedVariants);
+    const selected = variants.filter(v => selectedIds.includes(v.id));
+    const totalPriceAdjustment = selected.reduce((sum, v) => sum + (v.price_adjustment_eur || 0), 0);
+    const names = selected.map(v => v.option_value).join(', ');
+    // For now, take the first variant as the main one
+    const mainVariant = selected[0];
+    return {
+      variants: selected,
+      priceAdjustment: totalPriceAdjustment,
+      name: names,
+      mainVariant,
+    };
+  }, [variants, selectedVariants]);
 
   // Track ViewContent and add to recently viewed when product loads
   useEffect(() => {
@@ -68,11 +110,23 @@ export default function Produktas() {
     }
   }, [product, addToRecentlyViewed]);
 
+  const handleVariantChange = (type: string, variantId: string) => {
+    setSelectedVariants(prev => ({ ...prev, [type]: variantId }));
+  };
+
   const handleAddToCart = () => {
     if (product) {
-      addItem(product);
+      const variant = selectedVariantDetails.mainVariant 
+        ? {
+            id: selectedVariantDetails.mainVariant.id,
+            name: selectedVariantDetails.name,
+            priceAdjustment: selectedVariantDetails.priceAdjustment,
+          }
+        : undefined;
+      
+      addItem(product, 1, variant);
       toast.success("Pridėta į krepšelį", {
-        description: product.title,
+        description: variant ? `${product.title} - ${variant.name}` : product.title,
         position: "top-center",
       });
     }
@@ -117,6 +171,9 @@ export default function Produktas() {
   const eta = getEtaString(product);
   const image = getProductImage(product);
   const detailsCount = (product.details_json as Record<string, unknown>)?.detailsCount as number || 0;
+  
+  // Calculate final price with variant adjustments
+  const finalPrice = product.price_eur + selectedVariantDetails.priceAdjustment;
 
   const productSpecs = [
     { label: "Detalių skaičius", value: detailsCount > 0 ? `${detailsCount} vnt.` : "—" },
@@ -182,9 +239,16 @@ export default function Produktas() {
             </h1>
 
             {/* Price */}
-            <p className="font-heading text-3xl font-bold text-accent mb-4">
-              {formatPrice(product.price_eur)}
-            </p>
+            <div className="flex items-center gap-3 mb-4">
+              <p className="font-heading text-3xl font-bold text-accent">
+                {formatPrice(finalPrice)}
+              </p>
+              {selectedVariantDetails.priceAdjustment !== 0 && (
+                <span className="text-sm text-muted-foreground line-through">
+                  {formatPrice(product.price_eur)}
+                </span>
+              )}
+            </div>
 
             {/* Status Badge */}
             <div className="flex items-center gap-3 mb-6">
@@ -215,7 +279,7 @@ export default function Produktas() {
             )}
 
             {/* Trust Row */}
-            <div className="flex flex-wrap gap-4 mb-8">
+            <div className="flex flex-wrap gap-4 mb-6">
               {trustItems.map((item, idx) => (
                 <span key={idx} className="flex items-center gap-2 text-sm text-muted-foreground">
                   <item.icon className="w-4 h-4 text-primary" />
@@ -223,6 +287,16 @@ export default function Produktas() {
                 </span>
               ))}
             </div>
+
+            {/* Variant Selector */}
+            {variants.length > 0 && (
+              <VariantSelector
+                variants={variants}
+                selectedVariants={selectedVariants}
+                onVariantChange={handleVariantChange}
+                className="mb-6"
+              />
+            )}
 
             {/* CTA */}
             <Button 
@@ -355,6 +429,7 @@ export default function Produktas() {
           currentProductId={product.id} 
           category={product.category}
           categoryId={product.category_id}
+          tags={product.tags}
         />
       </div>
     </PageLayout>

@@ -6,9 +6,16 @@ interface RelatedProductsProps {
   currentProductId: string;
   category: string;
   categoryId?: string | null;
+  tags?: string[];
 }
 
-export function RelatedProducts({ currentProductId, category, categoryId }: RelatedProductsProps) {
+// Calculate tag overlap score
+function getTagOverlapScore(productTags: string[], currentTags: string[]): number {
+  if (!productTags?.length || !currentTags?.length) return 0;
+  return productTags.filter(tag => currentTags.includes(tag)).length;
+}
+
+export function RelatedProducts({ currentProductId, category, categoryId, tags = [] }: RelatedProductsProps) {
   const { data: products, isLoading } = useProducts();
 
   if (isLoading) {
@@ -19,18 +26,27 @@ export function RelatedProducts({ currentProductId, category, categoryId }: Rela
     );
   }
 
-  // Filter related products by same category, excluding current product
+  // Filter and score related products
   const relatedProducts = (products || [])
     .filter(p => p.id !== currentProductId)
-    .filter(p => {
-      // First try to match by category_id if available
-      if (categoryId && p.category_id) {
-        return p.category_id === categoryId;
-      }
-      // Fall back to category enum
-      return p.category === category;
+    .map(p => {
+      let score = 0;
+      
+      // Tag overlap score (highest priority)
+      score += getTagOverlapScore(p.tags || [], tags) * 3;
+      
+      // Same category_id
+      if (categoryId && p.category_id === categoryId) score += 2;
+      
+      // Same category enum
+      if (p.category === category) score += 1;
+      
+      return { product: p, score };
     })
-    .slice(0, 4);
+    .filter(item => item.score > 0)
+    .sort((a, b) => b.score - a.score)
+    .slice(0, 4)
+    .map(item => item.product);
 
   if (relatedProducts.length === 0) {
     return null;

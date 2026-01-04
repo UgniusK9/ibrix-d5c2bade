@@ -14,6 +14,14 @@ export interface CartItem {
   quantity: number;
   status: 'in_stock' | 'preorder';
   eta?: string;
+  variantId?: string;
+  variantName?: string;
+}
+
+interface VariantInfo {
+  id: string;
+  name: string;
+  priceAdjustment: number; // in EUR
 }
 
 interface CartStore {
@@ -24,9 +32,9 @@ interface CartStore {
   isModalOpen: boolean;
   
   // Actions
-  addItem: (product: Product, quantity?: number) => void;
-  updateQuantity: (productId: string, quantity: number) => void;
-  removeItem: (productId: string) => void;
+  addItem: (product: Product, quantity?: number, variant?: VariantInfo) => void;
+  updateQuantity: (productId: string, quantity: number, variantId?: string) => void;
+  removeItem: (productId: string, variantId?: string) => void;
   clearCart: () => void;
   setLoading: (loading: boolean) => void;
   setOpen: (open: boolean) => void;
@@ -64,29 +72,40 @@ export const useCartStore = create<CartStore>()(
       lastAddedItem: null,
       isModalOpen: false,
 
-      addItem: (product, quantity = 1) => {
+      addItem: (product, quantity = 1, variant) => {
         const { items } = get();
         
-        const existingItem = items.find(i => i.productId === product.id);
+        // Create unique key for product + variant combination
+        const itemKey = variant ? `${product.id}-${variant.id}` : product.id;
+        const existingItem = items.find(i => 
+          variant 
+            ? (i.productId === product.id && i.variantId === variant.id)
+            : (i.productId === product.id && !i.variantId)
+        );
+        
+        const priceAdjustment = variant?.priceAdjustment || 0;
+        const finalPrice = product.price_eur + priceAdjustment;
         
         const newItem: CartItem = {
           productId: product.id,
           productSlug: product.slug,
-          title: product.title,
+          title: variant ? `${product.title} - ${variant.name}` : product.title,
           image: getProductImage(product),
-          price: Math.round(product.price_eur * 100),
+          price: Math.round(finalPrice * 100),
           deposit: Math.round(product.deposit_eur * 100),
           currency: 'EUR',
           quantity,
           status: product.stock_status === 'in_stock' ? 'in_stock' : 'preorder',
           eta: getEtaString(product),
+          variantId: variant?.id,
+          variantName: variant?.name,
         };
         
         if (existingItem) {
           const updatedItem = { ...existingItem, quantity: existingItem.quantity + quantity };
           set({
             items: items.map(i =>
-              i.productId === product.id ? updatedItem : i
+              (i.productId === product.id && i.variantId === variant?.id) ? updatedItem : i
             ),
             lastAddedItem: updatedItem,
             isModalOpen: true,
@@ -102,29 +121,33 @@ export const useCartStore = create<CartStore>()(
         // Track AddToCart event
         trackAddToCartEvent({
           id: product.id,
-          name: product.title,
-          price: product.price_eur,
+          name: variant ? `${product.title} - ${variant.name}` : product.title,
+          price: finalPrice,
           currency: 'EUR',
           quantity,
         });
       },
 
-      updateQuantity: (productId, quantity) => {
+      updateQuantity: (productId, quantity, variantId) => {
         if (quantity <= 0) {
-          get().removeItem(productId);
+          get().removeItem(productId, variantId);
           return;
         }
         
         set({
           items: get().items.map(item =>
-            item.productId === productId ? { ...item, quantity } : item
+            (item.productId === productId && item.variantId === variantId) 
+              ? { ...item, quantity } 
+              : item
           )
         });
       },
 
-      removeItem: (productId) => {
+      removeItem: (productId, variantId) => {
         set({
-          items: get().items.filter(item => item.productId !== productId)
+          items: get().items.filter(item => 
+            !(item.productId === productId && item.variantId === variantId)
+          )
         });
       },
 
