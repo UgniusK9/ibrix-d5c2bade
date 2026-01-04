@@ -1,6 +1,6 @@
 import { useEffect, useState, useMemo } from "react";
 import { useParams, Link } from "react-router-dom";
-import { ArrowLeft, Package, Clock, Truck, RotateCcw, Shield, ShoppingCart, Puzzle, HelpCircle, Loader2, Star } from "lucide-react";
+import { ArrowLeft, Package, Clock, Truck, RotateCcw, Shield, ShoppingCart, Puzzle, HelpCircle, Loader2, Star, Scale, Check } from "lucide-react";
 import { PageLayout } from "@/components/layout/PageLayout";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -8,6 +8,7 @@ import { useProduct, formatPrice, getEtaString, getProductImage } from "@/hooks/
 import { useProductVariants, groupVariantsByType, type ProductVariant } from "@/hooks/useProductVariants";
 import { VariantSelector } from "@/components/products/VariantSelector";
 import { useCartStore } from "@/stores/cartStore";
+import { useComparisonStore } from "@/stores/comparisonStore";
 import { useRecentlyViewed } from "@/hooks/useRecentlyViewed";
 import { toast } from "sonner";
 import { trackViewContentEvent } from "@/hooks/useAnalytics";
@@ -53,6 +54,7 @@ export default function Produktas() {
   const { handle } = useParams<{ handle: string }>();
   const addItem = useCartStore((state) => state.addItem);
   const { addProduct: addToRecentlyViewed } = useRecentlyViewed();
+  const { addProduct: addToComparison, isInComparison, removeProduct: removeFromComparison } = useComparisonStore();
   const { data: product, isLoading, error } = useProduct(handle || '');
   const { data: variants = [] } = useProductVariants(product?.id);
   
@@ -129,6 +131,31 @@ export default function Produktas() {
         description: variant ? `${product.title} - ${variant.name}` : product.title,
         position: "top-center",
       });
+    }
+  };
+
+  const handleToggleComparison = () => {
+    if (!product) return;
+    
+    if (isInComparison(product.id)) {
+      removeFromComparison(product.id);
+      toast.info("Pašalinta iš palyginimo", {
+        description: product.title,
+        position: "top-center",
+      });
+    } else {
+      const added = addToComparison(product);
+      if (added) {
+        toast.success("Pridėta palyginimui", {
+          description: product.title,
+          position: "top-center",
+        });
+      } else {
+        toast.error("Palyginimo limitas", {
+          description: "Galite palyginti iki 3 produktų",
+          position: "top-center",
+        });
+      }
     }
   };
 
@@ -298,15 +325,32 @@ export default function Produktas() {
               />
             )}
 
-            {/* CTA */}
-            <Button 
-              size="lg" 
-              className="w-full bg-accent hover:bg-accent/90 text-accent-foreground h-14 text-base"
-              onClick={handleAddToCart}
-            >
-              <ShoppingCart className="w-5 h-5 mr-2" />
-              {isPreOrder ? "Užsisakyti (pre-order)" : "Į krepšelį"}
-            </Button>
+            {/* CTA Buttons */}
+            <div className="flex gap-3">
+              <Button 
+                size="lg" 
+                className="flex-1 bg-accent hover:bg-accent/90 text-accent-foreground h-14 text-base"
+                onClick={handleAddToCart}
+              >
+                <ShoppingCart className="w-5 h-5 mr-2" />
+                {isPreOrder ? "Užsisakyti (pre-order)" : "Į krepšelį"}
+              </Button>
+              
+              {/* Comparison button */}
+              <Button 
+                size="lg" 
+                variant={isInComparison(product.id) ? "secondary" : "outline"}
+                className="h-14"
+                onClick={handleToggleComparison}
+                title={isInComparison(product.id) ? "Pašalinti iš palyginimo" : "Pridėti palyginimui"}
+              >
+                {isInComparison(product.id) ? (
+                  <Check className="w-5 h-5" />
+                ) : (
+                  <Scale className="w-5 h-5" />
+                )}
+              </Button>
+            </div>
             
             {/* CTA subtext */}
             {isPreOrder && (

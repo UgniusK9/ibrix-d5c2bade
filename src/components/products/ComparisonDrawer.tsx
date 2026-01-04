@@ -1,20 +1,24 @@
-import { X, Trash2, Scale, Package, Clock, ShoppingCart, ExternalLink } from 'lucide-react';
+import { X, Trash2, Scale, Package, Clock, ShoppingCart, ExternalLink, Eye, EyeOff, Maximize2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { useState, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { Badge } from '@/components/ui/badge';
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
 import { useComparisonStore } from '@/stores/comparisonStore';
-import { formatPrice, getProductImage, getEtaString } from '@/hooks/useProducts';
+import { formatPrice, getProductImage, getEtaString, type Product } from '@/hooks/useProducts';
 import { useCartStore } from '@/stores/cartStore';
 import { toast } from 'sonner';
 
 export function ComparisonDrawer() {
   const { products, removeProduct, clearAll } = useComparisonStore();
   const addItem = useCartStore((state) => state.addItem);
+  const [showDifferencesOnly, setShowDifferencesOnly] = useState(false);
 
   if (products.length === 0) return null;
 
-  const handleAddToCart = (product: typeof products[0]) => {
+  const handleAddToCart = (product: Product) => {
     addItem(product);
     toast.success("Pridėta į krepšelį", {
       description: product.title,
@@ -25,8 +29,10 @@ export function ComparisonDrawer() {
   // Get comparison rows with all specifications
   const comparisonRows = [
     {
+      key: 'price',
       label: 'Kaina',
-      render: (product: typeof products[0]) => (
+      getValue: (p: Product) => p.sale_price_eur || p.price_eur,
+      render: (product: Product) => (
         <div className="flex flex-col items-center gap-1">
           {product.sale_price_eur ? (
             <>
@@ -46,24 +52,30 @@ export function ComparisonDrawer() {
       ),
     },
     {
+      key: 'deposit',
       label: 'Depozitas',
-      render: (product: typeof products[0]) => (
+      getValue: (p: Product) => p.deposit_eur,
+      render: (product: Product) => (
         <span className="font-semibold text-primary">
           {formatPrice(product.deposit_eur)}
         </span>
       ),
     },
     {
+      key: 'balance',
       label: 'Likutis',
-      render: (product: typeof products[0]) => (
+      getValue: (p: Product) => p.price_eur - p.deposit_eur,
+      render: (product: Product) => (
         <span className="font-medium text-muted-foreground">
           {formatPrice(product.price_eur - product.deposit_eur)}
         </span>
       ),
     },
     {
+      key: 'status',
       label: 'Būsena',
-      render: (product: typeof products[0]) => (
+      getValue: (p: Product) => p.stock_status,
+      render: (product: Product) => (
         <Badge 
           variant={product.stock_status === 'in_stock' ? 'default' : 'secondary'}
           className={product.stock_status === 'in_stock' ? 'bg-green-500' : ''}
@@ -74,8 +86,10 @@ export function ComparisonDrawer() {
       ),
     },
     {
+      key: 'eta',
       label: 'Pristatymas',
-      render: (product: typeof products[0]) => (
+      getValue: (p: Product) => getEtaString(p),
+      render: (product: Product) => (
         <span className="flex items-center gap-1.5 text-sm">
           <Clock className="w-4 h-4 text-muted-foreground" />
           {getEtaString(product)}
@@ -83,8 +97,10 @@ export function ComparisonDrawer() {
       ),
     },
     {
+      key: 'details',
       label: 'Detalių sk.',
-      render: (product: typeof products[0]) => {
+      getValue: (p: Product) => (p.details_json as Record<string, unknown>)?.detailsCount as number || 0,
+      render: (product: Product) => {
         const detailsCount = (product.details_json as Record<string, unknown>)?.detailsCount as number || 0;
         return (
           <span className="flex items-center gap-1.5 text-sm">
@@ -95,33 +111,54 @@ export function ComparisonDrawer() {
       },
     },
     {
+      key: 'assembly',
       label: 'Surinkimo laikas',
-      render: (product: typeof products[0]) => {
+      getValue: (p: Product) => (p.details_json as Record<string, unknown>)?.assemblyHours as number || 0,
+      render: (product: Product) => {
         const assemblyHours = (product.details_json as Record<string, unknown>)?.assemblyHours as number || 0;
         return assemblyHours > 0 ? `${assemblyHours} val.` : '—';
       },
     },
     {
+      key: 'dimensions',
       label: 'Matmenys',
-      render: (product: typeof products[0]) => {
+      getValue: (p: Product) => (p.details_json as Record<string, unknown>)?.dimensions as string || '',
+      render: (product: Product) => {
         const dimensions = (product.details_json as Record<string, unknown>)?.dimensions as string || '';
         return dimensions || '—';
       },
     },
     {
+      key: 'weight',
       label: 'Svoris',
-      render: (product: typeof products[0]) => {
+      getValue: (p: Product) => (p.details_json as Record<string, unknown>)?.weight as string || '',
+      render: (product: Product) => {
         const weight = (product.details_json as Record<string, unknown>)?.weight as string || '';
         return weight || '—';
       },
     },
     {
+      key: 'sku',
       label: 'SKU',
-      render: (product: typeof products[0]) => (
+      getValue: (p: Product) => p.sku,
+      render: (product: Product) => (
         <span className="font-mono text-xs">{product.sku}</span>
       ),
     },
   ];
+
+  // Check if row has differences
+  const rowHasDifference = (row: typeof comparisonRows[0]) => {
+    if (products.length < 2) return false;
+    const values = products.map(p => JSON.stringify(row.getValue(p)));
+    const uniqueValues = new Set(values);
+    return uniqueValues.size > 1;
+  };
+
+  // Filter rows based on differences toggle
+  const filteredRows = showDifferencesOnly && products.length >= 2
+    ? comparisonRows.filter(row => rowHasDifference(row))
+    : comparisonRows;
 
   return (
     <Sheet>
@@ -136,12 +173,37 @@ export function ComparisonDrawer() {
       </SheetTrigger>
       <SheetContent side="bottom" className="h-[85vh] overflow-y-auto">
         <SheetHeader className="mb-6">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <SheetTitle className="font-heading text-xl">Produktų palyginimas</SheetTitle>
-            <Button variant="ghost" size="sm" onClick={clearAll} className="text-destructive hover:text-destructive">
-              <Trash2 className="w-4 h-4 mr-2" />
-              Išvalyti
-            </Button>
+            <div className="flex items-center gap-4">
+              {/* Differences filter */}
+              {products.length >= 2 && (
+                <div className="flex items-center gap-2">
+                  <Switch
+                    id="diff-toggle"
+                    checked={showDifferencesOnly}
+                    onCheckedChange={setShowDifferencesOnly}
+                  />
+                  <Label htmlFor="diff-toggle" className="text-sm cursor-pointer flex items-center gap-1.5">
+                    {showDifferencesOnly ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
+                    Tik skirtumai
+                  </Label>
+                </div>
+              )}
+              
+              {/* Full page link */}
+              <Button asChild variant="outline" size="sm">
+                <Link to="/palyginti">
+                  <Maximize2 className="w-4 h-4 mr-2" />
+                  Pilnas vaizdas
+                </Link>
+              </Button>
+              
+              <Button variant="ghost" size="sm" onClick={clearAll} className="text-destructive hover:text-destructive">
+                <Trash2 className="w-4 h-4 mr-2" />
+                Išvalyti
+              </Button>
+            </div>
           </div>
         </SheetHeader>
 
@@ -211,23 +273,37 @@ export function ComparisonDrawer() {
               </tr>
             </thead>
             <tbody>
-              {comparisonRows.map((row, rowIndex) => (
-                <tr key={row.label} className={rowIndex % 2 === 0 ? 'bg-muted/30' : ''}>
-                  <td className="p-4 border-b border-border text-sm font-medium sticky left-0 bg-inherit">
-                    {row.label}
-                  </td>
-                  {products.map((product) => (
-                    <td key={product.id} className="p-4 border-b border-border text-center">
-                      {row.render(product)}
+              {filteredRows.map((row, rowIndex) => {
+                const hasDiff = rowHasDifference(row);
+                return (
+                  <tr 
+                    key={row.key} 
+                    className={`
+                      ${rowIndex % 2 === 0 ? 'bg-muted/30' : ''}
+                      ${hasDiff ? 'bg-primary/5' : ''}
+                    `}
+                  >
+                    <td className="p-4 border-b border-border text-sm font-medium sticky left-0 bg-inherit">
+                      <span className="flex items-center gap-2">
+                        {row.label}
+                        {hasDiff && (
+                          <span className="w-2 h-2 rounded-full bg-primary" title="Skirtumas" />
+                        )}
+                      </span>
                     </td>
-                  ))}
-                  {Array.from({ length: 3 - products.length }).map((_, i) => (
-                    <td key={`empty-${i}`} className="p-4 border-b border-border text-center text-muted-foreground">
-                      —
-                    </td>
-                  ))}
-                </tr>
-              ))}
+                    {products.map((product) => (
+                      <td key={product.id} className="p-4 border-b border-border text-center">
+                        {row.render(product)}
+                      </td>
+                    ))}
+                    {Array.from({ length: 3 - products.length }).map((_, i) => (
+                      <td key={`empty-${i}`} className="p-4 border-b border-border text-center text-muted-foreground">
+                        —
+                      </td>
+                    ))}
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>
