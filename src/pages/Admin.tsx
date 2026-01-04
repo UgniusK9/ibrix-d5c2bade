@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Package, Settings, List, BarChart3, Tag, RefreshCw, ShoppingBag, Users, RotateCcw, Layers, Gift } from "lucide-react";
+import { Package, Settings, List, BarChart3, Tag, RefreshCw, ShoppingBag, Users, RotateCcw, Layers, Gift, FolderTree, Mail } from "lucide-react";
 import { PageLayout } from "@/components/layout/PageLayout";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -8,9 +8,12 @@ import { ProductsManager } from "@/components/admin/ProductsManager";
 import { OrdersManager } from "@/components/admin/OrdersManager";
 import { OffersManager } from "@/components/admin/OffersManager";
 import { AnalyticsDashboard } from "@/components/admin/AnalyticsDashboard";
+import { AnalyticsCharts } from "@/components/admin/AnalyticsCharts";
 import { RefundsManager } from "@/components/admin/RefundsManager";
 import { BundlesManager } from "@/components/admin/BundlesManager";
 import { GiftCardsManager } from "@/components/admin/GiftCardsManager";
+import { CategoriesManager } from "@/components/admin/CategoriesManager";
+import { NewsletterManager } from "@/components/admin/NewsletterManager";
 import { supabase } from "@/integrations/supabase/client";
 import { Link } from "react-router-dom";
 
@@ -72,6 +75,10 @@ export default function Admin() {
               <ShoppingBag className="w-4 h-4" />
               Produktai
             </TabsTrigger>
+            <TabsTrigger value="categories" className="gap-2">
+              <FolderTree className="w-4 h-4" />
+              Kategorijos
+            </TabsTrigger>
             <TabsTrigger value="offers" className="gap-2">
               <Tag className="w-4 h-4" />
               Pasiūlymai
@@ -88,6 +95,10 @@ export default function Admin() {
               <Gift className="w-4 h-4" />
               Kuponai
             </TabsTrigger>
+            <TabsTrigger value="newsletter" className="gap-2">
+              <Mail className="w-4 h-4" />
+              Naujienlaiškis
+            </TabsTrigger>
             <TabsTrigger value="setup" className="gap-2">
               <Settings className="w-4 h-4" />
               Nustatymai
@@ -102,6 +113,10 @@ export default function Admin() {
             <ProductsManager />
           </TabsContent>
 
+          <TabsContent value="categories">
+            <CategoriesManager />
+          </TabsContent>
+
           <TabsContent value="offers">
             <OffersManager />
             <div className="mt-8">
@@ -111,6 +126,9 @@ export default function Admin() {
 
           <TabsContent value="analytics">
             <AnalyticsDashboard />
+            <div className="mt-8">
+              <AnalyticsCharts />
+            </div>
             <div className="mt-6 p-4 bg-muted/50 rounded-lg text-sm text-muted-foreground">
               <p><strong>Testavimo instrukcijos:</strong></p>
               <ul className="list-disc ml-4 mt-2 space-y-1">
@@ -127,6 +145,10 @@ export default function Admin() {
 
           <TabsContent value="giftcards">
             <GiftCardsManager />
+          </TabsContent>
+
+          <TabsContent value="newsletter">
+            <NewsletterManager />
           </TabsContent>
 
           <TabsContent value="setup">

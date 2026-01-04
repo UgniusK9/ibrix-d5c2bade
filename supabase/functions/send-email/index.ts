@@ -238,6 +238,35 @@ function getGiftCardEmail(data: any): { subject: string; html: string } {
   };
 }
 
+function getNewsletterEmail(data: any): { subject: string; html: string } {
+  const { firstName, subject, content } = data;
+
+  // Convert markdown-like content to basic HTML
+  const htmlContent = content
+    .split('\n\n')
+    .map((p: string) => `<p style="margin:15px 0;">${p}</p>`)
+    .join('');
+
+  return {
+    subject: subject,
+    html: `
+      <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;">
+        <h1 style="color:#1a1a1a;">Sveiki, ${firstName}!</h1>
+        
+        <div style="margin:20px 0;">
+          ${htmlContent}
+        </div>
+        
+        <hr style="border:none;border-top:1px solid #eee;margin:30px 0;">
+        <p style="color:#999;font-size:12px;">
+          IBRIX | ibrix.lt<br>
+          <a href="https://ibrix.lt/account" style="color:#999;">Atsisakyti prenumeratos</a>
+        </p>
+      </div>
+    `,
+  };
+}
+
 Deno.serve(async (req: Request) => {
   const requestId = generateRequestId();
   
@@ -286,6 +315,9 @@ Deno.serve(async (req: Request) => {
         break;
       case 'gift_card':
         emailContent = getGiftCardEmail(data);
+        break;
+      case 'newsletter':
+        emailContent = getNewsletterEmail(data);
         break;
       default:
         log(requestId, 'Unknown email type', { type });
