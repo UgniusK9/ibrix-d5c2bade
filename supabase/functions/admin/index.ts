@@ -28,7 +28,7 @@ const adminRequestSchema = z.discriminatedUnion('action', [
   // Users
   z.object({ action: z.literal('list_users') }),
   // Analytics
-  z.object({ action: z.literal('get_analytics'), period: z.enum(['7d', '30d', '90d']) }),
+  z.object({ action: z.literal('get_analytics'), period: z.enum(['24h', '7d', '30d', '90d']) }),
   // Order status updates
   z.object({ action: z.literal('update_order_status'), orderId: z.string().uuid(), status: z.enum(['created', 'deposit_paid', 'awaiting_balance', 'balance_paid', 'packed', 'shipped', 'delivered', 'cancelled', 'refunded']) }),
   // Refunds
@@ -235,7 +235,7 @@ Deno.serve(async (req) => {
 
       // Analytics
       case 'get_analytics': {
-        const periodDays = { '7d': 7, '30d': 30, '90d': 90 }[body.period] || 30;
+        const periodDays = { '24h': 1, '7d': 7, '30d': 30, '90d': 90 }[body.period] || 30;
         const startDate = new Date();
         startDate.setDate(startDate.getDate() - periodDays);
         const startDateStr = startDate.toISOString();
