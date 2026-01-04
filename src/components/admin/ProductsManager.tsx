@@ -38,6 +38,7 @@ interface Product {
   description: string | null;
   price_eur: number;
   deposit_eur: number;
+  sale_price_eur: number | null;
   stock_status: StockStatus;
   status: ProductStatus;
   category: ProductCategory;
@@ -66,6 +67,7 @@ interface ProductFormData {
   description: string;
   price_eur: string;
   deposit_eur: string;
+  sale_price_eur: string;
   stock_status: StockStatus;
   status: ProductStatus;
   category: ProductCategory;
@@ -85,6 +87,7 @@ const emptyFormData: ProductFormData = {
   description: '',
   price_eur: '',
   deposit_eur: '',
+  sale_price_eur: '',
   stock_status: 'preorder',
   status: 'active',
   category: 'engines',
@@ -190,6 +193,7 @@ export function ProductsManager() {
       description: product.description || '',
       price_eur: product.price_eur.toString(),
       deposit_eur: product.deposit_eur.toString(),
+      sale_price_eur: product.sale_price_eur?.toString() || '',
       stock_status: product.stock_status,
       status: product.status,
       category: product.category,
@@ -275,6 +279,7 @@ export function ProductsManager() {
         description: formData.description.trim() || null,
         price_eur: parseFloat(formData.price_eur),
         deposit_eur: parseFloat(formData.deposit_eur),
+        sale_price_eur: formData.sale_price_eur ? parseFloat(formData.sale_price_eur) : null,
         stock_status: formData.stock_status,
         status: formData.status,
         category: formData.category,
@@ -566,7 +571,7 @@ export function ProductsManager() {
             </div>
 
             {/* Pricing */}
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-3 gap-4">
               <div>
                 <Label htmlFor="price_eur">Kaina (EUR) *</Label>
                 <Input
@@ -580,6 +585,22 @@ export function ProductsManager() {
                 />
               </div>
               <div>
+                <Label htmlFor="sale_price_eur">Akcijos kaina (EUR)</Label>
+                <Input
+                  id="sale_price_eur"
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  value={formData.sale_price_eur}
+                  onChange={(e) => setFormData(prev => ({ ...prev, sale_price_eur: e.target.value }))}
+                  placeholder="Palikti tuščią jei nėra akcijos"
+                  className={formData.sale_price_eur ? "border-orange-500 focus-visible:ring-orange-500" : ""}
+                />
+                <p className="text-xs text-muted-foreground mt-1">
+                  Rodoma kaip nuolaida
+                </p>
+              </div>
+              <div>
                 <Label htmlFor="deposit_eur">Depozitas (EUR) *</Label>
                 <Input
                   id="deposit_eur"
@@ -591,7 +612,7 @@ export function ProductsManager() {
                   placeholder="0.00"
                 />
                 <p className="text-xs text-muted-foreground mt-1">
-                  Suma, mokama užsisakant (≤ kaina)
+                  Suma užsakant
                 </p>
               </div>
             </div>
@@ -631,30 +652,27 @@ export function ProductsManager() {
               </div>
             </div>
 
-            {/* Category (from DB) */}
+            {/* Category */}
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <Label>Kategorija (DB)</Label>
+                <Label>Kategorija</Label>
                 <Select 
-                  value={formData.category_id} 
-                  onValueChange={(v) => setFormData(prev => ({ ...prev, category_id: v }))}
+                  value={formData.category_id || "none"} 
+                  onValueChange={(v) => setFormData(prev => ({ ...prev, category_id: v === "none" ? "" : v }))}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Pasirinkite kategoriją" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">Nepasirinkta</SelectItem>
+                    <SelectItem value="none">Nepasirinkta</SelectItem>
                     {categories.map((cat) => (
                       <SelectItem key={cat.id} value={cat.id}>{cat.name}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
-                <p className="text-xs text-muted-foreground mt-1">
-                  Kategorija iš admin kategorijų sąrašo
-                </p>
               </div>
               <div>
-                <Label>Kategorija (enum)</Label>
+                <Label>Skiltis</Label>
                 <Select 
                   value={formData.category} 
                   onValueChange={(v) => setFormData(prev => ({ ...prev, category: v as ProductCategory }))}
@@ -669,9 +687,6 @@ export function ProductsManager() {
                     <SelectItem value="other">Kita</SelectItem>
                   </SelectContent>
                 </Select>
-                <p className="text-xs text-muted-foreground mt-1">
-                  Legacy kategorija (backup)
-                </p>
               </div>
             </div>
 

@@ -9,6 +9,7 @@ export interface Product {
   short_desc: string | null;
   price_eur: number;
   deposit_eur: number;
+  sale_price_eur: number | null;
   sku: string;
   stock_status: 'preorder' | 'in_stock' | 'out_of_stock';
   status: 'active' | 'inactive';
@@ -60,6 +61,7 @@ export function transformProduct(dbProduct: Record<string, unknown>): Product {
     short_desc: dbProduct.short_desc as string | null,
     price_eur: Number(dbProduct.price_eur),
     deposit_eur: Number(dbProduct.deposit_eur),
+    sale_price_eur: dbProduct.sale_price_eur ? Number(dbProduct.sale_price_eur) : null,
     sku: dbProduct.sku as string,
     stock_status: dbProduct.stock_status as 'preorder' | 'in_stock' | 'out_of_stock',
     status: dbProduct.status as 'active' | 'inactive',

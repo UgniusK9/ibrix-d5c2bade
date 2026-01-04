@@ -801,6 +801,70 @@ export type Database = {
           },
         ]
       }
+      product_reviews: {
+        Row: {
+          content: string | null
+          created_at: string
+          id: string
+          order_id: string | null
+          product_id: string
+          rating: number
+          status: string
+          title: string | null
+          updated_at: string
+          user_id: string
+          verified_purchase: boolean | null
+        }
+        Insert: {
+          content?: string | null
+          created_at?: string
+          id?: string
+          order_id?: string | null
+          product_id: string
+          rating: number
+          status?: string
+          title?: string | null
+          updated_at?: string
+          user_id: string
+          verified_purchase?: boolean | null
+        }
+        Update: {
+          content?: string | null
+          created_at?: string
+          id?: string
+          order_id?: string | null
+          product_id?: string
+          rating?: number
+          status?: string
+          title?: string | null
+          updated_at?: string
+          user_id?: string
+          verified_purchase?: boolean | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_reviews_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "product_reviews_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "product_reviews_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       products: {
         Row: {
           badges: Json | null
@@ -816,6 +880,7 @@ export type Database = {
           preorder_eta_weeks_max: number | null
           preorder_eta_weeks_min: number | null
           price_eur: number
+          sale_price_eur: number | null
           short_desc: string | null
           sku: string
           slug: string
@@ -838,6 +903,7 @@ export type Database = {
           preorder_eta_weeks_max?: number | null
           preorder_eta_weeks_min?: number | null
           price_eur: number
+          sale_price_eur?: number | null
           short_desc?: string | null
           sku: string
           slug: string
@@ -860,6 +926,7 @@ export type Database = {
           preorder_eta_weeks_max?: number | null
           preorder_eta_weeks_min?: number | null
           price_eur?: number
+          sale_price_eur?: number | null
           short_desc?: string | null
           sku?: string
           slug?: string

@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
-import { ArrowLeft, Package, Clock, Truck, RotateCcw, Shield, ShoppingCart, Puzzle, HelpCircle, Loader2 } from "lucide-react";
+import { ArrowLeft, Package, Clock, Truck, RotateCcw, Shield, ShoppingCart, Puzzle, HelpCircle, Loader2, Star } from "lucide-react";
 import { PageLayout } from "@/components/layout/PageLayout";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -10,6 +10,7 @@ import { useRecentlyViewed } from "@/hooks/useRecentlyViewed";
 import { toast } from "sonner";
 import { trackViewContentEvent } from "@/hooks/useAnalytics";
 import { SEOHead } from "@/components/seo/SEOHead";
+import { ProductReviews } from "@/components/products/ProductReviews";
 import {
   Accordion,
   AccordionContent,
@@ -331,6 +332,18 @@ export default function Produktas() {
                     </div>
                   ))}
                 </div>
+              </AccordionContent>
+            </AccordionItem>
+            {/* Reviews */}
+            <AccordionItem value="reviews" className="border border-border rounded-xl px-6 data-[state=open]:bg-card">
+              <AccordionTrigger className="hover:no-underline py-5">
+                <span className="flex items-center gap-3 font-heading font-semibold">
+                  <Star className="w-5 h-5 text-primary" />
+                  Atsiliepimai
+                </span>
+              </AccordionTrigger>
+              <AccordionContent className="pb-6">
+                <ProductReviews productId={product.id} productTitle={product.title} />
               </AccordionContent>
             </AccordionItem>
           </Accordion>
