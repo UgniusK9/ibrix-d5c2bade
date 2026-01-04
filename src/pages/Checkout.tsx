@@ -14,6 +14,8 @@ import { useCartStore, formatCartPrice } from "@/stores/cartStore";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { trackBeginCheckoutEvent, trackAddPaymentInfoEvent } from "@/hooks/useAnalytics";
+import { DiscountCodeInput, AppliedDiscount } from "@/components/checkout/DiscountCodeInput";
+import { InvoiceFields } from "@/components/checkout/InvoiceFields";
 
 const checkoutSchema = z.object({
   firstName: z.string().min(1, "Vardas privalomas").max(50),
@@ -27,6 +29,9 @@ const checkoutSchema = z.object({
   city: z.string().optional(),
   postalCode: z.string().optional(),
   notes: z.string().max(500).optional(),
+  invoiceCompanyName: z.string().optional(),
+  invoiceVatCode: z.string().optional(),
+  invoiceAddress: z.string().optional(),
 });
 
 type CheckoutFormData = z.infer<typeof checkoutSchema>;
@@ -43,6 +48,8 @@ export default function Checkout() {
   const { items, getTotalPrice, getTotalDeposit, clearCart } = useCartStore();
   const [isLoading, setIsLoading] = useState(false);
   const [step, setStep] = useState<1 | 2>(1);
+  const [appliedDiscount, setAppliedDiscount] = useState<AppliedDiscount | null>(null);
+  const [wantsInvoice, setWantsInvoice] = useState(false);
 
   const {
     register,
@@ -61,9 +68,16 @@ export default function Checkout() {
   const isLockerMethod = shippingMethod?.includes("locker");
 
   // Calculate deposit total from cart items
-  const depositTotal = getTotalDeposit();
+  const baseDepositTotal = getTotalDeposit();
   const fullTotal = getTotalPrice();
-  const balanceTotal = fullTotal - depositTotal;
+  // Calculate discount amount based on type
+  const discountAmount = appliedDiscount 
+    ? (appliedDiscount.type === 'percent' 
+      ? (baseDepositTotal * appliedDiscount.value / 100)
+      : appliedDiscount.value)
+    : 0;
+  const depositTotal = Math.max(0, baseDepositTotal - discountAmount);
+  const balanceTotal = fullTotal - baseDepositTotal;
 
   useEffect(() => {
     if (items.length === 0) {
@@ -130,6 +144,12 @@ export default function Checkout() {
           },
           notes: data.notes,
           items: checkoutItems,
+          discountCode: appliedDiscount?.code,
+          wantsInvoice: wantsInvoice,
+          invoiceCompanyName: data.invoiceCompanyName,
+          invoiceVatCode: data.invoiceVatCode,
+          invoiceAddress: data.invoiceAddress,
+          invoiceCountry: "Lietuva",
         },
       });
 
@@ -293,6 +313,25 @@ export default function Checkout() {
                     className="mt-2"
                   />
                 </div>
+
+                {/* Discount Code */}
+                <div className="bg-card border border-border rounded-xl p-6">
+                  <DiscountCodeInput
+                    cartTotal={fullTotal}
+                    onApply={setAppliedDiscount}
+                    appliedDiscount={appliedDiscount}
+                  />
+                </div>
+
+                {/* Invoice Fields */}
+                <div className="bg-card border border-border rounded-xl p-6">
+                  <InvoiceFields
+                    register={register}
+                    errors={errors}
+                    wantsInvoice={wantsInvoice}
+                    onWantsInvoiceChange={setWantsInvoice}
+                  />
+                </div>
               </>
             )}
 
@@ -365,6 +404,12 @@ export default function Checkout() {
                   <span className="text-muted-foreground">Pristatymas</span>
                   <span className="text-green-600">Nemokamas</span>
                 </div>
+                {appliedDiscount && (
+                  <div className="flex justify-between text-sm text-green-600">
+                    <span>Nuolaida ({appliedDiscount.code})</span>
+                    <span>-{formatCartPrice(discountAmount)}</span>
+                  </div>
+                )}
                 <div className="flex justify-between font-semibold text-primary pt-2 border-t border-dashed">
                   <span>Mokėsite dabar (depozitas)</span>
                   <span>{formatCartPrice(depositTotal)}</span>

@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
-interface AppliedDiscount {
+export interface AppliedDiscount {
   offerId: string;
   code: string;
   type: 'percent' | 'fixed';
