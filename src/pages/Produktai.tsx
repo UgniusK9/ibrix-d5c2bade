@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { Link, useParams, useSearchParams } from "react-router-dom";
 import { Package, Clock, ShoppingCart, Filter, Loader2, Grid3X3, LayoutGrid, ChevronRight } from "lucide-react";
 import { PageLayout } from "@/components/layout/PageLayout";
@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { useProducts, formatPrice, getEtaString, getProductImage, Product } from "@/hooks/useProducts";
 import { useCartStore } from "@/stores/cartStore";
 import { SEOHead } from "@/components/seo/SEOHead";
+import { supabase } from "@/integrations/supabase/client";
 import {
   Select,
   SelectContent,
@@ -18,65 +19,92 @@ import { cn } from "@/lib/utils";
 
 type StatusFilter = "all" | "preorder" | "in_stock";
 
-const categoryConfig: Record<string, { title: string; description: string; slug: string }> = {
-  engines: { 
-    title: "Varikliai", 
-    description: "Mechaninių konstruktorių kolekcija su realiai judančiais mechanizmais.",
-    slug: "varikliai"
-  },
-  cars: { 
-    title: "Automobilių modeliai", 
-    description: "Detalūs automobilių modeliai kolekcijoms ir entuziastams.",
-    slug: "automobiliai"
-  },
-  flowers: { 
-    title: "Gėlių rinkiniai", 
-    description: "Unikalūs gėlių konstruktoriai ir dekoracijos.",
-    slug: "geles"
-  },
-  other: { 
-    title: "Kiti produktai", 
-    description: "Kiti unikalūs konstruktoriai ir priedai.",
-    slug: "kita"
-  },
-  all: {
-    title: "Visi produktai",
-    description: "Peržiūrėkite visą mūsų produktų katalogą.",
-    slug: "visi"
-  }
-};
-
-// Reverse lookup: slug -> category key
-const slugToCategory: Record<string, string> = {
-  varikliai: "engines",
-  automobiliai: "cars",
-  geles: "flowers",
-  kita: "other",
-  visi: "all"
-};
+interface Category {
+  id: string;
+  name: string;
+  slug: string;
+  description: string | null;
+  active: boolean;
+}
 
 export default function Produktai() {
   const { category: categorySlug } = useParams<{ category?: string }>();
   const [searchParams, setSearchParams] = useSearchParams();
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
   const [viewMode, setViewMode] = useState<'grid' | 'compact'>('grid');
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [loadingCategories, setLoadingCategories] = useState(true);
   const addItem = useCartStore((state) => state.addItem);
   const { data: products, isLoading, error } = useProducts();
 
-  // Determine category from URL
-  const categoryKey = categorySlug ? slugToCategory[categorySlug] || 'all' : 'all';
-  const currentCategory = categoryConfig[categoryKey] || categoryConfig.all;
+  // Load categories from DB
+  useEffect(() => {
+    const loadCategories = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('categories')
+          .select('id, name, slug, description, active')
+          .eq('active', true)
+          .order('sort_order');
+        
+        if (error) throw error;
+        setCategories(data || []);
+      } catch (e) {
+        console.error('Failed to load categories:', e);
+      } finally {
+        setLoadingCategories(false);
+      }
+    };
+    loadCategories();
+  }, []);
 
+  // Determine current category from URL
+  const currentCategory = useMemo(() => {
+    if (!categorySlug || categorySlug === 'visi') {
+      return { id: 'all', name: 'Visi produktai', slug: 'visi', description: 'Peržiūrėkite visą mūsų produktų katalogą.' };
+    }
+    const found = categories.find(c => c.slug === categorySlug);
+    if (found) {
+      return { ...found, description: found.description || `${found.name} kolekcija` };
+    }
+    // Fallback for legacy enum categories
+    const legacyMap: Record<string, { name: string; description: string }> = {
+      varikliai: { name: 'Varikliai', description: 'Mechaninių konstruktorių kolekcija su realiai judančiais mechanizmais.' },
+      automobiliai: { name: 'Automobilių modeliai', description: 'Detalūs automobilių modeliai kolekcijoms ir entuziastams.' },
+      geles: { name: 'Gėlių rinkiniai', description: 'Unikalūs gėlių konstruktoriai ir dekoracijos.' },
+      kita: { name: 'Kiti produktai', description: 'Kiti unikalūs konstruktoriai ir priedai.' },
+    };
+    const legacy = legacyMap[categorySlug];
+    if (legacy) {
+      return { id: categorySlug, name: legacy.name, slug: categorySlug, description: legacy.description };
+    }
+    return { id: 'all', name: 'Visi produktai', slug: 'visi', description: 'Peržiūrėkite visą mūsų produktų katalogą.' };
+  }, [categorySlug, categories]);
+
+  // Filter products by category
   const filteredProducts = useMemo(() => {
     if (!products) return [];
     return products.filter((p) => {
-      // Filter by category
-      if (categoryKey !== 'all' && p.category !== categoryKey) return false;
-      // Filter by stock status
+      // Category filter
+      if (currentCategory.id !== 'all') {
+        // Check category_id first (DB category)
+        const matchesCategoryId = categories.find(c => c.slug === categorySlug)?.id === p.category_id;
+        // Fallback to legacy enum category
+        const legacySlugToEnum: Record<string, string> = {
+          varikliai: 'engines',
+          automobiliai: 'cars',
+          geles: 'flowers',
+          kita: 'other',
+        };
+        const matchesLegacy = legacySlugToEnum[categorySlug || ''] === p.category;
+        
+        if (!matchesCategoryId && !matchesLegacy) return false;
+      }
+      // Stock status filter
       if (statusFilter !== "all" && p.stock_status !== statusFilter) return false;
       return true;
     });
-  }, [products, categoryKey, statusFilter]);
+  }, [products, currentCategory, categorySlug, categories, statusFilter]);
 
   const handleAddToCart = (product: Product, e: React.MouseEvent) => {
     e.preventDefault();
@@ -88,18 +116,45 @@ export default function Produktai() {
   const categoryCounts = useMemo(() => {
     if (!products) return {};
     const counts: Record<string, number> = { all: products.length };
-    products.forEach(p => {
-      counts[p.category] = (counts[p.category] || 0) + 1;
+    
+    // Count by DB category_id
+    categories.forEach(cat => {
+      counts[cat.id] = products.filter(p => p.category_id === cat.id).length;
     });
+    
+    // Also count legacy categories
+    const legacyEnums = ['engines', 'cars', 'flowers', 'other'];
+    legacyEnums.forEach(e => {
+      if (!counts[e]) {
+        counts[e] = products.filter(p => p.category === e && !p.category_id).length;
+      }
+    });
+    
     return counts;
-  }, [products]);
+  }, [products, categories]);
+
+  // Build navigation items - combine DB categories with "all"
+  const navCategories = useMemo(() => {
+    const items: { id: string; name: string; slug: string; count: number }[] = [
+      { id: 'all', name: 'Visi produktai', slug: 'visi', count: categoryCounts['all'] || 0 }
+    ];
+    categories.forEach(cat => {
+      items.push({
+        id: cat.id,
+        name: cat.name,
+        slug: cat.slug,
+        count: categoryCounts[cat.id] || 0
+      });
+    });
+    return items;
+  }, [categories, categoryCounts]);
 
   return (
     <PageLayout>
       <SEOHead 
-        title={`${currentCategory.title} | Ibrix.lt`}
-        description={currentCategory.description}
-        canonical={`https://ibrix.lt/produktai/${categoryConfig[categoryKey]?.slug || ''}`}
+        title={`${currentCategory.name} | Ibrix.lt`}
+        description={currentCategory.description || ''}
+        canonical={`https://ibrix.lt/produktai/${currentCategory.slug}`}
       />
       
       <section className="py-8 md:py-12">
@@ -109,10 +164,10 @@ export default function Produktai() {
             <Link to="/" className="hover:text-foreground transition-colors">Pradžia</Link>
             <ChevronRight className="w-4 h-4" />
             <Link to="/produktai/visi" className="hover:text-foreground transition-colors">Produktai</Link>
-            {categoryKey !== 'all' && (
+            {currentCategory.id !== 'all' && (
               <>
                 <ChevronRight className="w-4 h-4" />
-                <span className="text-foreground font-medium">{currentCategory.title}</span>
+                <span className="text-foreground font-medium">{currentCategory.name}</span>
               </>
             )}
           </nav>
@@ -120,7 +175,7 @@ export default function Produktai() {
           {/* Header */}
           <div className="mb-8">
             <h1 className="font-heading text-3xl md:text-4xl font-bold mb-3">
-              {currentCategory.title}
+              {currentCategory.name}
             </h1>
             <p className="text-muted-foreground max-w-2xl">
               {currentCategory.description}
@@ -132,30 +187,36 @@ export default function Produktai() {
             <aside className="space-y-6">
               <div className="bg-card rounded-xl border border-border p-4">
                 <h3 className="font-heading font-semibold mb-4">Kategorijos</h3>
-                <nav className="space-y-1">
-                  {Object.entries(categoryConfig).map(([key, config]) => (
-                    <Link
-                      key={key}
-                      to={`/produktai/${config.slug}`}
-                      className={cn(
-                        "flex items-center justify-between px-3 py-2.5 rounded-lg text-sm transition-colors",
-                        categoryKey === key 
-                          ? "bg-primary/10 text-primary font-medium" 
-                          : "hover:bg-muted text-muted-foreground hover:text-foreground"
-                      )}
-                    >
-                      <span>{config.title}</span>
-                      {categoryCounts[key] !== undefined && (
-                        <Badge variant="secondary" className="text-xs">
-                          {categoryCounts[key]}
-                        </Badge>
-                      )}
-                    </Link>
-                  ))}
-                </nav>
+                {loadingCategories ? (
+                  <div className="flex items-center justify-center py-4">
+                    <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
+                  </div>
+                ) : (
+                  <nav className="space-y-1">
+                    {navCategories.map((cat) => (
+                      <Link
+                        key={cat.id}
+                        to={`/produktai/${cat.slug}`}
+                        className={cn(
+                          "flex items-center justify-between px-3 py-2.5 rounded-lg text-sm transition-colors",
+                          (currentCategory.slug === cat.slug || (currentCategory.id === 'all' && cat.id === 'all'))
+                            ? "bg-primary/10 text-primary font-medium" 
+                            : "hover:bg-muted text-muted-foreground hover:text-foreground"
+                        )}
+                      >
+                        <span>{cat.name}</span>
+                        {cat.count > 0 && (
+                          <Badge variant="secondary" className="text-xs">
+                            {cat.count}
+                          </Badge>
+                        )}
+                      </Link>
+                    ))}
+                  </nav>
+                )}
               </div>
 
-              {/* Mobile-hidden stock filter */}
+              {/* Stock filter */}
               <div className="hidden lg:block bg-card rounded-xl border border-border p-4">
                 <h3 className="font-heading font-semibold mb-4">Prieinamumas</h3>
                 <div className="space-y-2">

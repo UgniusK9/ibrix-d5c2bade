@@ -1,53 +1,30 @@
+import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { ArrowRight, Sparkles, Gift, Cog, Car, Puzzle, Zap } from "lucide-react";
+import { ArrowRight, Loader2 } from "lucide-react";
 import { motion } from "framer-motion";
+import { supabase } from "@/integrations/supabase/client";
 
-const collections = [
-  {
-    id: "engines",
-    title: "Varikliai",
-    description: "Tikslūs mechaniniai modeliai",
-    icon: Cog,
-    href: "/produktai/varikliai",
-    gradient: "from-primary/20 to-primary/5",
-    accent: "bg-primary/10 text-primary",
-  },
-  {
-    id: "cars",
-    title: "Automobiliai",
-    description: "Ikoniniai auto modeliai",
-    icon: Car,
-    href: "/produktai/automobiliai",
-    gradient: "from-accent/20 to-accent/5",
-    accent: "bg-accent/10 text-accent",
-  },
-  {
-    id: "flowers",
-    title: "Botanika",
-    description: "Gėlių kolekcijos",
-    icon: Sparkles,
-    href: "/produktai/geles",
-    gradient: "from-success/20 to-success/5",
-    accent: "bg-success/10 text-success",
-  },
-  {
-    id: "gifts",
-    title: "Dovanos",
-    description: "Idealios dovanoms",
-    icon: Gift,
-    href: "/produktai?tag=dovana",
-    gradient: "from-destructive/15 to-destructive/5",
-    accent: "bg-destructive/10 text-destructive",
-  },
-];
+interface Category {
+  id: string;
+  name: string;
+  slug: string;
+  description: string | null;
+  image_url: string | null;
+}
+
+// Fallback images for categories
+const categoryImages: Record<string, string> = {
+  varikliai: "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=600&h=400&fit=crop",
+  automobiliai: "https://images.unsplash.com/photo-1592198084033-aade902d1aae?w=600&h=400&fit=crop",
+  geles: "https://images.unsplash.com/photo-1490750967868-88aa4486c946?w=600&h=400&fit=crop",
+  konstruktoriai: "https://images.unsplash.com/photo-1587654780291-39c9404d746b?w=600&h=400&fit=crop",
+};
 
 const container = {
   hidden: { opacity: 0 },
   show: {
     opacity: 1,
-    transition: {
-      staggerChildren: 0.1,
-    },
+    transition: { staggerChildren: 0.1 },
   },
 };
 
@@ -57,54 +34,99 @@ const item = {
 };
 
 export function CollectionsSection() {
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const loadCategories = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('categories')
+          .select('id, name, slug, description, image_url')
+          .eq('active', true)
+          .order('sort_order')
+          .limit(8);
+        
+        if (error) throw error;
+        setCategories(data || []);
+      } catch (e) {
+        console.error('Failed to load categories:', e);
+      } finally {
+        setLoading(false);
+      }
+    };
+    loadCategories();
+  }, []);
+
+  if (loading) {
+    return (
+      <section className="py-16 md:py-24 bg-secondary/30">
+        <div className="container flex items-center justify-center">
+          <Loader2 className="w-8 h-8 animate-spin text-primary" />
+        </div>
+      </section>
+    );
+  }
+
+  if (categories.length === 0) {
+    return null;
+  }
+
   return (
-    <section className="py-16 md:py-24 bg-gradient-to-b from-background to-secondary/30">
+    <section className="py-16 md:py-24 bg-gradient-to-b from-background via-secondary/20 to-background">
       <div className="container">
-        {/* Header */}
-        <div className="text-center mb-12">
-          <span className="text-xs font-semibold text-accent uppercase tracking-widest mb-2 block">
-            ATRASK
-          </span>
-          <h2 className="font-heading text-3xl md:text-4xl font-bold mb-4">
-            Kolekcijos
-          </h2>
-          <p className="text-muted-foreground max-w-md mx-auto">
-            Pasirinkite kategoriją pagal savo interesus ir atraskite išskirtinius modelius.
-          </p>
+        {/* Section tabs */}
+        <div className="flex items-center gap-6 border-b border-border mb-8">
+          <button className="pb-3 border-b-2 border-primary text-foreground font-semibold">
+            Kategorijos
+          </button>
+          <Link to="/produktai/visi" className="pb-3 text-muted-foreground hover:text-foreground transition-colors">
+            Visi produktai
+          </Link>
         </div>
 
-        {/* Collections Grid */}
+        {/* Categories Grid - LEGO style tiles */}
         <motion.div 
-          className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6"
+          className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4"
           variants={container}
           initial="hidden"
           whileInView="show"
-          viewport={{ once: true, margin: "-100px" }}
+          viewport={{ once: true, margin: "-50px" }}
         >
-          {collections.map((collection) => {
-            const Icon = collection.icon;
+          {categories.map((category, index) => {
+            const imageUrl = category.image_url || categoryImages[category.slug] || categoryImages.konstruktoriai;
+            
             return (
-              <motion.div key={collection.id} variants={item}>
+              <motion.div key={category.id} variants={item}>
                 <Link
-                  to={collection.href}
-                  className={`group relative block p-6 md:p-8 rounded-2xl bg-gradient-to-br ${collection.gradient} border border-border/50 hover:border-primary/30 hover:shadow-premium-lg transition-all duration-300`}
+                  to={`/produktai/${category.slug}`}
+                  className="group relative block rounded-2xl overflow-hidden aspect-[4/5] bg-card border border-border hover:border-primary/30 hover:shadow-premium-lg transition-all duration-300"
                 >
-                  {/* Icon */}
-                  <div className={`w-12 h-12 rounded-xl ${collection.accent} flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300`}>
-                    <Icon className="w-6 h-6" />
+                  {/* Image */}
+                  <div className="absolute inset-0">
+                    <img 
+                      src={imageUrl}
+                      alt={category.name}
+                      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
                   </div>
                   
                   {/* Content */}
-                  <h3 className="font-heading font-semibold text-lg mb-1 group-hover:text-primary transition-colors">
-                    {collection.title}
-                  </h3>
-                  <p className="text-sm text-muted-foreground">
-                    {collection.description}
-                  </p>
-                  
-                  {/* Arrow */}
-                  <div className="absolute top-6 right-6 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <ArrowRight className="w-5 h-5 text-primary" />
+                  <div className="absolute bottom-0 left-0 right-0 p-4">
+                    <h3 className="font-heading font-bold text-lg text-white mb-1 group-hover:text-accent transition-colors">
+                      {category.name}
+                    </h3>
+                    {category.description && (
+                      <p className="text-sm text-white/70 line-clamp-2">
+                        {category.description}
+                      </p>
+                    )}
+                  </div>
+
+                  {/* Hover arrow */}
+                  <div className="absolute top-4 right-4 w-10 h-10 rounded-full bg-white/10 backdrop-blur-sm flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-x-2 group-hover:translate-x-0">
+                    <ArrowRight className="w-5 h-5 text-white" />
                   </div>
                 </Link>
               </motion.div>
@@ -112,14 +134,14 @@ export function CollectionsSection() {
           })}
         </motion.div>
 
-        {/* View All Link */}
+        {/* View All */}
         <div className="text-center mt-10">
           <Link
             to="/produktai/visi"
-            className="inline-flex items-center gap-2 text-primary hover:text-primary/80 font-medium transition-colors"
+            className="inline-flex items-center gap-2 text-primary hover:text-primary/80 font-medium transition-colors group"
           >
-            Žiūrėti visas kategorijas
-            <ArrowRight className="w-4 h-4" />
+            Žiūrėti visus produktus
+            <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
           </Link>
         </div>
       </div>

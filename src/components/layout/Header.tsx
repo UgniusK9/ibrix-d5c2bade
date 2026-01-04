@@ -10,7 +10,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import logo from "@/assets/logo.png";
 
 const navigation = [
-  { name: "Varikliai", href: "/varikliai" },
+  { name: "Produktai", href: "/produktai/visi" },
   { name: "Kaip veikia pre-order", href: "/pre-order" },
   { name: "Pagalba", href: "/pagalba" },
   { name: "Apie mus", href: "/apie" },
@@ -83,8 +83,8 @@ export function Header() {
             <div className="flex items-center gap-2">
               {/* CTA Button - Desktop only */}
               <Button asChild size="sm" className="hidden lg:flex bg-accent hover:bg-accent/90 text-accent-foreground h-9 px-4">
-                <Link to="/varikliai">
-                  Peržiūrėti variklius
+                <Link to="/produktai/visi">
+                  Peržiūrėti produktus
                   <ArrowRight className="ml-1.5 h-4 w-4" />
                 </Link>
               </Button>
@@ -163,8 +163,8 @@ export function Header() {
                   
                   <div className="mt-6 px-4 space-y-3">
                     <Button asChild className="w-full bg-accent hover:bg-accent/90 text-accent-foreground">
-                      <Link to="/varikliai" onClick={() => setMobileMenuOpen(false)}>
-                        Peržiūrėti variklius
+                      <Link to="/produktai/visi" onClick={() => setMobileMenuOpen(false)}>
+                        Peržiūrėti produktus
                         <ArrowRight className="ml-2 h-4 w-4" />
                       </Link>
                     </Button>
