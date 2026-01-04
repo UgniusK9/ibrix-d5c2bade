@@ -8,6 +8,9 @@ import { CookieConsentProvider } from "@/components/cookies/CookieConsentProvide
 import { PageViewTracker } from "@/components/analytics/PageViewTracker";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
+import { CartDrawer } from "@/components/cart/CartDrawer";
+import { AddToCartModal } from "@/components/cart/AddToCartModal";
+import { useCartStore } from "@/stores/cartStore";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import Varikliai from "./pages/Varikliai";
@@ -32,6 +35,22 @@ import ResetPassword from "./pages/ResetPassword";
 import Account from "./pages/Account";
 import AdminVerification from "./pages/AdminVerification";
 
+// Global cart components wrapper
+function CartComponents() {
+  const { lastAddedItem, isModalOpen, setModalOpen } = useCartStore();
+  
+  return (
+    <>
+      <CartDrawer />
+      <AddToCartModal 
+        isOpen={isModalOpen} 
+        onClose={() => setModalOpen(false)} 
+        item={lastAddedItem} 
+      />
+    </>
+  );
+}
+
 const queryClient = new QueryClient();
 
 const App = () => (
@@ -44,6 +63,7 @@ const App = () => (
           <AuthProvider>
             <CookieConsentProvider>
               <PageViewTracker />
+              <CartComponents />
               <Routes>
                 {/* Public routes */}
                 <Route path="/" element={<Index />} />

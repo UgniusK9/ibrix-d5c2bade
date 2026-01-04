@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Package, Clock, CheckCircle2, User, LogOut, Loader2, Tag } from 'lucide-react';
+import { Package, User, LogOut, Loader2, Tag } from 'lucide-react';
 import { PageLayout } from '@/components/layout/PageLayout';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
+import { OrderCard } from '@/components/account/OrderCard';
 
 interface Order {
   id: string;
@@ -15,6 +16,41 @@ interface Order {
   deposit_total_eur: number;
   balance_total_eur: number;
   created_at: string;
+  paid_at: string | null;
+  balance_paid_at: string | null;
+  shipping_address_json: Record<string, unknown> | null;
+  preorder_flag: boolean;
+  preorder_eta_weeks_min: number | null;
+  preorder_eta_weeks_max: number | null;
+}
+
+interface OrderPayment {
+  id: string;
+  order_id: string;
+  type: 'deposit' | 'balance' | 'refund';
+  amount_eur: number;
+  status: 'pending' | 'succeeded' | 'failed';
+  created_at: string;
+}
+
+interface OrderShipment {
+  id: string;
+  order_id: string;
+  status: 'pending' | 'packed' | 'shipped' | 'in_transit' | 'delivered';
+  tracking_number: string | null;
+  tracking_token: string;
+  carrier_code: 'omniva' | 'lp_express' | 'dpd' | 'other' | null;
+  shipped_at: string | null;
+  delivered_at: string | null;
+}
+
+interface OrderItem {
+  id: string;
+  order_id: string;
+  title_snapshot: string;
+  quantity: number;
+  unit_price_eur: number;
+  unit_deposit_eur: number;
 }
 
 interface Offer {
@@ -30,6 +66,9 @@ interface Offer {
 export default function Account() {
   const { user, signOut } = useAuth();
   const [orders, setOrders] = useState<Order[]>([]);
+  const [payments, setPayments] = useState<OrderPayment[]>([]);
+  const [shipments, setShipments] = useState<OrderShipment[]>([]);
+  const [orderItems, setOrderItems] = useState<OrderItem[]>([]);
   const [offers, setOffers] = useState<Offer[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -41,12 +80,46 @@ export default function Account() {
         // Load orders
         const { data: ordersData } = await supabase
           .from('orders')
-          .select('id, order_number, status, total_eur, deposit_total_eur, balance_total_eur, created_at')
+          .select('id, order_number, status, total_eur, deposit_total_eur, balance_total_eur, created_at, paid_at, balance_paid_at, shipping_address_json, preorder_flag, preorder_eta_weeks_min, preorder_eta_weeks_max')
           .eq('user_id', user.id)
           .order('created_at', { ascending: false });
 
         if (ordersData) {
-          setOrders(ordersData);
+          setOrders(ordersData as Order[]);
+
+          const orderIds = ordersData.map(o => o.id);
+          
+          if (orderIds.length > 0) {
+            // Load payments for these orders
+            const { data: paymentsData } = await supabase
+              .from('payments')
+              .select('id, order_id, type, amount_eur, status, created_at')
+              .in('order_id', orderIds);
+            
+            if (paymentsData) {
+              setPayments(paymentsData as OrderPayment[]);
+            }
+
+            // Load shipments
+            const { data: shipmentsData } = await supabase
+              .from('shipments')
+              .select('id, order_id, status, tracking_number, tracking_token, carrier_code, shipped_at, delivered_at')
+              .in('order_id', orderIds);
+            
+            if (shipmentsData) {
+              setShipments(shipmentsData as OrderShipment[]);
+            }
+
+            // Load order items
+            const { data: itemsData } = await supabase
+              .from('order_items')
+              .select('id, order_id, title_snapshot, quantity, unit_price_eur, unit_deposit_eur')
+              .in('order_id', orderIds);
+            
+            if (itemsData) {
+              setOrderItems(itemsData as OrderItem[]);
+            }
+          }
         }
 
         // Load user's targeted offers
@@ -61,8 +134,8 @@ export default function Account() {
 
         if (targetedOffers) {
           const activeOffers = targetedOffers
-            .filter((t: any) => t.offer?.active)
-            .map((t: any) => t.offer);
+            .filter((t: unknown) => (t as { offer: { active: boolean } })?.offer?.active)
+            .map((t: unknown) => (t as { offer: Offer }).offer);
           setOffers(activeOffers);
         }
       } catch (e) {
@@ -75,27 +148,23 @@ export default function Account() {
     loadData();
   }, [user]);
 
-  const getStatusBadge = (status: string) => {
-    const config: Record<string, { label: string; className: string }> = {
-      'created': { label: 'Sukurtas', className: 'bg-muted text-muted-foreground' },
-      'deposit_paid': { label: 'Depozitas sumokėtas', className: 'bg-green-500/10 text-green-600' },
-      'awaiting_balance': { label: 'Laukia likučio', className: 'bg-yellow-500/10 text-yellow-600' },
-      'balance_paid': { label: 'Pilnai apmokėtas', className: 'bg-green-500/10 text-green-600' },
-      'packed': { label: 'Supakuotas', className: 'bg-blue-500/10 text-blue-600' },
-      'shipped': { label: 'Išsiųstas', className: 'bg-primary/10 text-primary' },
-      'delivered': { label: 'Pristatytas', className: 'bg-green-500/10 text-green-600' },
-      'cancelled': { label: 'Atšauktas', className: 'bg-destructive/10 text-destructive' },
-      'refunded': { label: 'Grąžintas', className: 'bg-muted text-muted-foreground' },
-    };
-    const c = config[status] || config['created'];
-    return <Badge variant="outline" className={c.className}>{c.label}</Badge>;
-  };
-
   const formatPrice = (amount: number) => {
     return new Intl.NumberFormat('lt-LT', {
       style: 'currency',
       currency: 'EUR',
     }).format(amount);
+  };
+
+  const getPaymentsForOrder = (orderId: string) => {
+    return payments.filter(p => p.order_id === orderId);
+  };
+
+  const getShipmentForOrder = (orderId: string) => {
+    return shipments.find(s => s.order_id === orderId);
+  };
+
+  const getItemsForOrder = (orderId: string) => {
+    return orderItems.filter(i => i.order_id === orderId);
   };
 
   if (loading) {
@@ -183,38 +252,13 @@ export default function Account() {
           ) : (
             <div className="space-y-4">
               {orders.map((order) => (
-                <div key={order.id} className="bg-card border border-border rounded-xl p-4">
-                  <div className="flex items-center justify-between mb-3">
-                    <div>
-                      <p className="font-mono font-semibold">{order.order_number}</p>
-                      <p className="text-sm text-muted-foreground">
-                        {new Date(order.created_at).toLocaleDateString('lt-LT')}
-                      </p>
-                    </div>
-                    {getStatusBadge(order.status)}
-                  </div>
-
-                  <div className="grid grid-cols-3 gap-4 text-sm mb-3">
-                    <div>
-                      <span className="text-muted-foreground">Iš viso:</span>
-                      <p className="font-semibold">{formatPrice(order.total_eur)}</p>
-                    </div>
-                    <div>
-                      <span className="text-muted-foreground">Sumokėtas depozitas:</span>
-                      <p className="font-semibold text-green-600">{formatPrice(order.deposit_total_eur)}</p>
-                    </div>
-                    <div>
-                      <span className="text-muted-foreground">Likutis:</span>
-                      <p className="font-semibold text-yellow-600">{formatPrice(order.balance_total_eur)}</p>
-                    </div>
-                  </div>
-
-                  {order.status === 'awaiting_balance' && (
-                    <Button size="sm" className="w-full">
-                      Apmokėti likutį ({formatPrice(order.balance_total_eur)})
-                    </Button>
-                  )}
-                </div>
+                <OrderCard
+                  key={order.id}
+                  order={order}
+                  payments={getPaymentsForOrder(order.id)}
+                  shipment={getShipmentForOrder(order.id)}
+                  items={getItemsForOrder(order.id)}
+                />
               ))}
             </div>
           )}

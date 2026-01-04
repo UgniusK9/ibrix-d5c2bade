@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Loader2, Package, ChevronLeft, CreditCard, MapPin, Truck } from "lucide-react";
+import { Loader2, Package, ChevronLeft, CreditCard, MapPin, Truck, Shield, Sparkles } from "lucide-react";
 import { PageLayout } from "@/components/layout/PageLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -16,6 +16,8 @@ import { toast } from "sonner";
 import { trackBeginCheckoutEvent, trackAddPaymentInfoEvent } from "@/hooks/useAnalytics";
 import { DiscountCodeInput, AppliedDiscount } from "@/components/checkout/DiscountCodeInput";
 import { InvoiceFields } from "@/components/checkout/InvoiceFields";
+import { LockerSearch } from "@/components/checkout/LockerSearch";
+import { type LockerTerminal } from "@/data/lockerTerminals";
 
 const checkoutSchema = z.object({
   firstName: z.string().min(1, "Vardas privalomas").max(50),
@@ -25,6 +27,7 @@ const checkoutSchema = z.object({
   shippingMethod: z.enum(["omniva_locker", "lp_express_locker", "dpd_locker", "courier"]),
   lockerAddress: z.string().optional(),
   lockerId: z.string().optional(),
+  lockerCity: z.string().optional(),
   street: z.string().optional(),
   city: z.string().optional(),
   postalCode: z.string().optional(),
@@ -40,7 +43,7 @@ const shippingMethods = [
   { id: "omniva_locker", label: "Omniva paštomatas", price: 0, icon: Package },
   { id: "lp_express_locker", label: "LP EXPRESS paštomatas", price: 0, icon: Package },
   { id: "dpd_locker", label: "DPD paštomatas", price: 0, icon: Package },
-  { id: "courier", label: "Kurjeris", price: 0, icon: Truck },
+  { id: "courier", label: "Kurjeris į namus", price: 4.99, icon: Truck },
 ];
 
 export default function Checkout() {
@@ -50,6 +53,7 @@ export default function Checkout() {
   const [step, setStep] = useState<1 | 2>(1);
   const [appliedDiscount, setAppliedDiscount] = useState<AppliedDiscount | null>(null);
   const [wantsInvoice, setWantsInvoice] = useState(false);
+  const [selectedLocker, setSelectedLocker] = useState<LockerTerminal | null>(null);
 
   const {
     register,
@@ -67,17 +71,46 @@ export default function Checkout() {
   const shippingMethod = watch("shippingMethod");
   const isLockerMethod = shippingMethod?.includes("locker");
 
-  // Calculate deposit total from cart items
-  const baseDepositTotal = getTotalDeposit();
+  // Check if cart has any preorder items
+  const hasPreorderItems = items.some(item => item.status === 'preorder');
+  const hasInStockItems = items.some(item => item.status === 'in_stock');
+
+  // Calculate amounts based on stock status
+  // In-stock items: pay full price immediately
+  // Preorder items: pay deposit, balance later
+  const calculateAmounts = () => {
+    let immediatePayment = 0;
+    let laterPayment = 0;
+
+    items.forEach(item => {
+      const itemTotal = item.price * item.quantity;
+      if (item.status === 'in_stock') {
+        // In-stock: pay full price now
+        immediatePayment += itemTotal;
+      } else {
+        // Preorder: pay deposit now, balance later
+        const itemDeposit = item.deposit * item.quantity;
+        immediatePayment += itemDeposit;
+        laterPayment += itemTotal - itemDeposit;
+      }
+    });
+
+    return { immediatePayment, laterPayment };
+  };
+
+  const { immediatePayment, laterPayment } = calculateAmounts();
+
   const fullTotal = getTotalPrice();
-  // Calculate discount amount based on type
+  const selectedShippingMethod = shippingMethods.find(m => m.id === shippingMethod);
+  const shippingPrice = (selectedShippingMethod?.price || 0) * 100; // Convert to cents
+
+  // Calculate discount amount based on type (applies to immediate payment)
   const discountAmount = appliedDiscount 
     ? (appliedDiscount.type === 'percent' 
-      ? (baseDepositTotal * appliedDiscount.value / 100)
-      : appliedDiscount.value)
+      ? (immediatePayment * appliedDiscount.value / 100)
+      : Math.min(appliedDiscount.value * 100, immediatePayment)) // Don't discount more than total
     : 0;
-  const depositTotal = Math.max(0, baseDepositTotal - discountAmount);
-  const balanceTotal = fullTotal - baseDepositTotal;
+  const finalImmediatePayment = Math.max(0, immediatePayment - discountAmount) + shippingPrice;
 
   useEffect(() => {
     if (items.length === 0) {
@@ -89,7 +122,7 @@ export default function Checkout() {
     // Track begin checkout when page loads
     if (items.length > 0) {
       trackBeginCheckoutEvent({
-        totalCents: depositTotal,
+        totalCents: finalImmediatePayment,
         currency: "EUR",
         items: items.map(item => ({
           id: item.productId,
@@ -103,6 +136,16 @@ export default function Checkout() {
 
   const onSubmit = async (data: CheckoutFormData) => {
     if (step === 1) {
+      // Validate locker selection for locker methods
+      if (isLockerMethod && !selectedLocker) {
+        toast.error("Pasirinkite paštomatą");
+        return;
+      }
+      // Validate address for courier
+      if (data.shippingMethod === 'courier' && (!data.street || !data.city || !data.postalCode)) {
+        toast.error("Užpildykite visą pristatymo adresą");
+        return;
+      }
       setStep(2);
       return;
     }
@@ -111,7 +154,7 @@ export default function Checkout() {
 
     // Track add payment info
     trackAddPaymentInfoEvent({
-      totalCents: depositTotal,
+      totalCents: finalImmediatePayment,
       currency: "EUR",
       items: items.map(item => ({
         id: item.productId,
@@ -135,9 +178,15 @@ export default function Checkout() {
           email: data.email,
           phone: data.phone || undefined,
           shippingMethod: data.shippingMethod,
-          shippingAddress: {
-            lockerAddress: data.lockerAddress,
-            lockerId: data.lockerId,
+          shippingAddress: selectedLocker ? {
+            lockerId: selectedLocker.id,
+            lockerName: selectedLocker.name,
+            lockerAddress: `${selectedLocker.address}, ${selectedLocker.city}`,
+            lockerCity: selectedLocker.city,
+            lockerPostalCode: selectedLocker.postalCode,
+            lat: selectedLocker.lat,
+            lng: selectedLocker.lng,
+          } : {
             street: data.street,
             city: data.city,
             postalCode: data.postalCode,
@@ -272,13 +321,11 @@ export default function Checkout() {
                   </RadioGroup>
 
                   {isLockerMethod && (
-                    <div className="mt-4 p-4 bg-muted/50 rounded-lg">
-                      <Label htmlFor="lockerAddress">Paštomato adresas *</Label>
-                      <Input
-                        {...register("lockerAddress")}
-                        id="lockerAddress"
-                        placeholder="Įveskite paštomato adresą"
-                        className="mt-2"
+                    <div className="mt-4 p-4 bg-muted/30 rounded-lg border border-border">
+                      <LockerSearch
+                        shippingMethod={shippingMethod}
+                        selectedLocker={selectedLocker}
+                        onSelect={setSelectedLocker}
                       />
                     </div>
                   )}
@@ -346,12 +393,18 @@ export default function Checkout() {
                     Būsite nukreipti į saugų Stripe mokėjimo puslapį.
                   </p>
                   <p className="font-medium">
-                    Mokėsite depozitą: {formatCartPrice(depositTotal)}
+                    {laterPayment > 0 ? (
+                      <>Mokėsite dabar: {formatCartPrice(finalImmediatePayment)}</>
+                    ) : (
+                      <>Mokėsite: {formatCartPrice(finalImmediatePayment)}</>
+                    )}
                   </p>
                 </div>
-                <p className="text-sm text-muted-foreground">
-                  Likusi suma ({formatCartPrice(balanceTotal)}) bus apmokėta vėliau, prieš siunčiant užsakymą.
-                </p>
+                {laterPayment > 0 && (
+                  <p className="text-sm text-muted-foreground">
+                    Likusi suma ({formatCartPrice(laterPayment)}) bus apmokėta vėliau, prieš siunčiant užsakymą.
+                  </p>
+                )}
               </div>
             )}
 
@@ -364,7 +417,7 @@ export default function Checkout() {
               ) : step === 1 ? (
                 "Tęsti į mokėjimą"
               ) : (
-                `Apmokėti ${formatCartPrice(depositTotal)}`
+                `Apmokėti ${formatCartPrice(finalImmediatePayment)}`
               )}
             </Button>
           </form>
@@ -397,12 +450,14 @@ export default function Checkout() {
 
               <div className="border-t border-border pt-4 space-y-2">
                 <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">Pilna kaina</span>
+                  <span className="text-muted-foreground">Prekės</span>
                   <span>{formatCartPrice(fullTotal)}</span>
                 </div>
                 <div className="flex justify-between text-sm">
                   <span className="text-muted-foreground">Pristatymas</span>
-                  <span className="text-green-600">Nemokamas</span>
+                  <span className={shippingPrice === 0 ? "text-green-600" : ""}>
+                    {shippingPrice === 0 ? "Nemokamas" : formatCartPrice(shippingPrice)}
+                  </span>
                 </div>
                 {appliedDiscount && (
                   <div className="flex justify-between text-sm text-green-600">
@@ -411,13 +466,15 @@ export default function Checkout() {
                   </div>
                 )}
                 <div className="flex justify-between font-semibold text-primary pt-2 border-t border-dashed">
-                  <span>Mokėsite dabar (depozitas)</span>
-                  <span>{formatCartPrice(depositTotal)}</span>
+                  <span>{laterPayment > 0 ? "Mokėsite dabar" : "Iš viso"}</span>
+                  <span>{formatCartPrice(finalImmediatePayment)}</span>
                 </div>
-                <div className="flex justify-between text-sm text-muted-foreground">
-                  <span>Likusi suma (vėliau)</span>
-                  <span>{formatCartPrice(balanceTotal)}</span>
-                </div>
+                {laterPayment > 0 && (
+                  <div className="flex justify-between text-sm text-muted-foreground">
+                    <span>Likusi suma (vėliau)</span>
+                    <span>{formatCartPrice(laterPayment)}</span>
+                  </div>
+                )}
               </div>
             </div>
           </div>
