@@ -21,8 +21,8 @@ const adminRequestSchema = z.discriminatedUnion('action', [
   z.object({ action: z.literal('delete_product'), productId: z.string().uuid() }),
   // Offers
   z.object({ action: z.literal('list_offers') }),
-  z.object({ action: z.literal('create_offer'), title: z.string().min(1), description: z.string().nullable().optional(), code: z.string().min(1), type: z.enum(['percent', 'fixed']), value: z.number().positive(), active: z.boolean().optional(), starts_at: z.string().nullable().optional(), ends_at: z.string().nullable().optional() }),
-  z.object({ action: z.literal('update_offer'), offerId: z.string().uuid(), title: z.string().min(1).optional(), description: z.string().nullable().optional(), code: z.string().min(1).optional(), type: z.enum(['percent', 'fixed']).optional(), value: z.number().positive().optional(), active: z.boolean().optional(), starts_at: z.string().nullable().optional(), ends_at: z.string().nullable().optional() }),
+  z.object({ action: z.literal('create_offer'), title: z.string().min(1), description: z.string().nullable().optional(), code: z.string().min(1), type: z.enum(['percent', 'fixed']), value: z.number().positive(), active: z.boolean().optional(), starts_at: z.string().nullable().optional(), ends_at: z.string().nullable().optional(), min_cart_total: z.number().optional(), max_redemptions: z.number().nullable().optional(), per_user_limit: z.number().optional() }),
+  z.object({ action: z.literal('update_offer'), offerId: z.string().uuid(), title: z.string().min(1).optional(), description: z.string().nullable().optional(), code: z.string().min(1).optional(), type: z.enum(['percent', 'fixed']).optional(), value: z.number().positive().optional(), active: z.boolean().optional(), starts_at: z.string().nullable().optional(), ends_at: z.string().nullable().optional(), min_cart_total: z.number().optional(), max_redemptions: z.number().nullable().optional(), per_user_limit: z.number().optional() }),
   z.object({ action: z.literal('delete_offer'), offerId: z.string().uuid() }),
   z.object({ action: z.literal('assign_offer'), offerId: z.string().uuid(), userId: z.string().uuid().nullable().optional(), segmentKey: z.enum(['CART_ABANDONER', 'HIGH_INTENT', 'RETURNING', 'NEW_USER']).nullable().optional() }),
   // Users
@@ -31,6 +31,10 @@ const adminRequestSchema = z.discriminatedUnion('action', [
   z.object({ action: z.literal('get_analytics'), period: z.enum(['7d', '30d', '90d']) }),
   // Order status updates
   z.object({ action: z.literal('update_order_status'), orderId: z.string().uuid(), status: z.enum(['created', 'deposit_paid', 'awaiting_balance', 'balance_paid', 'packed', 'shipped', 'delivered', 'cancelled', 'refunded']) }),
+  // Refunds
+  z.object({ action: z.literal('process_refund'), refundId: z.string().uuid(), adminNotes: z.string().nullable().optional() }),
+  // Export
+  z.object({ action: z.literal('export_orders'), format: z.enum(['csv']).optional() }),
 ]);
 
 Deno.serve(async (req) => {
@@ -300,6 +304,103 @@ Deno.serve(async (req) => {
         const { error } = await supabase.from('orders').update({ status: body.status }).eq('id', body.orderId);
         if (error) throw error;
         return new Response(JSON.stringify({ success: true }), { headers: { 'Content-Type': 'application/json', ...corsHeaders } });
+      }
+
+      case 'process_refund': {
+        // Get refund details
+        const { data: refund, error: refundError } = await supabase.from('refunds').select('*, order:orders(*)').eq('id', body.refundId).single();
+        if (refundError || !refund) throw new Error('Refund not found');
+        if (refund.status !== 'requested') throw new Error('Refund already processed');
+
+        // Update status to processing
+        await supabase.from('refunds').update({ status: 'processing' }).eq('id', body.refundId);
+
+        // Get payment intent ID from original payment
+        const { data: payment } = await supabase.from('payments').select('stripe_payment_intent_id').eq('order_id', refund.order_id).eq('type', 'deposit').eq('status', 'succeeded').maybeSingle();
+        
+        if (!payment?.stripe_payment_intent_id) {
+          await supabase.from('refunds').update({ status: 'rejected', admin_notes: 'No payment found for refund' }).eq('id', body.refundId);
+          throw new Error('No payment found to refund');
+        }
+
+        // Process Stripe refund
+        const Stripe = (await import('https://esm.sh/stripe@14.21.0?target=deno')).default;
+        const stripe = new Stripe(Deno.env.get('STRIPE_SECRET_KEY') ?? '', { apiVersion: '2023-10-16' });
+        
+        const amountCents = Math.round(refund.amount_eur * 100);
+        const stripeRefund = await stripe.refunds.create({
+          payment_intent: payment.stripe_payment_intent_id,
+          amount: amountCents,
+        });
+
+        // Update refund record
+        await supabase.from('refunds').update({
+          status: 'refunded',
+          stripe_refund_id: stripeRefund.id,
+          admin_notes: body.adminNotes || null,
+          processed_at: new Date().toISOString(),
+        }).eq('id', body.refundId);
+
+        // Create payment record for refund
+        await supabase.from('payments').insert({
+          order_id: refund.order_id,
+          type: 'refund',
+          status: 'succeeded',
+          amount_eur: refund.amount_eur,
+          stripe_payment_intent_id: payment.stripe_payment_intent_id,
+        });
+
+        // Update order status if full refund
+        if (refund.is_full_refund) {
+          await supabase.from('orders').update({ status: 'refunded' }).eq('id', refund.order_id);
+        }
+
+        // Track event
+        await supabase.from('events').insert({
+          name: 'refund',
+          properties: {
+            order_id: refund.order_id,
+            amount_eur: refund.amount_eur,
+            stripe_refund_id: stripeRefund.id,
+          },
+        });
+
+        // Send email notification
+        const order = refund.order as any;
+        if (order?.email) {
+          await supabase.functions.invoke('send-email', {
+            body: {
+              type: 'refund_completed',
+              email: order.email,
+              firstName: order.first_name,
+              orderNumber: order.order_number,
+              amountEur: refund.amount_eur,
+            },
+          });
+        }
+
+        return new Response(JSON.stringify({ success: true, stripeRefundId: stripeRefund.id }), { headers: { 'Content-Type': 'application/json', ...corsHeaders } });
+      }
+
+      case 'export_orders': {
+        const { data: orders } = await supabase.from('orders').select('*').order('created_at', { ascending: false });
+        
+        if (!orders) {
+          return new Response(JSON.stringify({ success: true, csv: '' }), { headers: { 'Content-Type': 'application/json', ...corsHeaders } });
+        }
+
+        // Generate CSV
+        const headers = ['order_number', 'email', 'first_name', 'last_name', 'status', 'total_eur', 'deposit_total_eur', 'balance_total_eur', 'wants_invoice', 'invoice_company_name', 'invoice_vat_code', 'invoice_address', 'created_at'];
+        const rows = orders.map(o => headers.map(h => {
+          const val = (o as any)[h];
+          if (val === null || val === undefined) return '';
+          if (typeof val === 'string' && val.includes(',')) return `"${val}"`;
+          return val;
+        }).join(','));
+        
+        const csv = [headers.join(','), ...rows].join('\n');
+        
+        return new Response(JSON.stringify({ success: true, csv }), { headers: { 'Content-Type': 'application/json', ...corsHeaders } });
       }
 
       default:

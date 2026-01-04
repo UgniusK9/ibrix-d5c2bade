@@ -91,26 +91,32 @@ export type Database = {
       events: {
         Row: {
           created_at: string
+          event_id: string | null
           id: string
           name: string
           properties: Json | null
           session_id: string | null
+          source: string | null
           user_id: string | null
         }
         Insert: {
           created_at?: string
+          event_id?: string | null
           id?: string
           name: string
           properties?: Json | null
           session_id?: string | null
+          source?: string | null
           user_id?: string | null
         }
         Update: {
           created_at?: string
+          event_id?: string | null
           id?: string
           name?: string
           properties?: Json | null
           session_id?: string | null
+          source?: string | null
           user_id?: string | null
         }
         Relationships: [
@@ -172,11 +178,18 @@ export type Database = {
       offers: {
         Row: {
           active: boolean
+          applicable_categories: Json | null
+          applicable_products: Json | null
           code: string
           created_at: string
           description: string | null
           ends_at: string | null
+          free_shipping: boolean | null
           id: string
+          max_redemptions: number | null
+          min_cart_total: number | null
+          per_user_limit: number | null
+          stackable: boolean | null
           starts_at: string | null
           title: string
           type: Database["public"]["Enums"]["offer_type"]
@@ -185,11 +198,18 @@ export type Database = {
         }
         Insert: {
           active?: boolean
+          applicable_categories?: Json | null
+          applicable_products?: Json | null
           code: string
           created_at?: string
           description?: string | null
           ends_at?: string | null
+          free_shipping?: boolean | null
           id?: string
+          max_redemptions?: number | null
+          min_cart_total?: number | null
+          per_user_limit?: number | null
+          stackable?: boolean | null
           starts_at?: string | null
           title: string
           type: Database["public"]["Enums"]["offer_type"]
@@ -198,11 +218,18 @@ export type Database = {
         }
         Update: {
           active?: boolean
+          applicable_categories?: Json | null
+          applicable_products?: Json | null
           code?: string
           created_at?: string
           description?: string | null
           ends_at?: string | null
+          free_shipping?: boolean | null
           id?: string
+          max_redemptions?: number | null
+          min_cart_total?: number | null
+          per_user_limit?: number | null
+          stackable?: boolean | null
           starts_at?: string | null
           title?: string
           type?: Database["public"]["Enums"]["offer_type"]
@@ -274,10 +301,19 @@ export type Database = {
           deposit_total_eur: number
           discount_eur: number
           email: string
+          fbclid: string | null
           first_name: string
+          gclid: string | null
           id: string
+          invoice_address: string | null
+          invoice_company_name: string | null
+          invoice_country: string | null
+          invoice_number: string | null
+          invoice_vat_code: string | null
           last_name: string
           notes: string | null
+          offer_code: string | null
+          offer_id: string | null
           order_number: string
           paid_at: string | null
           payment_plan: Database["public"]["Enums"]["payment_plan"]
@@ -292,6 +328,10 @@ export type Database = {
           total_eur: number
           updated_at: string
           user_id: string | null
+          utm_campaign: string | null
+          utm_medium: string | null
+          utm_source: string | null
+          wants_invoice: boolean | null
         }
         Insert: {
           balance_paid_at?: string | null
@@ -301,10 +341,19 @@ export type Database = {
           deposit_total_eur: number
           discount_eur?: number
           email: string
+          fbclid?: string | null
           first_name: string
+          gclid?: string | null
           id?: string
+          invoice_address?: string | null
+          invoice_company_name?: string | null
+          invoice_country?: string | null
+          invoice_number?: string | null
+          invoice_vat_code?: string | null
           last_name: string
           notes?: string | null
+          offer_code?: string | null
+          offer_id?: string | null
           order_number: string
           paid_at?: string | null
           payment_plan?: Database["public"]["Enums"]["payment_plan"]
@@ -319,6 +368,10 @@ export type Database = {
           total_eur: number
           updated_at?: string
           user_id?: string | null
+          utm_campaign?: string | null
+          utm_medium?: string | null
+          utm_source?: string | null
+          wants_invoice?: boolean | null
         }
         Update: {
           balance_paid_at?: string | null
@@ -328,10 +381,19 @@ export type Database = {
           deposit_total_eur?: number
           discount_eur?: number
           email?: string
+          fbclid?: string | null
           first_name?: string
+          gclid?: string | null
           id?: string
+          invoice_address?: string | null
+          invoice_company_name?: string | null
+          invoice_country?: string | null
+          invoice_number?: string | null
+          invoice_vat_code?: string | null
           last_name?: string
           notes?: string | null
+          offer_code?: string | null
+          offer_id?: string | null
           order_number?: string
           paid_at?: string | null
           payment_plan?: Database["public"]["Enums"]["payment_plan"]
@@ -346,8 +408,19 @@ export type Database = {
           total_eur?: number
           updated_at?: string
           user_id?: string | null
+          utm_campaign?: string | null
+          utm_medium?: string | null
+          utm_source?: string | null
+          wants_invoice?: boolean | null
         }
         Relationships: [
+          {
+            foreignKeyName: "orders_offer_id_fkey"
+            columns: ["offer_id"]
+            isOneToOne: false
+            referencedRelation: "offers"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "orders_user_id_fkey"
             columns: ["user_id"]
@@ -466,6 +539,7 @@ export type Database = {
       }
       redemptions: {
         Row: {
+          discount_amount_eur: number | null
           id: string
           offer_id: string
           order_id: string | null
@@ -473,6 +547,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          discount_amount_eur?: number | null
           id?: string
           offer_id: string
           order_id?: string | null
@@ -480,6 +555,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          discount_amount_eur?: number | null
           id?: string
           offer_id?: string
           order_id?: string | null
@@ -510,33 +586,123 @@ export type Database = {
           },
         ]
       }
-      sessions: {
+      refunds: {
         Row: {
-          anonymous_id: string
-          first_seen_at: string
+          admin_notes: string | null
+          amount_eur: number
+          created_at: string | null
+          customer_notes: string | null
           id: string
-          ip_hash: string | null
-          last_seen_at: string
-          user_agent: string | null
+          is_full_refund: boolean | null
+          order_id: string
+          processed_at: string | null
+          reason: string
+          requested_at: string | null
+          status: string
+          stripe_refund_id: string | null
+          updated_at: string | null
           user_id: string | null
         }
         Insert: {
-          anonymous_id: string
-          first_seen_at?: string
+          admin_notes?: string | null
+          amount_eur: number
+          created_at?: string | null
+          customer_notes?: string | null
           id?: string
-          ip_hash?: string | null
-          last_seen_at?: string
-          user_agent?: string | null
+          is_full_refund?: boolean | null
+          order_id: string
+          processed_at?: string | null
+          reason: string
+          requested_at?: string | null
+          status?: string
+          stripe_refund_id?: string | null
+          updated_at?: string | null
           user_id?: string | null
         }
         Update: {
-          anonymous_id?: string
+          admin_notes?: string | null
+          amount_eur?: number
+          created_at?: string | null
+          customer_notes?: string | null
+          id?: string
+          is_full_refund?: boolean | null
+          order_id?: string
+          processed_at?: string | null
+          reason?: string
+          requested_at?: string | null
+          status?: string
+          stripe_refund_id?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "refunds_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "refunds_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sessions: {
+        Row: {
+          anonymous_id: string
+          fbclid: string | null
+          first_seen_at: string
+          gclid: string | null
+          id: string
+          ip_hash: string | null
+          landing_page: string | null
+          last_seen_at: string
+          user_agent: string | null
+          user_id: string | null
+          utm_campaign: string | null
+          utm_content: string | null
+          utm_medium: string | null
+          utm_source: string | null
+          utm_term: string | null
+        }
+        Insert: {
+          anonymous_id: string
+          fbclid?: string | null
           first_seen_at?: string
+          gclid?: string | null
           id?: string
           ip_hash?: string | null
+          landing_page?: string | null
           last_seen_at?: string
           user_agent?: string | null
           user_id?: string | null
+          utm_campaign?: string | null
+          utm_content?: string | null
+          utm_medium?: string | null
+          utm_source?: string | null
+          utm_term?: string | null
+        }
+        Update: {
+          anonymous_id?: string
+          fbclid?: string | null
+          first_seen_at?: string
+          gclid?: string | null
+          id?: string
+          ip_hash?: string | null
+          landing_page?: string | null
+          last_seen_at?: string
+          user_agent?: string | null
+          user_id?: string | null
+          utm_campaign?: string | null
+          utm_content?: string | null
+          utm_medium?: string | null
+          utm_source?: string | null
+          utm_term?: string | null
         }
         Relationships: [
           {
@@ -721,6 +887,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      generate_invoice_number: { Args: never; Returns: string }
       generate_order_number: { Args: never; Returns: string }
       has_role: {
         Args: {
