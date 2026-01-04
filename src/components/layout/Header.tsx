@@ -28,7 +28,7 @@ const infoLinks = [
   { name: "Pristatymas", href: "/pristatymas", icon: Truck },
   { name: "Grąžinimai", href: "/grazinimai", icon: Undo2 },
   { name: "Garantija", href: "/garantija", icon: Shield },
-  { name: "Atsiliepimai", href: "/produktai/visi#atsiliepimai", icon: Star },
+  { name: "Atsiliepimai", href: "/atsiliepimai", icon: Star },
   { name: "Taisyklės", href: "/taisykles", icon: FileText },
   { name: "Privatumo politika", href: "/privatumo-politika", icon: FileText },
   { name: "Slapukų politika", href: "/slapukai-politika", icon: Cookie },
