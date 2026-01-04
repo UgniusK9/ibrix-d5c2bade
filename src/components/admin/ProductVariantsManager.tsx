@@ -60,9 +60,34 @@ export function ProductVariantsManager({ productId, productSku }: ProductVariant
   };
 
   useEffect(() => {
-    if (productId) {
-      loadVariants();
-    }
+    let mounted = true;
+    
+    const load = async () => {
+      if (!productId) return;
+      setLoading(true);
+      try {
+        const { data, error } = await supabase
+          .from('product_variants')
+          .select('*')
+          .eq('product_id', productId)
+          .order('sort_order');
+
+        if (!mounted) return;
+        if (error) throw error;
+        setVariants((data || []).map(v => ({
+          ...v,
+          status: v.status as 'active' | 'inactive'
+        })));
+      } catch (e) {
+        console.error('Failed to load variants:', e);
+      } finally {
+        if (mounted) setLoading(false);
+      }
+    };
+    
+    load();
+    
+    return () => { mounted = false; };
   }, [productId]);
 
   const addVariant = () => {
