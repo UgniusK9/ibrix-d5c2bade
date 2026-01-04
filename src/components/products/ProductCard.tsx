@@ -168,9 +168,22 @@ export function ProductCard({ product, onQuickView }: ProductCardProps) {
 
         {/* Price */}
         <div className="flex items-center justify-between">
-          <p className="font-heading font-bold text-xl text-accent">
-            {formatPrice(product.price_eur)}
-          </p>
+          <div className="flex items-center gap-2">
+            {product.sale_price_eur ? (
+              <>
+                <p className="font-heading font-bold text-xl text-red-500">
+                  {formatPrice(product.sale_price_eur)}
+                </p>
+                <p className="text-sm text-muted-foreground line-through">
+                  {formatPrice(product.price_eur)}
+                </p>
+              </>
+            ) : (
+              <p className="font-heading font-bold text-xl text-accent">
+                {formatPrice(product.price_eur)}
+              </p>
+            )}
+          </div>
           
           <Button
             size="sm"
