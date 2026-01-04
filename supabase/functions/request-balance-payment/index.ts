@@ -67,8 +67,9 @@ Deno.serve(async (req) => {
       });
     }
 
-    const { orderId } = await req.json();
-    log(requestId, 'Balance payment request', { orderId, adminId: user.id, adminEmail: user.email });
+    const body = await req.json();
+    const { orderId, customMessage } = body;
+    log(requestId, 'Balance payment request', { orderId, adminId: user.id, adminEmail: user.email, hasCustomMessage: !!customMessage });
 
     // Fetch order
     const { data: order, error: orderError } = await supabase
@@ -211,6 +212,19 @@ Deno.serve(async (req) => {
       log(requestId, 'Failed to create payment record', paymentError);
     }
 
+    // Log balance request with custom message for audit trail
+    const { error: balanceRequestError } = await supabase.from('balance_requests').insert({
+      order_id: orderId,
+      requested_by_user_id: user.id,
+      message: customMessage || null,
+      payment_url: session.url,
+      sent_at: new Date().toISOString(),
+    });
+
+    if (balanceRequestError) {
+      log(requestId, 'Failed to log balance request', balanceRequestError);
+    }
+
     // Update order status to awaiting_balance
     const { error: updateError } = await supabase
       .from('orders')
@@ -230,12 +244,13 @@ Deno.serve(async (req) => {
         order_number: order.order_number,
         balance_eur: order.balance_total_eur,
         requested_by: user.id,
+        has_custom_message: !!customMessage,
       },
     });
 
     log(requestId, 'Balance requested event tracked');
 
-    // Send email with payment link
+    // Send email with payment link and custom message
     try {
       const emailResponse = await fetch(
         `${Deno.env.get('SUPABASE_URL')}/functions/v1/send-email`,
@@ -252,6 +267,7 @@ Deno.serve(async (req) => {
             orderNumber: order.order_number,
             balanceEur: order.balance_total_eur,
             paymentUrl: session.url,
+            customMessage: customMessage || null,
           }),
         }
       );

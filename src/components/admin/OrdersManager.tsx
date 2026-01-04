@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
-import { Package, Clock, CheckCircle2, XCircle, AlertCircle, ChevronRight, RefreshCw, CreditCard, DollarSign, Copy, ExternalLink, Search, Filter, Truck, Box } from 'lucide-react';
+import { Package, Clock, CheckCircle2, XCircle, AlertCircle, ChevronRight, RefreshCw, CreditCard, DollarSign, Copy, ExternalLink, Search, Filter, Truck, Box, MessageSquare } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import { supabase } from '@/integrations/supabase/client';
 import { ShipmentManager } from '@/components/admin/ShipmentManager';
 import { toast } from 'sonner';
@@ -107,6 +108,8 @@ export function OrdersManager() {
   const [detailsOpen, setDetailsOpen] = useState(false);
   const [requestingBalance, setRequestingBalance] = useState(false);
   const [balancePaymentUrl, setBalancePaymentUrl] = useState<string | null>(null);
+  const [balanceMessage, setBalanceMessage] = useState('');
+  const [showMessageInput, setShowMessageInput] = useState(false);
   
   // Filters
   const [search, setSearch] = useState('');
@@ -141,6 +144,8 @@ export function OrdersManager() {
     setDetailsOpen(true);
     setOrderShipment(null);
     setOrderItems([]);
+    setBalanceMessage('');
+    setShowMessageInput(false);
     setOrderPayments([]);
     setBalancePaymentUrl(null);
 
@@ -185,7 +190,10 @@ export function OrdersManager() {
     setRequestingBalance(true);
     try {
       const { data, error } = await supabase.functions.invoke('request-balance-payment', {
-        body: { orderId: selectedOrder.id }
+        body: { 
+          orderId: selectedOrder.id,
+          customMessage: balanceMessage.trim() || null
+        }
       });
 
       if (error) throw error;
@@ -537,28 +545,66 @@ export function OrdersManager() {
                 {/* Request Balance Button */}
                 {(selectedOrder.status === 'deposit_paid' || selectedOrder.status === 'awaiting_balance') && !selectedOrder.balance_paid_at && (
                   <div className="mt-4 space-y-3">
-                    <Button 
-                      size="sm" 
-                      className="w-full" 
-                      onClick={requestBalancePayment}
-                      disabled={requestingBalance}
-                    >
-                      {requestingBalance ? (
-                        <>
-                          <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
-                          Kuriama nuoroda...
-                        </>
-                      ) : (
-                        <>
-                          <CreditCard className="w-4 h-4 mr-2" />
-                          Prašyti apmokėti likutį ({formatPrice(selectedOrder.balance_total_eur)})
-                        </>
-                      )}
-                    </Button>
+                    {!showMessageInput ? (
+                      <Button 
+                        size="sm" 
+                        className="w-full" 
+                        onClick={() => setShowMessageInput(true)}
+                      >
+                        <MessageSquare className="w-4 h-4 mr-2" />
+                        Prašyti apmokėti likutį ({formatPrice(selectedOrder.balance_total_eur)})
+                      </Button>
+                    ) : (
+                      <div className="space-y-3 p-3 bg-muted/50 rounded-lg border border-border">
+                        <div>
+                          <p className="text-sm font-medium mb-2">Žinutė klientui (neprivaloma)</p>
+                          <Textarea
+                            value={balanceMessage}
+                            onChange={(e) => setBalanceMessage(e.target.value)}
+                            placeholder="Sveiki! Jūsų prekė paruošta. Apmokėkite likutį, kad galėtume išsiųsti..."
+                            rows={3}
+                            className="text-sm"
+                          />
+                          <p className="text-xs text-muted-foreground mt-1">
+                            Ši žinutė bus įtraukta į el. laišką klientui.
+                          </p>
+                        </div>
+                        <div className="flex gap-2">
+                          <Button 
+                            size="sm" 
+                            variant="outline"
+                            onClick={() => {
+                              setShowMessageInput(false);
+                              setBalanceMessage('');
+                            }}
+                          >
+                            Atšaukti
+                          </Button>
+                          <Button 
+                            size="sm" 
+                            className="flex-1"
+                            onClick={requestBalancePayment}
+                            disabled={requestingBalance}
+                          >
+                            {requestingBalance ? (
+                              <>
+                                <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                                Siunčiama...
+                              </>
+                            ) : (
+                              <>
+                                <CreditCard className="w-4 h-4 mr-2" />
+                                Siųsti prašymą
+                              </>
+                            )}
+                          </Button>
+                        </div>
+                      </div>
+                    )}
                     
                     {balancePaymentUrl && (
-                      <div className="bg-green-50 border border-green-200 rounded-lg p-3 space-y-2">
-                        <p className="text-sm text-green-800 font-medium">
+                      <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-3 space-y-2">
+                        <p className="text-sm text-green-800 dark:text-green-300 font-medium">
                           ✓ Mokėjimo nuoroda sukurta ir išsiųsta klientui!
                         </p>
                         <div className="flex gap-2">

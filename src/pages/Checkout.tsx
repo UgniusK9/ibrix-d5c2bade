@@ -4,6 +4,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Loader2, Package, ChevronLeft, CreditCard, MapPin, Truck, Shield, Sparkles } from "lucide-react";
+import { CartRecommendations } from "@/components/cart/CartRecommendations";
 import { PageLayout } from "@/components/layout/PageLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -479,6 +480,13 @@ export default function Checkout() {
             </div>
           </div>
         </div>
+
+        {/* Recommendations at bottom */}
+        {step === 1 && (
+          <div className="mt-8">
+            <CartRecommendations maxItems={4} title="Kiti galimi produktai" />
+          </div>
+        )}
       </div>
     </PageLayout>
   );
