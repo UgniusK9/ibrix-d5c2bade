@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Package, Settings, List, BarChart3, Tag, RefreshCw, ShoppingBag, Users, RotateCcw, Layers } from "lucide-react";
+import { Package, Settings, List, BarChart3, Tag, RefreshCw, ShoppingBag, Users, RotateCcw, Layers, Gift } from "lucide-react";
 import { PageLayout } from "@/components/layout/PageLayout";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -10,6 +10,7 @@ import { OffersManager } from "@/components/admin/OffersManager";
 import { AnalyticsDashboard } from "@/components/admin/AnalyticsDashboard";
 import { RefundsManager } from "@/components/admin/RefundsManager";
 import { BundlesManager } from "@/components/admin/BundlesManager";
+import { GiftCardsManager } from "@/components/admin/GiftCardsManager";
 import { supabase } from "@/integrations/supabase/client";
 import { Link } from "react-router-dom";
 
@@ -83,6 +84,10 @@ export default function Admin() {
               <RotateCcw className="w-4 h-4" />
               Grąžinimai
             </TabsTrigger>
+            <TabsTrigger value="giftcards" className="gap-2">
+              <Gift className="w-4 h-4" />
+              Kuponai
+            </TabsTrigger>
             <TabsTrigger value="setup" className="gap-2">
               <Settings className="w-4 h-4" />
               Nustatymai
@@ -118,6 +123,10 @@ export default function Admin() {
 
           <TabsContent value="refunds">
             <RefundsManager />
+          </TabsContent>
+
+          <TabsContent value="giftcards">
+            <GiftCardsManager />
           </TabsContent>
 
           <TabsContent value="setup">

@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { 
   ChevronDown, Package, CreditCard, Truck, MapPin, Calendar, 
   ExternalLink, Clock, CheckCircle2, Copy, Box, AlertCircle,
-  RotateCcw, Wallet, FileText, Download
+  RotateCcw, Wallet, FileText, Download, HelpCircle
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -10,6 +10,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/component
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
 import { TrackingMap } from '@/components/tracking/TrackingMap';
+import { SupportRequestForm } from '@/components/account/SupportRequestForm';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -165,6 +166,7 @@ export function OrderCard({
   isLoading 
 }: OrderCardProps) {
   const [isOpen, setIsOpen] = useState(false);
+  const [isSupportOpen, setIsSupportOpen] = useState(false);
   const config = statusConfig[order.status] || statusConfig['created'];
   const StatusIcon = config.icon;
 
@@ -629,10 +631,24 @@ export function OrderCard({
                   Grąžinti
                 </Button>
               )}
+              {order.status === 'delivered' && (
+                <Button variant="outline" onClick={() => setIsSupportOpen(true)}>
+                  <HelpCircle className="w-4 h-4 mr-2" />
+                  Turiu klausimą
+                </Button>
+              )}
             </div>
           </div>
         </CollapsibleContent>
       </div>
+
+      {/* Support Request Modal */}
+      <SupportRequestForm
+        isOpen={isSupportOpen}
+        onClose={() => setIsSupportOpen(false)}
+        orderId={order.id}
+        orderNumber={order.order_number}
+      />
     </Collapsible>
   );
 }

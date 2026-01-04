@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Package, User, LogOut, Loader2, Tag, Wallet } from 'lucide-react';
+import { Package, User, LogOut, Loader2, Tag, Wallet, Gift } from 'lucide-react';
 import { PageLayout } from '@/components/layout/PageLayout';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -8,6 +8,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { OrderCard } from '@/components/account/OrderCard';
 import { RefundRequestForm } from '@/components/refund/RefundRequestForm';
+import { RedeemGiftCard } from '@/components/account/RedeemGiftCard';
 import { toast } from 'sonner';
 
 interface RefundOrder {
@@ -306,6 +307,40 @@ export default function Account() {
                 Atsijungti
               </Button>
             </div>
+          </div>
+        </div>
+
+        {/* Gift Card Redeem + Wallet */}
+        <div className="grid md:grid-cols-2 gap-6 mb-8">
+          <RedeemGiftCard onSuccess={() => {
+            // Reload wallet balance
+            supabase
+              .from('wallets')
+              .select('id, balance_eur')
+              .eq('user_id', user?.id || '')
+              .maybeSingle()
+              .then(({ data }) => {
+                if (data) setWallet(data);
+              });
+          }} />
+          
+          <div className="bg-card border border-border rounded-xl p-6">
+            <h3 className="font-heading font-semibold text-lg flex items-center gap-2 mb-4">
+              <Wallet className="w-5 h-5 text-primary" />
+              Mano piniginė
+            </h3>
+            <p className="text-3xl font-bold text-success mb-2">
+              {formatPrice(wallet?.balance_eur || 0)}
+            </p>
+            <p className="text-sm text-muted-foreground">
+              Ši suma bus automatiškai pritaikyta prie jūsų sekančio pirkinio.
+            </p>
+            <Button asChild variant="outline" className="mt-4">
+              <Link to="/dovanu-kuponai">
+                <Gift className="w-4 h-4 mr-2" />
+                Dovanų kuponai
+              </Link>
+            </Button>
           </div>
         </div>
 
