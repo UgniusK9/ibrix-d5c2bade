@@ -42,6 +42,7 @@ interface OrderShipment {
   carrier_code: 'omniva' | 'lp_express' | 'dpd' | 'other' | null;
   shipped_at: string | null;
   delivered_at: string | null;
+  packed_at: string | null;
 }
 
 interface ShipmentEvent {
@@ -115,7 +116,7 @@ export default function Account() {
             // Load shipments
             const { data: shipmentsData } = await supabase
               .from('shipments')
-              .select('id, order_id, status, tracking_number, tracking_token, carrier_code, shipped_at, delivered_at')
+              .select('id, order_id, status, tracking_number, tracking_token, carrier_code, shipped_at, delivered_at, packed_at')
               .in('order_id', orderIds);
             
             if (shipmentsData) {

@@ -14,6 +14,7 @@ import { useCartStore } from "@/stores/cartStore";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import Varikliai from "./pages/Varikliai";
+import Produktai from "./pages/Produktai";
 import PreOrder from "./pages/PreOrder";
 import Pagalba from "./pages/Pagalba";
 import Apie from "./pages/Apie";
@@ -68,6 +69,8 @@ const App = () => (
                 {/* Public routes */}
                 <Route path="/" element={<Index />} />
                 <Route path="/varikliai" element={<Varikliai />} />
+                <Route path="/produktai/:category" element={<Produktai />} />
+                <Route path="/produktai" element={<Produktai />} />
                 <Route path="/pre-order" element={<PreOrder />} />
                 <Route path="/pagalba" element={<Pagalba />} />
                 <Route path="/apie" element={<Apie />} />
