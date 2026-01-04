@@ -1,5 +1,6 @@
-import { useState, useEffect } from 'react';
-import { Mail, Send, Users, RefreshCw, Plus, Eye, Trash2 } from 'lucide-react';
+import { useState, useEffect, useMemo } from 'react';
+import { Mail, Send, Users, RefreshCw, Plus, Eye, Trash2, TrendingUp } from 'lucide-react';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -29,6 +30,107 @@ interface Campaign {
   failed_count: number;
   sent_at: string | null;
   created_at: string;
+}
+
+// Subscriber Growth Chart Component
+function SubscriberGrowthChart({ subscribers }: { subscribers: Subscriber[] }) {
+  const chartData = useMemo(() => {
+    // Group subscribers by date
+    const dateMap: Record<string, number> = {};
+    
+    subscribers.forEach(sub => {
+      const date = new Date(sub.subscribed_at).toISOString().split('T')[0];
+      dateMap[date] = (dateMap[date] || 0) + 1;
+    });
+
+    // Sort dates and create cumulative data
+    const sortedDates = Object.keys(dateMap).sort();
+    let cumulative = 0;
+    
+    return sortedDates.map(date => {
+      cumulative += dateMap[date];
+      return {
+        date: new Date(date).toLocaleDateString('lt-LT', { month: 'short', day: 'numeric' }),
+        fullDate: date,
+        newSubscribers: dateMap[date],
+        total: cumulative,
+      };
+    });
+  }, [subscribers]);
+
+  if (chartData.length === 0) {
+    return (
+      <div className="text-center py-8 text-muted-foreground">
+        <TrendingUp className="w-12 h-12 mx-auto mb-2 opacity-50" />
+        <p>Nėra duomenų statistikai</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      <div className="grid grid-cols-2 gap-4">
+        <div className="bg-muted/30 rounded-lg p-4">
+          <p className="text-sm text-muted-foreground mb-1">Iš viso prenumeratorių</p>
+          <p className="text-2xl font-bold">{subscribers.filter(s => s.status === 'active').length}</p>
+        </div>
+        <div className="bg-muted/30 rounded-lg p-4">
+          <p className="text-sm text-muted-foreground mb-1">Naujų šį mėnesį</p>
+          <p className="text-2xl font-bold">
+            {subscribers.filter(s => {
+              const subDate = new Date(s.subscribed_at);
+              const now = new Date();
+              return subDate.getMonth() === now.getMonth() && subDate.getFullYear() === now.getFullYear();
+            }).length}
+          </p>
+        </div>
+      </div>
+
+      <div className="bg-card border border-border rounded-xl p-4">
+        <h3 className="font-medium mb-4">Prenumeratorių augimas</h3>
+        <div className="h-64">
+          <ResponsiveContainer width="100%" height="100%">
+            <LineChart data={chartData}>
+              <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+              <XAxis 
+                dataKey="date" 
+                className="text-xs"
+                tick={{ fill: 'hsl(var(--muted-foreground))' }}
+              />
+              <YAxis 
+                className="text-xs"
+                tick={{ fill: 'hsl(var(--muted-foreground))' }}
+              />
+              <Tooltip 
+                contentStyle={{
+                  backgroundColor: 'hsl(var(--card))',
+                  border: '1px solid hsl(var(--border))',
+                  borderRadius: '8px',
+                }}
+                labelStyle={{ color: 'hsl(var(--foreground))' }}
+              />
+              <Line 
+                type="monotone" 
+                dataKey="total" 
+                stroke="hsl(var(--primary))" 
+                strokeWidth={2}
+                dot={{ fill: 'hsl(var(--primary))', strokeWidth: 0, r: 3 }}
+                name="Iš viso"
+              />
+              <Line 
+                type="monotone" 
+                dataKey="newSubscribers" 
+                stroke="hsl(var(--accent))" 
+                strokeWidth={2}
+                dot={{ fill: 'hsl(var(--accent))', strokeWidth: 0, r: 3 }}
+                name="Nauji"
+              />
+            </LineChart>
+          </ResponsiveContainer>
+        </div>
+      </div>
+    </div>
+  );
 }
 
 export function NewsletterManager() {
@@ -217,6 +319,10 @@ export function NewsletterManager() {
               <Send className="w-4 h-4" />
               Kampanijos ({campaigns.length})
             </TabsTrigger>
+            <TabsTrigger value="analytics" className="gap-2">
+              <TrendingUp className="w-4 h-4" />
+              Statistika
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="subscribers">
@@ -319,6 +425,10 @@ export function NewsletterManager() {
                 ))}
               </div>
             )}
+          </TabsContent>
+
+          <TabsContent value="analytics">
+            <SubscriberGrowthChart subscribers={subscribers} />
           </TabsContent>
         </Tabs>
 

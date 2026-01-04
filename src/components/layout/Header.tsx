@@ -1,9 +1,15 @@
 import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { Menu, ShoppingCart, Truck, Clock, Headphones, ArrowRight, User, LogOut, Search } from "lucide-react";
+import { Menu, ShoppingCart, Truck, Clock, Headphones, ArrowRight, User, LogOut, Search, ChevronDown, Info, FileText, Shield, Cookie, Undo2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { useCartStore } from "@/stores/cartStore";
 import { CartDrawer } from "@/components/cart/CartDrawer";
 import { useAuth } from "@/contexts/AuthContext";
@@ -16,6 +22,15 @@ const navigation = [
   { name: "Pagalba", href: "/pagalba" },
   { name: "Apie mus", href: "/apie" },
   { name: "Kontaktai", href: "/kontaktai" },
+];
+
+const infoLinks = [
+  { name: "Pristatymas", href: "/pristatymas", icon: Truck },
+  { name: "Grąžinimai", href: "/grazinimai", icon: Undo2 },
+  { name: "Garantija", href: "/garantija", icon: Shield },
+  { name: "Taisyklės", href: "/taisykles", icon: FileText },
+  { name: "Privatumo politika", href: "/privatumo-politika", icon: FileText },
+  { name: "Slapukų politika", href: "/slapukai-politika", icon: Cookie },
 ];
 
 const topBarItems = [
@@ -67,6 +82,26 @@ export function Header() {
             <nav className="hidden lg:flex items-center gap-0.5">
               {/* Products Mega Menu */}
               <CategoriesMegaMenu />
+              
+              {/* Informacija Dropdown */}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button className="px-3 py-2 text-sm font-medium rounded-lg transition-colors whitespace-nowrap text-muted-foreground hover:text-foreground hover:bg-muted flex items-center gap-1">
+                    Informacija
+                    <ChevronDown className="h-3.5 w-3.5" />
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="start" className="w-48 bg-popover border border-border z-50">
+                  {infoLinks.map((item) => (
+                    <DropdownMenuItem key={item.name} asChild>
+                      <Link to={item.href} className="flex items-center gap-2 cursor-pointer">
+                        <item.icon className="h-4 w-4 text-muted-foreground" />
+                        {item.name}
+                      </Link>
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
               
               {navigation.map((item) => (
                 <Link
