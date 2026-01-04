@@ -102,6 +102,14 @@ export default function Admin() {
 
           <TabsContent value="analytics">
             <AnalyticsDashboard />
+            <div className="mt-6 p-4 bg-muted/50 rounded-lg text-sm text-muted-foreground">
+              <p><strong>Testavimo instrukcijos:</strong></p>
+              <ul className="list-disc ml-4 mt-2 space-y-1">
+                <li>GA4: Google Analytics → Realtime → DebugView (reikia GA Debug extension)</li>
+                <li>Meta CAPI: Events Manager → Test Events → Server Events</li>
+                <li>Sitemap: <a href="/api/sitemap" target="_blank" className="underline">Dinaminis sitemap.xml</a></li>
+              </ul>
+            </div>
           </TabsContent>
 
           <TabsContent value="refunds">
