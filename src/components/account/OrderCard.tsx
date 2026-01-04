@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { 
   ChevronDown, Package, CreditCard, Truck, MapPin, Calendar, 
   ExternalLink, Clock, CheckCircle2, Copy, Box, AlertCircle,
-  RotateCcw, Wallet
+  RotateCcw, Wallet, FileText, Download
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -11,6 +11,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
 import { TrackingMap } from '@/components/tracking/TrackingMap';
 import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
 
 interface OrderPayment {
   id: string;
@@ -593,6 +594,33 @@ export function OrderCard({
                     <ExternalLink className="w-4 h-4 mr-2" />
                     Sekti siuntą
                   </a>
+                </Button>
+              )}
+              {/* Invoice Download */}
+              {depositPayment && (
+                <Button 
+                  variant="outline" 
+                  onClick={async () => {
+                    try {
+                      const { data, error } = await supabase.functions.invoke('generate-invoice', {
+                        body: { orderId: order.id, action: 'html' }
+                      });
+                      if (error) throw error;
+                      
+                      // Open invoice HTML in new window for printing
+                      const invoiceWindow = window.open('', '_blank');
+                      if (invoiceWindow) {
+                        invoiceWindow.document.write(data);
+                        invoiceWindow.document.close();
+                      }
+                    } catch (e) {
+                      console.error('Invoice error:', e);
+                      toast.error('Nepavyko sugeneruoti sąskaitos');
+                    }
+                  }}
+                >
+                  <FileText className="w-4 h-4 mr-2" />
+                  Sąskaita
                 </Button>
               )}
               {['delivered', 'shipped'].includes(order.status) && onRequestRefund && (

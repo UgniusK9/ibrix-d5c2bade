@@ -8,6 +8,7 @@ import { useProduct, formatPrice, getEtaString, getProductImage } from "@/hooks/
 import { useCartStore } from "@/stores/cartStore";
 import { toast } from "sonner";
 import { trackViewContentEvent } from "@/hooks/useAnalytics";
+import { SEOHead } from "@/components/seo/SEOHead";
 import {
   Accordion,
   AccordionContent,
@@ -120,6 +121,27 @@ export default function Produktas() {
 
   return (
     <PageLayout>
+      <SEOHead 
+        title={product.title}
+        description={product.short_desc || product.description || `${product.title} - aukštos kokybės modelis iš IBRIX. ${isPreOrder ? 'Pre-order su depozitu.' : 'Sandėlyje.'}`}
+        canonical={`/produktas/${product.slug}`}
+        type="product"
+        image={image}
+        product={{
+          name: product.title,
+          price: product.price_eur,
+          currency: 'EUR',
+          availability: isPreOrder ? 'PreOrder' : 'InStock',
+          sku: product.sku,
+          image: image,
+          description: product.short_desc || product.description,
+        }}
+        breadcrumbs={[
+          { name: 'Pradžia', url: '/' },
+          { name: 'Produktai', url: '/produktai/visi' },
+          { name: product.title, url: `/produktas/${product.slug}` },
+        ]}
+      />
       <div className="container py-8 md:py-12">
         {/* Breadcrumb */}
         <Link 
