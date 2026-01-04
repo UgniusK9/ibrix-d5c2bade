@@ -44,6 +44,17 @@ interface OrderShipment {
   delivered_at: string | null;
 }
 
+interface ShipmentEvent {
+  id: string;
+  shipment_id: string;
+  status_code: string;
+  description: string;
+  location_label: string | null;
+  lat: number | null;
+  lng: number | null;
+  occurred_at: string;
+}
+
 interface OrderItem {
   id: string;
   order_id: string;
@@ -68,6 +79,7 @@ export default function Account() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [payments, setPayments] = useState<OrderPayment[]>([]);
   const [shipments, setShipments] = useState<OrderShipment[]>([]);
+  const [shipmentEvents, setShipmentEvents] = useState<ShipmentEvent[]>([]);
   const [orderItems, setOrderItems] = useState<OrderItem[]>([]);
   const [offers, setOffers] = useState<Offer[]>([]);
   const [loading, setLoading] = useState(true);
@@ -108,6 +120,20 @@ export default function Account() {
             
             if (shipmentsData) {
               setShipments(shipmentsData as OrderShipment[]);
+              
+              // Load shipment events for all shipments
+              const shipmentIds = shipmentsData.map(s => s.id);
+              if (shipmentIds.length > 0) {
+                const { data: eventsData } = await supabase
+                  .from('shipment_events')
+                  .select('id, shipment_id, status_code, description, location_label, lat, lng, occurred_at')
+                  .in('shipment_id', shipmentIds)
+                  .order('occurred_at', { ascending: false });
+                
+                if (eventsData) {
+                  setShipmentEvents(eventsData as ShipmentEvent[]);
+                }
+              }
             }
 
             // Load order items
@@ -165,6 +191,12 @@ export default function Account() {
 
   const getItemsForOrder = (orderId: string) => {
     return orderItems.filter(i => i.order_id === orderId);
+  };
+
+  const getShipmentEventsForOrder = (orderId: string) => {
+    const shipment = getShipmentForOrder(orderId);
+    if (!shipment) return [];
+    return shipmentEvents.filter(e => e.shipment_id === shipment.id);
   };
 
   if (loading) {
@@ -257,6 +289,7 @@ export default function Account() {
                   order={order}
                   payments={getPaymentsForOrder(order.id)}
                   shipment={getShipmentForOrder(order.id)}
+                  shipmentEvents={getShipmentEventsForOrder(order.id)}
                   items={getItemsForOrder(order.id)}
                 />
               ))}

@@ -141,8 +141,9 @@ Deno.serve(async (req) => {
     }
 
     // Calculate totals server-side (TRUST NOTHING FROM CLIENT)
+    // NEW LOGIC: in_stock = full price at checkout, preorder = deposit only
     let subtotalEur = 0;
-    let depositTotalEur = 0;
+    let immediatePaymentEur = 0; // What customer pays NOW
     let hasPreorder = false;
     let maxEtaWeeksMin = 0;
     let maxEtaWeeksMax = 0;
@@ -153,9 +154,11 @@ Deno.serve(async (req) => {
       const itemDeposit = Number(product.deposit_eur) * item.quantity;
       
       subtotalEur += itemSubtotal;
-      depositTotalEur += itemDeposit;
       
-      if (product.stock_status === 'preorder') {
+      // CRITICAL: In-stock items pay FULL price immediately, preorder pays DEPOSIT only
+      const isPreorder = product.stock_status === 'preorder';
+      if (isPreorder) {
+        immediatePaymentEur += itemDeposit; // Preorder: pay deposit
         hasPreorder = true;
         if (product.preorder_eta_weeks_min) {
           maxEtaWeeksMin = Math.max(maxEtaWeeksMin, product.preorder_eta_weeks_min);
@@ -163,10 +166,12 @@ Deno.serve(async (req) => {
         if (product.preorder_eta_weeks_max) {
           maxEtaWeeksMax = Math.max(maxEtaWeeksMax, product.preorder_eta_weeks_max);
         }
+      } else {
+        immediatePaymentEur += itemSubtotal; // In-stock: pay full price
       }
 
       // Validate inventory for in_stock items
-      if (product.stock_status === 'in_stock' && product.inventory_qty !== null) {
+      if (!isPreorder && product.inventory_qty !== null) {
         if (product.inventory_qty < item.quantity) {
           throw new Error(`Prekės "${product.title}" likę tik ${product.inventory_qty} vnt.`);
         }
@@ -180,20 +185,22 @@ Deno.serve(async (req) => {
         unitPriceEur: Number(product.price_eur),
         unitDepositEur: Number(product.deposit_eur),
         quantity: item.quantity,
+        isPreorder,
       };
     });
 
     const shippingEur = 0; // Free shipping
     const discountEur = 0; // TODO: Apply offers
     const totalEur = subtotalEur + shippingEur - discountEur;
-    const balanceTotalEur = totalEur - depositTotalEur;
+    const balanceTotalEur = totalEur - immediatePaymentEur; // What remains to pay later
 
     log(requestId, 'Totals calculated', { 
       subtotalEur, 
-      depositTotalEur, 
+      immediatePaymentEur, 
       balanceTotalEur, 
       totalEur,
-      hasPreorder 
+      hasPreorder,
+      paymentPlan: hasPreorder ? 'deposit_only' : 'full_payment'
     });
 
     // Generate order number
@@ -211,7 +218,7 @@ Deno.serve(async (req) => {
         first_name: body.firstName.trim(),
         last_name: body.lastName.trim(),
         status: 'created',
-        payment_plan: 'deposit_only',
+        payment_plan: hasPreorder ? 'deposit_only' : 'full_payment',
         preorder_flag: hasPreorder,
         preorder_eta_weeks_min: maxEtaWeeksMin > 0 ? maxEtaWeeksMin : null,
         preorder_eta_weeks_max: maxEtaWeeksMax > 0 ? maxEtaWeeksMax : null,
@@ -219,8 +226,8 @@ Deno.serve(async (req) => {
         discount_eur: discountEur,
         shipping_eur: shippingEur,
         total_eur: totalEur,
-        deposit_total_eur: depositTotalEur,
-        balance_total_eur: balanceTotalEur,
+        deposit_total_eur: immediatePaymentEur, // What's paid now (deposit OR full)
+        balance_total_eur: balanceTotalEur,     // What remains (0 for in-stock only)
         currency: 'EUR',
         shipping_address_json: body.shippingAddress,
         notes: body.notes?.trim().slice(0, 500) || null,
@@ -259,18 +266,31 @@ Deno.serve(async (req) => {
 
     log(requestId, 'Order items created', { count: orderItems.length });
 
-    // Create Stripe Checkout Session for DEPOSIT only
-    const lineItems = orderItemsData.map(item => ({
-      price_data: {
-        currency: 'eur',
-        unit_amount: Math.round(item.unitDepositEur * 100), // Convert to cents
-        product_data: {
-          name: `${item.title} (depozitas)`,
-          description: `Depozitas už ${item.quantity} vnt.`,
+    // Create Stripe Checkout Session
+    // For preorder: charge deposit only. For in-stock: charge full price
+    const lineItems = orderItemsData.map(item => {
+      const unitAmount = item.isPreorder 
+        ? Math.round(item.unitDepositEur * 100)  // Preorder: deposit
+        : Math.round(item.unitPriceEur * 100);   // In-stock: full price
+      
+      const label = item.isPreorder 
+        ? `${item.title} (depozitas)`
+        : item.title;
+      
+      return {
+        price_data: {
+          currency: 'eur',
+          unit_amount: unitAmount,
+          product_data: {
+            name: label,
+            description: item.isPreorder 
+              ? `Depozitas už ${item.quantity} vnt.`
+              : `${item.quantity} vnt.`,
+          },
         },
-      },
-      quantity: item.quantity,
-    }));
+        quantity: item.quantity,
+      };
+    });
 
     // Find or create Stripe customer
     let stripeCustomerId: string | undefined;
@@ -301,13 +321,13 @@ Deno.serve(async (req) => {
       metadata: {
         order_id: order.id,
         order_number: orderNumber,
-        payment_type: 'deposit',
+        payment_type: hasPreorder ? 'deposit' : 'full_payment',
       },
       payment_intent_data: {
         metadata: {
           order_id: order.id,
           order_number: orderNumber,
-          payment_type: 'deposit',
+          payment_type: hasPreorder ? 'deposit' : 'full_payment',
         },
       },
     });
@@ -315,7 +335,7 @@ Deno.serve(async (req) => {
     log(requestId, 'Stripe session created', { 
       sessionId: session.id, 
       url: session.url?.substring(0, 50) + '...',
-      depositAmountCents: Math.round(depositTotalEur * 100)
+      immediatePaymentCents: Math.round(immediatePaymentEur * 100)
     });
 
     return new Response(
@@ -325,7 +345,7 @@ Deno.serve(async (req) => {
         order: {
           id: order.id,
           orderNumber: order.order_number,
-          depositEur: depositTotalEur,
+          immediatePaymentEur: immediatePaymentEur,
           totalEur: totalEur,
           balanceEur: balanceTotalEur,
           hasPreorder,

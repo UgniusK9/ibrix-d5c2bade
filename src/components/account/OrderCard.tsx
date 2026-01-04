@@ -4,6 +4,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { cn } from '@/lib/utils';
+import { TrackingMap } from '@/components/tracking/TrackingMap';
 
 interface OrderPayment {
   id: string;
@@ -21,9 +22,16 @@ interface OrderShipment {
   carrier_code: 'omniva' | 'lp_express' | 'dpd' | 'other' | null;
   shipped_at: string | null;
   delivered_at: string | null;
-  last_location?: string;
-  last_location_lat?: number;
-  last_location_lng?: number;
+}
+
+interface ShipmentEvent {
+  id: string;
+  status_code: string;
+  description: string;
+  location_label: string | null;
+  lat: number | null;
+  lng: number | null;
+  occurred_at: string;
 }
 
 interface OrderItem {
@@ -52,6 +60,7 @@ interface OrderCardProps {
   };
   payments?: OrderPayment[];
   shipment?: OrderShipment;
+  shipmentEvents?: ShipmentEvent[];
   items?: OrderItem[];
   onPayBalance?: () => void;
 }
@@ -93,7 +102,7 @@ function formatPrice(amount: number): string {
   }).format(amount);
 }
 
-export function OrderCard({ order, payments, shipment, items, onPayBalance }: OrderCardProps) {
+export function OrderCard({ order, payments, shipment, shipmentEvents, items, onPayBalance }: OrderCardProps) {
   const [isOpen, setIsOpen] = useState(false);
   const config = statusConfig[order.status] || statusConfig['created'];
 
@@ -258,6 +267,20 @@ export function OrderCard({ order, payments, shipment, items, onPayBalance }: Or
                   </Button>
                 )}
               </div>
+            )}
+
+            {/* Tracking Map - show if we have location data */}
+            {shipmentEvents && shipmentEvents.length > 0 && (
+              <TrackingMap
+                location={shipmentEvents[0].location_label}
+                coordinates={
+                  shipmentEvents[0].lat && shipmentEvents[0].lng
+                    ? { lat: shipmentEvents[0].lat, lng: shipmentEvents[0].lng }
+                    : null
+                }
+                carrierName={shipment?.carrier_code ? carrierNames[shipment.carrier_code] : null}
+                lastUpdate={shipmentEvents[0].occurred_at}
+              />
             )}
 
             {/* Shipping address */}
