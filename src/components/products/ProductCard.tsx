@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { ShoppingCart, Package, Clock, Heart, Scale } from "lucide-react";
+import { ShoppingCart, Package, Clock, Heart, Scale, Eye } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Product, formatPrice, getEtaString, getProductImage } from "@/hooks/useProducts";
@@ -10,6 +10,7 @@ import { toast } from "sonner";
 
 interface ProductCardProps {
   product: Product;
+  onQuickView?: (product: Product) => void;
 }
 
 const BADGE_CONFIG: Record<string, { label: string; className: string }> = {
@@ -19,7 +20,7 @@ const BADGE_CONFIG: Record<string, { label: string; className: string }> = {
   limited: { label: 'Ribotas', className: 'bg-purple-500 text-white' },
 };
 
-export function ProductCard({ product }: ProductCardProps) {
+export function ProductCard({ product, onQuickView }: ProductCardProps) {
   const addItem = useCartStore((state) => state.addItem);
   const { addProduct, removeProduct, isInComparison } = useComparisonStore();
   const { isInWishlist, toggleWishlist } = useWishlist();
@@ -31,6 +32,12 @@ export function ProductCard({ product }: ProductCardProps) {
   const badges = (product as any).badges as string[] || [];
   const inComparison = isInComparison(product.id);
   const inWishlist = isInWishlist(product.id);
+
+  const handleQuickView = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    onQuickView?.(product);
+  };
 
   const handleAddToCart = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -105,6 +112,16 @@ export function ProductCard({ product }: ProductCardProps) {
 
         {/* Action buttons */}
         <div className="absolute top-3 right-3 flex flex-col gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
+          {onQuickView && (
+            <Button
+              size="icon"
+              variant="secondary"
+              className="h-8 w-8 bg-background/90"
+              onClick={handleQuickView}
+            >
+              <Eye className="h-4 w-4" />
+            </Button>
+          )}
           <Button
             size="icon"
             variant="secondary"

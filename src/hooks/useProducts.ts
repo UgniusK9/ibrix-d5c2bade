@@ -25,7 +25,7 @@ export interface Product {
 }
 
 // Transform DB product to our Product interface
-function transformProduct(dbProduct: Record<string, unknown>): Product {
+export function transformProduct(dbProduct: Record<string, unknown>): Product {
   const images = dbProduct.images as unknown;
   let imageArray: string[] = [];
   

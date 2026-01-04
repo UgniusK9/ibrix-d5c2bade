@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect } from "react";
 import { Link, useParams, useSearchParams } from "react-router-dom";
-import { Package, Clock, ShoppingCart, Filter, Loader2, Grid3X3, LayoutGrid, ChevronRight } from "lucide-react";
+import { Package, Clock, ShoppingCart, Filter, Loader2, Grid3X3, LayoutGrid, ChevronRight, Eye } from "lucide-react";
 import { PageLayout } from "@/components/layout/PageLayout";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -8,6 +8,7 @@ import { useProducts, formatPrice, getEtaString, getProductImage, Product } from
 import { useCartStore } from "@/stores/cartStore";
 import { SEOHead } from "@/components/seo/SEOHead";
 import { supabase } from "@/integrations/supabase/client";
+import { QuickViewModal } from "@/components/products/QuickViewModal";
 import {
   Select,
   SelectContent,
@@ -36,6 +37,7 @@ export default function Produktai() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [loadingCategories, setLoadingCategories] = useState(true);
   const [localSearch, setLocalSearch] = useState(searchQuery);
+  const [quickViewProduct, setQuickViewProduct] = useState<Product | null>(null);
   const addItem = useCartStore((state) => state.addItem);
   const { data: products, isLoading, error } = useProducts();
 
@@ -118,6 +120,12 @@ export default function Produktai() {
       return true;
     });
   }, [products, currentCategory, categorySlug, categories, statusFilter, searchQuery]);
+
+  const handleQuickView = (product: Product, e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setQuickViewProduct(product);
+  };
 
   const handleAddToCart = (product: Product, e: React.MouseEvent) => {
     e.preventDefault();
@@ -347,6 +355,15 @@ export default function Produktai() {
                           )}>
                             {isPreOrder ? "PRE-ORDER" : "SANDĖLYJE"}
                           </Badge>
+                          {/* Quick view button on hover */}
+                          <Button
+                            size="icon"
+                            variant="secondary"
+                            className="absolute top-2 right-2 h-8 w-8 bg-background/90 opacity-0 group-hover:opacity-100 transition-opacity"
+                            onClick={(e) => handleQuickView(product, e)}
+                          >
+                            <Eye className="h-4 w-4" />
+                          </Button>
                         </div>
                         <div className={cn("p-3", viewMode === 'grid' ? 'p-4' : 'p-3')}>
                           {viewMode === 'grid' && (
@@ -418,6 +435,13 @@ export default function Produktai() {
           </div>
         </div>
       </section>
+
+      {/* Quick View Modal */}
+      <QuickViewModal
+        product={quickViewProduct}
+        open={!!quickViewProduct}
+        onOpenChange={(open) => !open && setQuickViewProduct(null)}
+      />
     </PageLayout>
   );
 }
