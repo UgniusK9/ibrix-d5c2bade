@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Loader2, Package, ChevronLeft, CreditCard, MapPin, Truck, Shield, Sparkles } from "lucide-react";
+import { Loader2, Package, ChevronLeft, CreditCard, MapPin, Truck, Shield, Sparkles, Wallet } from "lucide-react";
 import { CartRecommendations } from "@/components/cart/CartRecommendations";
 import { PageLayout } from "@/components/layout/PageLayout";
 import { Button } from "@/components/ui/button";
@@ -11,7 +11,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Switch } from "@/components/ui/switch";
 import { useCartStore, formatCartPrice } from "@/stores/cartStore";
+import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { trackBeginCheckoutEvent, trackAddPaymentInfoEvent } from "@/hooks/useAnalytics";
@@ -49,12 +51,15 @@ const shippingMethods = [
 
 export default function Checkout() {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const { items, getTotalPrice, getTotalDeposit, clearCart } = useCartStore();
   const [isLoading, setIsLoading] = useState(false);
   const [step, setStep] = useState<1 | 2>(1);
   const [appliedDiscount, setAppliedDiscount] = useState<AppliedDiscount | null>(null);
   const [wantsInvoice, setWantsInvoice] = useState(false);
   const [selectedLocker, setSelectedLocker] = useState<LockerTerminal | null>(null);
+  const [walletBalance, setWalletBalance] = useState(0);
+  const [useWallet, setUseWallet] = useState(true);
 
   const {
     register,
@@ -111,13 +116,35 @@ export default function Checkout() {
       ? (immediatePayment * appliedDiscount.value / 100)
       : Math.min(appliedDiscount.value * 100, immediatePayment)) // Don't discount more than total
     : 0;
-  const finalImmediatePayment = Math.max(0, immediatePayment - discountAmount) + shippingPrice;
+  
+  // Wallet deduction
+  const walletDeduction = useWallet ? Math.min(walletBalance * 100, immediatePayment - discountAmount) : 0;
+  const finalImmediatePayment = Math.max(0, immediatePayment - discountAmount - walletDeduction) + shippingPrice;
 
   useEffect(() => {
     if (items.length === 0) {
-      navigate("/varikliai");
+      navigate("/produktai/visi");
     }
   }, [items, navigate]);
+
+  // Load wallet balance
+  useEffect(() => {
+    const loadWallet = async () => {
+      if (!user) return;
+      
+      const { data } = await supabase
+        .from('wallets')
+        .select('balance_eur')
+        .eq('user_id', user.id)
+        .maybeSingle();
+      
+      if (data) {
+        setWalletBalance(data.balance_eur);
+      }
+    };
+    
+    loadWallet();
+  }, [user]);
 
   useEffect(() => {
     // Track begin checkout when page loads
@@ -200,6 +227,8 @@ export default function Checkout() {
           invoiceVatCode: data.invoiceVatCode,
           invoiceAddress: data.invoiceAddress,
           invoiceCountry: "Lietuva",
+          useWalletBalance: useWallet && walletBalance > 0,
+          walletDeductionCents: walletDeduction,
         },
       });
 
@@ -371,6 +400,38 @@ export default function Checkout() {
                   />
                 </div>
 
+                {/* Wallet Balance */}
+                {user && walletBalance > 0 && (
+                  <div className="bg-gradient-to-r from-success/10 to-success/5 border border-success/30 rounded-xl p-6">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-full bg-success/20 flex items-center justify-center">
+                          <Wallet className="w-5 h-5 text-success" />
+                        </div>
+                        <div>
+                          <p className="font-semibold">Piniginės balansas</p>
+                          <p className="text-sm text-muted-foreground">
+                            Turimas likutis: {formatCartPrice(walletBalance * 100)}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Label htmlFor="use-wallet" className="text-sm">Naudoti</Label>
+                        <Switch
+                          id="use-wallet"
+                          checked={useWallet}
+                          onCheckedChange={setUseWallet}
+                        />
+                      </div>
+                    </div>
+                    {useWallet && walletDeduction > 0 && (
+                      <p className="text-sm text-success mt-3">
+                        Bus panaudota: -{formatCartPrice(walletDeduction)}
+                      </p>
+                    )}
+                  </div>
+                )}
+
                 {/* Invoice Fields */}
                 <div className="bg-card border border-border rounded-xl p-6">
                   <InvoiceFields
@@ -464,6 +525,12 @@ export default function Checkout() {
                   <div className="flex justify-between text-sm text-green-600">
                     <span>Nuolaida ({appliedDiscount.code})</span>
                     <span>-{formatCartPrice(discountAmount)}</span>
+                  </div>
+                )}
+                {useWallet && walletDeduction > 0 && (
+                  <div className="flex justify-between text-sm text-green-600">
+                    <span>Piniginė</span>
+                    <span>-{formatCartPrice(walletDeduction)}</span>
                   </div>
                 )}
                 <div className="flex justify-between font-semibold text-primary pt-2 border-t border-dashed">

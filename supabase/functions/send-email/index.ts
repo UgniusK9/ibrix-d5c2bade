@@ -163,6 +163,81 @@ function getShippedEmail(data: any): { subject: string; html: string } {
   };
 }
 
+function getSupportRequestEmail(data: any): { subject: string; html: string } {
+  const { orderNumber, requestType, message, userEmail } = data.data || data;
+
+  const requestTypeLabels: Record<string, string> = {
+    'return': 'Prekės grąžinimas',
+    'missing_parts': 'Trūkstamos detalės',
+    'other': 'Kita informacija',
+  };
+
+  return {
+    subject: `[SUPPORT] Užsakymas ${orderNumber} - ${requestTypeLabels[requestType] || requestType}`,
+    html: `
+      <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;">
+        <h1 style="color:#1a1a1a;">Nauja kliento užklausa</h1>
+        
+        <div style="background:#f5f5f5;padding:20px;border-radius:8px;margin:20px 0;">
+          <p style="margin:5px 0;"><strong>Užsakymas:</strong> ${orderNumber}</p>
+          <p style="margin:5px 0;"><strong>Kliento el. paštas:</strong> ${userEmail}</p>
+          <p style="margin:5px 0;"><strong>Užklausos tipas:</strong> ${requestTypeLabels[requestType] || requestType}</p>
+        </div>
+        
+        <div style="background:#fffbeb;padding:20px;border-radius:8px;margin:20px 0;border-left:4px solid #f59e0b;">
+          <p style="margin:0;"><strong>Pranešimas:</strong></p>
+          <p style="margin:10px 0;white-space:pre-wrap;">${message}</p>
+        </div>
+        
+        <hr style="border:none;border-top:1px solid #eee;margin:30px 0;">
+        <p style="color:#999;font-size:12px;">IBRIX Support System</p>
+      </div>
+    `,
+  };
+}
+
+function getGiftCardEmail(data: any): { subject: string; html: string } {
+  const { recipientName, senderName, code, amount, personalMessage } = data;
+
+  return {
+    subject: `${senderName || 'Draugas'} atsiuntė jums dovanų kuponą!`,
+    html: `
+      <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;">
+        <h1 style="color:#1a1a1a;">Sveiki, ${recipientName}!</h1>
+        <p>${senderName || 'Draugas'} atsiuntė jums IBRIX dovanų kuponą!</p>
+        
+        <div style="background:linear-gradient(135deg,#4f46e5,#7c3aed);color:white;padding:30px;border-radius:12px;margin:20px 0;text-align:center;">
+          <p style="margin:0;font-size:14px;opacity:0.9;">IBRIX Dovanų kuponas</p>
+          <p style="margin:10px 0;font-size:36px;font-weight:bold;">${amount}€</p>
+          <p style="margin:10px 0;font-family:monospace;font-size:20px;background:rgba(255,255,255,0.2);padding:10px;border-radius:6px;">${code}</p>
+        </div>
+        
+        ${personalMessage ? `
+          <div style="background:#f9f9f9;padding:20px;border-radius:8px;margin:20px 0;font-style:italic;">
+            "${personalMessage}"
+          </div>
+        ` : ''}
+        
+        <p>Norėdami panaudoti kuponą:</p>
+        <ol>
+          <li>Užsiregistruokite arba prisijunkite ibrix.lt</li>
+          <li>Eikite į "Mano paskyra" → "Aktyvuoti dovanų kuponą"</li>
+          <li>Įveskite kodą: <strong>${code}</strong></li>
+        </ol>
+        
+        <div style="margin:30px 0;">
+          <a href="https://ibrix.lt/auth" style="display:inline-block;background:#4f46e5;color:white;padding:14px 28px;text-decoration:none;border-radius:6px;">
+            Aktyvuoti kuponą
+          </a>
+        </div>
+        
+        <hr style="border:none;border-top:1px solid #eee;margin:30px 0;">
+        <p style="color:#999;font-size:12px;">IBRIX | ibrix.lt</p>
+      </div>
+    `,
+  };
+}
+
 Deno.serve(async (req: Request) => {
   const requestId = generateRequestId();
   
@@ -174,13 +249,21 @@ Deno.serve(async (req: Request) => {
     const { type, email, ...data } = await req.json();
     log(requestId, 'Email request received', { type, email, orderNumber: data.orderNumber });
 
-    // Validate email
-    if (!email || !type) {
+    // Validate email (unless it's a support request which goes to admin)
+    if (type !== 'support_request' && (!email || !type)) {
       log(requestId, 'Missing required fields', { hasEmail: !!email, hasType: !!type });
       return new Response(JSON.stringify({ error: 'Missing email or type' }), {
         status: 400,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
+    }
+
+    // Determine recipient email
+    let recipientEmail = email;
+    
+    // Support requests go to admin
+    if (type === 'support_request') {
+      recipientEmail = 'info@ibrix.lt'; // Admin email
     }
 
     // Get email content based on type
@@ -197,6 +280,12 @@ Deno.serve(async (req: Request) => {
         break;
       case 'shipped':
         emailContent = getShippedEmail(data);
+        break;
+      case 'support_request':
+        emailContent = getSupportRequestEmail(data);
+        break;
+      case 'gift_card':
+        emailContent = getGiftCardEmail(data);
         break;
       default:
         log(requestId, 'Unknown email type', { type });

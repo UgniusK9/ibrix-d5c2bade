@@ -35,6 +35,7 @@ import Auth from "./pages/Auth";
 import ResetPassword from "./pages/ResetPassword";
 import Account from "./pages/Account";
 import AdminVerification from "./pages/AdminVerification";
+import GiftCards from "./pages/GiftCards";
 
 // Global cart components wrapper
 function CartComponents() {
@@ -87,6 +88,7 @@ const App = () => (
                 <Route path="/uzsakymas" element={<OrderConfirmation />} />
                 <Route path="/siuntos-sekimas/:orderId" element={<SiuntosSekimas />} />
                 <Route path="/siuntos-sekimas" element={<SiuntosSekimas />} />
+                <Route path="/dovanu-kuponai" element={<GiftCards />} />
                 <Route path="/auth" element={<Auth />} />
                 <Route path="/auth/reset-password" element={<ResetPassword />} />
 
