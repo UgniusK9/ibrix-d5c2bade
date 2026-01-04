@@ -210,6 +210,22 @@ export function CategoriesManager() {
               >
                 <div className="flex items-center gap-3">
                   <GripVertical className="w-4 h-4 text-muted-foreground" />
+                  
+                  {/* Category image preview */}
+                  <div className="w-12 h-12 rounded-lg bg-secondary/50 overflow-hidden flex-shrink-0">
+                    {category.image_url ? (
+                      <img 
+                        src={category.image_url} 
+                        alt={category.name}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center">
+                        <FolderTree className="w-5 h-5 text-muted-foreground" />
+                      </div>
+                    )}
+                  </div>
+                  
                   <div>
                     <div className="flex items-center gap-2">
                       <span className="font-medium">{category.name}</span>
@@ -292,6 +308,16 @@ export function CategoriesManager() {
                   onChange={(e) => setFormData({ ...formData, image_url: e.target.value })}
                   placeholder="https://..."
                 />
+                {formData.image_url && (
+                  <div className="mt-2">
+                    <img 
+                      src={formData.image_url} 
+                      alt="Preview" 
+                      className="w-24 h-24 object-cover rounded-lg border"
+                      onError={(e) => (e.currentTarget.style.display = 'none')}
+                    />
+                  </div>
+                )}
               </div>
 
               <div className="grid grid-cols-2 gap-4">

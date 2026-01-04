@@ -1,16 +1,17 @@
 import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { Menu, ShoppingCart, Truck, Clock, Headphones, ArrowRight, User, LogOut } from "lucide-react";
+import { Menu, ShoppingCart, Truck, Clock, Headphones, ArrowRight, User, LogOut, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { useCartStore } from "@/stores/cartStore";
 import { CartDrawer } from "@/components/cart/CartDrawer";
 import { useAuth } from "@/contexts/AuthContext";
+import { ProductSearch } from "@/components/header/ProductSearch";
+import { CategoriesMegaMenu } from "@/components/header/CategoriesMegaMenu";
 import logo from "@/assets/logo.png";
 
 const navigation = [
-  { name: "Produktai", href: "/produktai/visi" },
   { name: "Kaip veikia pre-order", href: "/pre-order" },
   { name: "Pagalba", href: "/pagalba" },
   { name: "Apie mus", href: "/apie" },
@@ -64,6 +65,9 @@ export function Header() {
 
             {/* Desktop Navigation */}
             <nav className="hidden lg:flex items-center gap-1">
+              {/* Products Mega Menu */}
+              <CategoriesMegaMenu />
+              
               {navigation.map((item) => (
                 <Link
                   key={item.name}
@@ -78,6 +82,11 @@ export function Header() {
                 </Link>
               ))}
             </nav>
+
+            {/* Search - Desktop */}
+            <div className="hidden lg:block">
+              <ProductSearch />
+            </div>
 
             {/* Right Actions */}
             <div className="flex items-center gap-2">

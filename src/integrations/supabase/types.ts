@@ -875,6 +875,66 @@ export type Database = {
           },
         ]
       }
+      promo_banners: {
+        Row: {
+          active: boolean | null
+          background_color: string | null
+          badge_text: string | null
+          badge_variant: string | null
+          created_at: string
+          ends_at: string | null
+          id: string
+          image_url: string | null
+          link_text: string | null
+          link_url: string
+          secondary_link_text: string | null
+          secondary_link_url: string | null
+          sort_order: number | null
+          starts_at: string | null
+          subtitle: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean | null
+          background_color?: string | null
+          badge_text?: string | null
+          badge_variant?: string | null
+          created_at?: string
+          ends_at?: string | null
+          id?: string
+          image_url?: string | null
+          link_text?: string | null
+          link_url?: string
+          secondary_link_text?: string | null
+          secondary_link_url?: string | null
+          sort_order?: number | null
+          starts_at?: string | null
+          subtitle?: string | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean | null
+          background_color?: string | null
+          badge_text?: string | null
+          badge_variant?: string | null
+          created_at?: string
+          ends_at?: string | null
+          id?: string
+          image_url?: string | null
+          link_text?: string | null
+          link_url?: string
+          secondary_link_text?: string | null
+          secondary_link_url?: string | null
+          sort_order?: number | null
+          starts_at?: string | null
+          subtitle?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       redemptions: {
         Row: {
           discount_amount_eur: number | null

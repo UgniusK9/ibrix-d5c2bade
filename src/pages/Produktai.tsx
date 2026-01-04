@@ -30,10 +30,12 @@ interface Category {
 export default function Produktai() {
   const { category: categorySlug } = useParams<{ category?: string }>();
   const [searchParams, setSearchParams] = useSearchParams();
+  const searchQuery = searchParams.get('search') || '';
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
   const [viewMode, setViewMode] = useState<'grid' | 'compact'>('grid');
   const [categories, setCategories] = useState<Category[]>([]);
   const [loadingCategories, setLoadingCategories] = useState(true);
+  const [localSearch, setLocalSearch] = useState(searchQuery);
   const addItem = useCartStore((state) => state.addItem);
   const { data: products, isLoading, error } = useProducts();
 
@@ -81,10 +83,21 @@ export default function Produktai() {
     return { id: 'all', name: 'Visi produktai', slug: 'visi', description: 'Peržiūrėkite visą mūsų produktų katalogą.' };
   }, [categorySlug, categories]);
 
-  // Filter products by category
+  // Filter products by category and search
   const filteredProducts = useMemo(() => {
     if (!products) return [];
     return products.filter((p) => {
+      // Search filter
+      if (searchQuery) {
+        const query = searchQuery.toLowerCase();
+        const matchesSearch = 
+          p.title.toLowerCase().includes(query) ||
+          p.sku.toLowerCase().includes(query) ||
+          p.short_desc?.toLowerCase().includes(query) ||
+          p.description?.toLowerCase().includes(query);
+        if (!matchesSearch) return false;
+      }
+      
       // Category filter
       if (currentCategory.id !== 'all') {
         // Check category_id first (DB category)
@@ -104,7 +117,7 @@ export default function Produktai() {
       if (statusFilter !== "all" && p.stock_status !== statusFilter) return false;
       return true;
     });
-  }, [products, currentCategory, categorySlug, categories, statusFilter]);
+  }, [products, currentCategory, categorySlug, categories, statusFilter, searchQuery]);
 
   const handleAddToCart = (product: Product, e: React.MouseEvent) => {
     e.preventDefault();
