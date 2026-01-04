@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
-import { Star, Check, X, RefreshCw, MessageSquare } from 'lucide-react';
+import { Star, Check, X, RefreshCw, MessageSquare, Trash2, Reply, ImageIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Textarea } from '@/components/ui/textarea';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import {
@@ -10,6 +11,13 @@ import {
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select';
+import {
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
+} from '@/components/ui/dialog';
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { format } from 'date-fns';
 
 interface Review {
@@ -19,6 +27,9 @@ interface Review {
   rating: number;
   title: string | null;
   content: string | null;
+  image_url: string | null;
+  admin_reply: string | null;
+  admin_reply_at: string | null;
   verified_purchase: boolean;
   status: string;
   created_at: string;
@@ -30,6 +41,21 @@ export function ReviewsManager() {
   const [reviews, setReviews] = useState<Review[]>([]);
   const [loading, setLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState<string>('pending');
+  
+  // Reply dialog
+  const [replyDialogOpen, setReplyDialogOpen] = useState(false);
+  const [selectedReview, setSelectedReview] = useState<Review | null>(null);
+  const [replyText, setReplyText] = useState('');
+  const [replying, setReplying] = useState(false);
+  
+  // Delete dialog
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [reviewToDelete, setReviewToDelete] = useState<Review | null>(null);
+  const [deleting, setDeleting] = useState(false);
+  
+  // Image preview
+  const [imagePreviewOpen, setImagePreviewOpen] = useState(false);
+  const [previewImageUrl, setPreviewImageUrl] = useState<string | null>(null);
 
   const loadReviews = async () => {
     setLoading(true);
@@ -75,6 +101,73 @@ export function ReviewsManager() {
     } catch (e) {
       console.error('Failed to update review:', e);
       toast.error('Nepavyko atnaujinti atsiliepimo');
+    }
+  };
+
+  const handleOpenReplyDialog = (review: Review) => {
+    setSelectedReview(review);
+    setReplyText(review.admin_reply || '');
+    setReplyDialogOpen(true);
+  };
+
+  const handleSubmitReply = async () => {
+    if (!selectedReview) return;
+
+    setReplying(true);
+    try {
+      const { error } = await supabase
+        .from('product_reviews')
+        .update({
+          admin_reply: replyText.trim() || null,
+          admin_reply_at: replyText.trim() ? new Date().toISOString() : null,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', selectedReview.id);
+
+      if (error) throw error;
+      toast.success('Atsakymas išsaugotas');
+      setReplyDialogOpen(false);
+      loadReviews();
+    } catch (e) {
+      console.error('Failed to save reply:', e);
+      toast.error('Nepavyko išsaugoti atsakymo');
+    } finally {
+      setReplying(false);
+    }
+  };
+
+  const handleOpenDeleteDialog = (review: Review) => {
+    setReviewToDelete(review);
+    setDeleteDialogOpen(true);
+  };
+
+  const handleDeleteReview = async () => {
+    if (!reviewToDelete) return;
+
+    setDeleting(true);
+    try {
+      // Delete image from storage if exists
+      if (reviewToDelete.image_url) {
+        const path = reviewToDelete.image_url.split('/review-images/')[1];
+        if (path) {
+          await supabase.storage.from('review-images').remove([path]);
+        }
+      }
+
+      const { error } = await supabase
+        .from('product_reviews')
+        .delete()
+        .eq('id', reviewToDelete.id);
+
+      if (error) throw error;
+      toast.success('Atsiliepimas ištrintas');
+      setDeleteDialogOpen(false);
+      loadReviews();
+    } catch (e) {
+      console.error('Failed to delete review:', e);
+      toast.error('Nepavyko ištrinti atsiliepimo');
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -146,25 +239,45 @@ export function ReviewsManager() {
                 <TableHead>Vartotojas</TableHead>
                 <TableHead>Įvertinimas</TableHead>
                 <TableHead>Turinys</TableHead>
+                <TableHead>Nuotrauka</TableHead>
                 <TableHead>Data</TableHead>
                 <TableHead>Statusas</TableHead>
-                <TableHead></TableHead>
+                <TableHead>Veiksmai</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {reviews.map((review) => (
                 <TableRow key={review.id}>
-                  <TableCell className="font-medium max-w-[150px] truncate">
+                  <TableCell className="font-medium max-w-[120px] truncate">
                     {review.product?.title || 'Nežinomas'}
                   </TableCell>
-                  <TableCell className="text-sm text-muted-foreground max-w-[150px] truncate">
+                  <TableCell className="text-sm text-muted-foreground max-w-[120px] truncate">
                     {review.user?.email || 'Nežinomas'}
                   </TableCell>
                   <TableCell>{renderStars(review.rating)}</TableCell>
-                  <TableCell className="max-w-[250px]">
-                    {review.title && <p className="font-medium text-sm">{review.title}</p>}
+                  <TableCell className="max-w-[200px]">
+                    {review.title && <p className="font-medium text-sm truncate">{review.title}</p>}
                     {review.content && (
                       <p className="text-sm text-muted-foreground line-clamp-2">{review.content}</p>
+                    )}
+                    {review.admin_reply && (
+                      <p className="text-xs text-primary mt-1">✓ Atsakyta</p>
+                    )}
+                  </TableCell>
+                  <TableCell>
+                    {review.image_url ? (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => {
+                          setPreviewImageUrl(review.image_url);
+                          setImagePreviewOpen(true);
+                        }}
+                      >
+                        <ImageIcon className="w-4 h-4" />
+                      </Button>
+                    ) : (
+                      <span className="text-muted-foreground text-xs">-</span>
                     )}
                   </TableCell>
                   <TableCell className="text-sm text-muted-foreground">
@@ -172,26 +285,47 @@ export function ReviewsManager() {
                   </TableCell>
                   <TableCell>{getStatusBadge(review.status)}</TableCell>
                   <TableCell>
-                    {review.status === 'pending' && (
-                      <div className="flex gap-1">
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          className="text-green-600 hover:text-green-700 hover:bg-green-50"
-                          onClick={() => updateStatus(review.id, 'approved')}
-                        >
-                          <Check className="w-4 h-4" />
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                          onClick={() => updateStatus(review.id, 'rejected')}
-                        >
-                          <X className="w-4 h-4" />
-                        </Button>
-                      </div>
-                    )}
+                    <div className="flex gap-1">
+                      {review.status === 'pending' && (
+                        <>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="text-green-600 hover:text-green-700 hover:bg-green-50"
+                            onClick={() => updateStatus(review.id, 'approved')}
+                            title="Patvirtinti"
+                          >
+                            <Check className="w-4 h-4" />
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="text-orange-600 hover:text-orange-700 hover:bg-orange-50"
+                            onClick={() => updateStatus(review.id, 'rejected')}
+                            title="Atmesti"
+                          >
+                            <X className="w-4 h-4" />
+                          </Button>
+                        </>
+                      )}
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => handleOpenReplyDialog(review)}
+                        title="Atsakyti"
+                      >
+                        <Reply className="w-4 h-4" />
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                        onClick={() => handleOpenDeleteDialog(review)}
+                        title="Ištrinti"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </div>
                   </TableCell>
                 </TableRow>
               ))}
@@ -199,6 +333,85 @@ export function ReviewsManager() {
           </Table>
         </div>
       )}
+
+      {/* Reply Dialog */}
+      <Dialog open={replyDialogOpen} onOpenChange={setReplyDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Atsakyti į atsiliepimą</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            {selectedReview && (
+              <div className="p-3 bg-muted rounded-lg">
+                <div className="flex items-center gap-2 mb-2">
+                  {renderStars(selectedReview.rating)}
+                  <span className="text-sm text-muted-foreground">
+                    {selectedReview.user?.email}
+                  </span>
+                </div>
+                {selectedReview.title && (
+                  <p className="font-medium text-sm">{selectedReview.title}</p>
+                )}
+                {selectedReview.content && (
+                  <p className="text-sm text-muted-foreground">{selectedReview.content}</p>
+                )}
+              </div>
+            )}
+            <Textarea
+              value={replyText}
+              onChange={(e) => setReplyText(e.target.value)}
+              placeholder="Jūsų atsakymas..."
+              rows={4}
+            />
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setReplyDialogOpen(false)}>
+              Atšaukti
+            </Button>
+            <Button onClick={handleSubmitReply} disabled={replying}>
+              {replying ? 'Saugoma...' : 'Išsaugoti'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Ištrinti atsiliepimą?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Šis veiksmas negrįžtamas. Atsiliepimas bus visam laikui ištrintas.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Atšaukti</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteReview}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              disabled={deleting}
+            >
+              {deleting ? 'Trinama...' : 'Ištrinti'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Image Preview Dialog */}
+      <Dialog open={imagePreviewOpen} onOpenChange={setImagePreviewOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Atsiliepimo nuotrauka</DialogTitle>
+          </DialogHeader>
+          {previewImageUrl && (
+            <img
+              src={previewImageUrl}
+              alt="Atsiliepimo nuotrauka"
+              className="w-full max-h-[70vh] object-contain rounded-lg"
+            />
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

@@ -803,9 +803,12 @@ export type Database = {
       }
       product_reviews: {
         Row: {
+          admin_reply: string | null
+          admin_reply_at: string | null
           content: string | null
           created_at: string
           id: string
+          image_url: string | null
           order_id: string | null
           product_id: string
           rating: number
@@ -816,9 +819,12 @@ export type Database = {
           verified_purchase: boolean | null
         }
         Insert: {
+          admin_reply?: string | null
+          admin_reply_at?: string | null
           content?: string | null
           created_at?: string
           id?: string
+          image_url?: string | null
           order_id?: string | null
           product_id: string
           rating: number
@@ -829,9 +835,12 @@ export type Database = {
           verified_purchase?: boolean | null
         }
         Update: {
+          admin_reply?: string | null
+          admin_reply_at?: string | null
           content?: string | null
           created_at?: string
           id?: string
+          image_url?: string | null
           order_id?: string | null
           product_id?: string
           rating?: number
