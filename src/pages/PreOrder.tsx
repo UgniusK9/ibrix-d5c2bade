@@ -194,8 +194,8 @@ export default function PreOrder() {
               Peržiūrėkite mūsų variklio modelių kolekciją ir išsirinkite savo mėgstamą
             </p>
             <Button asChild size="lg" className="bg-accent hover:bg-accent/90 text-accent-foreground">
-              <Link to="/varikliai">
-                Peržiūrėti variklius
+              <Link to="/produktai/visi">
+                Peržiūrėti konstruktorius
                 <ArrowRight className="ml-2 h-5 w-5" />
               </Link>
             </Button>

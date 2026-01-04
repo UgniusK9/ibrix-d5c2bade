@@ -40,6 +40,7 @@ interface Product {
   price_eur: number;
   deposit_eur: number;
   sale_price_eur: number | null;
+  cost_price_eur: number | null;
   stock_status: StockStatus;
   status: ProductStatus;
   category: ProductCategory;
@@ -70,6 +71,7 @@ interface ProductFormData {
   price_eur: string;
   deposit_eur: string;
   sale_price_eur: string;
+  cost_price_eur: string;
   stock_status: StockStatus;
   status: ProductStatus;
   category: ProductCategory;
@@ -92,6 +94,7 @@ const emptyFormData: ProductFormData = {
   price_eur: '',
   deposit_eur: '',
   sale_price_eur: '',
+  cost_price_eur: '',
   stock_status: 'preorder',
   status: 'active',
   category: 'engines',
@@ -201,6 +204,7 @@ export function ProductsManager() {
       price_eur: product.price_eur.toString(),
       deposit_eur: product.deposit_eur.toString(),
       sale_price_eur: product.sale_price_eur?.toString() || '',
+      cost_price_eur: product.cost_price_eur?.toString() || '',
       stock_status: product.stock_status,
       status: product.status,
       category: product.category,
@@ -295,6 +299,7 @@ export function ProductsManager() {
         price_eur: parseFloat(formData.price_eur),
         deposit_eur: parseFloat(formData.deposit_eur),
         sale_price_eur: formData.sale_price_eur ? parseFloat(formData.sale_price_eur) : null,
+        cost_price_eur: formData.cost_price_eur ? parseFloat(formData.cost_price_eur) : null,
         stock_status: formData.stock_status,
         status: formData.status,
         category: formData.category,
@@ -587,9 +592,9 @@ export function ProductsManager() {
             </div>
 
             {/* Pricing */}
-            <div className="grid grid-cols-3 gap-4">
+            <div className="grid grid-cols-2 gap-4">
               <div>
-                <Label htmlFor="price_eur">Kaina (EUR) *</Label>
+                <Label htmlFor="price_eur">Pardavimo kaina (EUR) *</Label>
                 <Input
                   id="price_eur"
                   type="number"
@@ -600,6 +605,24 @@ export function ProductsManager() {
                   placeholder="0.00"
                 />
               </div>
+              <div>
+                <Label htmlFor="deposit_eur">Depozitas (EUR) *</Label>
+                <Input
+                  id="deposit_eur"
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  value={formData.deposit_eur}
+                  onChange={(e) => setFormData(prev => ({ ...prev, deposit_eur: e.target.value }))}
+                  placeholder="0.00"
+                />
+                <p className="text-xs text-muted-foreground mt-1">
+                  Suma užsakant
+                </p>
+              </div>
+            </div>
+            
+            <div className="grid grid-cols-2 gap-4">
               <div>
                 <Label htmlFor="sale_price_eur">Akcijos kaina (EUR)</Label>
                 <Input
@@ -617,19 +640,34 @@ export function ProductsManager() {
                 </p>
               </div>
               <div>
-                <Label htmlFor="deposit_eur">Depozitas (EUR) *</Label>
+                <Label htmlFor="cost_price_eur">Savikaina (EUR)</Label>
                 <Input
-                  id="deposit_eur"
+                  id="cost_price_eur"
                   type="number"
                   step="0.01"
                   min="0"
-                  value={formData.deposit_eur}
-                  onChange={(e) => setFormData(prev => ({ ...prev, deposit_eur: e.target.value }))}
+                  value={formData.cost_price_eur}
+                  onChange={(e) => setFormData(prev => ({ ...prev, cost_price_eur: e.target.value }))}
                   placeholder="0.00"
                 />
-                <p className="text-xs text-muted-foreground mt-1">
-                  Suma užsakant
-                </p>
+                {/* Profit calculation */}
+                {formData.cost_price_eur && formData.price_eur && (
+                  (() => {
+                    const cost = parseFloat(formData.cost_price_eur);
+                    const price = formData.sale_price_eur ? parseFloat(formData.sale_price_eur) : parseFloat(formData.price_eur);
+                    if (!isNaN(cost) && !isNaN(price) && cost > 0) {
+                      const profit = price - cost;
+                      const margin = ((profit / price) * 100).toFixed(1);
+                      const isPositive = profit > 0;
+                      return (
+                        <div className={`text-xs mt-1 font-medium ${isPositive ? 'text-green-600' : 'text-destructive'}`}>
+                          Pelnas: {formatPrice(profit)} ({margin}% marža)
+                        </div>
+                      );
+                    }
+                    return null;
+                  })()
+                )}
               </div>
             </div>
 
