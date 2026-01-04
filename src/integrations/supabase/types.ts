@@ -865,6 +865,59 @@ export type Database = {
           },
         ]
       }
+      product_variants: {
+        Row: {
+          created_at: string
+          id: string
+          inventory_qty: number
+          name: string
+          option_type: string
+          option_value: string
+          price_adjustment_eur: number | null
+          product_id: string
+          sku_suffix: string
+          sort_order: number | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          inventory_qty?: number
+          name: string
+          option_type: string
+          option_value: string
+          price_adjustment_eur?: number | null
+          product_id: string
+          sku_suffix: string
+          sort_order?: number | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          inventory_qty?: number
+          name?: string
+          option_type?: string
+          option_value?: string
+          price_adjustment_eur?: number | null
+          product_id?: string
+          sku_suffix?: string
+          sort_order?: number | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_variants_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       products: {
         Row: {
           badges: Json | null

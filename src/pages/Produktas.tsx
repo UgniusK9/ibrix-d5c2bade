@@ -11,6 +11,7 @@ import { toast } from "sonner";
 import { trackViewContentEvent } from "@/hooks/useAnalytics";
 import { SEOHead } from "@/components/seo/SEOHead";
 import { ProductReviews } from "@/components/products/ProductReviews";
+import { RelatedProducts } from "@/components/home/RelatedProducts";
 import {
   Accordion,
   AccordionContent,
@@ -348,6 +349,13 @@ export default function Produktas() {
             </AccordionItem>
           </Accordion>
         </div>
+
+        {/* Related Products */}
+        <RelatedProducts 
+          currentProductId={product.id} 
+          category={product.category}
+          categoryId={product.category_id}
+        />
       </div>
     </PageLayout>
   );

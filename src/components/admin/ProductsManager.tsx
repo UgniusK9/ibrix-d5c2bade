@@ -24,6 +24,7 @@ import {
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import type { Database } from '@/integrations/supabase/types';
+import { ProductVariantsManager } from './ProductVariantsManager';
 
 type ProductStatus = Database['public']['Enums']['product_status'];
 type StockStatus = Database['public']['Enums']['stock_status'];
@@ -800,6 +801,13 @@ export function ProductsManager() {
               )}
             </div>
           </div>
+
+          {/* Variants Manager - only show when editing existing product */}
+          {editingProduct && (
+            <div className="border-t pt-6">
+              <ProductVariantsManager productId={editingProduct.id} productSku={editingProduct.sku} />
+            </div>
+          )}
 
           <DialogFooter>
             <Button variant="outline" onClick={() => setFormOpen(false)}>

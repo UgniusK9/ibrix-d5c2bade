@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Package, Clock, CheckCircle2, XCircle, AlertCircle, ChevronRight, RefreshCw, CreditCard, DollarSign, Copy, ExternalLink, Search, Filter, Truck, Box, MessageSquare } from 'lucide-react';
+import { Package, Clock, CheckCircle2, XCircle, AlertCircle, ChevronRight, RefreshCw, CreditCard, DollarSign, Copy, ExternalLink, Search, Filter, Truck, Box, MessageSquare, Download } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
@@ -133,6 +133,59 @@ export function OrdersManager() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const exportToCSV = () => {
+    const headers = [
+      'Užsakymo nr.',
+      'Statusas',
+      'Vardas',
+      'Pavardė',
+      'El. paštas',
+      'Telefonas',
+      'Iš viso €',
+      'Depozitas €',
+      'Likutis €',
+      'Nuolaida €',
+      'Pristatymas €',
+      'Pre-order',
+      'Sukurta',
+      'Depozitas sumokėtas',
+      'Likutis sumokėtas'
+    ];
+    
+    const rows = filteredOrders.map(order => [
+      order.order_number,
+      order.status,
+      order.first_name,
+      order.last_name,
+      order.email,
+      order.phone || '',
+      order.total_eur.toFixed(2),
+      order.deposit_total_eur.toFixed(2),
+      order.balance_total_eur.toFixed(2),
+      order.discount_eur.toFixed(2),
+      order.shipping_eur.toFixed(2),
+      order.preorder_flag ? 'Taip' : 'Ne',
+      new Date(order.created_at).toISOString().split('T')[0],
+      order.paid_at ? new Date(order.paid_at).toISOString().split('T')[0] : '',
+      order.balance_paid_at ? new Date(order.balance_paid_at).toISOString().split('T')[0] : ''
+    ]);
+    
+    const csvContent = [
+      headers.join(';'),
+      ...rows.map(row => row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(';'))
+    ].join('\n');
+    
+    const BOM = '\uFEFF';
+    const blob = new Blob([BOM + csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = `uzsakymai_${new Date().toISOString().split('T')[0]}.csv`;
+    link.click();
+    URL.revokeObjectURL(link.href);
+    
+    toast.success('CSV failas eksportuotas');
   };
 
   useEffect(() => {
@@ -397,10 +450,16 @@ export function OrdersManager() {
           </Popover>
         </div>
         
-        <Button onClick={loadOrders} variant="outline" size="sm" disabled={loading}>
-          <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
-          Atnaujinti
-        </Button>
+        <div className="flex gap-2">
+          <Button onClick={exportToCSV} variant="outline" size="sm">
+            <Download className="w-4 h-4 mr-2" />
+            Eksportuoti CSV
+          </Button>
+          <Button onClick={loadOrders} variant="outline" size="sm" disabled={loading}>
+            <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
+            Atnaujinti
+          </Button>
+        </div>
       </div>
 
       {/* Orders table */}
