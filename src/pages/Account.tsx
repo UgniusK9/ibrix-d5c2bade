@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Package, User, LogOut, Loader2, Tag, Wallet, Gift } from 'lucide-react';
+import { Package, User, LogOut, Loader2, Tag, Wallet, Gift, Heart } from 'lucide-react';
 import { PageLayout } from '@/components/layout/PageLayout';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -9,6 +9,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { OrderCard } from '@/components/account/OrderCard';
 import { RefundRequestForm } from '@/components/refund/RefundRequestForm';
 import { RedeemGiftCard } from '@/components/account/RedeemGiftCard';
+import { WishlistSection } from '@/components/account/WishlistSection';
 import { toast } from 'sonner';
 
 interface RefundOrder {
@@ -310,8 +311,8 @@ export default function Account() {
           </div>
         </div>
 
-        {/* Gift Card Redeem + Wallet */}
-        <div className="grid md:grid-cols-2 gap-6 mb-8">
+        {/* Gift Card Redeem + Wallet + Wishlist */}
+        <div className="grid md:grid-cols-3 gap-6 mb-8">
           <RedeemGiftCard onSuccess={() => {
             // Reload wallet balance
             supabase
@@ -342,6 +343,8 @@ export default function Account() {
               </Link>
             </Button>
           </div>
+
+          <WishlistSection />
         </div>
 
         {/* My Deals */}

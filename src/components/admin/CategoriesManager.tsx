@@ -11,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
+import { ImageUpload } from './ImageUpload';
 
 interface Category {
   id: string;
@@ -301,24 +302,12 @@ export function CategoriesManager() {
                 />
               </div>
 
-              <div className="space-y-2">
-                <Label>Nuotraukos URL</Label>
-                <Input
-                  value={formData.image_url}
-                  onChange={(e) => setFormData({ ...formData, image_url: e.target.value })}
-                  placeholder="https://..."
-                />
-                {formData.image_url && (
-                  <div className="mt-2">
-                    <img 
-                      src={formData.image_url} 
-                      alt="Preview" 
-                      className="w-24 h-24 object-cover rounded-lg border"
-                      onError={(e) => (e.currentTarget.style.display = 'none')}
-                    />
-                  </div>
-                )}
-              </div>
+              <ImageUpload
+                value={formData.image_url}
+                onChange={(url) => setFormData({ ...formData, image_url: url })}
+                folder="categories"
+                label="Kategorijos nuotrauka"
+              />
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">

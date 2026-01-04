@@ -43,6 +43,7 @@ interface Product {
   category: ProductCategory;
   category_id: string | null;
   images: string[];
+  badges: string[];
   preorder_eta_weeks_min: number | null;
   preorder_eta_weeks_max: number | null;
   inventory_qty: number | null;
@@ -70,6 +71,7 @@ interface ProductFormData {
   category: ProductCategory;
   category_id: string;
   images: string[];
+  badges: string[];
   preorder_eta_weeks_min: string;
   preorder_eta_weeks_max: string;
   inventory_qty: string;
@@ -88,10 +90,18 @@ const emptyFormData: ProductFormData = {
   category: 'engines',
   category_id: '',
   images: [],
+  badges: [],
   preorder_eta_weeks_min: '',
   preorder_eta_weeks_max: '',
   inventory_qty: '0',
 };
+
+const BADGE_OPTIONS = [
+  { value: 'new', label: 'Naujiena', color: 'bg-green-500' },
+  { value: 'popular', label: 'Populiarus', color: 'bg-orange-500' },
+  { value: 'sale', label: 'Išpardavimas', color: 'bg-red-500' },
+  { value: 'limited', label: 'Ribotas', color: 'bg-purple-500' },
+];
 
 const formatPrice = (amount: number) => {
   return new Intl.NumberFormat('lt-LT', {
@@ -126,11 +136,13 @@ export function ProductsManager() {
 
       if (error) throw error;
       if (data?.products) {
-        // Parse images from JSON to array
+        // Parse images and badges from JSON to array
         const parsedProducts = data.products.map((p: any) => ({
           ...p,
           images: Array.isArray(p.images) ? p.images : 
-                  typeof p.images === 'string' ? JSON.parse(p.images) : []
+                  typeof p.images === 'string' ? JSON.parse(p.images) : [],
+          badges: Array.isArray(p.badges) ? p.badges : 
+                  typeof p.badges === 'string' ? JSON.parse(p.badges) : []
         }));
         setProducts(parsedProducts);
       }
@@ -183,6 +195,7 @@ export function ProductsManager() {
       category: product.category,
       category_id: product.category_id || '',
       images: product.images || [],
+      badges: product.badges || [],
       preorder_eta_weeks_min: product.preorder_eta_weeks_min?.toString() || '',
       preorder_eta_weeks_max: product.preorder_eta_weeks_max?.toString() || '',
       inventory_qty: product.inventory_qty?.toString() || '0',
@@ -267,6 +280,7 @@ export function ProductsManager() {
         category: formData.category,
         category_id: formData.category_id || null,
         images: formData.images,
+        badges: formData.badges,
         preorder_eta_weeks_min: formData.preorder_eta_weeks_min ? parseInt(formData.preorder_eta_weeks_min) : null,
         preorder_eta_weeks_max: formData.preorder_eta_weeks_max ? parseInt(formData.preorder_eta_weeks_max) : null,
         inventory_qty: parseInt(formData.inventory_qty) || 0,
@@ -703,6 +717,37 @@ export function ProductsManager() {
                 />
               </div>
             )}
+
+            {/* Badges */}
+            <div className="space-y-3">
+              <Label>Ženkliukai</Label>
+              <div className="flex flex-wrap gap-2">
+                {BADGE_OPTIONS.map((badge) => {
+                  const isSelected = formData.badges.includes(badge.value);
+                  return (
+                    <button
+                      key={badge.value}
+                      type="button"
+                      onClick={() => {
+                        setFormData(prev => ({
+                          ...prev,
+                          badges: isSelected
+                            ? prev.badges.filter(b => b !== badge.value)
+                            : [...prev.badges, badge.value]
+                        }));
+                      }}
+                      className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
+                        isSelected
+                          ? `${badge.color} text-white`
+                          : 'bg-muted text-muted-foreground hover:bg-muted/80'
+                      }`}
+                    >
+                      {badge.label}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
 
             {/* Images */}
             <div className="space-y-3">

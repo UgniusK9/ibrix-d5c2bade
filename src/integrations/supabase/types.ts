@@ -803,6 +803,7 @@ export type Database = {
       }
       products: {
         Row: {
+          badges: Json | null
           category: Database["public"]["Enums"]["product_category"]
           category_id: string | null
           created_at: string
@@ -824,6 +825,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          badges?: Json | null
           category?: Database["public"]["Enums"]["product_category"]
           category_id?: string | null
           created_at?: string
@@ -845,6 +847,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          badges?: Json | null
           category?: Database["public"]["Enums"]["product_category"]
           category_id?: string | null
           created_at?: string
@@ -1352,6 +1355,42 @@ export type Database = {
             columns: ["order_id"]
             isOneToOne: false
             referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      wishlists: {
+        Row: {
+          created_at: string
+          id: string
+          product_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          product_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          product_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "wishlists_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "wishlists_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
             referencedColumns: ["id"]
           },
         ]
