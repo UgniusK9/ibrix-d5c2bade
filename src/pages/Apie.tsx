@@ -85,8 +85,8 @@ export default function Apie() {
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
                 <Button asChild size="lg" className="bg-accent hover:bg-accent/90 text-accent-foreground">
-                  <Link to="/varikliai">
-                    Peržiūrėti variklius
+                  <Link to="/produktai/visi">
+                    Peržiūrėti konstruktorius
                     <ArrowRight className="ml-2 h-5 w-5" />
                   </Link>
                 </Button>

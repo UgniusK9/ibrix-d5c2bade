@@ -932,6 +932,7 @@ export type Database = {
           badges: Json | null
           category: Database["public"]["Enums"]["product_category"]
           category_id: string | null
+          cost_price_eur: number | null
           created_at: string
           deposit_eur: number
           description: string | null
@@ -956,6 +957,7 @@ export type Database = {
           badges?: Json | null
           category?: Database["public"]["Enums"]["product_category"]
           category_id?: string | null
+          cost_price_eur?: number | null
           created_at?: string
           deposit_eur: number
           description?: string | null
@@ -980,6 +982,7 @@ export type Database = {
           badges?: Json | null
           category?: Database["public"]["Enums"]["product_category"]
           category_id?: string | null
+          cost_price_eur?: number | null
           created_at?: string
           deposit_eur?: number
           description?: string | null

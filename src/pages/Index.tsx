@@ -10,7 +10,7 @@ import { RecommendationsCarousel } from "@/components/home/RecommendationsCarous
 import { RecentlyViewedSection } from "@/components/home/RecentlyViewedSection";
 import { HowItWorks } from "@/components/home/HowItWorks";
 import { PreOrderSection } from "@/components/home/PreOrderSection";
-import { FAQSection } from "@/components/home/FAQSection";
+
 import { SEOHead } from "@/components/seo/SEOHead";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -60,7 +60,6 @@ const Index = () => {
           <RecentlyViewedSection />
           <HowItWorks />
           <PreOrderSection />
-          <FAQSection />
         </main>
         <Footer />
       </div>

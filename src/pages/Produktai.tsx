@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect } from "react";
 import { Link, useParams, useSearchParams } from "react-router-dom";
-import { Package, Clock, ShoppingCart, Filter, Loader2, Grid3X3, LayoutGrid, ChevronRight, Eye } from "lucide-react";
+import { Package, Clock, ShoppingCart, Filter, Loader2, Grid3X3, LayoutGrid, ChevronRight, Eye, ArrowUpDown } from "lucide-react";
 import { PageLayout } from "@/components/layout/PageLayout";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -19,6 +19,7 @@ import {
 import { cn } from "@/lib/utils";
 
 type StatusFilter = "all" | "preorder" | "in_stock";
+type SortOption = "recommended" | "newest" | "price_asc" | "price_desc" | "parts" | "name_asc";
 
 interface Category {
   id: string;
@@ -28,11 +29,19 @@ interface Category {
   active: boolean;
 }
 
+// Special category slugs for virtual categories
+const SPECIAL_CATEGORIES = {
+  'dovanu-kuponai': { name: 'Dovanų kuponai', description: 'Dovanų kuponai artimiesiems' },
+  'pasiulymai': { name: 'Pasiūlymai ir išpardavimai', description: 'Specialūs pasiūlymai ir nuolaidos' },
+  'naujienos': { name: 'Naujienos', description: 'Naujausi produktai mūsų parduotuvėje' },
+};
+
 export default function Produktai() {
   const { category: categorySlug } = useParams<{ category?: string }>();
   const [searchParams, setSearchParams] = useSearchParams();
   const searchQuery = searchParams.get('search') || '';
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
+  const [sortBy, setSortBy] = useState<SortOption>("recommended");
   const [viewMode, setViewMode] = useState<'grid' | 'compact'>('grid');
   const [categories, setCategories] = useState<Category[]>([]);
   const [loadingCategories, setLoadingCategories] = useState(true);
@@ -62,11 +71,35 @@ export default function Produktai() {
     loadCategories();
   }, []);
 
+  // Handle URL params for stock filter
+  useEffect(() => {
+    if (categorySlug === 'preorder') {
+      setStatusFilter('preorder');
+    } else if (categorySlug === 'sandelyje') {
+      setStatusFilter('in_stock');
+    }
+  }, [categorySlug]);
+
   // Determine current category from URL
   const currentCategory = useMemo(() => {
     if (!categorySlug || categorySlug === 'visi') {
       return { id: 'all', name: 'Visi produktai', slug: 'visi', description: 'Peržiūrėkite visą mūsų produktų katalogą.' };
     }
+    
+    // Check special categories
+    if (categorySlug in SPECIAL_CATEGORIES) {
+      const special = SPECIAL_CATEGORIES[categorySlug as keyof typeof SPECIAL_CATEGORIES];
+      return { id: categorySlug, name: special.name, slug: categorySlug, description: special.description };
+    }
+    
+    // Check stock filter slugs
+    if (categorySlug === 'preorder') {
+      return { id: 'preorder', name: 'Pre-order', slug: 'preorder', description: 'Produktai, kuriuos galite užsisakyti iš anksto.' };
+    }
+    if (categorySlug === 'sandelyje') {
+      return { id: 'sandelyje', name: 'Sandėlyje', slug: 'sandelyje', description: 'Produktai, kurie yra mūsų sandėlyje ir paruošti siuntimui.' };
+    }
+    
     const found = categories.find(c => c.slug === categorySlug);
     if (found) {
       return { ...found, description: found.description || `${found.name} kolekcija` };
@@ -88,7 +121,8 @@ export default function Produktai() {
   // Filter products by category and search
   const filteredProducts = useMemo(() => {
     if (!products) return [];
-    return products.filter((p) => {
+    
+    let filtered = products.filter((p) => {
       // Search filter
       if (searchQuery) {
         const query = searchQuery.toLowerCase();
@@ -100,8 +134,31 @@ export default function Produktai() {
         if (!matchesSearch) return false;
       }
       
-      // Category filter
-      if (currentCategory.id !== 'all') {
+      // Special category filters
+      if (categorySlug === 'naujienos') {
+        const badges = p.badges || [];
+        return badges.includes('new');
+      }
+      if (categorySlug === 'pasiulymai') {
+        return p.sale_price_eur !== null && p.sale_price_eur !== undefined;
+      }
+      if (categorySlug === 'dovanu-kuponai') {
+        // Show gift card related products (if any tagged)
+        const tags = p.tags || [];
+        return tags.includes('dovanu-kuponas') || tags.includes('gift-card');
+      }
+      
+      // Stock status filter from URL or sidebar
+      if (categorySlug === 'preorder' || (statusFilter === 'preorder' && categorySlug !== 'sandelyje')) {
+        if (p.stock_status !== 'preorder') return false;
+      } else if (categorySlug === 'sandelyje' || (statusFilter === 'in_stock' && categorySlug !== 'preorder')) {
+        if (p.stock_status !== 'in_stock') return false;
+      } else if (statusFilter !== "all" && !['preorder', 'sandelyje'].includes(categorySlug || '')) {
+        if (p.stock_status !== statusFilter) return false;
+      }
+      
+      // Category filter (skip for special categories)
+      if (currentCategory.id !== 'all' && !['preorder', 'sandelyje', 'naujienos', 'pasiulymai', 'dovanu-kuponai'].includes(currentCategory.id)) {
         // Check category_id first (DB category)
         const matchesCategoryId = categories.find(c => c.slug === categorySlug)?.id === p.category_id;
         // Fallback to legacy enum category
@@ -115,11 +172,35 @@ export default function Produktai() {
         
         if (!matchesCategoryId && !matchesLegacy) return false;
       }
-      // Stock status filter
-      if (statusFilter !== "all" && p.stock_status !== statusFilter) return false;
+      
       return true;
     });
-  }, [products, currentCategory, categorySlug, categories, statusFilter, searchQuery]);
+    
+    // Sort products
+    return filtered.sort((a, b) => {
+      switch (sortBy) {
+        case 'newest':
+          return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+        case 'price_asc':
+          return (a.sale_price_eur || a.price_eur) - (b.sale_price_eur || b.price_eur);
+        case 'price_desc':
+          return (b.sale_price_eur || b.price_eur) - (a.sale_price_eur || a.price_eur);
+        case 'parts':
+          const aParts = (a.details_json as Record<string, unknown>)?.detailsCount as number || 0;
+          const bParts = (b.details_json as Record<string, unknown>)?.detailsCount as number || 0;
+          return bParts - aParts;
+        case 'name_asc':
+          return a.title.localeCompare(b.title, 'lt');
+        case 'recommended':
+        default:
+          // Prioritize popular badge, then new, then by creation date
+          const aPopular = (a.badges || []).includes('popular') ? 1 : 0;
+          const bPopular = (b.badges || []).includes('popular') ? 1 : 0;
+          if (aPopular !== bPopular) return bPopular - aPopular;
+          return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+      }
+    });
+  }, [products, currentCategory, categorySlug, categories, statusFilter, searchQuery, sortBy]);
 
   const handleQuickView = (product: Product, e: React.MouseEvent) => {
     e.preventDefault();
@@ -143,6 +224,13 @@ export default function Produktai() {
       counts[cat.id] = products.filter(p => p.category_id === cat.id).length;
     });
     
+    // Count special categories
+    counts['preorder'] = products.filter(p => p.stock_status === 'preorder').length;
+    counts['sandelyje'] = products.filter(p => p.stock_status === 'in_stock').length;
+    counts['naujienos'] = products.filter(p => (p.badges || []).includes('new')).length;
+    counts['pasiulymai'] = products.filter(p => p.sale_price_eur !== null && p.sale_price_eur !== undefined).length;
+    counts['dovanu-kuponai'] = products.filter(p => (p.tags || []).includes('dovanu-kuponas') || (p.tags || []).includes('gift-card')).length;
+    
     // Also count legacy categories
     const legacyEnums = ['engines', 'cars', 'flowers', 'other'];
     legacyEnums.forEach(e => {
@@ -154,11 +242,13 @@ export default function Produktai() {
     return counts;
   }, [products, categories]);
 
-  // Build navigation items - combine DB categories with "all"
+  // Build navigation items - combine DB categories with special ones
   const navCategories = useMemo(() => {
     const items: { id: string; name: string; slug: string; count: number }[] = [
       { id: 'all', name: 'Visi produktai', slug: 'visi', count: categoryCounts['all'] || 0 }
     ];
+    
+    // Add DB categories
     categories.forEach(cat => {
       items.push({
         id: cat.id,
@@ -167,6 +257,12 @@ export default function Produktai() {
         count: categoryCounts[cat.id] || 0
       });
     });
+    
+    // Add special categories
+    items.push({ id: 'dovanu-kuponai', name: 'Dovanų kuponai', slug: 'dovanu-kuponai', count: categoryCounts['dovanu-kuponai'] || 0 });
+    items.push({ id: 'pasiulymai', name: 'Pasiūlymai ir išpardavimai', slug: 'pasiulymai', count: categoryCounts['pasiulymai'] || 0 });
+    items.push({ id: 'naujienos', name: 'Naujienos', slug: 'naujienos', count: categoryCounts['naujienos'] || 0 });
+    
     return items;
   }, [categories, categoryCounts]);
 
@@ -242,22 +338,27 @@ export default function Produktai() {
                 <h3 className="font-heading font-semibold mb-4">Prieinamumas</h3>
                 <div className="space-y-2">
                   {[
-                    { value: 'all', label: 'Visi' },
-                    { value: 'in_stock', label: 'Sandėlyje' },
-                    { value: 'preorder', label: 'Pre-order' },
+                    { value: 'all', label: 'Visi', slug: 'visi' },
+                    { value: 'in_stock', label: 'Sandėlyje', slug: 'sandelyje' },
+                    { value: 'preorder', label: 'Pre-order', slug: 'preorder' },
                   ].map((option) => (
-                    <button
+                    <Link
                       key={option.value}
-                      onClick={() => setStatusFilter(option.value as StatusFilter)}
+                      to={`/produktai/${option.slug}`}
                       className={cn(
-                        "w-full text-left px-3 py-2 rounded-lg text-sm transition-colors",
-                        statusFilter === option.value
+                        "w-full text-left px-3 py-2 rounded-lg text-sm transition-colors block",
+                        (categorySlug === option.slug || (option.value === 'all' && categorySlug === 'visi'))
                           ? "bg-primary/10 text-primary font-medium"
                           : "hover:bg-muted text-muted-foreground hover:text-foreground"
                       )}
                     >
                       {option.label}
-                    </button>
+                      {categoryCounts[option.value === 'all' ? 'all' : option.value === 'in_stock' ? 'sandelyje' : 'preorder'] > 0 && (
+                        <Badge variant="secondary" className="ml-2 text-xs">
+                          {categoryCounts[option.value === 'all' ? 'all' : option.value === 'in_stock' ? 'sandelyje' : 'preorder']}
+                        </Badge>
+                      )}
+                    </Link>
                   ))}
                 </div>
               </div>
@@ -289,6 +390,22 @@ export default function Produktai() {
                 </div>
 
                 <div className="flex items-center gap-2">
+                  {/* Sort dropdown */}
+                  <Select value={sortBy} onValueChange={(v) => setSortBy(v as SortOption)}>
+                    <SelectTrigger className="w-[180px]">
+                      <ArrowUpDown className="w-4 h-4 mr-2" />
+                      <SelectValue placeholder="Rūšiuoti" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="recommended">Perkamiausi</SelectItem>
+                      <SelectItem value="newest">Naujausi</SelectItem>
+                      <SelectItem value="price_asc">Kaina: nuo žemiausios</SelectItem>
+                      <SelectItem value="price_desc">Kaina: nuo aukščiausios</SelectItem>
+                      <SelectItem value="parts">Dalių skaičius</SelectItem>
+                      <SelectItem value="name_asc">A-Z</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  
                   <Button
                     variant={viewMode === 'grid' ? 'default' : 'ghost'}
                     size="icon"
@@ -392,12 +509,31 @@ export default function Produktai() {
                             </div>
                           )}
                           <div className="flex items-center justify-between">
-                            <p className={cn(
-                              "font-heading font-bold text-accent",
-                              viewMode === 'grid' ? "text-lg" : "text-sm"
-                            )}>
-                              {formatPrice(product.price_eur)}
-                            </p>
+                            <div>
+                              {product.sale_price_eur ? (
+                                <div className="flex items-center gap-2">
+                                  <p className={cn(
+                                    "font-heading font-bold text-accent",
+                                    viewMode === 'grid' ? "text-lg" : "text-sm"
+                                  )}>
+                                    {formatPrice(product.sale_price_eur)}
+                                  </p>
+                                  <p className={cn(
+                                    "text-muted-foreground line-through",
+                                    viewMode === 'grid' ? "text-sm" : "text-xs"
+                                  )}>
+                                    {formatPrice(product.price_eur)}
+                                  </p>
+                                </div>
+                              ) : (
+                                <p className={cn(
+                                  "font-heading font-bold text-accent",
+                                  viewMode === 'grid' ? "text-lg" : "text-sm"
+                                )}>
+                                  {formatPrice(product.price_eur)}
+                                </p>
+                              )}
+                            </div>
                             {viewMode === 'grid' && (
                               <Button 
                                 size="sm" 
