@@ -20,6 +20,8 @@ interface CartStore {
   items: CartItem[];
   isLoading: boolean;
   isOpen: boolean;
+  lastAddedItem: CartItem | null;
+  isModalOpen: boolean;
   
   // Actions
   addItem: (product: Product, quantity?: number) => void;
@@ -28,6 +30,7 @@ interface CartStore {
   clearCart: () => void;
   setLoading: (loading: boolean) => void;
   setOpen: (open: boolean) => void;
+  setModalOpen: (open: boolean) => void;
   getTotalItems: () => number;
   getTotalPrice: () => number;
   getTotalDeposit: () => number;
@@ -58,34 +61,42 @@ export const useCartStore = create<CartStore>()(
       items: [],
       isLoading: false,
       isOpen: false,
+      lastAddedItem: null,
+      isModalOpen: false,
 
       addItem: (product, quantity = 1) => {
         const { items } = get();
         
         const existingItem = items.find(i => i.productId === product.id);
         
+        const newItem: CartItem = {
+          productId: product.id,
+          productSlug: product.slug,
+          title: product.title,
+          image: getProductImage(product),
+          price: Math.round(product.price_eur * 100),
+          deposit: Math.round(product.deposit_eur * 100),
+          currency: 'EUR',
+          quantity,
+          status: product.stock_status === 'in_stock' ? 'in_stock' : 'preorder',
+          eta: getEtaString(product),
+        };
+        
         if (existingItem) {
+          const updatedItem = { ...existingItem, quantity: existingItem.quantity + quantity };
           set({
             items: items.map(i =>
-              i.productId === product.id
-                ? { ...i, quantity: i.quantity + quantity }
-                : i
-            )
+              i.productId === product.id ? updatedItem : i
+            ),
+            lastAddedItem: updatedItem,
+            isModalOpen: true,
           });
         } else {
-          const newItem: CartItem = {
-            productId: product.id, // UUID from Supabase
-            productSlug: product.slug,
-            title: product.title,
-            image: getProductImage(product),
-            price: Math.round(product.price_eur * 100), // Convert to cents
-            deposit: Math.round(product.deposit_eur * 100), // Deposit from DB in cents
-            currency: 'EUR',
-            quantity,
-            status: product.stock_status === 'in_stock' ? 'in_stock' : 'preorder',
-            eta: getEtaString(product),
-          };
-          set({ items: [...items, newItem] });
+          set({ 
+            items: [...items, newItem],
+            lastAddedItem: newItem,
+            isModalOpen: true,
+          });
         }
         
         // Track AddToCart event
@@ -96,9 +107,6 @@ export const useCartStore = create<CartStore>()(
           currency: 'EUR',
           quantity,
         });
-        
-        // Open cart drawer when item is added
-        set({ isOpen: true });
       },
 
       updateQuantity: (productId, quantity) => {
@@ -126,6 +134,7 @@ export const useCartStore = create<CartStore>()(
 
       setLoading: (isLoading) => set({ isLoading }),
       setOpen: (isOpen) => set({ isOpen }),
+      setModalOpen: (isModalOpen) => set({ isModalOpen }),
 
       getTotalItems: () => {
         return get().items.reduce((sum, item) => sum + (item?.quantity || 0), 0);
