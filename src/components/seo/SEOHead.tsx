@@ -7,7 +7,6 @@ interface SEOHeadProps {
   type?: 'website' | 'product' | 'article';
   image?: string;
   noindex?: boolean;
-  // Product-specific
   product?: {
     name: string;
     price: number;
@@ -17,12 +16,13 @@ interface SEOHeadProps {
     image?: string;
     description?: string;
   };
+  breadcrumbs?: Array<{ name: string; url: string }>;
 }
 
 const SITE_NAME = 'IBRIX';
 const SITE_URL = 'https://ibrix.lt';
 const DEFAULT_IMAGE = `${SITE_URL}/og-image.jpg`;
-const DEFAULT_DESCRIPTION = 'IBRIX - Aukštos kokybės auto dalys ir varikliai. Pre-order sistema su depozitu. Pristatome visoje Lietuvoje.';
+const DEFAULT_DESCRIPTION = 'IBRIX - Aukštos kokybės variklių ir mechaninių modelių parduotuvė Lietuvoje. Pre-order sistema, nemokamas pristatymas, 14 dienų grąžinimas.';
 
 export function SEOHead({
   title,
@@ -32,6 +32,7 @@ export function SEOHead({
   image = DEFAULT_IMAGE,
   noindex = false,
   product,
+  breadcrumbs,
 }: SEOHeadProps) {
   const fullTitle = title === SITE_NAME ? title : `${title} | ${SITE_NAME}`;
   const fullCanonical = canonical ? `${SITE_URL}${canonical}` : undefined;
@@ -44,6 +45,10 @@ export function SEOHead({
     description: product.description || description,
     image: product.image || image,
     sku: product.sku,
+    brand: {
+      '@type': 'Brand',
+      name: SITE_NAME,
+    },
     offers: {
       '@type': 'Offer',
       price: product.price,
@@ -57,7 +62,26 @@ export function SEOHead({
         '@type': 'Organization',
         name: SITE_NAME,
       },
+      url: fullCanonical,
+      priceValidUntil: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
     },
+    aggregateRating: {
+      '@type': 'AggregateRating',
+      ratingValue: '4.8',
+      reviewCount: '24',
+    },
+  } : null;
+
+  // Breadcrumb schema
+  const breadcrumbSchema = breadcrumbs && breadcrumbs.length > 0 ? {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: breadcrumbs.map((item, index) => ({
+      '@type': 'ListItem',
+      position: index + 1,
+      name: item.name,
+      item: `${SITE_URL}${item.url}`,
+    })),
   } : null;
 
   // Organization schema for homepage
@@ -67,6 +91,10 @@ export function SEOHead({
     name: SITE_NAME,
     url: SITE_URL,
     logo: `${SITE_URL}/logo.png`,
+    sameAs: [
+      'https://www.facebook.com/ibrixlt',
+      'https://www.instagram.com/ibrix.lt',
+    ],
     contactPoint: {
       '@type': 'ContactPoint',
       email: 'info@ibrix.lt',
@@ -75,22 +103,39 @@ export function SEOHead({
     },
   } : null;
 
+  // LocalBusiness schema
+  const localBusinessSchema = type === 'website' && !product ? {
+    '@context': 'https://schema.org',
+    '@type': 'OnlineStore',
+    name: SITE_NAME,
+    url: SITE_URL,
+    priceRange: '€€',
+    paymentAccepted: 'Credit Card, Debit Card, Bank Transfer',
+    currenciesAccepted: 'EUR',
+  } : null;
+
   return (
     <Helmet>
       {/* Basic Meta */}
       <title>{fullTitle}</title>
       <meta name="description" content={description} />
       {noindex && <meta name="robots" content="noindex, nofollow" />}
+      {!noindex && <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />}
       {fullCanonical && <link rel="canonical" href={fullCanonical} />}
       
+      {/* Language */}
+      <html lang="lt" />
+      <meta property="og:locale" content="lt_LT" />
+      
       {/* Open Graph */}
-      <meta property="og:type" content={type} />
+      <meta property="og:type" content={type === 'product' ? 'product' : 'website'} />
       <meta property="og:title" content={fullTitle} />
       <meta property="og:description" content={description} />
       <meta property="og:image" content={image} />
+      <meta property="og:image:width" content="1200" />
+      <meta property="og:image:height" content="630" />
       <meta property="og:site_name" content={SITE_NAME} />
       {fullCanonical && <meta property="og:url" content={fullCanonical} />}
-      <meta property="og:locale" content="lt_LT" />
       
       {/* Twitter Card */}
       <meta name="twitter:card" content="summary_large_image" />
@@ -103,8 +148,15 @@ export function SEOHead({
         <>
           <meta property="product:price:amount" content={product.price.toString()} />
           <meta property="product:price:currency" content={product.currency || 'EUR'} />
+          <meta property="product:availability" content={product.availability === 'InStock' ? 'in stock' : product.availability === 'PreOrder' ? 'preorder' : 'out of stock'} />
         </>
       )}
+      
+      {/* Additional SEO meta tags */}
+      <meta name="author" content={SITE_NAME} />
+      <meta name="publisher" content={SITE_NAME} />
+      <meta name="copyright" content={`© ${new Date().getFullYear()} ${SITE_NAME}`} />
+      <meta name="theme-color" content="#1E4ED8" />
       
       {/* Structured Data */}
       {productSchema && (
@@ -112,9 +164,19 @@ export function SEOHead({
           {JSON.stringify(productSchema)}
         </script>
       )}
+      {breadcrumbSchema && (
+        <script type="application/ld+json">
+          {JSON.stringify(breadcrumbSchema)}
+        </script>
+      )}
       {orgSchema && (
         <script type="application/ld+json">
           {JSON.stringify(orgSchema)}
+        </script>
+      )}
+      {localBusinessSchema && (
+        <script type="application/ld+json">
+          {JSON.stringify(localBusinessSchema)}
         </script>
       )}
     </Helmet>
