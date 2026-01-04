@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 
 const STORAGE_KEY = 'recently_viewed_products';
 const MAX_ITEMS = 10;
@@ -56,8 +56,8 @@ export function useRecentlyViewed() {
     localStorage.removeItem(STORAGE_KEY);
   }, []);
 
-  // Get product IDs (most recent first)
-  const productIds = recentlyViewed.map((item) => item.productId);
+  // Get product IDs (most recent first) - memoized to prevent infinite loops
+  const productIds = useMemo(() => recentlyViewed.map((item) => item.productId), [recentlyViewed]);
 
   return {
     recentlyViewed,

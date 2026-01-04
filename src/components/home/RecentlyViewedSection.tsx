@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { Link } from "react-router-dom";
 import { Clock, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -11,8 +11,14 @@ export function RecentlyViewedSection() {
   const { productIds } = useRecentlyViewed();
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
+  const prevIdsRef = useRef<string>('');
 
   useEffect(() => {
+    // Stringify for stable comparison
+    const idsKey = productIds.join(',');
+    if (idsKey === prevIdsRef.current) return;
+    prevIdsRef.current = idsKey;
+
     const fetchProducts = async () => {
       if (productIds.length === 0) {
         setProducts([]);

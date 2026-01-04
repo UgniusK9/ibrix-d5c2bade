@@ -29,7 +29,7 @@ export function HowItWorks() {
           <span className="text-xs font-semibold text-accent uppercase tracking-widest mb-2 block">
             PROCESAS
           </span>
-          <h2 className="font-heading text-3xl md:text-4xl font-bold">
+          <h2 className="font-heading text-3xl md:text-4xl font-bold whitespace-nowrap">
             Kaip veikia pre-order
           </h2>
         </div>
