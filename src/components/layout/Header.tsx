@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { Menu, ShoppingCart, Truck, Clock, Headphones, ArrowRight, User, LogOut, Search, ChevronDown, Info, FileText, Shield, Cookie, Undo2 } from "lucide-react";
+import { Menu, ShoppingCart, Truck, Clock, Headphones, ArrowRight, User, LogOut, Search, ChevronDown, Info, FileText, Shield, Cookie, Undo2, Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
@@ -28,6 +28,7 @@ const infoLinks = [
   { name: "Pristatymas", href: "/pristatymas", icon: Truck },
   { name: "Grąžinimai", href: "/grazinimai", icon: Undo2 },
   { name: "Garantija", href: "/garantija", icon: Shield },
+  { name: "Atsiliepimai", href: "/produktai/visi#atsiliepimai", icon: Star },
   { name: "Taisyklės", href: "/taisykles", icon: FileText },
   { name: "Privatumo politika", href: "/privatumo-politika", icon: FileText },
   { name: "Slapukų politika", href: "/slapukai-politika", icon: Cookie },
