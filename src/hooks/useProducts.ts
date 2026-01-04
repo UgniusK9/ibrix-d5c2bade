@@ -13,6 +13,7 @@ export interface Product {
   stock_status: 'preorder' | 'in_stock' | 'out_of_stock';
   status: 'active' | 'inactive';
   category: string;
+  category_id: string | null;
   images: string[];
   inventory_qty: number | null;
   preorder_eta_weeks_min: number | null;
@@ -49,6 +50,7 @@ function transformProduct(dbProduct: Record<string, unknown>): Product {
     stock_status: dbProduct.stock_status as 'preorder' | 'in_stock' | 'out_of_stock',
     status: dbProduct.status as 'active' | 'inactive',
     category: dbProduct.category as string,
+    category_id: dbProduct.category_id as string | null,
     images: imageArray,
     inventory_qty: dbProduct.inventory_qty as number | null,
     preorder_eta_weeks_min: dbProduct.preorder_eta_weeks_min as number | null,

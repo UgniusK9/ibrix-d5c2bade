@@ -2,7 +2,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { HelmetProvider } from "react-helmet-async";
 import { CookieConsentProvider } from "@/components/cookies/CookieConsentProvider";
 import { PageViewTracker } from "@/components/analytics/PageViewTracker";
@@ -69,9 +69,10 @@ const App = () => (
               <Routes>
                 {/* Public routes */}
                 <Route path="/" element={<Index />} />
-                <Route path="/varikliai" element={<Varikliai />} />
+                {/* Redirect legacy /varikliai to new unified URL structure */}
+                <Route path="/varikliai" element={<Navigate to="/produktai/varikliai" replace />} />
                 <Route path="/produktai/:category" element={<Produktai />} />
-                <Route path="/produktai" element={<Produktai />} />
+                <Route path="/produktai" element={<Navigate to="/produktai/visi" replace />} />
                 <Route path="/pre-order" element={<PreOrder />} />
                 <Route path="/pagalba" element={<Pagalba />} />
                 <Route path="/apie" element={<Apie />} />

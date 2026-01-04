@@ -41,12 +41,20 @@ interface Product {
   stock_status: StockStatus;
   status: ProductStatus;
   category: ProductCategory;
+  category_id: string | null;
   images: string[];
   preorder_eta_weeks_min: number | null;
   preorder_eta_weeks_max: number | null;
   inventory_qty: number | null;
   created_at: string;
   updated_at: string;
+}
+
+interface Category {
+  id: string;
+  name: string;
+  slug: string;
+  active: boolean;
 }
 
 interface ProductFormData {
@@ -60,6 +68,7 @@ interface ProductFormData {
   stock_status: StockStatus;
   status: ProductStatus;
   category: ProductCategory;
+  category_id: string;
   images: string[];
   preorder_eta_weeks_min: string;
   preorder_eta_weeks_max: string;
@@ -77,6 +86,7 @@ const emptyFormData: ProductFormData = {
   stock_status: 'preorder',
   status: 'active',
   category: 'engines',
+  category_id: '',
   images: [],
   preorder_eta_weeks_min: '',
   preorder_eta_weeks_max: '',
@@ -92,6 +102,7 @@ const formatPrice = (amount: number) => {
 
 export function ProductsManager() {
   const [products, setProducts] = useState<Product[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<ProductStatus | 'all'>('all');
@@ -131,8 +142,24 @@ export function ProductsManager() {
     }
   };
 
+  const loadCategories = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('categories')
+        .select('id, name, slug, active')
+        .eq('active', true)
+        .order('sort_order');
+      
+      if (error) throw error;
+      setCategories(data || []);
+    } catch (e: any) {
+      console.error('Failed to load categories:', e);
+    }
+  };
+
   useEffect(() => {
     loadProducts();
+    loadCategories();
   }, []);
 
   const openCreateForm = () => {
@@ -154,6 +181,7 @@ export function ProductsManager() {
       stock_status: product.stock_status,
       status: product.status,
       category: product.category,
+      category_id: product.category_id || '',
       images: product.images || [],
       preorder_eta_weeks_min: product.preorder_eta_weeks_min?.toString() || '',
       preorder_eta_weeks_max: product.preorder_eta_weeks_max?.toString() || '',
@@ -237,6 +265,7 @@ export function ProductsManager() {
         stock_status: formData.stock_status,
         status: formData.status,
         category: formData.category,
+        category_id: formData.category_id || null,
         images: formData.images,
         preorder_eta_weeks_min: formData.preorder_eta_weeks_min ? parseInt(formData.preorder_eta_weeks_min) : null,
         preorder_eta_weeks_max: formData.preorder_eta_weeks_max ? parseInt(formData.preorder_eta_weeks_max) : null,
@@ -554,7 +583,7 @@ export function ProductsManager() {
             </div>
 
             {/* Status and Category */}
-            <div className="grid grid-cols-3 gap-4">
+            <div className="grid grid-cols-2 gap-4">
               <div>
                 <Label>Būsena</Label>
                 <Select 
@@ -586,8 +615,32 @@ export function ProductsManager() {
                   </SelectContent>
                 </Select>
               </div>
+            </div>
+
+            {/* Category (from DB) */}
+            <div className="grid grid-cols-2 gap-4">
               <div>
-                <Label>Kategorija</Label>
+                <Label>Kategorija (DB)</Label>
+                <Select 
+                  value={formData.category_id} 
+                  onValueChange={(v) => setFormData(prev => ({ ...prev, category_id: v }))}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Pasirinkite kategoriją" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="">Nepasirinkta</SelectItem>
+                    {categories.map((cat) => (
+                      <SelectItem key={cat.id} value={cat.id}>{cat.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Kategorija iš admin kategorijų sąrašo
+                </p>
+              </div>
+              <div>
+                <Label>Kategorija (enum)</Label>
                 <Select 
                   value={formData.category} 
                   onValueChange={(v) => setFormData(prev => ({ ...prev, category: v as ProductCategory }))}
@@ -602,6 +655,9 @@ export function ProductsManager() {
                     <SelectItem value="other">Kita</SelectItem>
                   </SelectContent>
                 </Select>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Legacy kategorija (backup)
+                </p>
               </div>
             </div>
 

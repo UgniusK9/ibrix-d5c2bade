@@ -1,5 +1,10 @@
+import { useState } from "react";
 import { Link } from "react-router-dom";
-import { Mail, MapPin, Clock, Truck, RotateCcw, Shield, CreditCard, Cookie } from "lucide-react";
+import { Mail, MapPin, Clock, Truck, RotateCcw, Shield, CreditCard, Cookie, ArrowRight, Loader2, Check } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 import logo from "@/assets/logo.png";
 import { useCookieConsentStore } from "@/stores/cookieConsentStore";
 
@@ -12,7 +17,7 @@ const footerTrustBadges = [
 
 const footerLinks = {
   narsyti: [
-    { name: "Varikliai", href: "/varikliai" },
+    { name: "Produktai", href: "/produktai/visi" },
     { name: "Kaip veikia Pre-Order", href: "/pre-order" },
     { name: "Apie mus", href: "/apie" },
     { name: "Kontaktai", href: "/kontaktai" },
@@ -33,9 +38,91 @@ const shippingPartners = ["Omniva", "LP EXPRESS", "DPD"];
 
 export function Footer() {
   const { openModal } = useCookieConsentStore();
+  const [email, setEmail] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [subscribed, setSubscribed] = useState(false);
+
+  const handleSubscribe = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!email.trim()) return;
+    
+    setLoading(true);
+    try {
+      const { error } = await supabase
+        .from('newsletter_subscribers')
+        .upsert(
+          { email: email.trim().toLowerCase(), status: 'active', subscribed_at: new Date().toISOString() },
+          { onConflict: 'email' }
+        );
+      
+      if (error) throw error;
+      setSubscribed(true);
+      setEmail("");
+      toast.success("Sėkmingai užsiprenumeravote!");
+    } catch (err: any) {
+      console.error('Newsletter subscribe error:', err);
+      toast.error("Nepavyko užsiprenumeruoti");
+    } finally {
+      setLoading(false);
+    }
+  };
   
   return (
     <footer className="bg-footer text-footer-foreground">
+      {/* Newsletter Section */}
+      <div className="bg-primary">
+        <div className="container py-10 md:py-14">
+          <div className="grid md:grid-cols-2 gap-8 items-center">
+            <div>
+              <h3 className="font-heading text-xl md:text-2xl font-bold text-primary-foreground mb-2">
+                Prisijunk prie IBRIX bendruomenės
+              </h3>
+              <p className="text-primary-foreground/70 text-sm">
+                Gauk naujienas apie naujus produktus, akcijas ir išskirtinius pasiūlymus.
+              </p>
+            </div>
+            <div>
+              {subscribed ? (
+                <div className="flex items-center gap-3 bg-primary-foreground/10 rounded-xl px-5 py-4">
+                  <div className="w-10 h-10 rounded-full bg-success/20 flex items-center justify-center">
+                    <Check className="w-5 h-5 text-success" />
+                  </div>
+                  <div>
+                    <p className="font-medium text-primary-foreground">Ačiū!</p>
+                    <p className="text-sm text-primary-foreground/70">Sėkmingai užsiprenumeravote naujienlaiškį.</p>
+                  </div>
+                </div>
+              ) : (
+                <form onSubmit={handleSubscribe} className="flex gap-2">
+                  <Input
+                    type="email"
+                    placeholder="El. pašto adresas"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    required
+                    className="flex-1 bg-primary-foreground/10 border-primary-foreground/20 text-primary-foreground placeholder:text-primary-foreground/50 focus:border-primary-foreground/40"
+                  />
+                  <Button 
+                    type="submit" 
+                    disabled={loading}
+                    className="bg-accent hover:bg-accent/90 text-accent-foreground font-semibold px-6"
+                  >
+                    {loading ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <>
+                        Prenumeruoti
+                        <ArrowRight className="w-4 h-4 ml-2" />
+                      </>
+                    )}
+                  </Button>
+                </form>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+
       {/* Trust badges bar */}
       <div className="border-b border-footer-foreground/10">
         <div className="container py-8">
