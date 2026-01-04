@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Package, Settings, List, BarChart3, Tag, RefreshCw, ShoppingBag, Users, RotateCcw } from "lucide-react";
+import { Package, Settings, List, BarChart3, Tag, RefreshCw, ShoppingBag, Users, RotateCcw, Layers } from "lucide-react";
 import { PageLayout } from "@/components/layout/PageLayout";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -9,6 +9,7 @@ import { OrdersManager } from "@/components/admin/OrdersManager";
 import { OffersManager } from "@/components/admin/OffersManager";
 import { AnalyticsDashboard } from "@/components/admin/AnalyticsDashboard";
 import { RefundsManager } from "@/components/admin/RefundsManager";
+import { BundlesManager } from "@/components/admin/BundlesManager";
 import { supabase } from "@/integrations/supabase/client";
 import { Link } from "react-router-dom";
 
@@ -98,6 +99,9 @@ export default function Admin() {
 
           <TabsContent value="offers">
             <OffersManager />
+            <div className="mt-8">
+              <BundlesManager />
+            </div>
           </TabsContent>
 
           <TabsContent value="analytics">

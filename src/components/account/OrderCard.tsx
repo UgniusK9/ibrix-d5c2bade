@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { 
   ChevronDown, Package, CreditCard, Truck, MapPin, Calendar, 
   ExternalLink, Clock, CheckCircle2, Copy, Box, AlertCircle,
-  RotateCcw
+  RotateCcw, Wallet
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -51,6 +51,13 @@ interface OrderItem {
   sku_snapshot?: string;
 }
 
+interface BalanceRequest {
+  id: string;
+  payment_url: string | null;
+  message: string | null;
+  sent_at: string;
+}
+
 interface OrderCardProps {
   order: {
     id: string;
@@ -72,6 +79,7 @@ interface OrderCardProps {
   shipment?: OrderShipment;
   shipmentEvents?: ShipmentEvent[];
   items?: OrderItem[];
+  balanceRequest?: BalanceRequest | null;
   onPayBalance?: () => void;
   onRequestRefund?: () => void;
   isLoading?: boolean;
@@ -150,6 +158,7 @@ export function OrderCard({
   shipment, 
   shipmentEvents, 
   items, 
+  balanceRequest,
   onPayBalance,
   onRequestRefund,
   isLoading 
@@ -162,6 +171,8 @@ export function OrderCard({
   const balancePayment = payments?.find(p => p.type === 'balance' && p.status === 'succeeded');
   const totalPaid = (depositPayment?.amount_eur || 0) + (balancePayment?.amount_eur || 0);
   const currentStep = getStepIndex(order.status);
+  const needsBalancePayment = order.status === 'awaiting_balance' || 
+    (order.status === 'deposit_paid' && order.balance_total_eur > 0 && !balancePayment);
 
   // Get shipping address display
   const getShippingDisplay = () => {
@@ -169,10 +180,10 @@ export function OrderCard({
     if (!addr) return null;
     
     if (addr.lockerName) {
-      return { type: 'locker', name: addr.lockerName as string, address: addr.lockerAddress as string };
+      return { type: 'locker', name: addr.lockerName as string, address: addr.lockerAddress as string, city: addr.lockerCity as string };
     }
     if (addr.street) {
-      return { type: 'courier', name: 'Kurjeris', address: `${addr.street}, ${addr.city} ${addr.postalCode}` };
+      return { type: 'courier', name: 'Kurjeris į namus', address: `${addr.street}, ${addr.city} ${addr.postalCode}` };
     }
     return null;
   };
@@ -186,8 +197,19 @@ export function OrderCard({
     if (order.preorder_flag && order.preorder_eta_weeks_min) {
       return `${order.preorder_eta_weeks_min}–${order.preorder_eta_weeks_max || order.preorder_eta_weeks_min} savaitės`;
     }
+    if (!order.preorder_flag) return '1–3 darbo dienos';
     return null;
   };
+
+  // Get last event with coordinates for map
+  const getLastEventWithLocation = () => {
+    if (!shipmentEvents || shipmentEvents.length === 0) return null;
+    const eventWithCoords = shipmentEvents.find(e => e.lat && e.lng);
+    if (eventWithCoords) return eventWithCoords;
+    return shipmentEvents[0]; // Return latest even without coords
+  };
+
+  const lastEvent = getLastEventWithLocation();
 
   if (isLoading) {
     return (
@@ -235,6 +257,34 @@ export function OrderCard({
                 )} />
               </div>
             </div>
+
+            {/* Balance Payment CTA - Prominent when needed */}
+            {needsBalancePayment && balanceRequest?.payment_url && (
+              <div className="mb-4 p-4 bg-gradient-to-r from-accent/10 to-accent/5 border border-accent/30 rounded-xl">
+                <div className="flex items-center justify-between gap-4">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-full bg-accent/20 flex items-center justify-center">
+                      <Wallet className="w-5 h-5 text-accent" />
+                    </div>
+                    <div>
+                      <p className="font-semibold text-accent">Laukiamas likučio apmokėjimas</p>
+                      <p className="text-sm text-muted-foreground">
+                        Suma: {formatPrice(order.balance_total_eur)}
+                      </p>
+                    </div>
+                  </div>
+                  <Button 
+                    className="bg-accent hover:bg-accent/90 text-accent-foreground"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      window.location.href = balanceRequest.payment_url!;
+                    }}
+                  >
+                    Apmokėti likutį
+                  </Button>
+                </div>
+              </div>
+            )}
 
             {/* Progress indicator */}
             {!['cancelled', 'refunded'].includes(order.status) && (
@@ -327,21 +377,21 @@ export function OrderCard({
                   </div>
                   <div className="flex-1">
                     <div className="flex items-center justify-between">
-                      <p className="font-medium">
-                        {order.payment_plan === 'full_payment' ? 'Pilnas mokėjimas' : 'Depozitas'}
-                      </p>
+                      <div>
+                        <p className="font-medium">
+                          {order.payment_plan === 'full_payment' ? 'Pilnas mokėjimas' : 'Depozitas'}
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          Mokėjimo būdas: Kortelė / Stripe
+                        </p>
+                      </div>
                       <span className="font-bold">{formatPrice(order.deposit_total_eur)}</span>
                     </div>
-                    <p className="text-sm text-muted-foreground">
+                    <p className="text-sm text-muted-foreground mt-1">
                       {depositPayment 
                         ? `Apmokėta ${formatDate(depositPayment.created_at)}` 
                         : 'Laukiama apmokėjimo'}
                     </p>
-                    {depositPayment?.stripe_payment_intent_id && (
-                      <p className="text-xs text-muted-foreground font-mono mt-1">
-                        Kortelė / Stripe
-                      </p>
-                    )}
                   </div>
                 </div>
 
@@ -361,10 +411,17 @@ export function OrderCard({
                     </div>
                     <div className="flex-1">
                       <div className="flex items-center justify-between">
-                        <p className="font-medium">Likutis</p>
+                        <div>
+                          <p className="font-medium">Likutis</p>
+                          {balancePayment && (
+                            <p className="text-xs text-muted-foreground">
+                              Mokėjimo būdas: Kortelė / Stripe
+                            </p>
+                          )}
+                        </div>
                         <span className="font-bold">{formatPrice(order.balance_total_eur)}</span>
                       </div>
-                      <p className="text-sm text-muted-foreground">
+                      <p className="text-sm text-muted-foreground mt-1">
                         {balancePayment 
                           ? `Apmokėta ${formatDate(balancePayment.created_at)}` 
                           : 'Laukiama apmokėjimo'}
@@ -376,7 +433,7 @@ export function OrderCard({
             </div>
 
             {/* Shipping info */}
-            {shipment && (
+            {(shipment || shippingInfo) && (
               <div className="space-y-4">
                 <h4 className="font-heading font-semibold flex items-center gap-2">
                   <Truck className="w-4 h-4 text-primary" />
@@ -386,12 +443,12 @@ export function OrderCard({
                   <div className="p-4 bg-card rounded-xl border border-border">
                     <span className="text-xs text-muted-foreground uppercase tracking-wide">Kurjeris</span>
                     <p className="font-semibold mt-1">
-                      {shipment.carrier_code ? carrierNames[shipment.carrier_code] : 'Nenurodyta'}
+                      {shipment?.carrier_code ? carrierNames[shipment.carrier_code] : (shippingInfo?.type === 'locker' ? 'Paštomatas' : 'Kurjeris')}
                     </p>
                   </div>
                   <div className="p-4 bg-card rounded-xl border border-border">
                     <span className="text-xs text-muted-foreground uppercase tracking-wide">Siuntos kodas</span>
-                    {shipment.tracking_number ? (
+                    {shipment?.tracking_number ? (
                       <div className="flex items-center gap-2 mt-1">
                         <p className="font-mono font-semibold">{shipment.tracking_number}</p>
                         <Button 
@@ -405,12 +462,36 @@ export function OrderCard({
                         >
                           <Copy className="w-3.5 h-3.5" />
                         </Button>
+                        {shipment.carrier_code && shipment.carrier_code !== 'other' && (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-7 w-7"
+                            asChild
+                          >
+                            <a 
+                              href={carrierTrackingUrls[shipment.carrier_code](shipment.tracking_number)} 
+                              target="_blank" 
+                              rel="noopener noreferrer"
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              <ExternalLink className="w-3.5 h-3.5" />
+                            </a>
+                          </Button>
+                        )}
                       </div>
                     ) : (
                       <p className="text-muted-foreground mt-1">Dar nėra</p>
                     )}
                   </div>
-                  {shipment.shipped_at && (
+                  {shippingInfo && (
+                    <div className="p-4 bg-card rounded-xl border border-border sm:col-span-2">
+                      <span className="text-xs text-muted-foreground uppercase tracking-wide">Pristatymo adresas</span>
+                      <p className="font-semibold mt-1">{shippingInfo.name}</p>
+                      <p className="text-sm text-muted-foreground">{shippingInfo.address}</p>
+                    </div>
+                  )}
+                  {shipment?.shipped_at && (
                     <div className="p-4 bg-card rounded-xl border border-border">
                       <span className="text-xs text-muted-foreground uppercase tracking-wide">Išsiųsta</span>
                       <p className="font-semibold mt-1">{formatDate(shipment.shipped_at)}</p>
@@ -423,100 +504,101 @@ export function OrderCard({
                     </div>
                   )}
                 </div>
-
-                {/* External tracking + internal tracking buttons */}
-                <div className="flex flex-wrap gap-3">
-                  {shipment.tracking_token && (
-                    <Button variant="outline" size="sm" asChild>
-                      <a href={`/siuntos-sekimas?token=${shipment.tracking_token}`}>
-                        <MapPin className="w-4 h-4 mr-2" />
-                        Sekti ibrix.lt
-                      </a>
-                    </Button>
-                  )}
-                  {shipment.tracking_number && shipment.carrier_code && carrierTrackingUrls[shipment.carrier_code] && (
-                    <Button variant="outline" size="sm" asChild>
-                      <a 
-                        href={carrierTrackingUrls[shipment.carrier_code](shipment.tracking_number)} 
-                        target="_blank" 
-                        rel="noopener noreferrer"
-                      >
-                        <ExternalLink className="w-4 h-4 mr-2" />
-                        Sekti {carrierNames[shipment.carrier_code]}
-                      </a>
-                    </Button>
-                  )}
-                </div>
               </div>
             )}
 
-            {/* Tracking Map - show if we have location data */}
-            {shipmentEvents && shipmentEvents.length > 0 && (
-              <TrackingMap
-                location={shipmentEvents[0].location_label}
-                coordinates={
-                  shipmentEvents[0].lat && shipmentEvents[0].lng
-                    ? { lat: shipmentEvents[0].lat, lng: shipmentEvents[0].lng }
-                    : null
-                }
-                carrierName={shipment?.carrier_code ? carrierNames[shipment.carrier_code] : null}
-                lastUpdate={shipmentEvents[0].occurred_at}
-              />
-            )}
-
-            {/* Shipping address */}
-            {shippingInfo && (
-              <div className="space-y-3">
-                <h4 className="font-heading font-semibold flex items-center gap-2 text-sm">
-                  <MapPin className="w-4 h-4 text-primary" />
-                  Pristatymo adresas
-                </h4>
-                <div className="p-4 bg-card rounded-xl border border-border">
-                  <p className="font-medium">{shippingInfo.name}</p>
-                  <p className="text-sm text-muted-foreground">{shippingInfo.address}</p>
-                </div>
-              </div>
-            )}
-
-            {/* Order items */}
+            {/* Order Items */}
             {items && items.length > 0 && (
-              <div className="space-y-3">
+              <div className="space-y-4">
                 <h4 className="font-heading font-semibold flex items-center gap-2">
                   <Package className="w-4 h-4 text-primary" />
-                  Prekės ({items.length})
+                  Prekės
                 </h4>
                 <div className="space-y-2">
-                  {items.map(item => (
-                    <div key={item.id} className="flex justify-between items-center p-4 bg-card rounded-xl border border-border">
+                  {items.map((item) => (
+                    <div key={item.id} className="flex items-center justify-between p-3 bg-card rounded-lg border border-border">
                       <div>
-                        <span className="font-medium">{item.title_snapshot}</span>
-                        <span className="text-muted-foreground ml-2">× {item.quantity}</span>
-                        {item.sku_snapshot && (
-                          <p className="text-xs text-muted-foreground font-mono">{item.sku_snapshot}</p>
-                        )}
+                        <p className="font-medium">{item.title_snapshot}</p>
+                        <p className="text-sm text-muted-foreground">
+                          Kiekis: {item.quantity} × {formatPrice(item.unit_price_eur)}
+                        </p>
                       </div>
-                      <span className="font-bold">{formatPrice(item.unit_price_eur * item.quantity)}</span>
+                      <p className="font-semibold">{formatPrice(item.unit_price_eur * item.quantity)}</p>
                     </div>
                   ))}
                 </div>
               </div>
             )}
 
-            {/* Action buttons */}
-            <div className="flex flex-wrap gap-3 pt-2">
-              {/* Pay balance button */}
-              {order.status === 'awaiting_balance' && onPayBalance && (
-                <Button onClick={onPayBalance} className="flex-1 sm:flex-none">
-                  <CreditCard className="w-4 h-4 mr-2" />
-                  Apmokėti likutį ({formatPrice(order.balance_total_eur)})
+            {/* Shipment Events Timeline */}
+            {shipmentEvents && shipmentEvents.length > 0 && (
+              <div className="space-y-4">
+                <h4 className="font-heading font-semibold flex items-center gap-2">
+                  <Calendar className="w-4 h-4 text-primary" />
+                  Siuntos kelionė
+                </h4>
+                <div className="space-y-3">
+                  {shipmentEvents.slice(0, 5).map((event, idx) => (
+                    <div key={event.id} className="flex items-start gap-3">
+                      <div className={cn(
+                        "w-2 h-2 rounded-full mt-2",
+                        idx === 0 ? "bg-primary" : "bg-muted-foreground/30"
+                      )} />
+                      <div className="flex-1">
+                        <p className={cn("font-medium text-sm", idx === 0 && "text-primary")}>
+                          {event.description}
+                        </p>
+                        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                          {event.location_label && <span>{event.location_label}</span>}
+                          <span>•</span>
+                          <span>{formatDate(event.occurred_at)}</span>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Map */}
+            {(lastEvent || shippingInfo) && (
+              <TrackingMap
+                location={lastEvent?.location_label || shippingInfo?.city || null}
+                coordinates={lastEvent?.lat && lastEvent?.lng ? { lat: lastEvent.lat, lng: lastEvent.lng } : null}
+                carrierName={shipment?.carrier_code ? carrierNames[shipment.carrier_code] : null}
+                lastUpdate={lastEvent?.occurred_at || null}
+              />
+            )}
+
+            {/* Actions */}
+            <div className="flex flex-wrap gap-3 pt-4 border-t border-border">
+              {needsBalancePayment && balanceRequest?.payment_url && (
+                <Button 
+                  className="bg-accent hover:bg-accent/90 text-accent-foreground"
+                  asChild
+                >
+                  <a href={balanceRequest.payment_url}>
+                    <Wallet className="w-4 h-4 mr-2" />
+                    Apmokėti likutį ({formatPrice(order.balance_total_eur)})
+                  </a>
                 </Button>
               )}
-
-              {/* Request refund button */}
-              {['deposit_paid', 'balance_paid', 'awaiting_balance'].includes(order.status) && onRequestRefund && (
-                <Button variant="outline" onClick={onRequestRefund} className="text-muted-foreground">
+              {shipment?.tracking_number && shipment.carrier_code && shipment.carrier_code !== 'other' && (
+                <Button variant="outline" asChild>
+                  <a 
+                    href={carrierTrackingUrls[shipment.carrier_code](shipment.tracking_number)} 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                  >
+                    <ExternalLink className="w-4 h-4 mr-2" />
+                    Sekti siuntą
+                  </a>
+                </Button>
+              )}
+              {['delivered', 'shipped'].includes(order.status) && onRequestRefund && (
+                <Button variant="outline" onClick={onRequestRefund}>
                   <RotateCcw className="w-4 h-4 mr-2" />
-                  Prašyti grąžinimo
+                  Grąžinti
                 </Button>
               )}
             </div>

@@ -1,12 +1,20 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Package, User, LogOut, Loader2, Tag } from 'lucide-react';
+import { Package, User, LogOut, Loader2, Tag, Wallet } from 'lucide-react';
 import { PageLayout } from '@/components/layout/PageLayout';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { OrderCard } from '@/components/account/OrderCard';
+import { RefundRequestForm } from '@/components/refund/RefundRequestForm';
+import { toast } from 'sonner';
+
+interface RefundOrder {
+  id: string;
+  orderNumber: string;
+  maxAmount: number;
+}
 
 interface Order {
   id: string;
@@ -65,6 +73,14 @@ interface OrderItem {
   unit_deposit_eur: number;
 }
 
+interface BalanceRequest {
+  id: string;
+  order_id: string;
+  payment_url: string | null;
+  message: string | null;
+  sent_at: string;
+}
+
 interface Offer {
   id: string;
   title: string;
@@ -75,6 +91,11 @@ interface Offer {
   ends_at: string | null;
 }
 
+interface WalletData {
+  id: string;
+  balance_eur: number;
+}
+
 export default function Account() {
   const { user, signOut } = useAuth();
   const [orders, setOrders] = useState<Order[]>([]);
@@ -82,8 +103,11 @@ export default function Account() {
   const [shipments, setShipments] = useState<OrderShipment[]>([]);
   const [shipmentEvents, setShipmentEvents] = useState<ShipmentEvent[]>([]);
   const [orderItems, setOrderItems] = useState<OrderItem[]>([]);
+  const [balanceRequests, setBalanceRequests] = useState<BalanceRequest[]>([]);
   const [offers, setOffers] = useState<Offer[]>([]);
+  const [wallet, setWallet] = useState<WalletData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [refundOrder, setRefundOrder] = useState<RefundOrder | null>(null);
 
   useEffect(() => {
     const loadData = async () => {
@@ -146,6 +170,17 @@ export default function Account() {
             if (itemsData) {
               setOrderItems(itemsData as OrderItem[]);
             }
+
+            // Load balance requests
+            const { data: balanceRequestsData } = await supabase
+              .from('balance_requests')
+              .select('id, order_id, payment_url, message, sent_at')
+              .in('order_id', orderIds)
+              .order('sent_at', { ascending: false });
+            
+            if (balanceRequestsData) {
+              setBalanceRequests(balanceRequestsData as BalanceRequest[]);
+            }
           }
         }
 
@@ -164,6 +199,17 @@ export default function Account() {
             .filter((t: unknown) => (t as { offer: { active: boolean } })?.offer?.active)
             .map((t: unknown) => (t as { offer: Offer }).offer);
           setOffers(activeOffers);
+        }
+
+        // Load wallet
+        const { data: walletData } = await supabase
+          .from('wallets')
+          .select('id, balance_eur')
+          .eq('user_id', user.id)
+          .maybeSingle();
+        
+        if (walletData) {
+          setWallet(walletData);
         }
       } catch (e) {
         console.error('Error loading account data:', e);
@@ -200,6 +246,29 @@ export default function Account() {
     return shipmentEvents.filter(e => e.shipment_id === shipment.id);
   };
 
+  const getBalanceRequestForOrder = (orderId: string) => {
+    return balanceRequests.find(br => br.order_id === orderId) || null;
+  };
+
+  const handleRefundSuccess = () => {
+    setRefundOrder(null);
+    toast.success('Grąžinimo užklausa pateikta sėkmingai');
+  };
+
+  const handleRequestRefund = (order: Order) => {
+    // Calculate max refund amount from payments
+    const orderPayments = getPaymentsForOrder(order.id);
+    const totalPaid = orderPayments
+      .filter(p => p.status === 'succeeded' && p.type !== 'refund')
+      .reduce((sum, p) => sum + p.amount_eur, 0);
+    
+    setRefundOrder({
+      id: order.id,
+      orderNumber: order.order_number,
+      maxAmount: totalPaid || order.deposit_total_eur,
+    });
+  };
+
   if (loading) {
     return (
       <PageLayout>
@@ -215,7 +284,7 @@ export default function Account() {
       <div className="container py-8 md:py-12 max-w-4xl">
         {/* Profile header */}
         <div className="bg-card border border-border rounded-xl p-6 mb-8">
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between flex-wrap gap-4">
             <div className="flex items-center gap-4">
               <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
                 <User className="w-6 h-6 text-primary" />
@@ -225,10 +294,18 @@ export default function Account() {
                 <p className="text-sm text-muted-foreground">Klientas</p>
               </div>
             </div>
-            <Button variant="outline" onClick={signOut}>
-              <LogOut className="w-4 h-4 mr-2" />
-              Atsijungti
-            </Button>
+            <div className="flex items-center gap-3">
+              {wallet && wallet.balance_eur > 0 && (
+                <div className="flex items-center gap-2 px-4 py-2 bg-success/10 border border-success/30 rounded-lg">
+                  <Wallet className="w-4 h-4 text-success" />
+                  <span className="font-semibold text-success">{formatPrice(wallet.balance_eur)}</span>
+                </div>
+              )}
+              <Button variant="outline" onClick={signOut}>
+                <LogOut className="w-4 h-4 mr-2" />
+                Atsijungti
+              </Button>
+            </div>
           </div>
         </div>
 
@@ -292,12 +369,26 @@ export default function Account() {
                   shipment={getShipmentForOrder(order.id)}
                   shipmentEvents={getShipmentEventsForOrder(order.id)}
                   items={getItemsForOrder(order.id)}
+                  balanceRequest={getBalanceRequestForOrder(order.id)}
+                  onRequestRefund={() => handleRequestRefund(order)}
                 />
               ))}
             </div>
           )}
         </div>
       </div>
+
+      {/* Refund Modal */}
+      {refundOrder && (
+        <RefundRequestForm
+          orderId={refundOrder.id}
+          orderNumber={refundOrder.orderNumber}
+          maxAmount={refundOrder.maxAmount}
+          isOpen={!!refundOrder}
+          onClose={() => setRefundOrder(null)}
+          onSuccess={handleRefundSuccess}
+        />
+      )}
     </PageLayout>
   );
 }
