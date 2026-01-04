@@ -7,6 +7,7 @@ import { CollectionsSection } from "@/components/home/CollectionsSection";
 import { ProductsSection } from "@/components/home/ProductsSection";
 import { EditorialSection } from "@/components/home/EditorialSection";
 import { RecommendationsCarousel } from "@/components/home/RecommendationsCarousel";
+import { RecentlyViewedSection } from "@/components/home/RecentlyViewedSection";
 import { HowItWorks } from "@/components/home/HowItWorks";
 import { PreOrderSection } from "@/components/home/PreOrderSection";
 import { FAQSection } from "@/components/home/FAQSection";
@@ -56,6 +57,7 @@ const Index = () => {
           <ProductsSection />
           <EditorialSection />
           <RecommendationsCarousel />
+          <RecentlyViewedSection />
           <HowItWorks />
           <PreOrderSection />
           <FAQSection />

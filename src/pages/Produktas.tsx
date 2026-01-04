@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useProduct, formatPrice, getEtaString, getProductImage } from "@/hooks/useProducts";
 import { useCartStore } from "@/stores/cartStore";
+import { useRecentlyViewed } from "@/hooks/useRecentlyViewed";
 import { toast } from "sonner";
 import { trackViewContentEvent } from "@/hooks/useAnalytics";
 import { SEOHead } from "@/components/seo/SEOHead";
@@ -47,9 +48,10 @@ const productFAQ = [
 export default function Produktas() {
   const { handle } = useParams<{ handle: string }>();
   const addItem = useCartStore((state) => state.addItem);
+  const { addProduct: addToRecentlyViewed } = useRecentlyViewed();
   const { data: product, isLoading, error } = useProduct(handle || '');
 
-  // Track ViewContent when product loads
+  // Track ViewContent and add to recently viewed when product loads
   useEffect(() => {
     if (product) {
       trackViewContentEvent({
@@ -59,8 +61,10 @@ export default function Produktas() {
         currency: 'EUR',
         category: product.category,
       });
+      // Add to recently viewed
+      addToRecentlyViewed(product.id);
     }
-  }, [product]);
+  }, [product, addToRecentlyViewed]);
 
   const handleAddToCart = () => {
     if (product) {
