@@ -3,6 +3,7 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { HelmetProvider } from "react-helmet-async";
 import { CookieConsentProvider } from "@/components/cookies/CookieConsentProvider";
 import { PageViewTracker } from "@/components/analytics/PageViewTracker";
 import { AuthProvider } from "@/contexts/AuthContext";
@@ -34,68 +35,70 @@ import AdminVerification from "./pages/AdminVerification";
 const queryClient = new QueryClient();
 
 const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner position="top-center" />
-      <BrowserRouter>
-        <AuthProvider>
-          <CookieConsentProvider>
-            <PageViewTracker />
-            <Routes>
-              {/* Public routes */}
-              <Route path="/" element={<Index />} />
-              <Route path="/varikliai" element={<Varikliai />} />
-              <Route path="/pre-order" element={<PreOrder />} />
-              <Route path="/pagalba" element={<Pagalba />} />
-              <Route path="/apie" element={<Apie />} />
-              <Route path="/kontaktai" element={<Kontaktai />} />
-              <Route path="/produktas/:handle" element={<Produktas />} />
-              <Route path="/pristatymas" element={<Pristatymas />} />
-              <Route path="/grazinimai" element={<Grazinimai />} />
-              <Route path="/garantija" element={<Garantija />} />
-              <Route path="/trukstamos-detales" element={<TrukstamosDetales />} />
-              <Route path="/privatumo-politika" element={<PrivatumoPolitika />} />
-              <Route path="/slapukai" element={<SlapukaiPolitika />} />
-              <Route path="/taisykles" element={<Taisykles />} />
-              <Route path="/checkout" element={<Checkout />} />
-              <Route path="/uzsakymas" element={<OrderConfirmation />} />
-              <Route path="/siuntos-sekimas/:orderId" element={<SiuntosSekimas />} />
-              <Route path="/siuntos-sekimas" element={<SiuntosSekimas />} />
-              <Route path="/auth" element={<Auth />} />
-              <Route path="/auth/reset-password" element={<ResetPassword />} />
+  <HelmetProvider>
+    <QueryClientProvider client={queryClient}>
+      <TooltipProvider>
+        <Toaster />
+        <Sonner position="top-center" />
+        <BrowserRouter>
+          <AuthProvider>
+            <CookieConsentProvider>
+              <PageViewTracker />
+              <Routes>
+                {/* Public routes */}
+                <Route path="/" element={<Index />} />
+                <Route path="/varikliai" element={<Varikliai />} />
+                <Route path="/pre-order" element={<PreOrder />} />
+                <Route path="/pagalba" element={<Pagalba />} />
+                <Route path="/apie" element={<Apie />} />
+                <Route path="/kontaktai" element={<Kontaktai />} />
+                <Route path="/produktas/:handle" element={<Produktas />} />
+                <Route path="/pristatymas" element={<Pristatymas />} />
+                <Route path="/grazinimai" element={<Grazinimai />} />
+                <Route path="/garantija" element={<Garantija />} />
+                <Route path="/trukstamos-detales" element={<TrukstamosDetales />} />
+                <Route path="/privatumo-politika" element={<PrivatumoPolitika />} />
+                <Route path="/slapukai" element={<SlapukaiPolitika />} />
+                <Route path="/taisykles" element={<Taisykles />} />
+                <Route path="/checkout" element={<Checkout />} />
+                <Route path="/uzsakymas" element={<OrderConfirmation />} />
+                <Route path="/siuntos-sekimas/:orderId" element={<SiuntosSekimas />} />
+                <Route path="/siuntos-sekimas" element={<SiuntosSekimas />} />
+                <Route path="/auth" element={<Auth />} />
+                <Route path="/auth/reset-password" element={<ResetPassword />} />
 
-              {/* Protected: Customer account */}
-              <Route path="/account" element={
-                <ProtectedRoute>
-                  <Account />
-                </ProtectedRoute>
-              } />
+                {/* Protected: Customer account */}
+                <Route path="/account" element={
+                  <ProtectedRoute>
+                    <Account />
+                  </ProtectedRoute>
+                } />
 
-              {/* Protected: Admin only */}
-              <Route path="/admin" element={
-                <ProtectedRoute requireAdmin>
-                  <Admin />
-                </ProtectedRoute>
-              } />
-              <Route path="/admin/verification" element={
-                <ProtectedRoute requireAdmin>
-                  <AdminVerification />
-                </ProtectedRoute>
-              } />
-              <Route path="/admin/*" element={
-                <ProtectedRoute requireAdmin>
-                  <Admin />
-                </ProtectedRoute>
-              } />
+                {/* Protected: Admin only */}
+                <Route path="/admin" element={
+                  <ProtectedRoute requireAdmin>
+                    <Admin />
+                  </ProtectedRoute>
+                } />
+                <Route path="/admin/verification" element={
+                  <ProtectedRoute requireAdmin>
+                    <AdminVerification />
+                  </ProtectedRoute>
+                } />
+                <Route path="/admin/*" element={
+                  <ProtectedRoute requireAdmin>
+                    <Admin />
+                  </ProtectedRoute>
+                } />
 
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </CookieConsentProvider>
-        </AuthProvider>
-      </BrowserRouter>
-    </TooltipProvider>
-  </QueryClientProvider>
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </CookieConsentProvider>
+          </AuthProvider>
+        </BrowserRouter>
+      </TooltipProvider>
+    </QueryClientProvider>
+  </HelmetProvider>
 );
 
 export default App;

@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Package, Settings, List, BarChart3, Tag, RefreshCw, ShoppingBag, Users } from "lucide-react";
+import { Package, Settings, List, BarChart3, Tag, RefreshCw, ShoppingBag, Users, RotateCcw } from "lucide-react";
 import { PageLayout } from "@/components/layout/PageLayout";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -8,6 +8,7 @@ import { ProductsManager } from "@/components/admin/ProductsManager";
 import { OrdersManager } from "@/components/admin/OrdersManager";
 import { OffersManager } from "@/components/admin/OffersManager";
 import { AnalyticsDashboard } from "@/components/admin/AnalyticsDashboard";
+import { RefundsManager } from "@/components/admin/RefundsManager";
 import { supabase } from "@/integrations/supabase/client";
 import { Link } from "react-router-dom";
 
@@ -77,6 +78,10 @@ export default function Admin() {
               <BarChart3 className="w-4 h-4" />
               Analitika
             </TabsTrigger>
+            <TabsTrigger value="refunds" className="gap-2">
+              <RotateCcw className="w-4 h-4" />
+              Grąžinimai
+            </TabsTrigger>
             <TabsTrigger value="setup" className="gap-2">
               <Settings className="w-4 h-4" />
               Nustatymai
@@ -97,6 +102,10 @@ export default function Admin() {
 
           <TabsContent value="analytics">
             <AnalyticsDashboard />
+          </TabsContent>
+
+          <TabsContent value="refunds">
+            <RefundsManager />
           </TabsContent>
 
           <TabsContent value="setup">
