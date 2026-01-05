@@ -394,7 +394,7 @@ export default function Account() {
               <Package className="w-12 h-12 text-muted-foreground/30 mx-auto mb-4" />
               <p className="text-muted-foreground">Užsakymų dar nėra</p>
               <Button asChild className="mt-4">
-                <Link to="/varikliai">Peržiūrėti produktus</Link>
+                <Link to="/produktai/visi">Peržiūrėti konstruktorius</Link>
               </Button>
             </div>
           ) : (

@@ -37,7 +37,7 @@ export function SEOHead({
   const fullTitle = title === SITE_NAME ? title : `${title} | ${SITE_NAME}`;
   const fullCanonical = canonical ? `${SITE_URL}${canonical}` : undefined;
 
-  // Product structured data (JSON-LD)
+  // Product structured data (JSON-LD) - no fake aggregateRating
   const productSchema = product ? {
     '@context': 'https://schema.org',
     '@type': 'Product',
@@ -64,11 +64,6 @@ export function SEOHead({
       },
       url: fullCanonical,
       priceValidUntil: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-    },
-    aggregateRating: {
-      '@type': 'AggregateRating',
-      ratingValue: '4.8',
-      reviewCount: '24',
     },
   } : null;
 

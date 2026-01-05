@@ -14,10 +14,10 @@ User-agent: *
 Allow: /
 Disallow: /admin
 Disallow: /checkout
-Disallow: /order-confirmation
+Disallow: /uzsakymas
 Disallow: /account
 Disallow: /auth
-Disallow: /reset-password
+Disallow: /auth/reset-password
 
 # Dynamic Sitemap (includes all products from database)
 Sitemap: https://huawtqggkzujiptndmns.supabase.co/functions/v1/sitemap

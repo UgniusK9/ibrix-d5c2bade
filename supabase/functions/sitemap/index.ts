@@ -32,18 +32,24 @@ Deno.serve(async (req) => {
 
     const today = new Date().toISOString().split('T')[0];
 
-    // Static pages
+    // Static pages - using actual routes from App.tsx
     const staticPages = [
       { loc: '', priority: '1.0', changefreq: 'daily' },
-      { loc: '/varikliai', priority: '0.9', changefreq: 'daily' },
+      { loc: '/produktai/visi', priority: '0.9', changefreq: 'daily' },
+      { loc: '/produktai/varikliai', priority: '0.9', changefreq: 'daily' },
+      { loc: '/pre-order', priority: '0.8', changefreq: 'weekly' },
+      { loc: '/dovanu-kuponai', priority: '0.7', changefreq: 'monthly' },
       { loc: '/apie', priority: '0.7', changefreq: 'monthly' },
       { loc: '/kontaktai', priority: '0.7', changefreq: 'monthly' },
       { loc: '/pristatymas', priority: '0.6', changefreq: 'monthly' },
       { loc: '/garantija', priority: '0.6', changefreq: 'monthly' },
       { loc: '/grazinimai', priority: '0.6', changefreq: 'monthly' },
       { loc: '/pagalba', priority: '0.6', changefreq: 'monthly' },
+      { loc: '/trukstamos-detales', priority: '0.5', changefreq: 'monthly' },
+      { loc: '/palyginti', priority: '0.5', changefreq: 'weekly' },
+      { loc: '/atsiliepimai', priority: '0.5', changefreq: 'weekly' },
       { loc: '/privatumo-politika', priority: '0.4', changefreq: 'yearly' },
-      { loc: '/slapukai-politika', priority: '0.4', changefreq: 'yearly' },
+      { loc: '/slapukai', priority: '0.4', changefreq: 'yearly' },
       { loc: '/taisykles', priority: '0.4', changefreq: 'yearly' },
     ];
 

@@ -84,7 +84,7 @@ export function WishlistSection() {
           <Heart className="w-12 h-12 text-muted-foreground/30 mx-auto mb-4" />
           <p className="text-muted-foreground mb-4">Jūsų norų sąrašas tuščias</p>
           <Button asChild variant="outline">
-            <Link to="/produktai/visi">Peržiūrėti produktus</Link>
+            <Link to="/produktai/visi">Peržiūrėti konstruktorius</Link>
           </Button>
         </div>
       ) : (
