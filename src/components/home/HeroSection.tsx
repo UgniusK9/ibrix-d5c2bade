@@ -64,7 +64,7 @@ export function HeroSection() {
                 className="bg-accent hover:bg-accent/90 text-accent-foreground font-semibold h-14 px-8 text-base"
               >
                 <Link to="/produktai/visi">
-                  Peržiūrėti produktus
+                  Peržiūrėti konstruktorius
                   <ArrowRight className="ml-2 h-5 w-5" />
                 </Link>
               </Button>

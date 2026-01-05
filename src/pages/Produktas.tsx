@@ -224,7 +224,7 @@ export default function Produktas() {
         image={image}
         product={{
           name: product.title,
-          price: product.price_eur,
+          price: displayPrice,
           currency: 'EUR',
           availability: isPreOrder ? 'PreOrder' : 'InStock',
           sku: product.sku,

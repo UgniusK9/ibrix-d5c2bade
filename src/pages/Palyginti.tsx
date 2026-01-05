@@ -230,7 +230,7 @@ export default function Palyginti() {
               Pridėkite produktus paspaudę palyginimo mygtuką produkto puslapyje
             </p>
             <Button asChild>
-              <Link to="/produktai/visi">Peržiūrėti produktus</Link>
+              <Link to="/produktai/visi">Peržiūrėti konstruktorius</Link>
             </Button>
           </div>
         )}

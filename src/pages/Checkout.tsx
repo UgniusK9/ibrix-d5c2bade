@@ -193,10 +193,11 @@ export default function Checkout() {
     });
 
     try {
-      // Prepare cart items for checkout
+      // Prepare cart items for checkout - include variantId for variant pricing
       const checkoutItems = items.map(item => ({
         productId: item.productId,
         quantity: item.quantity,
+        variantId: item.variantId || undefined,
       }));
 
       const { data: result, error } = await supabase.functions.invoke("checkout", {

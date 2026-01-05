@@ -14,6 +14,11 @@ const generateRequestId = () => crypto.randomUUID().slice(0, 8);
 const shippingAddressSchema = z.object({
   lockerAddress: z.string().max(200).optional(),
   lockerId: z.string().max(50).optional(),
+  lockerName: z.string().max(100).optional(),
+  lockerCity: z.string().max(50).optional(),
+  lockerPostalCode: z.string().max(10).optional(),
+  lat: z.number().optional(),
+  lng: z.number().optional(),
   street: z.string().max(100).optional(),
   city: z.string().max(50).optional(),
   postalCode: z.string().max(10).optional(),
@@ -23,6 +28,7 @@ const shippingAddressSchema = z.object({
 const cartItemSchema = z.object({
   productId: z.string().uuid(),
   quantity: z.number().int().min(1).max(10),
+  variantId: z.string().uuid().optional(),
 });
 
 const checkoutSchema = z.object({
@@ -47,11 +53,30 @@ const checkoutSchema = z.object({
   shippingAddress: shippingAddressSchema,
   notes: z.string().max(500, 'Pastabos per ilgos').optional(),
   items: z.array(cartItemSchema).min(1, 'Krepšelis tuščias'),
+  // Discount
+  discountCode: z.string().max(50).optional(),
+  // Invoice
+  wantsInvoice: z.boolean().optional(),
+  invoiceCompanyName: z.string().max(100).optional(),
+  invoiceVatCode: z.string().max(20).optional(),
+  invoiceAddress: z.string().max(200).optional(),
+  invoiceCountry: z.string().max(50).optional(),
+  // Wallet
+  useWalletBalance: z.boolean().optional(),
+  walletDeductionCents: z.number().min(0).optional(),
 });
 
 const log = (requestId: string, step: string, details?: any) => {
   const timestamp = new Date().toISOString();
   console.log(`[CHECKOUT][${requestId}][${timestamp}] ${step}`, details ? JSON.stringify(details) : '');
+};
+
+// Shipping costs
+const SHIPPING_COSTS: Record<string, number> = {
+  omniva_locker: 0,
+  lp_express_locker: 0,
+  dpd_locker: 0,
+  courier: 4.99,
 };
 
 Deno.serve(async (req) => {
@@ -92,7 +117,9 @@ Deno.serve(async (req) => {
     log(requestId, 'Request received', { 
       userId, 
       itemCount: rawBody.items?.length,
-      email: rawBody.email?.substring(0, 5) + '***' 
+      email: rawBody.email?.substring(0, 5) + '***',
+      discountCode: rawBody.discountCode || null,
+      useWallet: rawBody.useWalletBalance || false,
     });
     
     // Validate request body
@@ -128,6 +155,21 @@ Deno.serve(async (req) => {
       );
     }
 
+    // Fetch variants if any items have variantId
+    const variantIds = body.items.map(i => i.variantId).filter(Boolean) as string[];
+    let variantsMap = new Map<string, any>();
+    
+    if (variantIds.length > 0) {
+      const { data: variants } = await supabase
+        .from('product_variants')
+        .select('*')
+        .in('id', variantIds);
+      
+      if (variants) {
+        variants.forEach(v => variantsMap.set(v.id, v));
+      }
+    }
+
     // Validate all products exist
     const productMap = new Map(products.map(p => [p.id, p]));
     for (const item of body.items) {
@@ -141,7 +183,7 @@ Deno.serve(async (req) => {
     }
 
     // Calculate totals server-side (TRUST NOTHING FROM CLIENT)
-    // NEW LOGIC: in_stock = full price at checkout, preorder = deposit only
+    // in_stock = full price at checkout, preorder = deposit only
     let subtotalEur = 0;
     let immediatePaymentEur = 0; // What customer pays NOW
     let hasPreorder = false;
@@ -150,7 +192,18 @@ Deno.serve(async (req) => {
 
     const orderItemsData = body.items.map(item => {
       const product = productMap.get(item.productId)!;
-      const itemSubtotal = Number(product.price_eur) * item.quantity;
+      const variant = item.variantId ? variantsMap.get(item.variantId) : null;
+      
+      // Use effective price: sale_price_eur if lower than price_eur
+      const effectivePriceEur = (product.sale_price_eur && Number(product.sale_price_eur) < Number(product.price_eur))
+        ? Number(product.sale_price_eur)
+        : Number(product.price_eur);
+      
+      // Add variant price adjustment
+      const variantAdjustment = variant?.price_adjustment_eur ? Number(variant.price_adjustment_eur) : 0;
+      const finalUnitPrice = effectivePriceEur + variantAdjustment;
+      
+      const itemSubtotal = finalUnitPrice * item.quantity;
       const itemDeposit = Number(product.deposit_eur) * item.quantity;
       
       subtotalEur += itemSubtotal;
@@ -180,23 +233,87 @@ Deno.serve(async (req) => {
       return {
         productId: product.id,
         sku: product.sku,
-        title: product.title,
+        title: variant ? `${product.title} - ${variant.option_value}` : product.title,
         category: product.category,
-        unitPriceEur: Number(product.price_eur),
+        unitPriceEur: finalUnitPrice,
         unitDepositEur: Number(product.deposit_eur),
         quantity: item.quantity,
         isPreorder,
+        variantId: variant?.id || null,
+        variantName: variant?.option_value || null,
+        variantAdjustment,
       };
     });
 
-    const shippingEur = 0; // Free shipping
-    const discountEur = 0; // TODO: Apply offers
+    // Calculate shipping
+    const shippingEur = SHIPPING_COSTS[body.shippingMethod] ?? 0;
+    log(requestId, 'Shipping calculated', { method: body.shippingMethod, cost: shippingEur });
+
+    // Validate and apply discount server-side
+    let discountEur = 0;
+    let offerId: string | null = null;
+    let offerCode: string | null = null;
+    
+    if (body.discountCode) {
+      const { data: offer } = await supabase
+        .from('offers')
+        .select('*')
+        .eq('code', body.discountCode.toUpperCase())
+        .eq('active', true)
+        .maybeSingle();
+      
+      if (offer) {
+        const now = new Date();
+        const isValid = (!offer.starts_at || new Date(offer.starts_at) <= now) &&
+                        (!offer.ends_at || new Date(offer.ends_at) >= now) &&
+                        (!offer.min_cart_total || subtotalEur >= Number(offer.min_cart_total));
+        
+        if (isValid) {
+          if (offer.type === 'percent') {
+            discountEur = immediatePaymentEur * (Number(offer.value) / 100);
+          } else {
+            discountEur = Number(offer.value);
+          }
+          // Don't let discount exceed immediate payment
+          discountEur = Math.min(discountEur, immediatePaymentEur);
+          offerId = offer.id;
+          offerCode = offer.code;
+          log(requestId, 'Discount applied', { code: offer.code, discountEur });
+        }
+      }
+    }
+
+    // Apply wallet deduction (server-side validation)
+    let walletDeductionEur = 0;
+    if (userId && body.useWalletBalance) {
+      const { data: wallet } = await supabase
+        .from('wallets')
+        .select('id, balance_eur')
+        .eq('user_id', userId)
+        .maybeSingle();
+      
+      if (wallet && wallet.balance_eur > 0) {
+        // Max deduction is the lesser of wallet balance or (immediate payment - discount)
+        const maxDeduction = Math.min(wallet.balance_eur, immediatePaymentEur - discountEur);
+        walletDeductionEur = Math.max(0, maxDeduction);
+        log(requestId, 'Wallet deduction', { available: wallet.balance_eur, deducting: walletDeductionEur });
+      }
+    }
+
+    // Calculate final totals
     const totalEur = subtotalEur + shippingEur - discountEur;
     const balanceTotalEur = totalEur - immediatePaymentEur; // What remains to pay later
+    
+    // Final amount to charge Stripe (immediate - discount - wallet + shipping)
+    const stripeChargeEur = Math.max(0, immediatePaymentEur - discountEur - walletDeductionEur + shippingEur);
 
     log(requestId, 'Totals calculated', { 
       subtotalEur, 
+      shippingEur,
+      discountEur,
+      walletDeductionEur,
       immediatePaymentEur, 
+      stripeChargeEur,
       balanceTotalEur, 
       totalEur,
       hasPreorder,
@@ -226,11 +343,18 @@ Deno.serve(async (req) => {
         discount_eur: discountEur,
         shipping_eur: shippingEur,
         total_eur: totalEur,
-        deposit_total_eur: immediatePaymentEur, // What's paid now (deposit OR full)
-        balance_total_eur: balanceTotalEur,     // What remains (0 for in-stock only)
+        deposit_total_eur: stripeChargeEur, // What's charged to Stripe
+        balance_total_eur: balanceTotalEur,
         currency: 'EUR',
         shipping_address_json: body.shippingAddress,
         notes: body.notes?.trim().slice(0, 500) || null,
+        offer_id: offerId,
+        offer_code: offerCode,
+        wants_invoice: body.wantsInvoice || false,
+        invoice_company_name: body.invoiceCompanyName?.trim() || null,
+        invoice_vat_code: body.invoiceVatCode?.trim() || null,
+        invoice_address: body.invoiceAddress?.trim() || null,
+        invoice_country: body.invoiceCountry?.trim() || null,
       })
       .select()
       .single();
@@ -266,8 +390,63 @@ Deno.serve(async (req) => {
 
     log(requestId, 'Order items created', { count: orderItems.length });
 
+    // Deduct wallet balance if used
+    if (walletDeductionEur > 0 && userId) {
+      const { data: wallet } = await supabase
+        .from('wallets')
+        .select('id, balance_eur')
+        .eq('user_id', userId)
+        .single();
+      
+      if (wallet) {
+        const newBalance = wallet.balance_eur - walletDeductionEur;
+        await supabase
+          .from('wallets')
+          .update({ balance_eur: newBalance })
+          .eq('id', wallet.id);
+        
+        // Log wallet transaction
+        await supabase.from('wallet_transactions').insert({
+          wallet_id: wallet.id,
+          type: 'debit',
+          amount_eur: -walletDeductionEur,
+          description: `Panaudota užsakymui ${orderNumber}`,
+          reference_type: 'order',
+          reference_id: order.id,
+        });
+        
+        log(requestId, 'Wallet deducted', { amount: walletDeductionEur, newBalance });
+      }
+    }
+
+    // If nothing to charge (fully covered by wallet), mark as paid
+    if (stripeChargeEur <= 0) {
+      await supabase
+        .from('orders')
+        .update({ status: hasPreorder ? 'deposit_paid' : 'balance_paid', paid_at: new Date().toISOString() })
+        .eq('id', order.id);
+      
+      log(requestId, 'Order fully paid by wallet');
+      
+      const origin = req.headers.get('origin') || 'https://ibrix.lt';
+      return new Response(
+        JSON.stringify({
+          success: true,
+          checkoutUrl: `${origin}/uzsakymas?order_id=${order.id}&paid=wallet`,
+          order: {
+            id: order.id,
+            orderNumber: order.order_number,
+            immediatePaymentEur: 0,
+            totalEur: totalEur,
+            balanceEur: balanceTotalEur,
+            hasPreorder,
+          },
+        }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
     // Create Stripe Checkout Session
-    // For preorder: charge deposit only. For in-stock: charge full price
     const lineItems = orderItemsData.map(item => {
       const unitAmount = item.isPreorder 
         ? Math.round(item.unitDepositEur * 100)  // Preorder: deposit
@@ -292,6 +471,21 @@ Deno.serve(async (req) => {
       };
     });
 
+    // Add shipping as line item if not free
+    if (shippingEur > 0) {
+      lineItems.push({
+        price_data: {
+          currency: 'eur',
+          unit_amount: Math.round(shippingEur * 100),
+          product_data: {
+            name: 'Pristatymas kurjeriu',
+            description: 'Pristatymas į namus',
+          },
+        },
+        quantity: 1,
+      });
+    }
+
     // Find or create Stripe customer
     let stripeCustomerId: string | undefined;
     const existingCustomers = await stripe.customers.list({
@@ -312,7 +506,10 @@ Deno.serve(async (req) => {
 
     const origin = req.headers.get('origin') || 'https://ibrix.lt';
     
-    const session = await stripe.checkout.sessions.create({
+    // Calculate discount for Stripe (if any)
+    const totalDiscountCents = Math.round((discountEur + walletDeductionEur) * 100);
+    
+    const sessionConfig: any = {
       customer: stripeCustomerId,
       line_items: lineItems,
       mode: 'payment',
@@ -322,6 +519,7 @@ Deno.serve(async (req) => {
         order_id: order.id,
         order_number: orderNumber,
         payment_type: hasPreorder ? 'deposit' : 'full_payment',
+        wallet_deduction_eur: walletDeductionEur.toString(),
       },
       payment_intent_data: {
         metadata: {
@@ -330,12 +528,25 @@ Deno.serve(async (req) => {
           payment_type: hasPreorder ? 'deposit' : 'full_payment',
         },
       },
-    });
+    };
+
+    // Add discount as coupon if applicable
+    if (totalDiscountCents > 0) {
+      const coupon = await stripe.coupons.create({
+        amount_off: totalDiscountCents,
+        currency: 'eur',
+        duration: 'once',
+        name: discountEur > 0 ? `Nuolaida: ${offerCode}` : 'Piniginės kreditas',
+      });
+      sessionConfig.discounts = [{ coupon: coupon.id }];
+    }
+
+    const session = await stripe.checkout.sessions.create(sessionConfig);
 
     log(requestId, 'Stripe session created', { 
       sessionId: session.id, 
       url: session.url?.substring(0, 50) + '...',
-      immediatePaymentCents: Math.round(immediatePaymentEur * 100)
+      stripeChargeCents: Math.round(stripeChargeEur * 100)
     });
 
     return new Response(
@@ -345,7 +556,7 @@ Deno.serve(async (req) => {
         order: {
           id: order.id,
           orderNumber: order.order_number,
-          immediatePaymentEur: immediatePaymentEur,
+          immediatePaymentEur: stripeChargeEur,
           totalEur: totalEur,
           balanceEur: balanceTotalEur,
           hasPreorder,

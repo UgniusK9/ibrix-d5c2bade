@@ -44,9 +44,9 @@ export default function GiftCards() {
 
     setIsProcessing(true);
     try {
-      const { data, error } = await supabase.functions.invoke('checkout', {
+      // Use dedicated gift card purchase function
+      const { data, error } = await supabase.functions.invoke('purchase-gift-card', {
         body: {
-          isGiftCard: true,
           giftCardAmount: finalAmount,
           recipientEmail,
           recipientName,
@@ -54,10 +54,6 @@ export default function GiftCards() {
           personalMessage,
           email: user?.email || recipientEmail,
           firstName: senderName || 'Pirkėjas',
-          lastName: '',
-          shippingMethod: 'digital',
-          shippingAddress: {},
-          items: [],
         },
       });
 

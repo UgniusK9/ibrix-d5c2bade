@@ -83,15 +83,20 @@ export const useCartStore = create<CartStore>()(
             : (i.productId === product.id && !i.variantId)
         );
         
+        // Use effective price: sale_price_eur if it's lower than price_eur
+        const effectiveBasePriceEur = (product.sale_price_eur && product.sale_price_eur < product.price_eur) 
+          ? product.sale_price_eur 
+          : product.price_eur;
+        
         const priceAdjustment = variant?.priceAdjustment || 0;
-        const finalPrice = product.price_eur + priceAdjustment;
+        const finalPriceEur = effectiveBasePriceEur + priceAdjustment;
         
         const newItem: CartItem = {
           productId: product.id,
           productSlug: product.slug,
           title: variant ? `${product.title} - ${variant.name}` : product.title,
           image: getProductImage(product),
-          price: Math.round(finalPrice * 100),
+          price: Math.round(finalPriceEur * 100),
           deposit: Math.round(product.deposit_eur * 100),
           currency: 'EUR',
           quantity,
@@ -122,7 +127,7 @@ export const useCartStore = create<CartStore>()(
         trackAddToCartEvent({
           id: product.id,
           name: variant ? `${product.title} - ${variant.name}` : product.title,
-          price: finalPrice,
+          price: finalPriceEur,
           currency: 'EUR',
           quantity,
         });
