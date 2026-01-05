@@ -643,7 +643,9 @@ export type Database = {
           offer_id: string | null
           order_number: string
           paid_at: string | null
+          payment_method_code: string | null
           payment_plan: Database["public"]["Enums"]["payment_plan"]
+          payment_provider: string | null
           phone: string | null
           preorder_eta_weeks_max: number | null
           preorder_eta_weeks_min: number | null
@@ -683,7 +685,9 @@ export type Database = {
           offer_id?: string | null
           order_number: string
           paid_at?: string | null
+          payment_method_code?: string | null
           payment_plan?: Database["public"]["Enums"]["payment_plan"]
+          payment_provider?: string | null
           phone?: string | null
           preorder_eta_weeks_max?: number | null
           preorder_eta_weeks_min?: number | null
@@ -723,7 +727,9 @@ export type Database = {
           offer_id?: string | null
           order_number?: string
           paid_at?: string | null
+          payment_method_code?: string | null
           payment_plan?: Database["public"]["Enums"]["payment_plan"]
+          payment_provider?: string | null
           phone?: string | null
           preorder_eta_weeks_max?: number | null
           preorder_eta_weeks_min?: number | null
