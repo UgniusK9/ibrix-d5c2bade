@@ -44,7 +44,7 @@ const checkoutSchema = z.object({
     .email('Neteisingas el. pašto adresas')
     .max(100, 'El. paštas per ilgas'),
   phone: z.string()
-    .regex(/^\+?[0-9\s\-]{8,20}$/, 'Neteisingas telefono numeris')
+    .max(30)
     .optional()
     .or(z.literal('')),
   shippingMethod: z.enum(['omniva_locker', 'lp_express_locker', 'dpd_locker', 'courier'], {
@@ -64,6 +64,10 @@ const checkoutSchema = z.object({
   // Wallet
   useWalletBalance: z.boolean().optional(),
   walletDeductionCents: z.number().min(0).optional(),
+  // Payment provider
+  paymentProvider: z.enum(['stripe', 'paypal', 'paysera']).optional(),
+  paymentMethodCode: z.string().max(50).optional(),
+  skipStripe: z.boolean().optional(),
 });
 
 const log = (requestId: string, step: string, details?: any) => {
@@ -343,7 +347,7 @@ Deno.serve(async (req) => {
         discount_eur: discountEur,
         shipping_eur: shippingEur,
         total_eur: totalEur,
-        deposit_total_eur: stripeChargeEur, // What's charged to Stripe
+        deposit_total_eur: stripeChargeEur,
         balance_total_eur: balanceTotalEur,
         currency: 'EUR',
         shipping_address_json: body.shippingAddress,
@@ -355,6 +359,8 @@ Deno.serve(async (req) => {
         invoice_vat_code: body.invoiceVatCode?.trim() || null,
         invoice_address: body.invoiceAddress?.trim() || null,
         invoice_country: body.invoiceCountry?.trim() || null,
+        payment_provider: body.paymentProvider || 'stripe',
+        payment_method_code: body.paymentMethodCode || 'card',
       })
       .select()
       .single();
@@ -437,6 +443,25 @@ Deno.serve(async (req) => {
             id: order.id,
             orderNumber: order.order_number,
             immediatePaymentEur: 0,
+            totalEur: totalEur,
+            balanceEur: balanceTotalEur,
+            hasPreorder,
+          },
+        }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // If skipStripe is set (for Paysera), return order without Stripe session
+    if (body.skipStripe) {
+      log(requestId, 'Skipping Stripe for Paysera payment');
+      return new Response(
+        JSON.stringify({
+          success: true,
+          order: {
+            id: order.id,
+            orderNumber: order.order_number,
+            immediatePaymentEur: stripeChargeEur,
             totalEur: totalEur,
             balanceEur: balanceTotalEur,
             hasPreorder,

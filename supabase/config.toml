@@ -64,3 +64,9 @@ verify_jwt = true
 
 [functions.purchase-gift-card]
 verify_jwt = false
+
+[functions.create-paysera-payment]
+verify_jwt = false
+
+[functions.paysera-callback]
+verify_jwt = false

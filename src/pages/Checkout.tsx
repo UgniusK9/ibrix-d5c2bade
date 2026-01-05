@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Loader2, Package, ChevronLeft, CreditCard, MapPin, Truck, Shield, Sparkles, Wallet } from "lucide-react";
+import { Loader2, Package, ChevronLeft, CreditCard, MapPin, Truck, Wallet } from "lucide-react";
 import { CartRecommendations } from "@/components/cart/CartRecommendations";
 import { PageLayout } from "@/components/layout/PageLayout";
 import { Button } from "@/components/ui/button";
@@ -20,13 +20,15 @@ import { trackBeginCheckoutEvent, trackAddPaymentInfoEvent } from "@/hooks/useAn
 import { DiscountCodeInput, AppliedDiscount } from "@/components/checkout/DiscountCodeInput";
 import { InvoiceFields } from "@/components/checkout/InvoiceFields";
 import { LockerSearch } from "@/components/checkout/LockerSearch";
+import { PhoneInput } from "@/components/checkout/PhoneInput";
+import { PaymentMethodSelector, PaymentMethod, PAYMENT_METHODS } from "@/components/checkout/PaymentMethodSelector";
 import { type LockerTerminal } from "@/data/lockerTerminals";
 
 const checkoutSchema = z.object({
   firstName: z.string().min(1, "Vardas privalomas").max(50),
   lastName: z.string().min(1, "Pavardė privaloma").max(50),
   email: z.string().email("Neteisingas el. pašto adresas"),
-  phone: z.string().regex(/^\+?[0-9\s\-]{8,20}$/, "Neteisingas telefono numeris").optional().or(z.literal("")),
+  phone: z.string().optional().or(z.literal("")),
   shippingMethod: z.enum(["omniva_locker", "lp_express_locker", "dpd_locker", "courier"]),
   lockerAddress: z.string().optional(),
   lockerId: z.string().optional(),
@@ -52,7 +54,7 @@ const shippingMethods = [
 export default function Checkout() {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { items, getTotalPrice, getTotalDeposit, clearCart } = useCartStore();
+  const { items, getTotalPrice, clearCart } = useCartStore();
   const [isLoading, setIsLoading] = useState(false);
   const [step, setStep] = useState<1 | 2>(1);
   const [appliedDiscount, setAppliedDiscount] = useState<AppliedDiscount | null>(null);
@@ -60,6 +62,10 @@ export default function Checkout() {
   const [selectedLocker, setSelectedLocker] = useState<LockerTerminal | null>(null);
   const [walletBalance, setWalletBalance] = useState(0);
   const [useWallet, setUseWallet] = useState(true);
+  const [phoneValue, setPhoneValue] = useState("");
+  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<PaymentMethod | null>(
+    PAYMENT_METHODS.find(m => m.enabled) || null
+  );
 
   const {
     register,
@@ -79,11 +85,8 @@ export default function Checkout() {
 
   // Check if cart has any preorder items
   const hasPreorderItems = items.some(item => item.status === 'preorder');
-  const hasInStockItems = items.some(item => item.status === 'in_stock');
 
   // Calculate amounts based on stock status
-  // In-stock items: pay full price immediately
-  // Preorder items: pay deposit, balance later
   const calculateAmounts = () => {
     let immediatePayment = 0;
     let laterPayment = 0;
@@ -91,10 +94,8 @@ export default function Checkout() {
     items.forEach(item => {
       const itemTotal = item.price * item.quantity;
       if (item.status === 'in_stock') {
-        // In-stock: pay full price now
         immediatePayment += itemTotal;
       } else {
-        // Preorder: pay deposit now, balance later
         const itemDeposit = item.deposit * item.quantity;
         immediatePayment += itemDeposit;
         laterPayment += itemTotal - itemDeposit;
@@ -108,16 +109,14 @@ export default function Checkout() {
 
   const fullTotal = getTotalPrice();
   const selectedShippingMethod = shippingMethods.find(m => m.id === shippingMethod);
-  const shippingPrice = (selectedShippingMethod?.price || 0) * 100; // Convert to cents
+  const shippingPrice = (selectedShippingMethod?.price || 0) * 100;
 
-  // Calculate discount amount based on type (applies to immediate payment)
   const discountAmount = appliedDiscount 
     ? (appliedDiscount.type === 'percent' 
       ? (immediatePayment * appliedDiscount.value / 100)
-      : Math.min(appliedDiscount.value * 100, immediatePayment)) // Don't discount more than total
+      : Math.min(appliedDiscount.value * 100, immediatePayment))
     : 0;
   
-  // Wallet deduction
   const walletDeduction = useWallet ? Math.min(walletBalance * 100, immediatePayment - discountAmount) : 0;
   const finalImmediatePayment = Math.max(0, immediatePayment - discountAmount - walletDeduction) + shippingPrice;
 
@@ -127,7 +126,6 @@ export default function Checkout() {
     }
   }, [items, navigate]);
 
-  // Load wallet balance
   useEffect(() => {
     const loadWallet = async () => {
       if (!user) return;
@@ -147,7 +145,6 @@ export default function Checkout() {
   }, [user]);
 
   useEffect(() => {
-    // Track begin checkout when page loads
     if (items.length > 0) {
       trackBeginCheckoutEvent({
         totalCents: finalImmediatePayment,
@@ -164,12 +161,10 @@ export default function Checkout() {
 
   const onSubmit = async (data: CheckoutFormData) => {
     if (step === 1) {
-      // Validate locker selection for locker methods
       if (isLockerMethod && !selectedLocker) {
         toast.error("Pasirinkite paštomatą");
         return;
       }
-      // Validate address for courier
       if (data.shippingMethod === 'courier' && (!data.street || !data.city || !data.postalCode)) {
         toast.error("Užpildykite visą pristatymo adresą");
         return;
@@ -178,9 +173,13 @@ export default function Checkout() {
       return;
     }
 
+    if (!selectedPaymentMethod) {
+      toast.error("Pasirinkite mokėjimo būdą");
+      return;
+    }
+
     setIsLoading(true);
 
-    // Track add payment info
     trackAddPaymentInfoEvent({
       totalCents: finalImmediatePayment,
       currency: "EUR",
@@ -193,55 +192,116 @@ export default function Checkout() {
     });
 
     try {
-      // Prepare cart items for checkout - include variantId for variant pricing
       const checkoutItems = items.map(item => ({
         productId: item.productId,
         quantity: item.quantity,
         variantId: item.variantId || undefined,
       }));
 
-      const { data: result, error } = await supabase.functions.invoke("checkout", {
-        body: {
-          firstName: data.firstName,
-          lastName: data.lastName,
-          email: data.email,
-          phone: data.phone || undefined,
-          shippingMethod: data.shippingMethod,
-          shippingAddress: selectedLocker ? {
-            lockerId: selectedLocker.id,
-            lockerName: selectedLocker.name,
-            lockerAddress: `${selectedLocker.address}, ${selectedLocker.city}`,
-            lockerCity: selectedLocker.city,
-            lockerPostalCode: selectedLocker.postalCode,
-            lat: selectedLocker.lat,
-            lng: selectedLocker.lng,
-          } : {
-            street: data.street,
-            city: data.city,
-            postalCode: data.postalCode,
+      // For Stripe payments, use the existing checkout flow
+      if (selectedPaymentMethod.provider === 'stripe') {
+        const { data: result, error } = await supabase.functions.invoke("checkout", {
+          body: {
+            firstName: data.firstName,
+            lastName: data.lastName,
+            email: data.email,
+            phone: phoneValue || undefined,
+            shippingMethod: data.shippingMethod,
+            shippingAddress: selectedLocker ? {
+              lockerId: selectedLocker.id,
+              lockerName: selectedLocker.name,
+              lockerAddress: `${selectedLocker.address}, ${selectedLocker.city}`,
+              lockerCity: selectedLocker.city,
+              lockerPostalCode: selectedLocker.postalCode,
+              lat: selectedLocker.lat,
+              lng: selectedLocker.lng,
+            } : {
+              street: data.street,
+              city: data.city,
+              postalCode: data.postalCode,
+            },
+            notes: data.notes,
+            items: checkoutItems,
+            discountCode: appliedDiscount?.code,
+            wantsInvoice: wantsInvoice,
+            invoiceCompanyName: data.invoiceCompanyName,
+            invoiceVatCode: data.invoiceVatCode,
+            invoiceAddress: data.invoiceAddress,
+            invoiceCountry: "Lietuva",
+            useWalletBalance: useWallet && walletBalance > 0,
+            walletDeductionCents: walletDeduction,
+            paymentProvider: 'stripe',
+            paymentMethodCode: selectedPaymentMethod.code,
           },
-          notes: data.notes,
-          items: checkoutItems,
-          discountCode: appliedDiscount?.code,
-          wantsInvoice: wantsInvoice,
-          invoiceCompanyName: data.invoiceCompanyName,
-          invoiceVatCode: data.invoiceVatCode,
-          invoiceAddress: data.invoiceAddress,
-          invoiceCountry: "Lietuva",
-          useWalletBalance: useWallet && walletBalance > 0,
-          walletDeductionCents: walletDeduction,
-        },
-      });
+        });
 
-      if (error) throw error;
+        if (error) throw error;
 
-      if (result?.checkoutUrl) {
-        // Clear cart before redirect
-        clearCart();
-        // Redirect to Stripe
-        window.location.href = result.checkoutUrl;
-      } else {
-        throw new Error("Nepavyko sukurti apmokėjimo sesijos");
+        if (result?.checkoutUrl) {
+          clearCart();
+          window.location.href = result.checkoutUrl;
+        } else {
+          throw new Error("Nepavyko sukurti apmokėjimo sesijos");
+        }
+      } else if (selectedPaymentMethod.provider === 'paysera') {
+        // For Paysera, first create order then redirect to Paysera
+        const { data: result, error } = await supabase.functions.invoke("checkout", {
+          body: {
+            firstName: data.firstName,
+            lastName: data.lastName,
+            email: data.email,
+            phone: phoneValue || undefined,
+            shippingMethod: data.shippingMethod,
+            shippingAddress: selectedLocker ? {
+              lockerId: selectedLocker.id,
+              lockerName: selectedLocker.name,
+              lockerAddress: `${selectedLocker.address}, ${selectedLocker.city}`,
+              lockerCity: selectedLocker.city,
+              lockerPostalCode: selectedLocker.postalCode,
+              lat: selectedLocker.lat,
+              lng: selectedLocker.lng,
+            } : {
+              street: data.street,
+              city: data.city,
+              postalCode: data.postalCode,
+            },
+            notes: data.notes,
+            items: checkoutItems,
+            discountCode: appliedDiscount?.code,
+            wantsInvoice: wantsInvoice,
+            invoiceCompanyName: data.invoiceCompanyName,
+            invoiceVatCode: data.invoiceVatCode,
+            invoiceAddress: data.invoiceAddress,
+            invoiceCountry: "Lietuva",
+            useWalletBalance: useWallet && walletBalance > 0,
+            walletDeductionCents: walletDeduction,
+            paymentProvider: 'paysera',
+            paymentMethodCode: selectedPaymentMethod.code,
+            skipStripe: true, // Flag to skip Stripe session creation
+          },
+        });
+
+        if (error) throw error;
+
+        // Now call Paysera payment creation
+        const { data: payseraResult, error: payseraError } = await supabase.functions.invoke("create-paysera-payment", {
+          body: {
+            orderId: result.order.id,
+            paymentType: hasPreorderItems ? 'deposit' : 'full',
+            bankCode: selectedPaymentMethod.bankCode,
+          },
+        });
+
+        if (payseraError) throw payseraError;
+
+        if (payseraResult?.redirectUrl) {
+          clearCart();
+          window.location.href = payseraResult.redirectUrl;
+        } else {
+          throw new Error("Nepavyko sukurti Paysera mokėjimo");
+        }
+      } else if (selectedPaymentMethod.provider === 'paypal') {
+        toast.error("PayPal mokėjimai bus prieinami greitai");
       }
     } catch (error: any) {
       console.error("Checkout error:", error);
@@ -312,10 +372,10 @@ export default function Checkout() {
                   </div>
                   <div>
                     <Label htmlFor="phone">Telefonas</Label>
-                    <Input {...register("phone")} id="phone" placeholder="+370..." />
-                    {errors.phone && (
-                      <p className="text-destructive text-sm mt-1">{errors.phone.message}</p>
-                    )}
+                    <PhoneInput
+                      value={phoneValue}
+                      onChange={setPhoneValue}
+                    />
                   </div>
                 </div>
 
@@ -449,29 +509,23 @@ export default function Checkout() {
               <div className="bg-card border border-border rounded-xl p-6 space-y-4">
                 <h2 className="font-semibold text-lg flex items-center gap-2">
                   <CreditCard className="w-5 h-5" />
-                  Mokėjimas
+                  Pasirinkite mokėjimo būdą
                 </h2>
-                <div className="p-4 bg-primary/5 border border-primary/20 rounded-lg">
-                  <p className="text-sm text-muted-foreground mb-2">
-                    Būsite nukreipti į saugų Stripe mokėjimo puslapį.
-                  </p>
-                  <p className="font-medium">
-                    {laterPayment > 0 ? (
-                      <>Mokėsite dabar: {formatCartPrice(finalImmediatePayment)}</>
-                    ) : (
-                      <>Mokėsite: {formatCartPrice(finalImmediatePayment)}</>
-                    )}
-                  </p>
-                </div>
+                
+                <PaymentMethodSelector
+                  selectedMethod={selectedPaymentMethod?.id || null}
+                  onSelect={setSelectedPaymentMethod}
+                />
+
                 {laterPayment > 0 && (
-                  <p className="text-sm text-muted-foreground">
+                  <p className="text-sm text-muted-foreground mt-4">
                     Likusi suma ({formatCartPrice(laterPayment)}) bus apmokėta vėliau, prieš siunčiant užsakymą.
                   </p>
                 )}
               </div>
             )}
 
-            <Button type="submit" size="lg" className="w-full" disabled={isLoading}>
+            <Button type="submit" size="lg" className="w-full" disabled={isLoading || (step === 2 && !selectedPaymentMethod)}>
               {isLoading ? (
                 <>
                   <Loader2 className="w-4 h-4 mr-2 animate-spin" />
