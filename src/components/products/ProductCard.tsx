@@ -14,9 +14,9 @@ interface ProductCardProps {
 }
 
 const BADGE_CONFIG: Record<string, { label: string; className: string }> = {
-  new: { label: 'Naujiena', className: 'bg-green-500 text-white' },
+  new: { label: 'Naujiena', className: 'bg-emerald-500 text-white' },
   popular: { label: 'Populiarus', className: 'bg-orange-500 text-white' },
-  sale: { label: 'Išpardavimas', className: 'bg-red-500 text-white' },
+  sale: { label: 'Akcija', className: 'bg-red-500 text-white' },
   limited: { label: 'Ribotas', className: 'bg-purple-500 text-white' },
 };
 
@@ -32,6 +32,9 @@ export function ProductCard({ product, onQuickView }: ProductCardProps) {
   const badges = (product as any).badges as string[] || [];
   const inComparison = isInComparison(product.id);
   const inWishlist = isInWishlist(product.id);
+  
+  // Check for sale price
+  const hasSalePrice = product.sale_price_eur && product.sale_price_eur < product.price_eur;
 
   const handleQuickView = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -87,8 +90,8 @@ export function ProductCard({ product, onQuickView }: ProductCardProps) {
           className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
         />
         
-        {/* Badges row */}
-        <div className="absolute top-3 left-3 flex flex-wrap gap-1.5">
+        {/* Stock Badge - bottom left */}
+        <div className="absolute bottom-3 left-3">
           <Badge 
             className={`text-xs font-semibold px-2.5 py-1 ${
               isPreOrder 
@@ -98,7 +101,18 @@ export function ProductCard({ product, onQuickView }: ProductCardProps) {
           >
             {isPreOrder ? "PRE-ORDER" : "SANDĖLYJE"}
           </Badge>
+        </div>
+        
+        {/* Product Badges - top right corner */}
+        <div className="absolute top-3 right-3 flex flex-col gap-1">
+          {/* Sale badge if sale price exists */}
+          {hasSalePrice && !badges.includes('sale') && (
+            <Badge className="text-xs font-semibold px-2.5 py-1 bg-red-500 text-white">
+              Akcija
+            </Badge>
+          )}
           
+          {/* Admin-set badges */}
           {badges.map((badge) => {
             const config = BADGE_CONFIG[badge];
             if (!config) return null;
@@ -111,7 +125,7 @@ export function ProductCard({ product, onQuickView }: ProductCardProps) {
         </div>
 
         {/* Action buttons */}
-        <div className="absolute top-3 right-3 flex flex-col gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
+        <div className="absolute top-3 left-3 flex flex-col gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
           {onQuickView && (
             <Button
               size="icon"
@@ -169,10 +183,10 @@ export function ProductCard({ product, onQuickView }: ProductCardProps) {
         {/* Price */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            {product.sale_price_eur ? (
+            {hasSalePrice ? (
               <>
                 <p className="font-heading font-bold text-xl text-red-500">
-                  {formatPrice(product.sale_price_eur)}
+                  {formatPrice(product.sale_price_eur!)}
                 </p>
                 <p className="text-sm text-muted-foreground line-through">
                   {formatPrice(product.price_eur)}

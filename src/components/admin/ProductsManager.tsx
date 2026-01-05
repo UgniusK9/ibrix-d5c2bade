@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Plus, Search, Edit, Trash2, Package, RefreshCw, ChevronDown, X, ImagePlus, Save } from 'lucide-react';
+import { Plus, Search, Edit, Trash2, Package, RefreshCw, ChevronDown, X, Save } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -25,6 +25,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import type { Database } from '@/integrations/supabase/types';
 import { ProductVariantsManager } from './ProductVariantsManager';
+import { MultiImageUpload } from './MultiImageUpload';
 
 type ProductStatus = Database['public']['Enums']['product_status'];
 type StockStatus = Database['public']['Enums']['stock_status'];
@@ -832,41 +833,14 @@ export function ProductsManager() {
               </p>
             </div>
 
-            {/* Images */}
-            <div className="space-y-3">
-              <Label>Nuotraukos</Label>
-              <div className="flex gap-2">
-                <Input
-                  value={newImageUrl}
-                  onChange={(e) => setNewImageUrl(e.target.value)}
-                  placeholder="https://... nuotraukos URL"
-                />
-                <Button type="button" variant="outline" onClick={addImage}>
-                  <ImagePlus className="w-4 h-4" />
-                </Button>
-              </div>
-              
-              {formData.images.length > 0 && (
-                <div className="flex flex-wrap gap-2">
-                  {formData.images.map((url, index) => (
-                    <div key={index} className="relative group">
-                      <img 
-                        src={url} 
-                        alt={`Product ${index + 1}`}
-                        className="w-20 h-20 rounded object-cover border"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => removeImage(index)}
-                        className="absolute -top-2 -right-2 w-5 h-5 bg-destructive text-destructive-foreground rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
-                      >
-                        <X className="w-3 h-3" />
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
+            {/* Images - Multi Image Upload */}
+            <MultiImageUpload
+              value={formData.images}
+              onChange={(urls) => setFormData(prev => ({ ...prev, images: urls }))}
+              folder="products"
+              label="Konstruktoriaus nuotraukos"
+              maxImages={10}
+            />
           </div>
 
           {/* Variants Manager - only show when editing existing product */}

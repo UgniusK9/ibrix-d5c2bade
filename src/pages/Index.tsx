@@ -5,6 +5,7 @@ import { PromoBanner } from "@/components/home/PromoBanner";
 import { TrustBadges } from "@/components/home/TrustBadges";
 import { CollectionsSection } from "@/components/home/CollectionsSection";
 import { ProductsSection } from "@/components/home/ProductsSection";
+import { BundlesSection } from "@/components/home/BundlesSection";
 import { EditorialSection } from "@/components/home/EditorialSection";
 import { RecommendationsCarousel } from "@/components/home/RecommendationsCarousel";
 import { RecentlyViewedSection } from "@/components/home/RecentlyViewedSection";
@@ -55,6 +56,7 @@ const Index = () => {
           <TrustBadges />
           <CollectionsSection />
           <ProductsSection />
+          <BundlesSection />
           <EditorialSection />
           <RecommendationsCarousel />
           <RecentlyViewedSection />

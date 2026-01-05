@@ -183,10 +183,10 @@ export default function Produktas() {
               Produktas nerastas
             </h1>
             <p className="text-muted-foreground mb-6">
-              Šio produkto nepavyko rasti. Galite peržiūrėti kitus variklius.
+              Šio konstruktoriaus nepavyko rasti. Galite peržiūrėti kitus konstruktorius.
             </p>
             <Button asChild>
-              <Link to="/varikliai">Grįžti į kolekciją</Link>
+              <Link to="/produktai/visi">Grįžti į kolekciją</Link>
             </Button>
           </div>
         </div>
@@ -198,9 +198,14 @@ export default function Produktas() {
   const eta = getEtaString(product);
   const image = getProductImage(product);
   const detailsCount = (product.details_json as Record<string, unknown>)?.detailsCount as number || 0;
+  const badges = (product as any).badges as string[] || [];
+  
+  // Check if sale price is active
+  const hasSalePrice = product.sale_price_eur && product.sale_price_eur < product.price_eur;
+  const displayPrice = hasSalePrice ? product.sale_price_eur! : product.price_eur;
   
   // Calculate final price with variant adjustments
-  const finalPrice = product.price_eur + selectedVariantDetails.priceAdjustment;
+  const finalPrice = displayPrice + selectedVariantDetails.priceAdjustment;
 
   const productSpecs = [
     { label: "Detalių skaičius", value: detailsCount > 0 ? `${detailsCount} vnt.` : "—" },
@@ -235,11 +240,11 @@ export default function Produktas() {
       <div className="container py-8 md:py-12">
         {/* Breadcrumb */}
         <Link 
-          to="/varikliai" 
+          to="/produktai/visi" 
           className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground transition-colors mb-8"
         >
           <ArrowLeft className="w-4 h-4 mr-2" />
-          Grįžti į variklius
+          Grįžti į konstruktorius
         </Link>
 
         {/* Product Grid */}
@@ -267,13 +272,27 @@ export default function Produktas() {
 
             {/* Price */}
             <div className="flex items-center gap-3 mb-4">
-              <p className="font-heading text-3xl font-bold text-accent">
-                {formatPrice(finalPrice)}
-              </p>
-              {selectedVariantDetails.priceAdjustment !== 0 && (
-                <span className="text-sm text-muted-foreground line-through">
-                  {formatPrice(product.price_eur)}
-                </span>
+              {hasSalePrice ? (
+                <>
+                  <p className="font-heading text-3xl font-bold text-red-500">
+                    {formatPrice(finalPrice)}
+                  </p>
+                  <span className="text-lg text-muted-foreground line-through">
+                    {formatPrice(product.price_eur + selectedVariantDetails.priceAdjustment)}
+                  </span>
+                  <Badge className="bg-red-500 text-white font-bold">Akcija</Badge>
+                </>
+              ) : (
+                <>
+                  <p className="font-heading text-3xl font-bold text-accent">
+                    {formatPrice(finalPrice)}
+                  </p>
+                  {selectedVariantDetails.priceAdjustment !== 0 && (
+                    <span className="text-sm text-muted-foreground line-through">
+                      {formatPrice(displayPrice)}
+                    </span>
+                  )}
+                </>
               )}
             </div>
 
