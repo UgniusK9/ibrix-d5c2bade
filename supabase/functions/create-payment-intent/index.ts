@@ -32,7 +32,13 @@ Deno.serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
-    const stripe = new Stripe(Deno.env.get('STRIPE_SECRET_KEY') ?? '', {
+    const stripeSecretKey = Deno.env.get('STRIPE_SECRET_KEY') ?? '';
+    const isTestMode = stripeSecretKey.startsWith('sk_test_');
+    const isLiveMode = stripeSecretKey.startsWith('sk_live_');
+    
+    console.log(`[PAYMENT-INTENT] Stripe mode: ${isTestMode ? 'TEST' : isLiveMode ? 'LIVE' : 'UNKNOWN'}, key prefix: ${stripeSecretKey.substring(0, 8)}...`);
+
+    const stripe = new Stripe(stripeSecretKey, {
       apiVersion: '2023-10-16',
     });
 
