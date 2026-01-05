@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { Loader2, Sparkles, Tag, Cog, Car, Flower2, Puzzle, Gift } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
+import { motion } from "framer-motion";
 
 interface Category {
   id: string;
@@ -84,30 +85,58 @@ export function CollectionsSection() {
           Naršyk pagal kategoriją
         </h2>
         
-        {/* Category cards grid */}
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3 md:gap-4">
-          {allTiles.map((tile) => {
+          {allTiles.map((tile, index) => {
             const IconComponent = tile.style.icon;
             const linkUrl = tile.slug === 'pasiulymai' 
               ? '/produktai/visi?offers=true' 
               : `/produktai/${tile.slug}`;
             
             return (
-              <Link
+              <motion.div
                 key={tile.id}
-                to={linkUrl}
-                className={cn(
-                  "group relative flex flex-col items-center justify-center p-5 md:p-6 rounded-2xl text-white transition-all duration-200",
-                  tile.style.bg,
-                  tile.style.hover,
-                  "hover:scale-105 hover:shadow-lg"
-                )}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ 
+                  delay: index * 0.05,
+                  duration: 0.3,
+                  ease: "easeOut"
+                }}
               >
-                <IconComponent className="w-8 h-8 md:w-10 md:h-10 mb-3 opacity-90" strokeWidth={1.5} />
-                <span className="font-bold text-sm md:text-base text-center leading-tight">
-                  {tile.name}
-                </span>
-              </Link>
+                <Link
+                  to={linkUrl}
+                  className="block"
+                >
+                  <motion.div
+                    className={cn(
+                      "relative flex flex-col items-center justify-center p-5 md:p-6 rounded-2xl text-white",
+                      tile.style.bg
+                    )}
+                    whileHover={{ 
+                      scale: 1.08,
+                      y: -4,
+                      transition: { 
+                        type: "spring", 
+                        stiffness: 400, 
+                        damping: 17 
+                      }
+                    }}
+                    whileTap={{ scale: 0.95 }}
+                  >
+                    <motion.div
+                      whileHover={{ 
+                        rotate: [0, -10, 10, -5, 0],
+                        transition: { duration: 0.5 }
+                      }}
+                    >
+                      <IconComponent className="w-8 h-8 md:w-10 md:h-10 mb-3 opacity-90" strokeWidth={1.5} />
+                    </motion.div>
+                    <span className="font-bold text-sm md:text-base text-center leading-tight">
+                      {tile.name}
+                    </span>
+                  </motion.div>
+                </Link>
+              </motion.div>
             );
           })}
         </div>
