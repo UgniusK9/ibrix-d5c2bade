@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { ArrowRight, ShoppingCart, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { useProducts, formatPrice, getProductImage, Product } from "@/hooks/useProducts";
 import { useCartStore } from "@/stores/cartStore";
 import { toast } from "sonner";
@@ -11,6 +12,14 @@ const stockBadges = {
   preorder: { label: "Pre-order", bg: "bg-blue-500", text: "text-white" },
   in_stock: { label: "Sandėlyje", bg: "bg-green-500", text: "text-white" },
   out_of_stock: { label: "Išparduota", bg: "bg-gray-400", text: "text-white" },
+};
+
+// Product badge configuration
+const productBadges: Record<string, { label: string; bg: string }> = {
+  new: { label: "Naujiena", bg: "bg-emerald-500" },
+  popular: { label: "Populiarus", bg: "bg-orange-500" },
+  sale: { label: "Akcija", bg: "bg-red-500" },
+  limited: { label: "Ribotas", bg: "bg-purple-500" },
 };
 
 export function ProductsSection() {
@@ -60,8 +69,8 @@ export function ProductsSection() {
           </div>
           
           <Button asChild variant="outline" className="w-fit">
-            <Link to="/varikliai">
-              Peržiūrėti visus
+            <Link to="/produktai/visi">
+              Peržiūrėti visus konstruktorius
               <ArrowRight className="ml-2 h-4 w-4" />
             </Link>
           </Button>
@@ -73,6 +82,8 @@ export function ProductsSection() {
             const stockStatus = product.stock_status || 'preorder';
             const badge = stockBadges[stockStatus] || stockBadges.preorder;
             const image = getProductImage(product);
+            const badges = (product as any).badges as string[] || [];
+            const hasSale = product.sale_price_eur && product.sale_price_eur < product.price_eur;
             
             return (
               <Link
@@ -88,14 +99,34 @@ export function ProductsSection() {
                     className="w-full h-full object-contain transition-transform duration-300 group-hover:scale-105"
                   />
                   
-                  {/* Corner badge */}
+                  {/* Stock badge - bottom left */}
                   <div className={cn(
-                    "absolute top-3 left-3 px-3 py-1 rounded-full text-xs font-bold",
+                    "absolute bottom-3 left-3 px-3 py-1 rounded-full text-xs font-bold",
                     badge.bg,
                     badge.text
                   )}>
                     {badge.label}
                   </div>
+
+                  {/* Product badges - top right */}
+                  {(badges.length > 0 || hasSale) && (
+                    <div className="absolute top-3 right-3 flex flex-col gap-1">
+                      {hasSale && !badges.includes('sale') && (
+                        <Badge className="bg-red-500 text-white text-xs font-bold px-2 py-0.5">
+                          Akcija
+                        </Badge>
+                      )}
+                      {badges.map((badgeKey) => {
+                        const config = productBadges[badgeKey];
+                        if (!config) return null;
+                        return (
+                          <Badge key={badgeKey} className={cn(config.bg, "text-white text-xs font-bold px-2 py-0.5")}>
+                            {config.label}
+                          </Badge>
+                        );
+                      })}
+                    </div>
+                  )}
                 </div>
 
                 {/* Content - minimal and clean */}

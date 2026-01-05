@@ -130,7 +130,7 @@ export function Header() {
               {/* CTA Button - Desktop only */}
               <Button asChild size="sm" className="hidden lg:flex bg-accent hover:bg-accent/90 text-accent-foreground h-9 px-4">
                 <Link to="/produktai/visi">
-                  Peržiūrėti produktus
+                  Peržiūrėti konstruktorius
                   <ArrowRight className="ml-1.5 h-4 w-4" />
                 </Link>
               </Button>
@@ -210,7 +210,7 @@ export function Header() {
                   <div className="mt-6 px-4 space-y-3">
                     <Button asChild className="w-full bg-accent hover:bg-accent/90 text-accent-foreground">
                       <Link to="/produktai/visi" onClick={() => setMobileMenuOpen(false)}>
-                        Peržiūrėti produktus
+                        Peržiūrėti konstruktorius
                         <ArrowRight className="ml-2 h-4 w-4" />
                       </Link>
                     </Button>

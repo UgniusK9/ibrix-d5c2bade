@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Package, Settings, List, BarChart3, Tag, RefreshCw, ShoppingBag, Users, RotateCcw, Layers, Gift, FolderTree, Mail, Image, MessageSquare, Bell } from "lucide-react";
+import { Package, Settings, List, BarChart3, Tag, RefreshCw, ShoppingBag, Users, RotateCcw, Layers, Gift, FolderTree, Mail, Image, MessageSquare, Bell, TrendingUp } from "lucide-react";
 import { PageLayout } from "@/components/layout/PageLayout";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -9,6 +9,7 @@ import { OrdersManager } from "@/components/admin/OrdersManager";
 import { OffersManager } from "@/components/admin/OffersManager";
 import { AnalyticsDashboard } from "@/components/admin/AnalyticsDashboard";
 import { AnalyticsCharts } from "@/components/admin/AnalyticsCharts";
+import { ProfitMarginReport } from "@/components/admin/ProfitMarginReport";
 import { RefundsManager } from "@/components/admin/RefundsManager";
 import { BundlesManager } from "@/components/admin/BundlesManager";
 import { GiftCardsManager } from "@/components/admin/GiftCardsManager";
@@ -58,7 +59,7 @@ export default function Admin() {
         <div className="flex items-center justify-between mb-8">
           <div>
             <h1 className="font-heading text-3xl font-bold">Administravimas</h1>
-            <p className="text-muted-foreground">Produktų, užsakymų ir sistemos valdymas</p>
+            <p className="text-muted-foreground">Konstruktorių, užsakymų ir sistemos valdymas</p>
           </div>
           <Button asChild variant="outline" size="sm">
             <Link to="/admin/verification">
@@ -76,7 +77,7 @@ export default function Admin() {
             </TabsTrigger>
             <TabsTrigger value="products" className="gap-2">
               <ShoppingBag className="w-4 h-4" />
-              Produktai
+              Konstruktoriai
             </TabsTrigger>
             <TabsTrigger value="categories" className="gap-2">
               <FolderTree className="w-4 h-4" />
@@ -89,6 +90,10 @@ export default function Admin() {
             <TabsTrigger value="analytics" className="gap-2">
               <BarChart3 className="w-4 h-4" />
               Analitika
+            </TabsTrigger>
+            <TabsTrigger value="profit" className="gap-2">
+              <TrendingUp className="w-4 h-4" />
+              Pelnas
             </TabsTrigger>
             <TabsTrigger value="refunds" className="gap-2">
               <RotateCcw className="w-4 h-4" />
@@ -152,6 +157,10 @@ export default function Admin() {
                 <li>Sitemap: <a href="/api/sitemap" target="_blank" className="underline">Dinaminis sitemap.xml</a></li>
               </ul>
             </div>
+          </TabsContent>
+
+          <TabsContent value="profit">
+            <ProfitMarginReport />
           </TabsContent>
 
           <TabsContent value="refunds">
