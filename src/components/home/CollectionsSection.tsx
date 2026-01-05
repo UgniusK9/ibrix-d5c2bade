@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { ArrowRight, Loader2, Percent } from "lucide-react";
-import { motion } from "framer-motion";
+import { Loader2, Sparkles, Tag, Cog, Car, Flower2, Puzzle, Gift } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
 
@@ -13,25 +12,22 @@ interface Category {
   image_url: string | null;
 }
 
-// Default category images as fallback
-const categoryImages: Record<string, string> = {
-  varikliai: "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400&h=400&fit=crop",
-  automobiliai: "https://images.unsplash.com/photo-1592198084033-aade902d1aae?w=400&h=400&fit=crop",
-  geles: "https://images.unsplash.com/photo-1490750967868-88aa4486c946?w=400&h=400&fit=crop",
-  konstruktoriai: "https://images.unsplash.com/photo-1587654780291-39c9404d746b?w=400&h=400&fit=crop",
+// LEGO-style bright colors for categories
+const categoryStyles: Record<string, { bg: string; hover: string; icon: React.ElementType }> = {
+  varikliai: { bg: "bg-red-500", hover: "hover:bg-red-600", icon: Cog },
+  automobiliai: { bg: "bg-blue-500", hover: "hover:bg-blue-600", icon: Car },
+  geles: { bg: "bg-pink-500", hover: "hover:bg-pink-600", icon: Flower2 },
+  konstruktoriai: { bg: "bg-green-500", hover: "hover:bg-green-600", icon: Puzzle },
+  visi: { bg: "bg-yellow-400", hover: "hover:bg-yellow-500", icon: Sparkles },
+  pasiulymai: { bg: "bg-orange-500", hover: "hover:bg-orange-600", icon: Tag },
+  "dovanu-kuponai": { bg: "bg-purple-500", hover: "hover:bg-purple-600", icon: Gift },
 };
 
-// Tabs for filtering
-const tabs = [
-  { id: "all", name: "Naujienos" },
-  { id: "popular", name: "Populiariausi" },
-  { id: "themes", name: "Temos" },
-];
+const defaultStyle = { bg: "bg-indigo-500", hover: "hover:bg-indigo-600", icon: Puzzle };
 
 export function CollectionsSection() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState("all");
 
   useEffect(() => {
     const loadCategories = async () => {
@@ -56,107 +52,64 @@ export function CollectionsSection() {
 
   if (loading) {
     return (
-      <section className="py-12 bg-primary">
+      <section className="py-12 bg-white">
         <div className="container flex items-center justify-center">
-          <Loader2 className="w-8 h-8 animate-spin text-primary-foreground" />
+          <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
         </div>
       </section>
     );
   }
 
-  // Add special tiles
+  // Build category tiles with special ones first
   const allTiles: Array<{
-    type: 'link' | 'promo' | 'category';
     id: string;
     name: string;
     slug: string;
-    image_url: string | null;
-    isHighlight?: boolean;
-    isPromo?: boolean;
+    style: { bg: string; hover: string; icon: React.ElementType };
   }> = [
-    { type: 'link', id: 'all', name: 'Visi nauji rinkiniai', slug: 'visi', image_url: null, isHighlight: true },
-    { type: 'promo', id: 'offers', name: 'Pasiūlymai', slug: 'pasiulymai', image_url: null, isPromo: true },
-    ...categories.map(c => ({ ...c, type: 'category' as const })),
+    { id: 'all', name: 'Naujienos', slug: 'visi', style: categoryStyles.visi },
+    { id: 'offers', name: 'Pasiūlymai', slug: 'pasiulymai', style: categoryStyles.pasiulymai },
+    ...categories.map(c => ({
+      id: c.id,
+      name: c.name,
+      slug: c.slug,
+      style: categoryStyles[c.slug] || defaultStyle,
+    })),
   ];
 
   return (
-    <section className="py-8 bg-primary">
+    <section className="py-10 md:py-14 bg-white">
       <div className="container">
-        {/* Tabs */}
-        <div className="flex items-center gap-6 mb-6">
-          {tabs.map((tab) => (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
-              className={cn(
-                "text-sm font-medium transition-colors pb-1",
-                activeTab === tab.id
-                  ? "text-primary-foreground border-b-2 border-primary-foreground"
-                  : "text-primary-foreground/60 hover:text-primary-foreground"
-              )}
-            >
-              {tab.name}
-            </button>
-          ))}
-        </div>
-
-        {/* Horizontal scrolling category tiles - LEGO style */}
-        <div className="relative -mx-4 px-4">
-          <div className="flex gap-4 overflow-x-auto pb-4 scrollbar-hide snap-x snap-mandatory">
-            {allTiles.map((tile, index) => {
-              const imageUrl = tile.image_url || categoryImages[tile.slug] || categoryImages.konstruktoriai;
-              
-              if (tile.type === 'promo') {
-                return (
-                  <Link
-                    key={tile.id}
-                    to="/produktai/visi?offers=true"
-                    className="flex-shrink-0 snap-start group"
-                  >
-                    <div className="w-28 md:w-32">
-                      <div className="aspect-square rounded-xl bg-accent flex items-center justify-center overflow-hidden mb-2 group-hover:shadow-lg transition-shadow">
-                        <div className="text-accent-foreground font-bold text-4xl">
-                          <Percent className="w-12 h-12" />
-                        </div>
-                      </div>
-                      <p className="text-xs md:text-sm font-medium text-primary-foreground text-center line-clamp-2">
-                        {tile.name}
-                      </p>
-                    </div>
-                  </Link>
-                );
-              }
-              
-              return (
-                <Link
-                  key={tile.id}
-                  to={`/produktai/${tile.slug}`}
-                  className="flex-shrink-0 snap-start group"
-                >
-                  <div className="w-28 md:w-32">
-                    <div 
-                      className={cn(
-                        "aspect-square rounded-xl overflow-hidden mb-2 group-hover:shadow-lg transition-all duration-300",
-                        tile.isHighlight && "ring-2 ring-accent ring-offset-2 ring-offset-primary"
-                      )}
-                    >
-                      <img 
-                        src={imageUrl}
-                        alt={tile.name}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                      />
-                    </div>
-                    <p className={cn(
-                      "text-xs md:text-sm font-medium text-center line-clamp-2",
-                      tile.isHighlight ? "text-accent" : "text-primary-foreground"
-                    )}>
-                      {tile.name}
-                    </p>
-                  </div>
-                </Link>
-              );
-            })}
-          </div>
+        <h2 className="font-heading text-2xl md:text-3xl font-bold text-center mb-8">
+          Naršyk pagal kategoriją
+        </h2>
+        
+        {/* Category cards grid */}
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3 md:gap-4">
+          {allTiles.map((tile) => {
+            const IconComponent = tile.style.icon;
+            const linkUrl = tile.slug === 'pasiulymai' 
+              ? '/produktai/visi?offers=true' 
+              : `/produktai/${tile.slug}`;
+            
+            return (
+              <Link
+                key={tile.id}
+                to={linkUrl}
+                className={cn(
+                  "group relative flex flex-col items-center justify-center p-5 md:p-6 rounded-2xl text-white transition-all duration-200",
+                  tile.style.bg,
+                  tile.style.hover,
+                  "hover:scale-105 hover:shadow-lg"
+                )}
+              >
+                <IconComponent className="w-8 h-8 md:w-10 md:h-10 mb-3 opacity-90" strokeWidth={1.5} />
+                <span className="font-bold text-sm md:text-base text-center leading-tight">
+                  {tile.name}
+                </span>
+              </Link>
+            );
+          })}
         </div>
       </div>
     </section>
