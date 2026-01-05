@@ -1,7 +1,13 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import Stripe from 'https://esm.sh/stripe@14.21.0?target=deno';
 
-const stripe = new Stripe(Deno.env.get('STRIPE_SECRET_KEY') ?? '', {
+const stripeSecretKey = Deno.env.get('STRIPE_SECRET_KEY') ?? '';
+const isTestMode = stripeSecretKey.startsWith('sk_test_');
+const isLiveMode = stripeSecretKey.startsWith('sk_live_');
+
+console.log(`[STRIPE-WEBHOOK] Initialized in ${isTestMode ? 'TEST' : isLiveMode ? 'LIVE' : 'UNKNOWN'} mode, key prefix: ${stripeSecretKey.substring(0, 8)}...`);
+
+const stripe = new Stripe(stripeSecretKey, {
   apiVersion: '2023-10-16',
 });
 
