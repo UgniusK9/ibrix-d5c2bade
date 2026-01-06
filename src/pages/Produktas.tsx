@@ -1,5 +1,6 @@
 import { useEffect, useState, useMemo } from "react";
 import { useParams, Link } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { ArrowLeft, Package, Clock, Truck, RotateCcw, Shield, ShoppingCart, Puzzle, HelpCircle, Loader2, Star, Scale, Check } from "lucide-react";
 import { PageLayout } from "@/components/layout/PageLayout";
 import { Button } from "@/components/ui/button";
@@ -22,18 +23,7 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 
-const trustItems = [
-  { icon: Truck, text: "Nemokamas pristatymas" },
-  { icon: RotateCcw, text: "14 d. grąžinimas" },
-  { icon: Puzzle, text: "Trūkstamos detalės – nemokamai" },
-];
-
-const boxContents = [
-  "Visos konstrukcinės detalės (pilnas komplektas)",
-  "Iliustruota surinkimo instrukcija (EN)",
-  "Atsarginės smulkios detalės",
-  "Stovas ekspozicijai",
-];
+// Trust items and box contents are now translatable via t() function
 
 const productFAQ = [
   {
@@ -52,6 +42,7 @@ const productFAQ = [
 
 export default function Produktas() {
   const { handle } = useParams<{ handle: string }>();
+  const { t } = useTranslation();
   const addItem = useCartStore((state) => state.addItem);
   const { addProduct: addToRecentlyViewed } = useRecentlyViewed();
   const { addProduct: addToComparison, isInComparison, removeProduct: removeFromComparison } = useComparisonStore();
@@ -127,7 +118,7 @@ export default function Produktas() {
         : undefined;
       
       addItem(product, 1, variant);
-      toast.success("Pridėta į krepšelį", {
+      toast.success(t('products.addedToCart'), {
         description: variant ? `${product.title} - ${variant.name}` : product.title,
         position: "top-center",
       });
@@ -139,20 +130,20 @@ export default function Produktas() {
     
     if (isInComparison(product.id)) {
       removeFromComparison(product.id);
-      toast.info("Pašalinta iš palyginimo", {
+      toast.info(t('products.removedFromComparison'), {
         description: product.title,
         position: "top-center",
       });
     } else {
       const added = addToComparison(product);
       if (added) {
-        toast.success("Pridėta palyginimui", {
+        toast.success(t('products.addedToComparison'), {
           description: product.title,
           position: "top-center",
         });
       } else {
-        toast.error("Palyginimo limitas", {
-          description: "Galite palyginti iki 3 konstruktorių",
+        toast.error(t('products.comparisonLimit'), {
+          description: t('products.comparisonLimitDesc'),
           position: "top-center",
         });
       }
@@ -180,13 +171,13 @@ export default function Produktas() {
           <div className="text-center">
             <Package className="w-16 h-16 text-muted-foreground/30 mx-auto mb-4" />
           <h1 className="font-heading text-2xl font-bold mb-2">
-              Konstruktorius nerastas
+              {t('products.constructorNotFound')}
             </h1>
             <p className="text-muted-foreground mb-6">
-              Šio konstruktoriaus nepavyko rasti. Galite peržiūrėti kitus konstruktorius.
+              {t('products.constructorNotFoundDesc')}
             </p>
             <Button asChild>
-              <Link to="/produktai/visi">Grįžti į kolekciją</Link>
+              <Link to="/produktai/visi">{t('products.backToAll')}</Link>
             </Button>
           </div>
         </div>
@@ -208,10 +199,10 @@ export default function Produktas() {
   const finalPrice = displayPrice + selectedVariantDetails.priceAdjustment;
 
   const productSpecs = [
-    { label: "Detalių skaičius", value: detailsCount > 0 ? `${detailsCount} vnt.` : "—" },
-    { label: "Sudėtingumas", value: "Pažengusiems" },
-    { label: "Amžiaus grupė", value: "16+" },
-    { label: "Surinkimo laikas", value: "~20–30 val." },
+    { label: t('products.partsCount'), value: detailsCount > 0 ? `${detailsCount} ${t('products.pieces')}` : "—" },
+    { label: t('products.difficulty'), value: t('products.advanced') },
+    { label: t('products.ageGroup'), value: "16+" },
+    { label: t('products.assemblyTime'), value: `~20–30 ${t('products.hours')}` },
   ];
 
   return (
@@ -232,8 +223,8 @@ export default function Produktas() {
           description: product.short_desc || product.description,
         }}
         breadcrumbs={[
-          { name: 'Pradžia', url: '/' },
-          { name: 'Konstruktoriai', url: '/produktai/visi' },
+          { name: t('nav.home'), url: '/' },
+          { name: t('nav.constructors'), url: '/produktai/visi' },
           { name: product.title, url: `/produktas/${product.slug}` },
         ]}
       />
@@ -244,7 +235,7 @@ export default function Produktas() {
           className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground transition-colors mb-8"
         >
           <ArrowLeft className="w-4 h-4 mr-2" />
-          Grįžti į konstruktorius
+          {t('products.backToConstructors')}
         </Link>
 
         {/* Product Grid */}
@@ -280,7 +271,7 @@ export default function Produktas() {
                   <span className="text-lg text-muted-foreground line-through">
                     {formatPrice(product.price_eur + selectedVariantDetails.priceAdjustment)}
                   </span>
-                  <Badge className="bg-red-500 text-white font-bold">Akcija</Badge>
+                  <Badge className="bg-red-500 text-white font-bold">{t('products.sale')}</Badge>
                 </>
               ) : (
                 <>
@@ -299,12 +290,12 @@ export default function Produktas() {
             {/* Status Badge */}
             <div className="flex items-center gap-3 mb-6">
               <Badge className={`text-sm px-3 py-1 ${isPreOrder ? "bg-primary text-primary-foreground" : "bg-success text-success-foreground"}`}>
-                {isPreOrder ? "PRE-ORDER" : "SANDĖLYJE"}
+                {isPreOrder ? t('products.preOrder') : t('products.inStock')}
               </Badge>
               {detailsCount > 0 && (
                 <span className="flex items-center gap-1.5 text-sm text-muted-foreground">
                   <Package className="w-4 h-4" />
-                  {detailsCount} detalių
+                  {detailsCount} {t('products.details')}
                 </span>
               )}
             </div>
@@ -315,23 +306,29 @@ export default function Produktas() {
                 <div className="flex items-center gap-3 mb-2">
                   <Clock className="w-5 h-5 text-primary" />
                   <span className="font-heading font-semibold">
-                    Pre-order: {eta}
+                    {t('products.preOrderEta')} {eta}
                   </span>
                 </div>
                 <p className="text-sm text-muted-foreground">
-                  Atšaukti galima bet kada iki išsiuntimo – grąžiname pilną sumą
+                  {t('products.cancelAnytime')}
                 </p>
               </div>
             )}
 
             {/* Trust Row */}
             <div className="flex flex-wrap gap-4 mb-6">
-              {trustItems.map((item, idx) => (
-                <span key={idx} className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <item.icon className="w-4 h-4 text-primary" />
-                  {item.text}
-                </span>
-              ))}
+              <span className="flex items-center gap-2 text-sm text-muted-foreground">
+                <Truck className="w-4 h-4 text-primary" />
+                {t('products.freeShipping')}
+              </span>
+              <span className="flex items-center gap-2 text-sm text-muted-foreground">
+                <RotateCcw className="w-4 h-4 text-primary" />
+                {t('products.returns14days')}
+              </span>
+              <span className="flex items-center gap-2 text-sm text-muted-foreground">
+                <Puzzle className="w-4 h-4 text-primary" />
+                {t('products.freeMissingParts')}
+              </span>
             </div>
 
             {/* Variant Selector */}
@@ -352,7 +349,7 @@ export default function Produktas() {
                 onClick={handleAddToCart}
               >
                 <ShoppingCart className="w-5 h-5 mr-2" />
-                {isPreOrder ? "Užsisakyti (pre-order)" : "Į krepšelį"}
+                {isPreOrder ? t('products.orderPreOrder') : t('products.addToCart')}
               </Button>
               
               {/* Comparison button */}
@@ -361,7 +358,7 @@ export default function Produktas() {
                 variant={isInComparison(product.id) ? "secondary" : "outline"}
                 className="h-14"
                 onClick={handleToggleComparison}
-                title={isInComparison(product.id) ? "Pašalinti iš palyginimo" : "Pridėti palyginimui"}
+                title={isInComparison(product.id) ? t('products.removeFromCompare') : t('products.addToCompare')}
               >
                 {isInComparison(product.id) ? (
                   <Check className="w-5 h-5" />
@@ -374,7 +371,7 @@ export default function Produktas() {
             {/* CTA subtext */}
             {isPreOrder && (
               <p className="text-center text-sm text-muted-foreground mt-3">
-                Atšaukti galima iki išsiuntimo. Grąžiname pilną sumą.
+                {t('products.cancelAnytime')}
               </p>
             )}
 
@@ -395,7 +392,7 @@ export default function Produktas() {
               <AccordionTrigger className="hover:no-underline py-5">
                 <span className="flex items-center gap-3 font-heading font-semibold">
                   <Package className="w-5 h-5 text-primary" />
-                  Specifikacijos
+                  {t('products.specifications')}
                 </span>
               </AccordionTrigger>
               <AccordionContent className="pb-6">
@@ -415,17 +412,27 @@ export default function Produktas() {
               <AccordionTrigger className="hover:no-underline py-5">
                 <span className="flex items-center gap-3 font-heading font-semibold">
                   <Shield className="w-5 h-5 text-primary" />
-                  Kas dėžėje
+                  {t('products.boxContents')}
                 </span>
               </AccordionTrigger>
               <AccordionContent className="pb-6">
                 <ul className="space-y-2">
-                  {boxContents.map((item, idx) => (
-                    <li key={idx} className="flex items-center gap-2 text-muted-foreground">
-                      <span className="w-1.5 h-1.5 rounded-full bg-primary" />
-                      {item}
-                    </li>
-                  ))}
+                  <li className="flex items-center gap-2 text-muted-foreground">
+                    <span className="w-1.5 h-1.5 rounded-full bg-primary" />
+                    {t('products.boxContentsItems.allParts')}
+                  </li>
+                  <li className="flex items-center gap-2 text-muted-foreground">
+                    <span className="w-1.5 h-1.5 rounded-full bg-primary" />
+                    {t('products.boxContentsItems.instructions')}
+                  </li>
+                  <li className="flex items-center gap-2 text-muted-foreground">
+                    <span className="w-1.5 h-1.5 rounded-full bg-primary" />
+                    {t('products.boxContentsItems.spareParts')}
+                  </li>
+                  <li className="flex items-center gap-2 text-muted-foreground">
+                    <span className="w-1.5 h-1.5 rounded-full bg-primary" />
+                    {t('products.boxContentsItems.displayStand')}
+                  </li>
                 </ul>
               </AccordionContent>
             </AccordionItem>
@@ -435,20 +442,20 @@ export default function Produktas() {
               <AccordionTrigger className="hover:no-underline py-5">
                 <span className="flex items-center gap-3 font-heading font-semibold">
                   <Puzzle className="w-5 h-5 text-primary" />
-                  Trūkstamos detalės
+                  {t('products.missingParts')}
                 </span>
               </AccordionTrigger>
               <AccordionContent className="pb-6">
                 <p className="text-muted-foreground mb-4">
-                  Rinkinius patikriname prieš išsiuntimą. Jei vis dėlto trūktų detalės, išspręsime nemokamai:
+                  {t('products.missingPartsDesc')}
                 </p>
                 <ol className="space-y-2 text-muted-foreground">
-                  <li>1. Parašykite per kontaktų formą arba el. paštu</li>
-                  <li>2. Nurodykite modelio pavadinimą ir detalės numerį</li>
-                  <li>3. Trūkstamą detalę išsiunčiame per 5 darbo dienas</li>
+                  <li>1. {t('products.missingPartsStep1')}</li>
+                  <li>2. {t('products.missingPartsStep2')}</li>
+                  <li>3. {t('products.missingPartsStep3')}</li>
                 </ol>
                 <p className="text-sm text-muted-foreground mt-4">
-                  Rašykite: <a href="mailto:support@ibrix.lt" className="text-primary hover:underline">support@ibrix.lt</a>
+                  {t('misc.emailUs')}: <a href="mailto:support@ibrix.lt" className="text-primary hover:underline">support@ibrix.lt</a>
                 </p>
               </AccordionContent>
             </AccordionItem>
@@ -458,7 +465,7 @@ export default function Produktas() {
               <AccordionTrigger className="hover:no-underline py-5">
                 <span className="flex items-center gap-3 font-heading font-semibold">
                   <HelpCircle className="w-5 h-5 text-primary" />
-                  Dažnai užduodami klausimai
+                  {t('misc.faqTitle')}
                 </span>
               </AccordionTrigger>
               <AccordionContent className="pb-6">
@@ -477,7 +484,7 @@ export default function Produktas() {
               <AccordionTrigger className="hover:no-underline py-5">
                 <span className="flex items-center gap-3 font-heading font-semibold">
                   <Star className="w-5 h-5 text-primary" />
-                  Atsiliepimai
+                  {t('nav.reviews')}
                 </span>
               </AccordionTrigger>
               <AccordionContent className="pb-6">

@@ -1,5 +1,6 @@
 import { useState, useMemo, useEffect } from "react";
 import { Link, useParams, useSearchParams } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { Package, Clock, ShoppingCart, Filter, Loader2, Grid3X3, LayoutGrid, ChevronRight, Eye, ArrowUpDown } from "lucide-react";
 import { PageLayout } from "@/components/layout/PageLayout";
 import { Button } from "@/components/ui/button";
@@ -38,6 +39,7 @@ const SPECIAL_CATEGORIES = {
 
 export default function Produktai() {
   const { category: categorySlug } = useParams<{ category?: string }>();
+  const { t } = useTranslation();
   const [searchParams, setSearchParams] = useSearchParams();
   const searchQuery = searchParams.get('search') || '';
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
