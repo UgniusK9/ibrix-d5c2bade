@@ -145,12 +145,18 @@ export function Header() {
                   <UserProfileDropdown />
                 </div>
               ) : (
-                <Button asChild variant="ghost" size="sm" className="hidden lg:flex">
-                  <Link to="/auth">
-                    <User className="h-4 w-4 mr-2" />
-                    {t('header.login')}
-                  </Link>
-                </Button>
+                <div className="hidden lg:flex items-center gap-2">
+                  <Button asChild variant="outline" size="sm" className="border-primary text-primary hover:bg-primary hover:text-primary-foreground transition-colors">
+                    <Link to="/auth/login">
+                      {t('header.login')}
+                    </Link>
+                  </Button>
+                  <Button asChild size="sm" className="bg-accent hover:bg-accent/90 text-accent-foreground">
+                    <Link to="/auth/signup/step-1">
+                      {t('header.signUp')}
+                    </Link>
+                  </Button>
+                </div>
               )}
 
               {/* Language Selector */}
@@ -215,7 +221,7 @@ export function Header() {
                           <span className="font-medium">{t('account.myAccount')}</span>
                         </Link>
                         <Link
-                          to="/account"
+                          to="/orders"
                           onClick={() => setMobileMenuOpen(false)}
                           className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-muted transition-colors"
                         >
@@ -256,12 +262,18 @@ export function Header() {
                         </button>
                       </div>
                     ) : (
-                      <Button asChild variant="outline" className="w-full">
-                        <Link to="/auth" onClick={() => setMobileMenuOpen(false)}>
-                          <User className="h-4 w-4 mr-2" />
-                          {t('header.login')}
-                        </Link>
-                      </Button>
+                      <div className="space-y-2">
+                        <Button asChild variant="outline" className="w-full border-primary text-primary hover:bg-primary hover:text-primary-foreground">
+                          <Link to="/auth/login" onClick={() => setMobileMenuOpen(false)}>
+                            {t('header.login')}
+                          </Link>
+                        </Button>
+                        <Button asChild className="w-full bg-accent hover:bg-accent/90 text-accent-foreground">
+                          <Link to="/auth/signup/step-1" onClick={() => setMobileMenuOpen(false)}>
+                            {t('header.signUp')}
+                          </Link>
+                        </Button>
+                      </div>
                     )}
                   </div>
                 </SheetContent>

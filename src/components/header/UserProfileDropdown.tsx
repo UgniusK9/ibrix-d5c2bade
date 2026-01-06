@@ -108,7 +108,7 @@ export function UserProfileDropdown() {
           </DropdownMenuItem>
 
           <DropdownMenuItem asChild>
-            <Link to="/account" className="flex items-center gap-3 cursor-pointer">
+            <Link to="/orders" className="flex items-center gap-3 cursor-pointer">
               <Package className="h-4 w-4 text-muted-foreground" />
               <span>{t('account.myOrders')}</span>
             </Link>
@@ -125,6 +125,13 @@ export function UserProfileDropdown() {
             <Link to="/account/credits" className="flex items-center gap-3 cursor-pointer">
               <Gift className="h-4 w-4 text-muted-foreground" />
               <span>{t('account.rewards')}</span>
+            </Link>
+          </DropdownMenuItem>
+
+          <DropdownMenuItem asChild>
+            <Link to="/account/settings" className="flex items-center gap-3 cursor-pointer">
+              <Settings className="h-4 w-4 text-muted-foreground" />
+              <span>{t('account.settings')}</span>
             </Link>
           </DropdownMenuItem>
         </div>
