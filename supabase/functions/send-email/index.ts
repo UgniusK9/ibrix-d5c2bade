@@ -635,6 +635,45 @@ function getAdminOrderNotificationEmail(data: any): { subject: string; html: str
   };
 }
 
+// Inquiry reply email for customers
+function getInquiryReplyEmail(data: any): { subject: string; html: string } {
+  const { customerName, replyMessage, conversationUrl, originalTopic } = data;
+
+  const content = `
+    <h2 style="margin:0 0 16px;font-size:22px;font-weight:700;color:#1f2937;">Sveiki, ${customerName}!</h2>
+    
+    <p style="color:#4b5563;margin:0 0 16px;line-height:1.6;">
+      Atsakėme į jūsų užklausą: <strong>${originalTopic}</strong>
+    </p>
+
+    <!-- Reply Message -->
+    <div style="background:#f0fdf4;border-left:4px solid #22c55e;padding:20px;border-radius:0 8px 8px 0;margin:24px 0;">
+      <p style="margin:0;color:#1f2937;line-height:1.6;white-space:pre-wrap;">${replyMessage}</p>
+    </div>
+
+    <p style="color:#4b5563;margin:24px 0 16px;line-height:1.6;">
+      Jei turite papildomų klausimų, galite tęsti pokalbį:
+    </p>
+
+    <!-- CTA Button -->
+    <div style="text-align:center;margin:32px 0;">
+      <a href="${conversationUrl}" style="display:inline-block;background:#4f46e5;color:#ffffff;padding:14px 32px;text-decoration:none;border-radius:8px;font-weight:600;font-size:16px;">
+        Tęsti pokalbį
+      </a>
+    </div>
+
+    <p style="color:#9ca3af;font-size:13px;margin-top:24px;">
+      Arba atidarykite šią nuorodą naršyklėje:<br>
+      <a href="${conversationUrl}" style="color:#4f46e5;word-break:break-all;">${conversationUrl}</a>
+    </p>
+  `;
+
+  return {
+    subject: `Atsakymas į jūsų užklausą – ${originalTopic}`,
+    html: wrapEmail(content),
+  };
+}
+
 // Helper functions
 function getShippingMethodLabel(method: string): string {
   const labels: Record<string, string> = {
@@ -701,6 +740,10 @@ Deno.serve(async (req: Request) => {
         break;
       case 'newsletter':
         emailContent = getNewsletterEmail(data);
+        break;
+      case 'inquiry_reply':
+        emailContent = getInquiryReplyEmail(data);
+        recipientEmail = data.to || email;
         break;
       case 'admin_order_notification':
         emailContent = getAdminOrderNotificationEmail(data);
