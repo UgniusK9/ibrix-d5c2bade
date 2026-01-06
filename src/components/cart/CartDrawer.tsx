@@ -10,9 +10,11 @@ import {
 } from "@/components/ui/sheet";
 import { useCartStore, formatCartPrice } from "@/stores/cartStore";
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 
 export function CartDrawer() {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const { 
     items, 
     isLoading,
@@ -36,11 +38,11 @@ export function CartDrawer() {
     <Sheet open={isOpen} onOpenChange={setOpen}>
       <SheetContent className="w-full sm:max-w-lg flex flex-col h-full">
         <SheetHeader className="flex-shrink-0">
-          <SheetTitle className="font-heading">Krepšelis</SheetTitle>
+          <SheetTitle className="font-heading">{t('cart.title')}</SheetTitle>
           <SheetDescription>
             {totalItems === 0 
-              ? "Jūsų krepšelis tuščias" 
-              : `${totalItems} ${totalItems === 1 ? 'prekė' : totalItems < 10 ? 'prekės' : 'prekių'} krepšelyje`
+              ? t('cart.empty')
+              : `${totalItems} ${t('order.items')}`
             }
           </SheetDescription>
         </SheetHeader>
@@ -50,9 +52,9 @@ export function CartDrawer() {
             <div className="flex-1 flex items-center justify-center">
               <div className="text-center">
                 <ShoppingCart className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                <p className="text-muted-foreground">Jūsų krepšelis tuščias</p>
+                <p className="text-muted-foreground">{t('cart.empty')}</p>
                 <p className="text-sm text-muted-foreground/70 mt-1">
-                  Pridėkite prekių iš mūsų kolekcijos
+                  {t('cart.continueShopping')}
                 </p>
               </div>
             </div>
@@ -83,7 +85,7 @@ export function CartDrawer() {
                         </h4>
                         {item.eta && (
                           <p className="text-xs text-muted-foreground mt-0.5">
-                            Pristatymas: {item.eta}
+                            {t('nav.delivery')}: {item.eta}
                           </p>
                         )}
                         <div className="flex items-center gap-2 mt-1">
@@ -91,7 +93,7 @@ export function CartDrawer() {
                             variant="outline" 
                             className={`text-xs ${item.status === 'in_stock' ? 'border-success/50 text-success' : 'border-primary/50 text-primary'}`}
                           >
-                            {item.status === 'in_stock' ? 'Sandėlyje' : 'Pre-order'}
+                            {item.status === 'in_stock' ? t('products.inStock') : t('products.preOrder')}
                           </Badge>
                         </div>
                         <p className="font-semibold text-sm mt-1">
@@ -139,14 +141,14 @@ export function CartDrawer() {
               {/* Fixed checkout section */}
               <div className="flex-shrink-0 space-y-4 pt-4 border-t bg-background mt-4">
                 <div className="flex justify-between items-center">
-                  <span className="text-base font-medium">Viso</span>
+                  <span className="text-base font-medium">{t('cart.total')}</span>
                   <span className="text-xl font-bold font-heading">
                     {formatCartPrice(totalPrice, 'EUR')}
                   </span>
                 </div>
                 
                 <p className="text-xs text-muted-foreground text-center">
-                  Nemokamas pristatymas į paštomatą
+                  {t('header.freeShipping')}
                 </p>
                 
                 <Button 
@@ -158,12 +160,12 @@ export function CartDrawer() {
                   {isLoading ? (
                     <>
                       <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                      Kraunama...
+                      {t('common.loading')}
                     </>
                   ) : (
                     <>
                       <ArrowRight className="w-4 h-4 mr-2" />
-                      Pereiti į apmokėjimą
+                      {t('cart.checkout')}
                     </>
                   )}
                 </Button>

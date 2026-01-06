@@ -65,9 +65,9 @@ export default function Auth() {
       newErrors.confirm = 'Slaptažodžiai nesutampa';
     }
 
-    // Require CAPTCHA for registration
-    if (mode === 'register' && !captchaToken) {
-      newErrors.captcha = 'Prašome patvirtinti, kad nesate robotas';
+    // Require CAPTCHA for registration and login
+    if ((mode === 'register' || (mode === 'login' && loginMethod === 'password')) && !captchaToken) {
+      newErrors.captcha = t('auth.captchaRequired');
     }
 
     setErrors(newErrors);
@@ -84,17 +84,29 @@ export default function Auth() {
       let result: { error: Error | null };
 
       if (mode === 'login' && loginMethod === 'password') {
+        // Verify CAPTCHA server-side first for login
+        const { data: captchaResult, error: captchaError } = await supabase.functions.invoke('verify-captcha', {
+          body: { token: captchaToken }
+        });
+        
+        if (captchaError || !captchaResult?.success) {
+          toast.error(t('auth.captchaRequired'));
+          setCaptchaToken(null);
+          setLoading(false);
+          return;
+        }
+
         result = await signInWithPassword(email, password);
         if (result.error) {
           if (result.error.message.includes('Invalid login')) {
-            toast.error('Neteisingas el. paštas arba slaptažodis');
+            toast.error(t('auth.invalidCredentials'));
           } else if (result.error.message.includes('Email not confirmed')) {
-            toast.error('Patvirtinkite el. paštą prieš prisijungdami');
+            toast.error(t('auth.emailNotConfirmed'));
           } else {
-            toast.error('Prisijungti nepavyko. Bandykite dar kartą.');
+            toast.error(t('common.error'));
           }
         } else {
-          toast.success('Sėkmingai prisijungėte!');
+          toast.success(t('common.success'));
         }
       } else if (mode === 'login' && loginMethod === 'magic-link') {
         result = await signInWithMagicLink(email);
@@ -409,18 +421,39 @@ export default function Auth() {
                     </div>
                   )}
 
-                  <Button type="submit" className="w-full h-12 text-base" disabled={loading}>
+                  {/* CAPTCHA for password login */}
+                  {loginMethod === 'password' && (
+                    <div className="flex justify-center">
+                      <Turnstile
+                        siteKey={TURNSTILE_SITE_KEY}
+                        onSuccess={(token) => {
+                          setCaptchaToken(token);
+                          setErrors((prev) => ({ ...prev, captcha: undefined }));
+                        }}
+                        onError={() => {
+                          setCaptchaToken(null);
+                          setErrors((prev) => ({ ...prev, captcha: t('auth.captchaRequired') }));
+                        }}
+                        onExpire={() => setCaptchaToken(null)}
+                      />
+                      {errors.captcha && (
+                        <p className="text-sm text-destructive mt-1.5">{errors.captcha}</p>
+                      )}
+                    </div>
+                  )}
+
+                  <Button type="submit" className="w-full h-12 text-base" disabled={loading || (loginMethod === 'password' && !captchaToken)}>
                     {loading ? (
                       <>
                         <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                        Palaukite...
+                        {t('auth.loggingIn')}
                       </>
                     ) : loginMethod === 'password' ? (
-                      'Prisijungti'
+                      t('auth.login')
                     ) : (
                       <>
                         <Mail className="w-4 h-4 mr-2" />
-                        Gauti prisijungimo nuorodą
+                        {t('auth.getMagicLink')}
                       </>
                     )}
                   </Button>
