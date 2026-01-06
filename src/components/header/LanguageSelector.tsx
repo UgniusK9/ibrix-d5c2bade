@@ -1,5 +1,4 @@
 import { useTranslation } from 'react-i18next';
-import { Globe } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -9,8 +8,8 @@ import {
 import { Button } from '@/components/ui/button';
 
 const languages = [
-  { code: 'lt', name: 'Lietuvių' },
-  { code: 'en', name: 'English' },
+  { code: 'lt', name: 'Lietuvių', flag: '🇱🇹' },
+  { code: 'en', name: 'English', flag: '🇬🇧' },
 ];
 
 export function LanguageSelector() {
@@ -26,21 +25,21 @@ export function LanguageSelector() {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="icon" className="h-9 w-9" title={currentLang.name}>
-          <Globe className="h-5 w-5" />
+        <Button variant="ghost" size="icon" className="h-9 w-9 text-lg" title={currentLang.name}>
+          {currentLang.flag}
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-36">
+      <DropdownMenuContent align="end" className="w-40">
         {languages.map((lang) => (
           <DropdownMenuItem
             key={lang.code}
             onClick={() => handleLanguageChange(lang.code)}
-            className={`flex items-center justify-between cursor-pointer ${
+            className={`flex items-center gap-2 cursor-pointer ${
               i18n.language === lang.code ? 'bg-primary/10 text-primary' : ''
             }`}
           >
+            <span className="text-lg">{lang.flag}</span>
             <span className="font-medium">{lang.name}</span>
-            <span className="text-xs text-muted-foreground uppercase">{lang.code}</span>
           </DropdownMenuItem>
         ))}
       </DropdownMenuContent>

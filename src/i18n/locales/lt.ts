@@ -30,6 +30,7 @@ export const lt = {
     viewAll: 'Peržiūrėti viską',
     learnMore: 'Sužinoti daugiau',
     readMore: 'Skaityti daugiau',
+    step: 'Žingsnis',
   },
   
   // Navigation
@@ -256,6 +257,8 @@ export const lt = {
     loginRequired: 'Prisijunkite, kad galėtumėte išsaugoti produktus',
     giftCardActivated: 'Dovanų kuponas aktyvuotas',
     giftCardInvalid: 'Neteisingas arba panaudotas kodas',
+    myDeals: 'Mano pasiūlymai',
+    walletAutoApply: 'Ši suma bus automatiškai pritaikyta prie jūsų sekančio pirkinio.',
   },
   
   // Gift Cards

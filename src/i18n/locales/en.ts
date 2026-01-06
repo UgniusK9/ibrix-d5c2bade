@@ -30,6 +30,7 @@ export const en = {
     viewAll: 'View all',
     learnMore: 'Learn more',
     readMore: 'Read more',
+    step: 'Step',
   },
   
   // Navigation
@@ -256,6 +257,8 @@ export const en = {
     loginRequired: 'Please login to save products',
     giftCardActivated: 'Gift card activated',
     giftCardInvalid: 'Invalid or used code',
+    myDeals: 'My Deals',
+    walletAutoApply: 'This amount will be automatically applied to your next purchase.',
   },
   
   // Gift Cards
