@@ -14,6 +14,30 @@ export type Database = {
   }
   public: {
     Tables: {
+      app_settings: {
+        Row: {
+          created_at: string
+          description: string | null
+          key: string
+          updated_at: string
+          value: Json
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          key: string
+          updated_at?: string
+          value: Json
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          key?: string
+          updated_at?: string
+          value?: Json
+        }
+        Relationships: []
+      }
       balance_requests: {
         Row: {
           created_at: string
@@ -624,8 +648,12 @@ export type Database = {
           balance_paid_at: string | null
           balance_total_eur: number
           created_at: string
+          credits_earned_cents: number | null
+          credits_redeemed_cents: number | null
+          credits_status: string | null
           currency: string
           deposit_total_eur: number
+          discount_cents: number | null
           discount_eur: number
           email: string
           fbclid: string | null
@@ -642,6 +670,7 @@ export type Database = {
           offer_code: string | null
           offer_id: string | null
           order_number: string
+          paid_amount_cents: number | null
           paid_at: string | null
           payment_method_code: string | null
           payment_plan: Database["public"]["Enums"]["payment_plan"]
@@ -651,9 +680,12 @@ export type Database = {
           preorder_eta_weeks_min: number | null
           preorder_flag: boolean
           shipping_address_json: Json
+          shipping_cents: number | null
           shipping_eur: number
           status: Database["public"]["Enums"]["order_status"]
+          subtotal_cents: number | null
           subtotal_eur: number
+          total_cents: number | null
           total_eur: number
           updated_at: string
           user_id: string | null
@@ -666,8 +698,12 @@ export type Database = {
           balance_paid_at?: string | null
           balance_total_eur: number
           created_at?: string
+          credits_earned_cents?: number | null
+          credits_redeemed_cents?: number | null
+          credits_status?: string | null
           currency?: string
           deposit_total_eur: number
+          discount_cents?: number | null
           discount_eur?: number
           email: string
           fbclid?: string | null
@@ -684,6 +720,7 @@ export type Database = {
           offer_code?: string | null
           offer_id?: string | null
           order_number: string
+          paid_amount_cents?: number | null
           paid_at?: string | null
           payment_method_code?: string | null
           payment_plan?: Database["public"]["Enums"]["payment_plan"]
@@ -693,9 +730,12 @@ export type Database = {
           preorder_eta_weeks_min?: number | null
           preorder_flag?: boolean
           shipping_address_json?: Json
+          shipping_cents?: number | null
           shipping_eur?: number
           status?: Database["public"]["Enums"]["order_status"]
+          subtotal_cents?: number | null
           subtotal_eur: number
+          total_cents?: number | null
           total_eur: number
           updated_at?: string
           user_id?: string | null
@@ -708,8 +748,12 @@ export type Database = {
           balance_paid_at?: string | null
           balance_total_eur?: number
           created_at?: string
+          credits_earned_cents?: number | null
+          credits_redeemed_cents?: number | null
+          credits_status?: string | null
           currency?: string
           deposit_total_eur?: number
+          discount_cents?: number | null
           discount_eur?: number
           email?: string
           fbclid?: string | null
@@ -726,6 +770,7 @@ export type Database = {
           offer_code?: string | null
           offer_id?: string | null
           order_number?: string
+          paid_amount_cents?: number | null
           paid_at?: string | null
           payment_method_code?: string | null
           payment_plan?: Database["public"]["Enums"]["payment_plan"]
@@ -735,9 +780,12 @@ export type Database = {
           preorder_eta_weeks_min?: number | null
           preorder_flag?: boolean
           shipping_address_json?: Json
+          shipping_cents?: number | null
           shipping_eur?: number
           status?: Database["public"]["Enums"]["order_status"]
+          subtotal_cents?: number | null
           subtotal_eur?: number
+          total_cents?: number | null
           total_eur?: number
           updated_at?: string
           user_id?: string | null
@@ -1406,26 +1454,50 @@ export type Database = {
       }
       users: {
         Row: {
+          country: string | null
           created_at: string
+          date_of_birth: string | null
           email: string
+          first_name: string | null
           id: string
           last_login_at: string | null
+          last_name: string | null
+          marketing_opt_in: boolean | null
+          marketing_opt_in_at: string | null
+          personalization_opt_in: boolean | null
+          personalization_opt_in_at: string | null
           role: Database["public"]["Enums"]["app_role"]
           updated_at: string
         }
         Insert: {
+          country?: string | null
           created_at?: string
+          date_of_birth?: string | null
           email: string
+          first_name?: string | null
           id: string
           last_login_at?: string | null
+          last_name?: string | null
+          marketing_opt_in?: boolean | null
+          marketing_opt_in_at?: string | null
+          personalization_opt_in?: boolean | null
+          personalization_opt_in_at?: string | null
           role?: Database["public"]["Enums"]["app_role"]
           updated_at?: string
         }
         Update: {
+          country?: string | null
           created_at?: string
+          date_of_birth?: string | null
           email?: string
+          first_name?: string | null
           id?: string
           last_login_at?: string | null
+          last_name?: string | null
+          marketing_opt_in?: boolean | null
+          marketing_opt_in_at?: string | null
+          personalization_opt_in?: boolean | null
+          personalization_opt_in_at?: string | null
           role?: Database["public"]["Enums"]["app_role"]
           updated_at?: string
         }
@@ -1437,8 +1509,13 @@ export type Database = {
           created_at: string
           description: string | null
           id: string
+          order_id: string | null
+          reason: string | null
           reference_id: string | null
           reference_type: string | null
+          status: string | null
+          stripe_checkout_session_id: string | null
+          stripe_payment_intent_id: string | null
           type: string
           wallet_id: string
         }
@@ -1447,8 +1524,13 @@ export type Database = {
           created_at?: string
           description?: string | null
           id?: string
+          order_id?: string | null
+          reason?: string | null
           reference_id?: string | null
           reference_type?: string | null
+          status?: string | null
+          stripe_checkout_session_id?: string | null
+          stripe_payment_intent_id?: string | null
           type: string
           wallet_id: string
         }
@@ -1457,12 +1539,24 @@ export type Database = {
           created_at?: string
           description?: string | null
           id?: string
+          order_id?: string | null
+          reason?: string | null
           reference_id?: string | null
           reference_type?: string | null
+          status?: string | null
+          stripe_checkout_session_id?: string | null
+          stripe_payment_intent_id?: string | null
           type?: string
           wallet_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "wallet_transactions_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "wallet_transactions_wallet_id_fkey"
             columns: ["wallet_id"]

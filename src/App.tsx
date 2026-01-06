@@ -39,6 +39,13 @@ import AdminVerification from "./pages/AdminVerification";
 import GiftCards from "./pages/GiftCards";
 import Palyginti from "./pages/Palyginti";
 import Atsiliepimai from "./pages/Atsiliepimai";
+import AuthLanding from "./pages/auth/AuthLanding";
+import AuthLogin from "./pages/auth/AuthLogin";
+import SignupStep1 from "./pages/auth/SignupStep1";
+import SignupStep2 from "./pages/auth/SignupStep2";
+import VerifyEmail from "./pages/auth/VerifyEmail";
+import AuthSuccess from "./pages/auth/AuthSuccess";
+import Credits from "./pages/account/Credits";
 
 // Global cart components wrapper
 function CartComponents() {
@@ -96,13 +103,24 @@ const App = () => (
                 <Route path="/dovanu-kuponai" element={<GiftCards />} />
                 <Route path="/palyginti" element={<Palyginti />} />
                 <Route path="/atsiliepimai" element={<Atsiliepimai />} />
-                <Route path="/auth" element={<Auth />} />
+                <Route path="/auth" element={<AuthLanding />} />
+                <Route path="/auth/login" element={<AuthLogin />} />
+                <Route path="/auth/signup/step-1" element={<SignupStep1 />} />
+                <Route path="/auth/signup/step-2" element={<SignupStep2 />} />
+                <Route path="/auth/verify-email" element={<VerifyEmail />} />
+                <Route path="/auth/success" element={<AuthSuccess />} />
                 <Route path="/auth/reset-password" element={<ResetPassword />} />
+                <Route path="/auth/legacy" element={<Auth />} />
 
                 {/* Protected: Customer account */}
                 <Route path="/account" element={
                   <ProtectedRoute>
                     <Account />
+                  </ProtectedRoute>
+                } />
+                <Route path="/account/credits" element={
+                  <ProtectedRoute>
+                    <Credits />
                   </ProtectedRoute>
                 } />
 
