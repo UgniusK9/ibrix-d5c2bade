@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { 
   ChevronDown, Package, CreditCard, Truck, MapPin, Calendar, 
   ExternalLink, Clock, CheckCircle2, Copy, Box, AlertCircle,
-  RotateCcw, Wallet, FileText, Download, HelpCircle
+  RotateCcw, Wallet, FileText, Download, HelpCircle, ShoppingCart
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -46,6 +46,7 @@ interface ShipmentEvent {
 
 interface OrderItem {
   id: string;
+  product_id?: string;
   title_snapshot: string;
   quantity: number;
   unit_price_eur: number;
@@ -84,6 +85,7 @@ interface OrderCardProps {
   balanceRequest?: BalanceRequest | null;
   onPayBalance?: () => void;
   onRequestRefund?: () => void;
+  onReorder?: (items: OrderItem[]) => void;
   isLoading?: boolean;
 }
 
@@ -163,6 +165,7 @@ export function OrderCard({
   balanceRequest,
   onPayBalance,
   onRequestRefund,
+  onReorder,
   isLoading 
 }: OrderCardProps) {
   const [isOpen, setIsOpen] = useState(false);
@@ -635,6 +638,12 @@ export function OrderCard({
                 <Button variant="outline" onClick={() => setIsSupportOpen(true)}>
                   <HelpCircle className="w-4 h-4 mr-2" />
                   Turiu klausimą
+                </Button>
+              )}
+              {items && items.length > 0 && onReorder && (
+                <Button variant="outline" onClick={() => onReorder(items)}>
+                  <ShoppingCart className="w-4 h-4 mr-2" />
+                  Užsakyti dar kartą
                 </Button>
               )}
             </div>

@@ -1,12 +1,13 @@
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { User, Mail, MapPin, Save, Loader2, ArrowLeft } from 'lucide-react';
+import { User, Mail, MapPin, Save, Loader2, ArrowLeft, AlertCircle, CheckCircle2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { PageLayout } from '@/components/layout/PageLayout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -30,6 +31,9 @@ export default function Settings() {
   const { t } = useTranslation();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [savingEmail, setSavingEmail] = useState(false);
+  const [emailSent, setEmailSent] = useState(false);
+  const [newEmail, setNewEmail] = useState('');
   
   const [profile, setProfile] = useState<ProfileData>({
     first_name: '',
@@ -65,9 +69,9 @@ export default function Settings() {
             email: data.email || '',
             country: data.country,
           });
+          setNewEmail(data.email || '');
         }
         
-        // Load saved address from localStorage (or could be stored in DB)
         const savedAddress = localStorage.getItem(`user_address_${user.id}`);
         if (savedAddress) {
           setAddress(JSON.parse(savedAddress));
@@ -98,7 +102,6 @@ export default function Settings() {
       
       if (error) throw error;
       
-      // Save address to localStorage
       localStorage.setItem(`user_address_${user.id}`, JSON.stringify(address));
       
       toast.success(t('settings.saved'));
@@ -107,6 +110,37 @@ export default function Settings() {
       toast.error(t('common.error'));
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleChangeEmail = async () => {
+    if (!user || !newEmail || newEmail === profile.email) return;
+    
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(newEmail)) {
+      toast.error(t('settings.invalidEmail'));
+      return;
+    }
+    
+    setSavingEmail(true);
+    try {
+      const { error } = await supabase.auth.updateUser({
+        email: newEmail,
+      });
+      
+      if (error) throw error;
+      
+      setEmailSent(true);
+      toast.success(t('settings.emailVerificationSent'));
+    } catch (error: any) {
+      console.error('Error changing email:', error);
+      if (error.message?.includes('already registered')) {
+        toast.error(t('settings.emailAlreadyUsed'));
+      } else {
+        toast.error(t('common.error'));
+      }
+    } finally {
+      setSavingEmail(false);
     }
   };
 
@@ -123,7 +157,6 @@ export default function Settings() {
   return (
     <PageLayout>
       <div className="container py-8 md:py-12 max-w-2xl">
-        {/* Back Button */}
         <Link 
           to="/account" 
           className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground mb-6 transition-colors"
@@ -136,7 +169,6 @@ export default function Settings() {
         <p className="text-muted-foreground mb-8">{t('settings.subtitle')}</p>
 
         <div className="space-y-6">
-          {/* Personal Information */}
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
@@ -169,31 +201,69 @@ export default function Settings() {
             </CardContent>
           </Card>
 
-          {/* Email */}
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Mail className="w-5 h-5 text-primary" />
                 {t('settings.email')}
               </CardTitle>
-              <CardDescription>{t('settings.emailDesc')}</CardDescription>
+              <CardDescription>{t('settings.emailChangeDesc')}</CardDescription>
             </CardHeader>
-            <CardContent>
-              <div className="space-y-2">
-                <Label htmlFor="email">{t('auth.email')}</Label>
-                <Input
-                  id="email"
-                  type="email"
-                  value={profile.email}
-                  disabled
-                  className="bg-muted"
-                />
-                <p className="text-xs text-muted-foreground">{t('settings.emailHint')}</p>
-              </div>
+            <CardContent className="space-y-4">
+              {emailSent ? (
+                <Alert className="border-success/30 bg-success/10">
+                  <CheckCircle2 className="h-4 w-4 text-success" />
+                  <AlertDescription className="text-success">
+                    {t('settings.emailVerificationSentDesc')}
+                  </AlertDescription>
+                </Alert>
+              ) : (
+                <>
+                  <div className="space-y-2">
+                    <Label htmlFor="currentEmail">{t('settings.currentEmail')}</Label>
+                    <Input
+                      id="currentEmail"
+                      type="email"
+                      value={profile.email}
+                      disabled
+                      className="bg-muted"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="newEmail">{t('settings.newEmail')}</Label>
+                    <Input
+                      id="newEmail"
+                      type="email"
+                      value={newEmail}
+                      onChange={(e) => setNewEmail(e.target.value)}
+                      placeholder={t('settings.newEmailPlaceholder')}
+                    />
+                  </div>
+                  {newEmail && newEmail !== profile.email && (
+                    <Alert>
+                      <AlertCircle className="h-4 w-4" />
+                      <AlertDescription>
+                        {t('settings.emailChangeNote')}
+                      </AlertDescription>
+                    </Alert>
+                  )}
+                  <Button 
+                    onClick={handleChangeEmail}
+                    disabled={savingEmail || !newEmail || newEmail === profile.email}
+                    variant="outline"
+                  >
+                    {savingEmail ? (
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    ) : (
+                      <Mail className="w-4 h-4 mr-2" />
+                    )}
+                    {t('settings.changeEmail')}
+                  </Button>
+                </>
+              )}
             </CardContent>
           </Card>
 
-          {/* Address */}
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
@@ -244,7 +314,6 @@ export default function Settings() {
             </CardContent>
           </Card>
 
-          {/* Save Button */}
           <Button 
             onClick={handleSaveProfile} 
             disabled={saving}

@@ -1,4 +1,14 @@
 export const lt = {
+  wishlist: {
+    title: 'Norų sąrašas',
+    subtitle: 'Jūsų išsaugoti produktai',
+    items: 'produktų',
+    empty: 'Jūsų norų sąrašas tuščias',
+    emptyDesc: 'Išsaugokite produktus, kurie jums patinka, ir grįžkite prie jų vėliau.',
+    removed: 'Produktas pašalintas iš norų sąrašo',
+    backToAccount: 'Grįžti į paskyrą',
+    loginRequired: 'Prisijunkite, kad galėtumėte matyti savo norų sąrašą',
+  },
   // Common
   common: {
     loading: 'Kraunama...',
@@ -208,6 +218,16 @@ export const lt = {
     email: 'El. paštas',
     emailDesc: 'Jūsų prisijungimo el. paštas',
     emailHint: 'El. paštą galite pakeisti susisiekę su mumis',
+    emailChangeDesc: 'Pakeiskite savo prisijungimo el. paštą',
+    currentEmail: 'Dabartinis el. paštas',
+    newEmail: 'Naujas el. paštas',
+    newEmailPlaceholder: 'Įveskite naują el. paštą',
+    changeEmail: 'Keisti el. paštą',
+    emailChangeNote: 'Gausite patvirtinimo laišką nauju adresu. El. paštas bus pakeistas tik patvirtinus.',
+    emailVerificationSent: 'Patvirtinimo laiškas išsiųstas',
+    emailVerificationSentDesc: 'Patikrinkite savo naują el. pašto dėžutę ir paspauskite patvirtinimo nuorodą.',
+    emailAlreadyUsed: 'Šis el. paštas jau užregistruotas',
+    invalidEmail: 'Neteisingas el. pašto formatas',
     address: 'Pristatymo adresas',
     addressDesc: 'Išsaugokite adresą greitesniam apsipirkimui',
     street: 'Gatvė',
@@ -229,6 +249,9 @@ export const lt = {
     delivered: 'Pristatyti',
     searchPlaceholder: 'Ieškoti pagal užsakymo numerį...',
     noResults: 'Pagal pasirinktus filtrus užsakymų nerasta',
+    reorder: 'Užsakyti dar kartą',
+    reorderSuccess: 'Prekės pridėtos į krepšelį',
+    reorderPartial: 'Kai kurios prekės neberandamos',
   },
   
   // Hero Section

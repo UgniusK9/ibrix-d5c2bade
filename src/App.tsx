@@ -48,6 +48,7 @@ import AuthSuccess from "./pages/auth/AuthSuccess";
 import Credits from "./pages/account/Credits";
 import Settings from "./pages/account/Settings";
 import Orders from "./pages/Orders";
+import Wishlist from "./pages/Wishlist";
 
 // Global cart components wrapper
 function CartComponents() {
@@ -133,6 +134,11 @@ const App = () => (
                 <Route path="/orders" element={
                   <ProtectedRoute>
                     <Orders />
+                  </ProtectedRoute>
+                } />
+                <Route path="/wishlist" element={
+                  <ProtectedRoute>
+                    <Wishlist />
                   </ProtectedRoute>
                 } />
 

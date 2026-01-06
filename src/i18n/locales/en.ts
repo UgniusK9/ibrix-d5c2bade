@@ -1,4 +1,14 @@
 export const en = {
+  wishlist: {
+    title: 'Wishlist',
+    subtitle: 'Your saved products',
+    items: 'items',
+    empty: 'Your wishlist is empty',
+    emptyDesc: 'Save products you like and come back to them later.',
+    removed: 'Product removed from wishlist',
+    backToAccount: 'Back to account',
+    loginRequired: 'Log in to see your wishlist',
+  },
   // Common
   common: {
     loading: 'Loading...',
@@ -208,6 +218,16 @@ export const en = {
     email: 'Email',
     emailDesc: 'Your login email address',
     emailHint: 'Contact us to change your email',
+    emailChangeDesc: 'Change your login email address',
+    currentEmail: 'Current email',
+    newEmail: 'New email',
+    newEmailPlaceholder: 'Enter new email',
+    changeEmail: 'Change email',
+    emailChangeNote: 'You will receive a confirmation email to your new address. Your email will only be changed after confirmation.',
+    emailVerificationSent: 'Verification email sent',
+    emailVerificationSentDesc: 'Check your new email inbox and click the confirmation link.',
+    emailAlreadyUsed: 'This email is already registered',
+    invalidEmail: 'Invalid email format',
     address: 'Delivery Address',
     addressDesc: 'Save your address for faster checkout',
     street: 'Street',
@@ -229,6 +249,9 @@ export const en = {
     delivered: 'Delivered',
     searchPlaceholder: 'Search by order number...',
     noResults: 'No orders match your filters',
+    reorder: 'Reorder',
+    reorderSuccess: 'Items added to cart',
+    reorderPartial: 'Some items are no longer available',
   },
   
   // Hero Section
