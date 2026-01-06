@@ -238,6 +238,15 @@ export const en = {
     postalCodePlaceholder: 'XXXXX',
     saveChanges: 'Save changes',
     saved: 'Settings saved',
+    password: 'Password',
+    passwordChangeDesc: 'Change your login password',
+    newPassword: 'New password',
+    confirmPassword: 'Confirm password',
+    changePassword: 'Change password',
+    passwordTooShort: 'Password must be at least 8 characters',
+    passwordMismatch: 'Passwords do not match',
+    passwordChanged: 'Password changed',
+    passwordChangedDesc: 'Your password has been successfully changed.',
   },
   
   // Orders page
