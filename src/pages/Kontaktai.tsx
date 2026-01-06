@@ -13,6 +13,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 
 const contactInfo = [
   {
@@ -46,20 +47,42 @@ const topics = [
 export default function Kontaktai() {
   const [submitted, setSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [selectedTopic, setSelectedTopic] = useState("");
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setLoading(true);
-    
-    // Simulate form submission
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
+
+    const formData = new FormData(e.currentTarget);
+    const name = formData.get("name") as string;
+    const email = formData.get("email") as string;
+    const order = formData.get("order") as string;
+    const message = formData.get("message") as string;
+
+    try {
+      const { error } = await supabase.from("contact_inquiries").insert({
+        name,
+        email,
+        topic: selectedTopic,
+        order_number: order || null,
+        message,
+      });
+
+      if (error) throw error;
+
+      setSubmitted(true);
+      toast.success("Žinutė išsiųsta!", {
+        description: "Atsakysime per 24 valandas",
+        position: "top-center",
+      });
+    } catch (error) {
+      console.error("Error submitting inquiry:", error);
+      toast.error("Klaida siunčiant žinutę", {
+        description: "Bandykite dar kartą vėliau",
+      });
+    }
+
     setLoading(false);
-    setSubmitted(true);
-    toast.success("Žinutė išsiųsta!", {
-      description: "Atsakysime per 24 valandas",
-      position: "top-center",
-    });
   };
 
   return (
@@ -157,7 +180,7 @@ export default function Kontaktai() {
 
                       <div className="space-y-2">
                         <Label htmlFor="topic">Tema</Label>
-                        <Select name="topic" required>
+                        <Select name="topic" required value={selectedTopic} onValueChange={setSelectedTopic}>
                           <SelectTrigger>
                             <SelectValue placeholder="Pasirinkite temą" />
                           </SelectTrigger>

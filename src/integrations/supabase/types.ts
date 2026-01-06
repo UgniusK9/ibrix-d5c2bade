@@ -276,6 +276,45 @@ export type Database = {
           },
         ]
       }
+      contact_inquiries: {
+        Row: {
+          conversation_token: string
+          created_at: string
+          email: string
+          id: string
+          message: string
+          name: string
+          order_number: string | null
+          status: string
+          topic: string
+          updated_at: string
+        }
+        Insert: {
+          conversation_token?: string
+          created_at?: string
+          email: string
+          id?: string
+          message: string
+          name: string
+          order_number?: string | null
+          status?: string
+          topic: string
+          updated_at?: string
+        }
+        Update: {
+          conversation_token?: string
+          created_at?: string
+          email?: string
+          id?: string
+          message?: string
+          name?: string
+          order_number?: string | null
+          status?: string
+          topic?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       events: {
         Row: {
           created_at: string
@@ -392,6 +431,38 @@ export type Database = {
             columns: ["redeemed_by_user_id"]
             isOneToOne: false
             referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      inquiry_messages: {
+        Row: {
+          created_at: string
+          id: string
+          inquiry_id: string
+          message: string
+          sender_type: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          inquiry_id: string
+          message: string
+          sender_type: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          inquiry_id?: string
+          message?: string
+          sender_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "inquiry_messages_inquiry_id_fkey"
+            columns: ["inquiry_id"]
+            isOneToOne: false
+            referencedRelation: "contact_inquiries"
             referencedColumns: ["id"]
           },
         ]

@@ -49,6 +49,7 @@ import Credits from "./pages/account/Credits";
 import Settings from "./pages/account/Settings";
 import Orders from "./pages/Orders";
 import Wishlist from "./pages/Wishlist";
+import Pokalbis from "./pages/Pokalbis";
 
 // Global cart components wrapper
 function CartComponents() {
@@ -106,6 +107,7 @@ const App = () => (
                 <Route path="/dovanu-kuponai" element={<GiftCards />} />
                 <Route path="/palyginti" element={<Palyginti />} />
                 <Route path="/atsiliepimai" element={<Atsiliepimai />} />
+                <Route path="/pokalbis/:token" element={<Pokalbis />} />
                 <Route path="/auth" element={<AuthLanding />} />
                 <Route path="/auth/login" element={<AuthLogin />} />
                 <Route path="/auth/signup/step-1" element={<SignupStep1 />} />
