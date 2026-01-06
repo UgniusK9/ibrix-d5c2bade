@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { Menu, ShoppingCart, Truck, Clock, Headphones, ArrowRight, User, LogOut, Search, ChevronDown, Info, FileText, Shield, Cookie, Undo2, Star, HelpCircle } from "lucide-react";
+import { Menu, ShoppingCart, Truck, Clock, Headphones, ArrowRight, User, LogOut, ChevronDown, FileText, Shield, Cookie, Undo2, Star, HelpCircle, Package, Heart, Gift } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
@@ -17,6 +17,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { ProductSearch } from "@/components/header/ProductSearch";
 import { CategoriesMegaMenu } from "@/components/header/CategoriesMegaMenu";
 import { LanguageSelector } from "@/components/header/LanguageSelector";
+import { UserProfileDropdown } from "@/components/header/UserProfileDropdown";
 import logo from "@/assets/logo.png";
 
 const navigation = [
@@ -140,26 +141,8 @@ export function Header() {
 
               {/* User Account */}
               {user ? (
-                <div className="hidden lg:flex items-center gap-1">
-                  {isAdmin && (
-                    <Button asChild variant="ghost" size="sm">
-                      <Link to="/admin">{t('header.admin')}</Link>
-                    </Button>
-                  )}
-                  <Button asChild variant="ghost" size="sm">
-                    <Link to="/account" className="flex items-center gap-2">
-                      <User className="h-4 w-4" />
-                      {t('header.account')}
-                    </Link>
-                  </Button>
-                  <Button 
-                    variant="ghost" 
-                    size="icon"
-                    onClick={signOut}
-                    title={t('header.logout')}
-                  >
-                    <LogOut className="h-4 w-4" />
-                  </Button>
+                <div className="hidden lg:flex items-center">
+                  <UserProfileDropdown />
                 </div>
               ) : (
                 <Button asChild variant="ghost" size="sm" className="hidden lg:flex">
@@ -213,39 +196,70 @@ export function Header() {
                     ))}
                   </nav>
                   
-                  <div className="mt-6 px-4 space-y-3">
+                  <div className="mt-6 px-4 space-y-2">
                     <Button asChild className="w-full bg-accent hover:bg-accent/90 text-accent-foreground">
                       <Link to="/produktai/visi" onClick={() => setMobileMenuOpen(false)}>
-                        Peržiūrėti konstruktorius
+                        {t('nav.viewConstructors')}
                         <ArrowRight className="ml-2 h-4 w-4" />
                       </Link>
                     </Button>
                     
                     {user ? (
-                      <>
-                        <Button asChild variant="outline" className="w-full">
-                          <Link to="/account" onClick={() => setMobileMenuOpen(false)}>
-                            <User className="h-4 w-4 mr-2" />
-                            Mano paskyra
-                          </Link>
-                        </Button>
+                      <div className="space-y-1 pt-2">
+                        <Link
+                          to="/account"
+                          onClick={() => setMobileMenuOpen(false)}
+                          className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-muted transition-colors"
+                        >
+                          <User className="h-5 w-5 text-muted-foreground" />
+                          <span className="font-medium">{t('account.myAccount')}</span>
+                        </Link>
+                        <Link
+                          to="/account"
+                          onClick={() => setMobileMenuOpen(false)}
+                          className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-muted transition-colors"
+                        >
+                          <Package className="h-5 w-5 text-muted-foreground" />
+                          <span className="font-medium">{t('account.myOrders')}</span>
+                        </Link>
+                        <Link
+                          to="/account"
+                          onClick={() => setMobileMenuOpen(false)}
+                          className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-muted transition-colors"
+                        >
+                          <Heart className="h-5 w-5 text-muted-foreground" />
+                          <span className="font-medium">{t('account.wishlist')}</span>
+                        </Link>
+                        <Link
+                          to="/account/credits"
+                          onClick={() => setMobileMenuOpen(false)}
+                          className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-muted transition-colors"
+                        >
+                          <Gift className="h-5 w-5 text-muted-foreground" />
+                          <span className="font-medium">{t('account.rewards')}</span>
+                        </Link>
                         {isAdmin && (
-                          <Button asChild variant="outline" className="w-full">
-                            <Link to="/admin" onClick={() => setMobileMenuOpen(false)}>
-                              Admin
-                            </Link>
-                          </Button>
+                          <Link
+                            to="/admin"
+                            onClick={() => setMobileMenuOpen(false)}
+                            className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-muted transition-colors"
+                          >
+                            <span className="font-medium">{t('header.admin')}</span>
+                          </Link>
                         )}
-                        <Button variant="ghost" className="w-full" onClick={() => { signOut(); setMobileMenuOpen(false); }}>
-                          <LogOut className="h-4 w-4 mr-2" />
-                          Atsijungti
-                        </Button>
-                      </>
+                        <button
+                          onClick={() => { signOut(); setMobileMenuOpen(false); }}
+                          className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-muted transition-colors w-full text-left text-destructive"
+                        >
+                          <LogOut className="h-5 w-5" />
+                          <span className="font-medium">{t('auth.logout')}</span>
+                        </button>
+                      </div>
                     ) : (
                       <Button asChild variant="outline" className="w-full">
                         <Link to="/auth" onClick={() => setMobileMenuOpen(false)}>
                           <User className="h-4 w-4 mr-2" />
-                          Prisijungti
+                          {t('header.login')}
                         </Link>
                       </Button>
                     )}

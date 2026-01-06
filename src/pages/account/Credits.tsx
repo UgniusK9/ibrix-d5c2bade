@@ -1,7 +1,20 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { Wallet, ArrowLeft, Loader2, Info, Gift, Clock, ShoppingBag, Filter } from 'lucide-react';
+import { 
+  Wallet, 
+  ArrowLeft, 
+  Loader2, 
+  Info, 
+  Gift, 
+  Clock, 
+  ShoppingBag, 
+  TrendingUp,
+  CheckCircle2,
+  XCircle,
+  Timer,
+  Sparkles
+} from 'lucide-react';
 import { PageLayout } from '@/components/layout/PageLayout';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -133,7 +146,28 @@ export default function Credits() {
     }
   };
 
-  const getStatusBadge = (status: string) => {
+  const getStatusIcon = (status: string, type: string) => {
+    if (type === 'earn_pending') {
+      return <Timer className="h-4 w-4 text-amber-500" />;
+    }
+    switch (status) {
+      case 'pending':
+        return <Timer className="h-4 w-4 text-amber-500" />;
+      case 'available':
+        return <CheckCircle2 className="h-4 w-4 text-green-500" />;
+      case 'reversed':
+        return <XCircle className="h-4 w-4 text-red-500" />;
+      case 'captured':
+        return <CheckCircle2 className="h-4 w-4 text-blue-500" />;
+      default:
+        return <CheckCircle2 className="h-4 w-4 text-green-500" />;
+    }
+  };
+
+  const getStatusBadge = (status: string, type: string) => {
+    if (type === 'earn_pending') {
+      return <Badge variant="outline" className="text-amber-600 border-amber-300 bg-amber-50">{t('credits.status.pending')}</Badge>;
+    }
     switch (status) {
       case 'pending':
         return <Badge variant="outline" className="text-amber-600 border-amber-300 bg-amber-50">{t('credits.status.pending')}</Badge>;
@@ -169,6 +203,7 @@ export default function Credits() {
   }
 
   const activationDays = typeof settings.activation_delay_days === 'number' ? settings.activation_delay_days : 14;
+  const earnRate = typeof settings.earn_rate_percent === 'number' ? settings.earn_rate_percent : 3;
 
   return (
     <PageLayout>
@@ -182,52 +217,100 @@ export default function Credits() {
           {t('common.back')}
         </Link>
 
-        <h1 className="font-heading text-2xl md:text-3xl font-bold mb-8 flex items-center gap-3">
-          <Wallet className="w-8 h-8 text-primary" />
-          {t('credits.title')}
-        </h1>
+        <div className="flex items-center gap-3 mb-8">
+          <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center">
+            <Sparkles className="w-6 h-6 text-white" />
+          </div>
+          <div>
+            <h1 className="font-heading text-2xl md:text-3xl font-bold">
+              {t('credits.title')}
+            </h1>
+            <p className="text-muted-foreground text-sm">{t('credits.subtitle')}</p>
+          </div>
+        </div>
 
         {/* Balance cards */}
         <div className="grid md:grid-cols-2 gap-4 mb-8">
-          <div className="bg-card border border-border rounded-xl p-6">
-            <p className="text-sm text-muted-foreground mb-1">{t('credits.balance')}</p>
-            <p className="text-3xl font-bold text-success">{formatPrice(balance)}</p>
+          <div className="bg-gradient-to-br from-green-50 to-green-100 dark:from-green-950 dark:to-green-900 border border-green-200 dark:border-green-800 rounded-2xl p-6">
+            <div className="flex items-center gap-3 mb-3">
+              <div className="w-10 h-10 rounded-xl bg-green-500/20 flex items-center justify-center">
+                <Wallet className="w-5 h-5 text-green-600" />
+              </div>
+              <p className="text-sm font-medium text-green-700 dark:text-green-300">{t('credits.balance')}</p>
+            </div>
+            <p className="text-4xl font-bold text-green-700 dark:text-green-200">{formatPrice(balance)}</p>
+            <p className="text-xs text-green-600/70 dark:text-green-400/70 mt-2">{t('credits.availableNow')}</p>
           </div>
-          <div className="bg-card border border-border rounded-xl p-6">
-            <p className="text-sm text-muted-foreground mb-1">{t('credits.pending')}</p>
-            <p className="text-3xl font-bold text-amber-500">{formatPrice(pendingCredits)}</p>
+          
+          <div className="bg-gradient-to-br from-amber-50 to-amber-100 dark:from-amber-950 dark:to-amber-900 border border-amber-200 dark:border-amber-800 rounded-2xl p-6">
+            <div className="flex items-center gap-3 mb-3">
+              <div className="w-10 h-10 rounded-xl bg-amber-500/20 flex items-center justify-center">
+                <Clock className="w-5 h-5 text-amber-600" />
+              </div>
+              <p className="text-sm font-medium text-amber-700 dark:text-amber-300">{t('credits.pending')}</p>
+            </div>
+            <p className="text-4xl font-bold text-amber-700 dark:text-amber-200">{formatPrice(pendingCredits)}</p>
+            <p className="text-xs text-amber-600/70 dark:text-amber-400/70 mt-2">
+              {t('credits.pendingHint', { days: activationDays })}
+            </p>
           </div>
         </div>
 
         {/* How it works */}
-        <div className="bg-primary/5 border border-primary/20 rounded-xl p-6 mb-8">
-          <h2 className="font-semibold text-lg flex items-center gap-2 mb-4">
+        <div className="bg-card border border-border rounded-2xl p-6 mb-8">
+          <h2 className="font-semibold text-lg flex items-center gap-2 mb-6">
             <Info className="w-5 h-5 text-primary" />
             {t('credits.how.title')}
           </h2>
-          <div className="space-y-3">
-            <div className="flex items-start gap-3">
-              <ShoppingBag className="w-5 h-5 text-primary mt-0.5" />
-              <p className="text-sm text-muted-foreground">{t('credits.how.1')}</p>
+          <div className="grid md:grid-cols-3 gap-6">
+            <div className="flex flex-col items-center text-center p-4">
+              <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center mb-4">
+                <ShoppingBag className="w-7 h-7 text-primary" />
+              </div>
+              <h3 className="font-medium mb-2">{t('credits.how.step1Title')}</h3>
+              <p className="text-sm text-muted-foreground">
+                {t('credits.how.1', { percent: earnRate })}
+              </p>
             </div>
-            <div className="flex items-start gap-3">
-              <Clock className="w-5 h-5 text-primary mt-0.5" />
+            <div className="flex flex-col items-center text-center p-4">
+              <div className="w-14 h-14 rounded-2xl bg-amber-500/10 flex items-center justify-center mb-4">
+                <Clock className="w-7 h-7 text-amber-500" />
+              </div>
+              <h3 className="font-medium mb-2">{t('credits.how.step2Title')}</h3>
               <p className="text-sm text-muted-foreground">
                 {t('credits.how.2', { days: activationDays })}
               </p>
             </div>
-            <div className="flex items-start gap-3">
-              <Gift className="w-5 h-5 text-primary mt-0.5" />
+            <div className="flex flex-col items-center text-center p-4">
+              <div className="w-14 h-14 rounded-2xl bg-green-500/10 flex items-center justify-center mb-4">
+                <Gift className="w-7 h-7 text-green-500" />
+              </div>
+              <h3 className="font-medium mb-2">{t('credits.how.step3Title')}</h3>
               <p className="text-sm text-muted-foreground">{t('credits.how.3')}</p>
             </div>
           </div>
         </div>
 
+        {/* CTA */}
+        {balance > 0 && (
+          <div className="bg-gradient-to-r from-primary/10 to-primary/5 border border-primary/20 rounded-2xl p-6 mb-8 flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <TrendingUp className="w-8 h-8 text-primary" />
+              <div>
+                <p className="font-semibold">{t('credits.readyToUse')}</p>
+                <p className="text-sm text-muted-foreground">{t('credits.useAtCheckout')}</p>
+              </div>
+            </div>
+            <Button asChild>
+              <Link to="/produktai/visi">{t('credits.shopNow')}</Link>
+            </Button>
+          </div>
+        )}
+
         {/* Transaction history */}
-        <div className="bg-card border border-border rounded-xl overflow-hidden">
-          <div className="p-4 border-b border-border flex items-center justify-between">
-            <h2 className="font-semibold text-lg flex items-center gap-2">
-              <Filter className="w-5 h-5" />
+        <div className="bg-card border border-border rounded-2xl overflow-hidden">
+          <div className="p-4 border-b border-border flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <h2 className="font-semibold text-lg">
               {t('credits.history')}
             </h2>
             <Tabs value={filter} onValueChange={(v) => setFilter(v as typeof filter)}>
@@ -240,38 +323,48 @@ export default function Credits() {
           </div>
 
           {filteredTransactions.length === 0 ? (
-            <div className="p-8 text-center">
-              <Wallet className="w-12 h-12 text-muted-foreground/30 mx-auto mb-4" />
-              <p className="text-muted-foreground">{t('credits.empty')}</p>
+            <div className="p-12 text-center">
+              <div className="w-16 h-16 rounded-full bg-muted mx-auto mb-4 flex items-center justify-center">
+                <Wallet className="w-8 h-8 text-muted-foreground/50" />
+              </div>
+              <p className="text-muted-foreground mb-4">{t('credits.empty')}</p>
+              <Button asChild variant="outline">
+                <Link to="/produktai/visi">{t('credits.startEarning')}</Link>
+              </Button>
             </div>
           ) : (
             <div className="divide-y divide-border">
               {filteredTransactions.map((tx) => (
-                <div key={tx.id} className="p-4 flex items-center justify-between">
-                  <div className="flex items-center gap-4">
-                    <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                      isEarnType(tx.type) ? 'bg-green-100 text-green-600' : 'bg-blue-100 text-blue-600'
-                    }`}>
-                      {isEarnType(tx.type) ? '+' : '-'}
+                <div key={tx.id} className="p-4 hover:bg-muted/50 transition-colors">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-4">
+                      <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${
+                        isEarnType(tx.type) 
+                          ? 'bg-green-100 dark:bg-green-900/30' 
+                          : 'bg-blue-100 dark:bg-blue-900/30'
+                      }`}>
+                        {isEarnType(tx.type) ? (
+                          <TrendingUp className="w-5 h-5 text-green-600" />
+                        ) : (
+                          <ShoppingBag className="w-5 h-5 text-blue-600" />
+                        )}
+                      </div>
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <p className="font-medium">{getTypeLabel(tx.type)}</p>
+                          {getStatusIcon(tx.status || 'available', tx.type)}
+                        </div>
+                        <p className="text-sm text-muted-foreground">{formatDate(tx.created_at)}</p>
+                      </div>
                     </div>
-                    <div>
-                      <p className="font-medium text-sm">{getTypeLabel(tx.type)}</p>
-                      <p className="text-xs text-muted-foreground">{formatDate(tx.created_at)}</p>
+                    <div className="text-right flex flex-col items-end gap-1">
+                      <p className={`font-bold text-lg ${
+                        isEarnType(tx.type) ? 'text-green-600' : 'text-foreground'
+                      }`}>
+                        {isEarnType(tx.type) ? '+' : '-'}{formatPrice(tx.amount_eur)}
+                      </p>
+                      {getStatusBadge(tx.status || 'available', tx.type)}
                     </div>
-                  </div>
-                  <div className="text-right flex items-center gap-3">
-                    {getStatusBadge(tx.status || 'available')}
-                    <p className={`font-semibold ${isEarnType(tx.type) ? 'text-green-600' : 'text-foreground'}`}>
-                      {isEarnType(tx.type) ? '+' : '-'}{formatPrice(tx.amount_eur)}
-                    </p>
-                    {tx.order_id && (
-                      <Link 
-                        to={`/account`} 
-                        className="text-xs text-primary hover:underline"
-                      >
-                        {t('credits.table.order')}
-                      </Link>
-                    )}
                   </div>
                 </div>
               ))}
