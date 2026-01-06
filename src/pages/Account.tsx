@@ -1,88 +1,17 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Package, User, LogOut, Loader2, Tag, Wallet, Gift, Heart } from 'lucide-react';
+import { 
+  User, LogOut, Loader2, Tag, Wallet, Gift, Heart, 
+  Settings, Package, HelpCircle, Truck, MessageSquare, 
+  BookOpen, Star, ChevronRight, Award
+} from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { PageLayout } from '@/components/layout/PageLayout';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Card, CardContent } from '@/components/ui/card';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
-import { OrderCard } from '@/components/account/OrderCard';
-import { RefundRequestForm } from '@/components/refund/RefundRequestForm';
-import { RedeemGiftCard } from '@/components/account/RedeemGiftCard';
-import { WishlistSection } from '@/components/account/WishlistSection';
-import { toast } from 'sonner';
-
-interface RefundOrder {
-  id: string;
-  orderNumber: string;
-  maxAmount: number;
-}
-
-interface Order {
-  id: string;
-  order_number: string;
-  status: string;
-  total_eur: number;
-  deposit_total_eur: number;
-  balance_total_eur: number;
-  created_at: string;
-  paid_at: string | null;
-  balance_paid_at: string | null;
-  shipping_address_json: Record<string, unknown> | null;
-  preorder_flag: boolean;
-  preorder_eta_weeks_min: number | null;
-  preorder_eta_weeks_max: number | null;
-}
-
-interface OrderPayment {
-  id: string;
-  order_id: string;
-  type: 'deposit' | 'balance' | 'refund';
-  amount_eur: number;
-  status: 'pending' | 'succeeded' | 'failed';
-  created_at: string;
-}
-
-interface OrderShipment {
-  id: string;
-  order_id: string;
-  status: 'pending' | 'packed' | 'shipped' | 'in_transit' | 'delivered';
-  tracking_number: string | null;
-  tracking_token: string;
-  carrier_code: 'omniva' | 'lp_express' | 'dpd' | 'other' | null;
-  shipped_at: string | null;
-  delivered_at: string | null;
-  packed_at: string | null;
-}
-
-interface ShipmentEvent {
-  id: string;
-  shipment_id: string;
-  status_code: string;
-  description: string;
-  location_label: string | null;
-  lat: number | null;
-  lng: number | null;
-  occurred_at: string;
-}
-
-interface OrderItem {
-  id: string;
-  order_id: string;
-  title_snapshot: string;
-  quantity: number;
-  unit_price_eur: number;
-  unit_deposit_eur: number;
-}
-
-interface BalanceRequest {
-  id: string;
-  order_id: string;
-  payment_url: string | null;
-  message: string | null;
-  sent_at: string;
-}
 
 interface Offer {
   id: string;
@@ -107,17 +36,11 @@ interface UserProfile {
 export default function Account() {
   const { user, signOut } = useAuth();
   const { t } = useTranslation();
-  const [orders, setOrders] = useState<Order[]>([]);
-  const [payments, setPayments] = useState<OrderPayment[]>([]);
-  const [shipments, setShipments] = useState<OrderShipment[]>([]);
-  const [shipmentEvents, setShipmentEvents] = useState<ShipmentEvent[]>([]);
-  const [orderItems, setOrderItems] = useState<OrderItem[]>([]);
-  const [balanceRequests, setBalanceRequests] = useState<BalanceRequest[]>([]);
   const [offers, setOffers] = useState<Offer[]>([]);
   const [wallet, setWallet] = useState<WalletData | null>(null);
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
+  const [wishlistCount, setWishlistCount] = useState(0);
   const [loading, setLoading] = useState(true);
-  const [refundOrder, setRefundOrder] = useState<RefundOrder | null>(null);
 
   useEffect(() => {
     const loadData = async () => {
@@ -133,76 +56,6 @@ export default function Account() {
         
         if (profileData) {
           setUserProfile(profileData);
-        }
-
-        // Load orders
-        const { data: ordersData } = await supabase
-          .from('orders')
-          .select('id, order_number, status, total_eur, deposit_total_eur, balance_total_eur, created_at, paid_at, balance_paid_at, shipping_address_json, preorder_flag, preorder_eta_weeks_min, preorder_eta_weeks_max')
-          .eq('user_id', user.id)
-          .order('created_at', { ascending: false });
-
-        if (ordersData) {
-          setOrders(ordersData as Order[]);
-
-          const orderIds = ordersData.map(o => o.id);
-          
-          if (orderIds.length > 0) {
-            // Load payments for these orders
-            const { data: paymentsData } = await supabase
-              .from('payments')
-              .select('id, order_id, type, amount_eur, status, created_at')
-              .in('order_id', orderIds);
-            
-            if (paymentsData) {
-              setPayments(paymentsData as OrderPayment[]);
-            }
-
-            // Load shipments
-            const { data: shipmentsData } = await supabase
-              .from('shipments')
-              .select('id, order_id, status, tracking_number, tracking_token, carrier_code, shipped_at, delivered_at, packed_at')
-              .in('order_id', orderIds);
-            
-            if (shipmentsData) {
-              setShipments(shipmentsData as OrderShipment[]);
-              
-              // Load shipment events for all shipments
-              const shipmentIds = shipmentsData.map(s => s.id);
-              if (shipmentIds.length > 0) {
-                const { data: eventsData } = await supabase
-                  .from('shipment_events')
-                  .select('id, shipment_id, status_code, description, location_label, lat, lng, occurred_at')
-                  .in('shipment_id', shipmentIds)
-                  .order('occurred_at', { ascending: false });
-                
-                if (eventsData) {
-                  setShipmentEvents(eventsData as ShipmentEvent[]);
-                }
-              }
-            }
-
-            // Load order items
-            const { data: itemsData } = await supabase
-              .from('order_items')
-              .select('id, order_id, title_snapshot, quantity, unit_price_eur, unit_deposit_eur')
-              .in('order_id', orderIds);
-            
-            if (itemsData) {
-              setOrderItems(itemsData as OrderItem[]);
-            }
-
-            // Load balance requests
-            const { data: balanceRequestsData } = await supabase
-              .from('balance_requests')
-              .select('id, order_id, payment_url, message, sent_at')
-              .in('order_id', orderIds)
-              .order('sent_at', { ascending: false });
-            
-            if (balanceRequestsData) {
-              setBalanceRequests(balanceRequestsData as BalanceRequest[]);
-            }
-          }
         }
 
         // Load user's targeted offers
@@ -232,6 +85,14 @@ export default function Account() {
         if (walletData) {
           setWallet(walletData);
         }
+
+        // Load wishlist count
+        const { count } = await supabase
+          .from('wishlists')
+          .select('id', { count: 'exact', head: true })
+          .eq('user_id', user.id);
+        
+        setWishlistCount(count || 0);
       } catch (e) {
         console.error('Error loading account data:', e);
       } finally {
@@ -249,47 +110,6 @@ export default function Account() {
     }).format(amount);
   };
 
-  const getPaymentsForOrder = (orderId: string) => {
-    return payments.filter(p => p.order_id === orderId);
-  };
-
-  const getShipmentForOrder = (orderId: string) => {
-    return shipments.find(s => s.order_id === orderId);
-  };
-
-  const getItemsForOrder = (orderId: string) => {
-    return orderItems.filter(i => i.order_id === orderId);
-  };
-
-  const getShipmentEventsForOrder = (orderId: string) => {
-    const shipment = getShipmentForOrder(orderId);
-    if (!shipment) return [];
-    return shipmentEvents.filter(e => e.shipment_id === shipment.id);
-  };
-
-  const getBalanceRequestForOrder = (orderId: string) => {
-    return balanceRequests.find(br => br.order_id === orderId) || null;
-  };
-
-  const handleRefundSuccess = () => {
-    setRefundOrder(null);
-    toast.success(t('account.supportSent'));
-  };
-
-  const handleRequestRefund = (order: Order) => {
-    // Calculate max refund amount from payments
-    const orderPayments = getPaymentsForOrder(order.id);
-    const totalPaid = orderPayments
-      .filter(p => p.status === 'succeeded' && p.type !== 'refund')
-      .reduce((sum, p) => sum + p.amount_eur, 0);
-    
-    setRefundOrder({
-      id: order.id,
-      orderNumber: order.order_number,
-      maxAmount: totalPaid || order.deposit_total_eur,
-    });
-  };
-
   if (loading) {
     return (
       <PageLayout>
@@ -302,154 +122,211 @@ export default function Account() {
 
   return (
     <PageLayout>
-      <div className="container py-8 md:py-12 max-w-4xl">
-        {/* Profile header */}
-        <div className="bg-card border border-border rounded-xl p-6 mb-8">
-          <div className="flex items-center justify-between flex-wrap gap-4">
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
-                <User className="w-6 h-6 text-primary" />
-              </div>
-              <div>
-                <p className="font-semibold">
-                  {userProfile?.first_name && userProfile?.last_name 
-                    ? `${userProfile.first_name} ${userProfile.last_name}` 
-                    : user?.email}
-                </p>
-                <p className="text-sm text-muted-foreground">{t('account.title')}</p>
-              </div>
-            </div>
-            <div className="flex items-center gap-3">
-              {wallet && wallet.balance_eur > 0 && (
-                <div className="flex items-center gap-2 px-4 py-2 bg-success/10 border border-success/30 rounded-lg">
-                  <Wallet className="w-4 h-4 text-success" />
-                  <span className="font-semibold text-success">{formatPrice(wallet.balance_eur)}</span>
+      <div className="container py-8 md:py-12 max-w-6xl">
+        <h1 className="font-heading text-2xl md:text-3xl font-bold mb-8">{t('account.title')}</h1>
+        
+        <div className="grid md:grid-cols-2 gap-6">
+          {/* Profile Card */}
+          <Card className="border-2 border-border">
+            <CardContent className="p-6">
+              <div className="flex items-center gap-4">
+                <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center">
+                  <User className="w-8 h-8 text-primary" />
                 </div>
-              )}
-              <Button variant="outline" onClick={signOut}>
-                <LogOut className="w-4 h-4 mr-2" />
-                {t('auth.logout')}
+                <div className="flex-1">
+                  <p className="font-heading font-semibold text-lg">
+                    {userProfile?.first_name && userProfile?.last_name 
+                      ? `${userProfile.first_name} ${userProfile.last_name}` 
+                      : user?.email}
+                  </p>
+                  <Link to="/account/settings" className="text-sm text-primary hover:underline">
+                    {t('account.memberCard')}
+                  </Link>
+                </div>
+                <div className="text-right">
+                  <p className="text-sm text-muted-foreground">{t('account.credits')}</p>
+                  <p className="text-2xl font-bold">{formatPrice(wallet?.balance_eur || 0)}</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Credits Info Card */}
+          <Card className="border-2 border-border bg-gradient-to-br from-primary/5 to-transparent">
+            <CardContent className="p-6">
+              <h3 className="font-heading font-semibold text-lg mb-2">{t('account.creditsInfo')}</h3>
+              <p className="text-sm text-muted-foreground mb-4">
+                {t('account.creditsDescription')}
+              </p>
+              <div className="flex gap-3">
+                <Button asChild size="sm">
+                  <Link to="/account/credits">{t('account.learnMore')}</Link>
+                </Button>
+                <Button asChild variant="outline" size="sm">
+                  <Link to="/dovanu-kuponai">{t('nav.giftCards')}</Link>
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Wishlist Card */}
+          <Card className="border-2 border-dashed border-primary/40 bg-gradient-to-br from-rose-50 to-transparent dark:from-rose-950/20">
+            <CardContent className="p-6">
+              <h3 className="font-heading font-semibold text-lg mb-2 flex items-center gap-2">
+                <Heart className="w-5 h-5 text-rose-500" />
+                {t('account.createWishlist')}
+              </h3>
+              <p className="text-sm text-muted-foreground mb-4">
+                {t('account.wishlistDescription')}
+              </p>
+              <Button asChild variant="outline" size="sm">
+                <Link to="/wishlist">
+                  {wishlistCount > 0 
+                    ? `${t('account.viewWishlist')} (${wishlistCount})` 
+                    : t('account.viewWishlist')}
+                </Link>
               </Button>
-            </div>
-          </div>
-        </div>
+            </CardContent>
+          </Card>
 
-        {/* Gift Card Redeem + Wallet + Wishlist */}
-        <div className="grid md:grid-cols-3 gap-6 mb-8">
-          <RedeemGiftCard onSuccess={() => {
-            // Reload wallet balance
-            supabase
-              .from('wallets')
-              .select('id, balance_eur')
-              .eq('user_id', user?.id || '')
-              .maybeSingle()
-              .then(({ data }) => {
-                if (data) setWallet(data);
-              });
-          }} />
-          
-          <div className="bg-card border border-border rounded-xl p-6">
-            <h3 className="font-heading font-semibold text-lg flex items-center gap-2 mb-4">
-              <Wallet className="w-5 h-5 text-primary" />
-              {t('account.wallet')}
-            </h3>
-            <p className="text-3xl font-bold text-success mb-2">
-              {formatPrice(wallet?.balance_eur || 0)}
-            </p>
-            <p className="text-sm text-muted-foreground">
-              {t('account.walletAutoApply')}
-            </p>
-            <Button asChild variant="outline" className="mt-4">
-              <Link to="/dovanu-kuponai">
-                <Gift className="w-4 h-4 mr-2" />
-                {t('nav.giftCards')}
-              </Link>
-            </Button>
-          </div>
-
-          <WishlistSection />
-        </div>
-
-        {/* My Deals */}
-        {offers.length > 0 && (
-          <div className="mb-8">
-            <h2 className="font-heading text-xl font-bold mb-4 flex items-center gap-2">
-              <Tag className="w-5 h-5" />
-              {t('account.myDeals')}
-            </h2>
-            <div className="grid gap-4 md:grid-cols-2">
-              {offers.map((offer) => (
-                <div key={offer.id} className="bg-card border border-primary/30 rounded-xl p-4">
-                  <div className="flex items-start justify-between">
-                    <div>
-                      <h3 className="font-semibold">{offer.title}</h3>
-                      {offer.description && (
-                        <p className="text-sm text-muted-foreground mt-1">{offer.description}</p>
-                      )}
+          {/* My Deals */}
+          {offers.length > 0 ? (
+            <Card className="border-2 border-border">
+              <CardContent className="p-6">
+                <h3 className="font-heading font-semibold text-lg mb-4 flex items-center gap-2">
+                  <Tag className="w-5 h-5 text-primary" />
+                  {t('account.myDeals')}
+                </h3>
+                <div className="space-y-3">
+                  {offers.slice(0, 2).map((offer) => (
+                    <div key={offer.id} className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
+                      <div>
+                        <p className="font-medium">{offer.title}</p>
+                        <code className="text-xs bg-background px-2 py-0.5 rounded">{offer.code}</code>
+                      </div>
+                      <Badge className="bg-primary text-primary-foreground">
+                        {offer.type === 'percent' ? `-${offer.value}%` : `-${formatPrice(offer.value)}`}
+                      </Badge>
                     </div>
-                    <Badge className="bg-primary text-primary-foreground">
-                      {offer.type === 'percent' ? `-${offer.value}%` : `-${formatPrice(offer.value)}`}
-                    </Badge>
-                  </div>
-                  <div className="mt-3 flex items-center justify-between">
-                    <code className="text-sm bg-muted px-2 py-1 rounded">{offer.code}</code>
-                    {offer.ends_at && (
-                      <span className="text-xs text-muted-foreground">
-                        Galioja iki: {new Date(offer.ends_at).toLocaleDateString('lt-LT')}
-                      </span>
-                    )}
-                  </div>
+                  ))}
                 </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Orders */}
-        <div>
-          <h2 className="font-heading text-xl font-bold mb-4 flex items-center gap-2">
-            <Package className="w-5 h-5" />
-            {t('account.orders')}
-          </h2>
-
-          {orders.length === 0 ? (
-            <div className="bg-card border border-border rounded-xl p-8 text-center">
-              <Package className="w-12 h-12 text-muted-foreground/30 mx-auto mb-4" />
-              <p className="text-muted-foreground">{t('account.noOrders')}</p>
-              <Button asChild className="mt-4">
-                <Link to="/produktai/visi">{t('nav.viewConstructors')}</Link>
-              </Button>
-            </div>
+              </CardContent>
+            </Card>
           ) : (
-            <div className="space-y-4">
-              {orders.map((order) => (
-                <OrderCard
-                  key={order.id}
-                  order={order}
-                  payments={getPaymentsForOrder(order.id)}
-                  shipment={getShipmentForOrder(order.id)}
-                  shipmentEvents={getShipmentEventsForOrder(order.id)}
-                  items={getItemsForOrder(order.id)}
-                  balanceRequest={getBalanceRequestForOrder(order.id)}
-                  onRequestRefund={() => handleRequestRefund(order)}
-                />
-              ))}
-            </div>
+            <Card className="border-2 border-border bg-gradient-to-br from-amber-50 to-transparent dark:from-amber-950/20">
+              <CardContent className="p-6">
+                <h3 className="font-heading font-semibold text-lg mb-2 flex items-center gap-2">
+                  <Star className="w-5 h-5 text-amber-500" />
+                  {t('account.rewards')}
+                </h3>
+                <p className="text-sm text-muted-foreground mb-4">
+                  {t('account.rewardsDescription')}
+                </p>
+                <Button asChild variant="outline" size="sm">
+                  <Link to="/account/credits">{t('account.viewAllRewards')}</Link>
+                </Button>
+              </CardContent>
+            </Card>
           )}
         </div>
-      </div>
 
-      {/* Refund Modal */}
-      {refundOrder && (
-        <RefundRequestForm
-          orderId={refundOrder.id}
-          orderNumber={refundOrder.orderNumber}
-          maxAmount={refundOrder.maxAmount}
-          isOpen={!!refundOrder}
-          onClose={() => setRefundOrder(null)}
-          onSuccess={handleRefundSuccess}
-        />
-      )}
+        {/* Quick Links */}
+        <div className="grid md:grid-cols-2 gap-6 mt-8">
+          {/* Navigation Links */}
+          <Card className="border-2 border-border">
+            <CardContent className="p-0">
+              <Link 
+                to="/uzsakymai" 
+                className="flex items-center justify-between p-4 hover:bg-muted/50 transition-colors border-b border-border"
+              >
+                <div className="flex items-center gap-3">
+                  <Package className="w-5 h-5 text-muted-foreground" />
+                  <span className="font-medium">{t('account.orders')}</span>
+                </div>
+                <ChevronRight className="w-5 h-5 text-muted-foreground" />
+              </Link>
+              <Link 
+                to="/account/credits" 
+                className="flex items-center justify-between p-4 hover:bg-muted/50 transition-colors border-b border-border"
+              >
+                <div className="flex items-center gap-3">
+                  <Award className="w-5 h-5 text-muted-foreground" />
+                  <span className="font-medium">{t('account.credits')}</span>
+                </div>
+                <ChevronRight className="w-5 h-5 text-muted-foreground" />
+              </Link>
+              <Link 
+                to="/wishlist" 
+                className="flex items-center justify-between p-4 hover:bg-muted/50 transition-colors border-b border-border"
+              >
+                <div className="flex items-center gap-3">
+                  <Heart className="w-5 h-5 text-muted-foreground" />
+                  <span className="font-medium">{t('wishlist.title')}</span>
+                </div>
+                <ChevronRight className="w-5 h-5 text-muted-foreground" />
+              </Link>
+              <Link 
+                to="/account/settings" 
+                className="flex items-center justify-between p-4 hover:bg-muted/50 transition-colors"
+              >
+                <div className="flex items-center gap-3">
+                  <Settings className="w-5 h-5 text-muted-foreground" />
+                  <span className="font-medium">{t('account.settings')}</span>
+                </div>
+                <ChevronRight className="w-5 h-5 text-muted-foreground" />
+              </Link>
+            </CardContent>
+          </Card>
+
+          {/* Help Section */}
+          <Card className="border-2 border-border">
+            <CardContent className="p-6">
+              <h3 className="font-heading font-semibold text-lg mb-4 flex items-center gap-2">
+                <HelpCircle className="w-5 h-5" />
+                {t('account.help')}
+              </h3>
+              <div className="grid grid-cols-2 gap-3">
+                <Link 
+                  to="/pristatymas" 
+                  className="flex items-center gap-2 p-3 rounded-lg bg-muted/50 hover:bg-muted transition-colors text-sm"
+                >
+                  <Truck className="w-4 h-4 text-muted-foreground" />
+                  {t('account.deliveryReturns')}
+                </Link>
+                <Link 
+                  to="/pagalba" 
+                  className="flex items-center gap-2 p-3 rounded-lg bg-muted/50 hover:bg-muted transition-colors text-sm"
+                >
+                  <BookOpen className="w-4 h-4 text-muted-foreground" />
+                  {t('account.faq')}
+                </Link>
+                <Link 
+                  to="/kontaktai" 
+                  className="flex items-center gap-2 p-3 rounded-lg bg-muted/50 hover:bg-muted transition-colors text-sm"
+                >
+                  <MessageSquare className="w-4 h-4 text-muted-foreground" />
+                  {t('account.contactUs')}
+                </Link>
+                <Link 
+                  to="/grazinimai" 
+                  className="flex items-center gap-2 p-3 rounded-lg bg-muted/50 hover:bg-muted transition-colors text-sm"
+                >
+                  <Package className="w-4 h-4 text-muted-foreground" />
+                  {t('account.returns')}
+                </Link>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Logout */}
+        <div className="mt-8 flex justify-center">
+          <Button variant="outline" onClick={signOut} className="gap-2">
+            <LogOut className="w-4 h-4" />
+            {t('auth.logout')}
+          </Button>
+        </div>
+      </div>
     </PageLayout>
   );
 }
