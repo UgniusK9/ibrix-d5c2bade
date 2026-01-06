@@ -86,6 +86,31 @@ export default function Pokalbis() {
     fetchData();
   }, [token]);
 
+  // Realtime subscription for new messages
+  useEffect(() => {
+    if (!inquiry) return;
+
+    const channel = supabase
+      .channel(`conversation-${inquiry.id}`)
+      .on(
+        'postgres_changes',
+        { 
+          event: 'INSERT', 
+          schema: 'public', 
+          table: 'inquiry_messages',
+          filter: `inquiry_id=eq.${inquiry.id}`
+        },
+        (payload) => {
+          setMessages(prev => [...prev, payload.new as InquiryMessage]);
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [inquiry?.id]);
+
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
@@ -96,12 +121,14 @@ export default function Pokalbis() {
     setSending(true);
 
     try {
+      const messageText = newMessage.trim();
+      
       const { error } = await supabase
         .from("inquiry_messages")
         .insert({
           inquiry_id: inquiry.id,
           sender_type: "customer",
-          message: newMessage.trim(),
+          message: messageText,
         });
 
       if (error) throw error;
@@ -111,6 +138,18 @@ export default function Pokalbis() {
         .from("contact_inquiries")
         .update({ status: "in_progress" })
         .eq("id", inquiry.id);
+
+      // Send email notification to admin
+      await supabase.functions.invoke("send-email", {
+        body: {
+          type: "admin_inquiry_notification",
+          customerName: inquiry.name,
+          customerEmail: inquiry.email,
+          topic: topicLabels[inquiry.topic] || inquiry.topic,
+          message: messageText,
+          conversationUrl: `${window.location.origin}/admin`,
+        },
+      });
 
       toast.success("Žinutė išsiųsta!");
       setNewMessage("");

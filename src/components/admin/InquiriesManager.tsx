@@ -105,6 +105,56 @@ export function InquiriesManager() {
 
   useEffect(() => {
     fetchInquiries();
+
+    // Realtime subscription for new inquiries and messages
+    const inquiriesChannel = supabase
+      .channel('admin-inquiries')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'contact_inquiries' },
+        (payload) => {
+          console.log('Inquiry change:', payload);
+          if (payload.eventType === 'INSERT') {
+            setInquiries(prev => [payload.new as Inquiry, ...prev]);
+            toast.info("Nauja užklausa!", { description: (payload.new as Inquiry).name });
+          } else if (payload.eventType === 'UPDATE') {
+            setInquiries(prev => 
+              prev.map(i => i.id === (payload.new as Inquiry).id ? payload.new as Inquiry : i)
+            );
+          } else if (payload.eventType === 'DELETE') {
+            setInquiries(prev => prev.filter(i => i.id !== (payload.old as Inquiry).id));
+          }
+        }
+      )
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'inquiry_messages' },
+        (payload) => {
+          const newMessage = payload.new as InquiryMessage;
+          // If it's a customer message and we're viewing that inquiry, refresh messages
+          if (newMessage.sender_type === 'customer') {
+            toast.info("Naujas kliento atsakymas!", { 
+              description: "Klientas atsakė į užklausą",
+              action: {
+                label: "Peržiūrėti",
+                onClick: () => {
+                  const inquiry = inquiries.find(i => i.id === newMessage.inquiry_id);
+                  if (inquiry) handleOpenInquiry(inquiry);
+                }
+              }
+            });
+            // Refresh messages if viewing the same inquiry
+            if (selectedInquiry?.id === newMessage.inquiry_id) {
+              fetchMessages(newMessage.inquiry_id);
+            }
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(inquiriesChannel);
+    };
   }, []);
 
   useEffect(() => {
