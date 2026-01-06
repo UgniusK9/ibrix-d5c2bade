@@ -4,6 +4,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Loader2, Package, ChevronLeft, CreditCard, MapPin, Truck, Wallet } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { CartRecommendations } from "@/components/cart/CartRecommendations";
 import { PageLayout } from "@/components/layout/PageLayout";
 import { Button } from "@/components/ui/button";
@@ -44,15 +45,16 @@ const checkoutSchema = z.object({
 
 type CheckoutFormData = z.infer<typeof checkoutSchema>;
 
-const shippingMethods = [
-  { id: "omniva_locker", label: "Omniva paštomatas", price: 0, icon: Package },
-  { id: "lp_express_locker", label: "LP EXPRESS paštomatas", price: 0, icon: Package },
-  { id: "dpd_locker", label: "DPD paštomatas", price: 0, icon: Package },
-  { id: "courier", label: "Kurjeris į namus", price: 4.99, icon: Truck },
+const getShippingMethods = (t: (key: string) => string) => [
+  { id: "omniva_locker", label: "Omniva " + t('checkout.parcelLocker').toLowerCase(), price: 0, icon: Package },
+  { id: "lp_express_locker", label: "LP EXPRESS " + t('checkout.parcelLocker').toLowerCase(), price: 0, icon: Package },
+  { id: "dpd_locker", label: "DPD " + t('checkout.parcelLocker').toLowerCase(), price: 0, icon: Package },
+  { id: "courier", label: t('checkout.courier'), price: 4.99, icon: Truck },
 ];
 
 export default function Checkout() {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const { user } = useAuth();
   const { items, getTotalPrice, clearCart } = useCartStore();
   const [isLoading, setIsLoading] = useState(false);
@@ -108,6 +110,7 @@ export default function Checkout() {
   const { immediatePayment, laterPayment } = calculateAmounts();
 
   const fullTotal = getTotalPrice();
+  const shippingMethods = getShippingMethods(t);
   const selectedShippingMethod = shippingMethods.find(m => m.id === shippingMethod);
   const shippingPrice = (selectedShippingMethod?.price || 0) * 100;
 
@@ -326,13 +329,13 @@ export default function Checkout() {
             className="mb-4"
           >
             <ChevronLeft className="w-4 h-4 mr-2" />
-            {step === 2 ? "Grįžti" : "Atgal"}
+            {t('common.back')}
           </Button>
           <h1 className="font-heading text-2xl md:text-3xl font-bold">
-            {step === 1 ? "Pristatymo informacija" : "Mokėjimas"}
+            {step === 1 ? t('checkout.shippingInfo') : t('checkout.paymentInfo')}
           </h1>
           <p className="text-muted-foreground mt-1">
-            Žingsnis {step} iš 2
+            {t('common.step')} {step} / 2
           </p>
         </div>
 
@@ -345,18 +348,18 @@ export default function Checkout() {
                 <div className="bg-card border border-border rounded-xl p-6 space-y-4">
                   <h2 className="font-semibold text-lg flex items-center gap-2">
                     <MapPin className="w-5 h-5" />
-                    Kontaktinė informacija
+                    {t('checkout.contactInfo')}
                   </h2>
                   <div className="grid sm:grid-cols-2 gap-4">
                     <div>
-                      <Label htmlFor="firstName">Vardas *</Label>
+                      <Label htmlFor="firstName">{t('checkout.firstName')} *</Label>
                       <Input {...register("firstName")} id="firstName" />
                       {errors.firstName && (
                         <p className="text-destructive text-sm mt-1">{errors.firstName.message}</p>
                       )}
                     </div>
                     <div>
-                      <Label htmlFor="lastName">Pavardė *</Label>
+                      <Label htmlFor="lastName">{t('checkout.lastName')} *</Label>
                       <Input {...register("lastName")} id="lastName" />
                       {errors.lastName && (
                         <p className="text-destructive text-sm mt-1">{errors.lastName.message}</p>
@@ -364,14 +367,14 @@ export default function Checkout() {
                     </div>
                   </div>
                   <div>
-                    <Label htmlFor="email">El. paštas *</Label>
+                    <Label htmlFor="email">{t('checkout.email')} *</Label>
                     <Input {...register("email")} id="email" type="email" />
                     {errors.email && (
                       <p className="text-destructive text-sm mt-1">{errors.email.message}</p>
                     )}
                   </div>
                   <div>
-                    <Label htmlFor="phone">Telefonas</Label>
+                    <Label htmlFor="phone">{t('checkout.phone')}</Label>
                     <PhoneInput
                       value={phoneValue}
                       onChange={setPhoneValue}
@@ -383,7 +386,7 @@ export default function Checkout() {
                 <div className="bg-card border border-border rounded-xl p-6 space-y-4">
                   <h2 className="font-semibold text-lg flex items-center gap-2">
                     <Truck className="w-5 h-5" />
-                    Pristatymo būdas
+                    {t('checkout.shippingMethod')}
                   </h2>
                   <RadioGroup
                     value={shippingMethod}
@@ -404,7 +407,7 @@ export default function Checkout() {
                           <Icon className="w-5 h-5 text-muted-foreground" />
                           <span className="flex-1">{method.label}</span>
                           <span className="text-sm text-muted-foreground">
-                            {method.price === 0 ? "Nemokamas" : `${method.price}€`}
+                            {method.price === 0 ? t('common.free') : `${method.price}€`}
                           </span>
                         </label>
                       );
@@ -529,12 +532,12 @@ export default function Checkout() {
               {isLoading ? (
                 <>
                   <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  Apdorojama...
+                  {t('checkout.processing')}
                 </>
               ) : step === 1 ? (
-                "Tęsti į mokėjimą"
+                t('common.next')
               ) : (
-                `Apmokėti ${formatCartPrice(finalImmediatePayment)}`
+                `${t('cart.checkout')} ${formatCartPrice(finalImmediatePayment)}`
               )}
             </Button>
           </form>
@@ -542,7 +545,7 @@ export default function Checkout() {
           {/* Order Summary */}
           <div className="lg:sticky lg:top-24">
             <div className="bg-card border border-border rounded-xl p-6">
-              <h2 className="font-semibold text-lg mb-4">Užsakymo suvestinė</h2>
+              <h2 className="font-semibold text-lg mb-4">{t('checkout.orderSummary')}</h2>
               
               <div className="space-y-3 mb-6">
                 {items.map((item) => (
@@ -555,7 +558,7 @@ export default function Checkout() {
                     <div className="flex-1 min-w-0">
                       <p className="font-medium text-sm truncate">{item.title}</p>
                       <p className="text-xs text-muted-foreground">
-                        Kiekis: {item.quantity}
+                        {t('cart.quantity')}: {item.quantity}
                       </p>
                       <p className="text-sm font-medium">
                         {formatCartPrice(item.price * item.quantity)}
@@ -567,13 +570,13 @@ export default function Checkout() {
 
               <div className="border-t border-border pt-4 space-y-2">
                 <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">Prekės</span>
+                  <span className="text-muted-foreground">{t('order.items')}</span>
                   <span>{formatCartPrice(fullTotal)}</span>
                 </div>
                 <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">Pristatymas</span>
+                  <span className="text-muted-foreground">{t('cart.shipping')}</span>
                   <span className={shippingPrice === 0 ? "text-green-600" : ""}>
-                    {shippingPrice === 0 ? "Nemokamas" : formatCartPrice(shippingPrice)}
+                    {shippingPrice === 0 ? t('common.free') : formatCartPrice(shippingPrice)}
                   </span>
                 </div>
                 {appliedDiscount && (

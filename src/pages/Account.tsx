@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Package, User, LogOut, Loader2, Tag, Wallet, Gift, Heart } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { PageLayout } from '@/components/layout/PageLayout';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -100,6 +101,7 @@ interface WalletData {
 
 export default function Account() {
   const { user, signOut } = useAuth();
+  const { t } = useTranslation();
   const [orders, setOrders] = useState<Order[]>([]);
   const [payments, setPayments] = useState<OrderPayment[]>([]);
   const [shipments, setShipments] = useState<OrderShipment[]>([]);
@@ -254,7 +256,7 @@ export default function Account() {
 
   const handleRefundSuccess = () => {
     setRefundOrder(null);
-    toast.success('Grąžinimo užklausa pateikta sėkmingai');
+    toast.success(t('account.supportSent'));
   };
 
   const handleRequestRefund = (order: Order) => {
@@ -293,7 +295,7 @@ export default function Account() {
               </div>
               <div>
                 <p className="font-semibold">{user?.email}</p>
-                <p className="text-sm text-muted-foreground">Klientas</p>
+                <p className="text-sm text-muted-foreground">{t('account.title')}</p>
               </div>
             </div>
             <div className="flex items-center gap-3">
@@ -305,7 +307,7 @@ export default function Account() {
               )}
               <Button variant="outline" onClick={signOut}>
                 <LogOut className="w-4 h-4 mr-2" />
-                Atsijungti
+                {t('auth.logout')}
               </Button>
             </div>
           </div>
@@ -328,18 +330,18 @@ export default function Account() {
           <div className="bg-card border border-border rounded-xl p-6">
             <h3 className="font-heading font-semibold text-lg flex items-center gap-2 mb-4">
               <Wallet className="w-5 h-5 text-primary" />
-              Mano piniginė
+              {t('account.wallet')}
             </h3>
             <p className="text-3xl font-bold text-success mb-2">
               {formatPrice(wallet?.balance_eur || 0)}
             </p>
             <p className="text-sm text-muted-foreground">
-              Ši suma bus automatiškai pritaikyta prie jūsų sekančio pirkinio.
+              {t('account.walletAutoApply')}
             </p>
             <Button asChild variant="outline" className="mt-4">
               <Link to="/dovanu-kuponai">
                 <Gift className="w-4 h-4 mr-2" />
-                Dovanų kuponai
+                {t('nav.giftCards')}
               </Link>
             </Button>
           </div>
@@ -352,7 +354,7 @@ export default function Account() {
           <div className="mb-8">
             <h2 className="font-heading text-xl font-bold mb-4 flex items-center gap-2">
               <Tag className="w-5 h-5" />
-              Mano pasiūlymai
+              {t('account.myDeals')}
             </h2>
             <div className="grid gap-4 md:grid-cols-2">
               {offers.map((offer) => (
@@ -386,15 +388,15 @@ export default function Account() {
         <div>
           <h2 className="font-heading text-xl font-bold mb-4 flex items-center gap-2">
             <Package className="w-5 h-5" />
-            Mano užsakymai
+            {t('account.orders')}
           </h2>
 
           {orders.length === 0 ? (
             <div className="bg-card border border-border rounded-xl p-8 text-center">
               <Package className="w-12 h-12 text-muted-foreground/30 mx-auto mb-4" />
-              <p className="text-muted-foreground">Užsakymų dar nėra</p>
+              <p className="text-muted-foreground">{t('account.noOrders')}</p>
               <Button asChild className="mt-4">
-                <Link to="/produktai/visi">Peržiūrėti konstruktorius</Link>
+                <Link to="/produktai/visi">{t('nav.viewConstructors')}</Link>
               </Button>
             </div>
           ) : (

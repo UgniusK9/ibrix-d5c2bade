@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useAuth } from '@/contexts/AuthContext';
+import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { z } from 'zod';
 import { useTranslation } from 'react-i18next';
@@ -108,6 +109,18 @@ export default function Auth() {
           toast.success('Prisijungimo nuoroda išsiųsta!');
         }
       } else if (mode === 'register') {
+        // Verify CAPTCHA server-side first
+        const { data: captchaResult, error: captchaError } = await supabase.functions.invoke('verify-captcha', {
+          body: { token: captchaToken }
+        });
+        
+        if (captchaError || !captchaResult?.success) {
+          toast.error('CAPTCHA patvirtinimas nepavyko. Bandykite dar kartą.');
+          setCaptchaToken(null);
+          setLoading(false);
+          return;
+        }
+        
         result = await signUp(email, password);
         if (result.error) {
           if (result.error.message.includes('already registered')) {

@@ -73,3 +73,9 @@ verify_jwt = false
 
 [functions.get-order-by-session]
 verify_jwt = false
+
+[functions.parcel-terminals]
+verify_jwt = false
+
+[functions.verify-captcha]
+verify_jwt = false
