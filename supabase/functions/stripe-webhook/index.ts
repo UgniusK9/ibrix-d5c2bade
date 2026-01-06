@@ -260,6 +260,118 @@ async function earnCreditsForOrder(requestId: string, orderId: string, userId: s
   }
 }
 
+// Reverse credits when order is refunded
+async function reverseCreditsForOrder(requestId: string, orderId: string, isFullRefund: boolean) {
+  try {
+    // Get order details
+    const { data: order } = await supabase
+      .from('orders')
+      .select('user_id, credits_earned_cents, credits_status')
+      .eq('id', orderId)
+      .maybeSingle();
+
+    if (!order?.user_id) {
+      log(requestId, 'No user_id for credits reversal, skipping', { orderId });
+      return;
+    }
+
+    if (!order.credits_earned_cents || order.credits_earned_cents === 0) {
+      log(requestId, 'No credits to reverse', { orderId });
+      return;
+    }
+
+    if (order.credits_status === 'earn_reversed') {
+      log(requestId, 'Credits already reversed', { orderId });
+      return;
+    }
+
+    // Get wallet
+    const { data: wallet } = await supabase
+      .from('wallets')
+      .select('id, balance_eur')
+      .eq('user_id', order.user_id)
+      .maybeSingle();
+
+    if (!wallet) {
+      log(requestId, 'No wallet found for user', { orderId, userId: order.user_id });
+      return;
+    }
+
+    const creditsEarnedEur = order.credits_earned_cents / 100;
+
+    // Check if credits are still pending or already available
+    const { data: pendingTx } = await supabase
+      .from('wallet_transactions')
+      .select('id, status, type')
+      .eq('order_id', orderId)
+      .in('type', ['earn_pending', 'earn_available'])
+      .maybeSingle();
+
+    if (pendingTx) {
+      if (pendingTx.type === 'earn_pending') {
+        // Credits still pending - just mark as reversed (no balance impact)
+        log(requestId, 'Reversing pending credits', { orderId, amount: creditsEarnedEur });
+
+        await supabase
+          .from('wallet_transactions')
+          .update({
+            type: 'earn_reversed',
+            status: 'reversed',
+            reason: 'Order refunded before credits activated'
+          })
+          .eq('id', pendingTx.id);
+
+      } else if (pendingTx.type === 'earn_available') {
+        // Credits already added to balance - need to deduct
+        log(requestId, 'Reversing available credits', { orderId, amount: creditsEarnedEur });
+
+        // Create reversal transaction
+        await supabase
+          .from('wallet_transactions')
+          .insert({
+            wallet_id: wallet.id,
+            type: 'earn_reversed',
+            amount_eur: creditsEarnedEur,
+            status: 'reversed',
+            order_id: orderId,
+            reason: 'Order refunded - credits reversed'
+          });
+
+        // Deduct from wallet balance (but don't go negative)
+        const newBalance = Math.max(0, wallet.balance_eur - creditsEarnedEur);
+        await supabase
+          .from('wallets')
+          .update({ 
+            balance_eur: newBalance,
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', wallet.id);
+
+        log(requestId, 'Wallet balance updated', { 
+          walletId: wallet.id, 
+          oldBalance: wallet.balance_eur,
+          newBalance 
+        });
+      }
+    }
+
+    // Update order credits status
+    await supabase
+      .from('orders')
+      .update({ credits_status: 'earn_reversed' })
+      .eq('id', orderId);
+
+    log(requestId, 'Credits reversed successfully', { 
+      orderId, 
+      creditsEarnedCents: order.credits_earned_cents,
+      isFullRefund 
+    });
+
+  } catch (err) {
+    log(requestId, 'Credits reversal failed (non-blocking)', err);
+  }
+}
+
 // Send server-side Meta CAPI event
 async function sendMetaCapi(requestId: string, eventData: {
   eventName: string;
@@ -765,6 +877,9 @@ Deno.serve(async (req) => {
               .update({ status: 'refunded' })
               .eq('id', payment.order_id);
           }
+
+          // REVERSE CREDITS if order had earned credits
+          await reverseCreditsForOrder(requestId, payment.order_id, charge.refunded);
 
           log(requestId, 'Refund processed', { orderId: payment.order_id });
           
