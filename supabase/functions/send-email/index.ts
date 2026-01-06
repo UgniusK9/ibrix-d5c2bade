@@ -674,6 +674,55 @@ function getInquiryReplyEmail(data: any): { subject: string; html: string } {
   };
 }
 
+// Admin notification when customer replies to inquiry
+function getAdminInquiryNotificationEmail(data: any): { subject: string; html: string } {
+  const { customerName, customerEmail, topic, message, conversationUrl } = data;
+
+  const content = `
+    <!-- Alert Banner -->
+    <div style="background:#fef3c7;padding:20px;border-radius:8px;text-align:center;margin-bottom:24px;">
+      <p style="margin:0 0 4px;font-size:14px;color:#92400e;">💬 NAUJAS KLIENTO ATSAKYMAS</p>
+      <p style="margin:0;font-size:18px;font-weight:600;color:#92400e;">${customerName}</p>
+    </div>
+
+    <!-- Customer Info -->
+    <div style="background:#f9fafb;padding:20px;border-radius:8px;margin-bottom:16px;">
+      <table width="100%" cellpadding="0" cellspacing="0">
+        <tr>
+          <td style="padding:6px 0;color:#6b7280;width:100px;">Klientas:</td>
+          <td style="padding:6px 0;font-weight:500;color:#1f2937;">${customerName}</td>
+        </tr>
+        <tr>
+          <td style="padding:6px 0;color:#6b7280;">El. paštas:</td>
+          <td style="padding:6px 0;"><a href="mailto:${customerEmail}" style="color:#4f46e5;font-weight:500;">${customerEmail}</a></td>
+        </tr>
+        <tr>
+          <td style="padding:6px 0;color:#6b7280;">Tema:</td>
+          <td style="padding:6px 0;font-weight:500;color:#1f2937;">${topic}</td>
+        </tr>
+      </table>
+    </div>
+
+    <!-- Message -->
+    <div style="background:#eff6ff;padding:20px;border-radius:8px;border-left:4px solid #3b82f6;margin-bottom:24px;">
+      <p style="margin:0 0 8px;font-weight:600;color:#1e40af;">Žinutė:</p>
+      <p style="margin:0;color:#1e40af;white-space:pre-wrap;">${message}</p>
+    </div>
+
+    <!-- CTA -->
+    <div style="text-align:center;">
+      <a href="${conversationUrl}" style="display:inline-block;background:#1a1a2e;color:#ffffff;padding:14px 32px;text-decoration:none;border-radius:8px;font-weight:600;">
+        Peržiūrėti užklausas
+      </a>
+    </div>
+  `;
+
+  return {
+    subject: `💬 Naujas atsakymas nuo ${customerName} – ${topic}`,
+    html: wrapEmail(content),
+  };
+}
+
 // Helper functions
 function getShippingMethodLabel(method: string): string {
   const labels: Record<string, string> = {
@@ -744,6 +793,10 @@ Deno.serve(async (req: Request) => {
       case 'inquiry_reply':
         emailContent = getInquiryReplyEmail(data);
         recipientEmail = data.to || email;
+        break;
+      case 'admin_inquiry_notification':
+        emailContent = getAdminInquiryNotificationEmail(data);
+        recipientEmail = ADMIN_EMAIL;
         break;
       case 'admin_order_notification':
         emailContent = getAdminOrderNotificationEmail(data);
