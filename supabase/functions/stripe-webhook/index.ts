@@ -108,6 +108,158 @@ async function trackEvent(requestId: string, name: string, orderId: string, prop
   }
 }
 
+// Earn credits for eligible order
+async function earnCreditsForOrder(requestId: string, orderId: string, userId: string | null) {
+  if (!userId) {
+    log(requestId, 'No user_id for credits earning, skipping', { orderId });
+    return;
+  }
+
+  try {
+    // Get credits settings
+    const { data: settings } = await supabase
+      .from('app_settings')
+      .select('key, value')
+      .in('key', [
+        'credits.earn_rate_percent',
+        'credits.min_order_subtotal_cents',
+        'credits.exclude_categories'
+      ]);
+
+    const settingsMap: Record<string, any> = {};
+    settings?.forEach(s => {
+      settingsMap[s.key] = s.value;
+    });
+
+    const earnRatePercent = settingsMap['credits.earn_rate_percent']?.value ?? 3;
+    const minSubtotalCents = settingsMap['credits.min_order_subtotal_cents']?.value ?? 1000;
+    const excludeCategories = settingsMap['credits.exclude_categories']?.value ?? ['gift_card'];
+
+    // Get order items to calculate eligible subtotal
+    const { data: orderItems } = await supabase
+      .from('order_items')
+      .select('unit_price_eur, quantity, category_snapshot')
+      .eq('order_id', orderId);
+
+    if (!orderItems || orderItems.length === 0) {
+      log(requestId, 'No order items found for credits', { orderId });
+      return;
+    }
+
+    // Calculate eligible subtotal (exclude gift cards and other excluded categories)
+    let eligibleSubtotalCents = 0;
+    for (const item of orderItems) {
+      const categoryLower = (item.category_snapshot || '').toLowerCase();
+      const isExcluded = excludeCategories.some((cat: string) => 
+        categoryLower.includes(cat.toLowerCase())
+      );
+      
+      if (!isExcluded) {
+        eligibleSubtotalCents += Math.round(item.unit_price_eur * 100) * item.quantity;
+      }
+    }
+
+    log(requestId, 'Eligible subtotal for credits', { 
+      orderId, 
+      eligibleSubtotalCents,
+      minSubtotalCents 
+    });
+
+    // Check minimum subtotal
+    if (eligibleSubtotalCents < minSubtotalCents) {
+      log(requestId, 'Subtotal below minimum for credits', { orderId });
+      
+      // Update order with 0 credits
+      await supabase
+        .from('orders')
+        .update({ 
+          credits_earned_cents: 0,
+          credits_status: 'none'
+        })
+        .eq('id', orderId);
+      return;
+    }
+
+    // Calculate credits to earn
+    const creditsEarnedCents = Math.floor(eligibleSubtotalCents * earnRatePercent / 100);
+    
+    if (creditsEarnedCents <= 0) {
+      log(requestId, 'No credits to earn', { orderId });
+      return;
+    }
+
+    // Get or create wallet
+    let { data: wallet } = await supabase
+      .from('wallets')
+      .select('id, balance_eur')
+      .eq('user_id', userId)
+      .maybeSingle();
+
+    if (!wallet) {
+      const { data: newWallet, error: walletError } = await supabase
+        .from('wallets')
+        .insert({ user_id: userId, balance_eur: 0 })
+        .select('id, balance_eur')
+        .single();
+
+      if (walletError) {
+        log(requestId, 'Failed to create wallet', walletError);
+        return;
+      }
+      wallet = newWallet;
+    }
+
+    // Check if earn_pending already exists for this order
+    const { data: existingTransaction } = await supabase
+      .from('wallet_transactions')
+      .select('id')
+      .eq('order_id', orderId)
+      .eq('type', 'earn_pending')
+      .maybeSingle();
+
+    if (existingTransaction) {
+      log(requestId, 'Credits already pending for this order', { orderId });
+      return;
+    }
+
+    // Create earn_pending transaction
+    const { error: txError } = await supabase
+      .from('wallet_transactions')
+      .insert({
+        wallet_id: wallet.id,
+        type: 'earn_pending',
+        amount_eur: creditsEarnedCents / 100,
+        status: 'pending',
+        order_id: orderId,
+        reason: `Earned ${earnRatePercent}% credits from order`,
+      });
+
+    if (txError) {
+      log(requestId, 'Failed to create earn_pending transaction', txError);
+      return;
+    }
+
+    // Update order with credits earned
+    await supabase
+      .from('orders')
+      .update({
+        credits_earned_cents: creditsEarnedCents,
+        credits_status: 'earn_pending',
+      })
+      .eq('id', orderId);
+
+    log(requestId, 'Credits earn_pending created', { 
+      orderId, 
+      userId,
+      creditsEarnedCents,
+      earnRatePercent 
+    });
+
+  } catch (err) {
+    log(requestId, 'Credits earning failed (non-blocking)', err);
+  }
+}
+
 // Send server-side Meta CAPI event
 async function sendMetaCapi(requestId: string, eventData: {
   eventName: string;
@@ -447,6 +599,9 @@ Deno.serve(async (req) => {
                 contentIds: order.order_items?.map((i: any) => i.product_id) || [],
               });
             }
+
+            // EARN CREDITS for logged-in users after successful payment
+            await earnCreditsForOrder(requestId, orderId, order.user_id);
           }
           
           // Record event as processed
