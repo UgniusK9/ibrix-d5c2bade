@@ -9,8 +9,8 @@ import {
 import { Button } from '@/components/ui/button';
 
 const languages = [
-  { code: 'lt', name: 'Lietuvių', flag: '🇱🇹' },
-  { code: 'en', name: 'English', flag: '🇬🇧' },
+  { code: 'lt', name: 'Lietuvių' },
+  { code: 'en', name: 'English' },
 ];
 
 export function LanguageSelector() {
@@ -26,26 +26,21 @@ export function LanguageSelector() {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="sm" className="gap-1.5 px-2">
-          <span className="text-base">{currentLang.flag}</span>
-          <span className="hidden sm:inline text-sm font-medium">{currentLang.code.toUpperCase()}</span>
-          <Globe className="h-4 w-4 text-muted-foreground" />
+        <Button variant="ghost" size="icon" className="h-9 w-9" title={currentLang.name}>
+          <Globe className="h-5 w-5" />
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-40">
+      <DropdownMenuContent align="end" className="w-36">
         {languages.map((lang) => (
           <DropdownMenuItem
             key={lang.code}
             onClick={() => handleLanguageChange(lang.code)}
-            className={`flex items-center gap-2 cursor-pointer ${
+            className={`flex items-center justify-between cursor-pointer ${
               i18n.language === lang.code ? 'bg-primary/10 text-primary' : ''
             }`}
           >
-            <span className="text-base">{lang.flag}</span>
             <span className="font-medium">{lang.name}</span>
-            {i18n.language === lang.code && (
-              <span className="ml-auto text-primary">✓</span>
-            )}
+            <span className="text-xs text-muted-foreground uppercase">{lang.code}</span>
           </DropdownMenuItem>
         ))}
       </DropdownMenuContent>
