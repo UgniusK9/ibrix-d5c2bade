@@ -238,6 +238,15 @@ export const lt = {
     postalCodePlaceholder: 'LT-XXXXX',
     saveChanges: 'Išsaugoti pakeitimus',
     saved: 'Nustatymai išsaugoti',
+    password: 'Slaptažodis',
+    passwordChangeDesc: 'Pakeiskite savo prisijungimo slaptažodį',
+    newPassword: 'Naujas slaptažodis',
+    confirmPassword: 'Patvirtinti slaptažodį',
+    changePassword: 'Keisti slaptažodį',
+    passwordTooShort: 'Slaptažodis turi būti bent 8 simbolių',
+    passwordMismatch: 'Slaptažodžiai nesutampa',
+    passwordChanged: 'Slaptažodis pakeistas',
+    passwordChangedDesc: 'Jūsų slaptažodis sėkmingai pakeistas.',
   },
   
   // Orders page

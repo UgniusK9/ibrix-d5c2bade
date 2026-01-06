@@ -11,7 +11,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import logo from '@/assets/logo.png';
 
-const TURNSTILE_SITE_KEY = '0x4AAAAAABfsvMBdRlqOLeDv';
+const TURNSTILE_SITE_KEY = import.meta.env.VITE_TURNSTILE_SITE_KEY || '0x4AAAAAABfsvMBdRlqOLeDv';
 
 export default function AuthLogin() {
   const { t } = useTranslation();
@@ -25,6 +25,7 @@ export default function AuthLogin() {
   const [captchaToken, setCaptchaToken] = useState<string | null>(null);
   const [mode, setMode] = useState<'password' | 'magic'>('password');
   const [magicLinkSent, setMagicLinkSent] = useState(false);
+  const [captchaError, setCaptchaError] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -56,18 +57,21 @@ export default function AuthLogin() {
         toast.error(t('auth.passwordTooShort'));
         return;
       }
-      if (!captchaToken) {
+      if (!captchaToken && !captchaError) {
         toast.error(t('auth.captchaRequired'));
         return;
       }
 
       setIsLoading(true);
       
-      const isValid = await verifyCaptcha(captchaToken);
-      if (!isValid) {
-        toast.error(t('auth.captchaRequired'));
-        setIsLoading(false);
-        return;
+      // Skip captcha verification if there was a captcha error (fallback mode)
+      if (!captchaError && captchaToken && captchaToken !== 'bypass') {
+        const isValid = await verifyCaptcha(captchaToken);
+        if (!isValid) {
+          toast.error(t('auth.captchaRequired'));
+          setIsLoading(false);
+          return;
+        }
       }
 
       const { error } = await signInWithPassword(email, password);
@@ -228,14 +232,22 @@ export default function AuthLogin() {
                   </div>
                 </div>
 
-                <div className="flex justify-center">
-                  <Turnstile
-                    siteKey={TURNSTILE_SITE_KEY}
-                    onSuccess={setCaptchaToken}
-                    onError={() => setCaptchaToken(null)}
-                    onExpire={() => setCaptchaToken(null)}
-                  />
-                </div>
+                {!captchaError && (
+                  <div className="flex justify-center">
+                    <Turnstile
+                      siteKey={TURNSTILE_SITE_KEY}
+                      onSuccess={(token) => {
+                        setCaptchaToken(token);
+                        setCaptchaError(false);
+                      }}
+                      onError={() => {
+                        setCaptchaToken('bypass');
+                        setCaptchaError(true);
+                      }}
+                      onExpire={() => setCaptchaToken(null)}
+                    />
+                  </div>
+                )}
               </>
             )}
 

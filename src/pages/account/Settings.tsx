@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { User, Mail, MapPin, Save, Loader2, ArrowLeft, AlertCircle, CheckCircle2 } from 'lucide-react';
+import { User, Mail, MapPin, Save, Loader2, ArrowLeft, AlertCircle, CheckCircle2, Lock, Eye, EyeOff } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { PageLayout } from '@/components/layout/PageLayout';
 import { Button } from '@/components/ui/button';
@@ -27,13 +27,21 @@ interface AddressData {
 }
 
 export default function Settings() {
-  const { user } = useAuth();
+  const { user, updatePassword } = useAuth();
   const { t } = useTranslation();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [savingEmail, setSavingEmail] = useState(false);
+  const [savingPassword, setSavingPassword] = useState(false);
   const [emailSent, setEmailSent] = useState(false);
+  const [passwordChanged, setPasswordChanged] = useState(false);
   const [newEmail, setNewEmail] = useState('');
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   
   const [profile, setProfile] = useState<ProfileData>({
     first_name: '',
@@ -141,6 +149,38 @@ export default function Settings() {
       }
     } finally {
       setSavingEmail(false);
+    }
+  };
+
+  const handleChangePassword = async () => {
+    if (!user) return;
+    
+    if (newPassword.length < 8) {
+      toast.error(t('settings.passwordTooShort'));
+      return;
+    }
+    
+    if (newPassword !== confirmPassword) {
+      toast.error(t('settings.passwordMismatch'));
+      return;
+    }
+    
+    setSavingPassword(true);
+    try {
+      const { error } = await updatePassword(newPassword);
+      
+      if (error) throw error;
+      
+      setPasswordChanged(true);
+      setCurrentPassword('');
+      setNewPassword('');
+      setConfirmPassword('');
+      toast.success(t('settings.passwordChanged'));
+    } catch (error: any) {
+      console.error('Error changing password:', error);
+      toast.error(error.message || t('common.error'));
+    } finally {
+      setSavingPassword(false);
     }
   };
 
@@ -258,6 +298,98 @@ export default function Settings() {
                       <Mail className="w-4 h-4 mr-2" />
                     )}
                     {t('settings.changeEmail')}
+                  </Button>
+                </>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Password Change Card */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Lock className="w-5 h-5 text-primary" />
+                {t('settings.password')}
+              </CardTitle>
+              <CardDescription>{t('settings.passwordChangeDesc')}</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {passwordChanged ? (
+                <Alert className="border-success/30 bg-success/10">
+                  <CheckCircle2 className="h-4 w-4 text-success" />
+                  <AlertDescription className="text-success">
+                    {t('settings.passwordChangedDesc')}
+                  </AlertDescription>
+                </Alert>
+              ) : (
+                <>
+                  <div className="space-y-2">
+                    <Label htmlFor="newPassword">{t('settings.newPassword')}</Label>
+                    <div className="relative">
+                      <Input
+                        id="newPassword"
+                        type={showNewPassword ? 'text' : 'password'}
+                        value={newPassword}
+                        onChange={(e) => setNewPassword(e.target.value)}
+                        placeholder="••••••••"
+                        className="pr-10"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowNewPassword(!showNewPassword)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                      >
+                        {showNewPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      </button>
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="confirmPassword">{t('settings.confirmPassword')}</Label>
+                    <div className="relative">
+                      <Input
+                        id="confirmPassword"
+                        type={showConfirmPassword ? 'text' : 'password'}
+                        value={confirmPassword}
+                        onChange={(e) => setConfirmPassword(e.target.value)}
+                        placeholder="••••••••"
+                        className="pr-10"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                      >
+                        {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      </button>
+                    </div>
+                  </div>
+                  {newPassword && newPassword.length < 8 && (
+                    <Alert>
+                      <AlertCircle className="h-4 w-4" />
+                      <AlertDescription>
+                        {t('settings.passwordTooShort')}
+                      </AlertDescription>
+                    </Alert>
+                  )}
+                  {newPassword && confirmPassword && newPassword !== confirmPassword && (
+                    <Alert variant="destructive">
+                      <AlertCircle className="h-4 w-4" />
+                      <AlertDescription>
+                        {t('settings.passwordMismatch')}
+                      </AlertDescription>
+                    </Alert>
+                  )}
+                  <Button 
+                    onClick={handleChangePassword}
+                    disabled={savingPassword || !newPassword || newPassword.length < 8 || newPassword !== confirmPassword}
+                    variant="outline"
+                  >
+                    {savingPassword ? (
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    ) : (
+                      <Lock className="w-4 h-4 mr-2" />
+                    )}
+                    {t('settings.changePassword')}
                   </Button>
                 </>
               )}
