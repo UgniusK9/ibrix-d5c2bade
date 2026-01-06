@@ -49,7 +49,7 @@ export function PreOrderSection() {
               asChild 
               className="bg-accent hover:bg-accent/90 text-accent-foreground font-semibold h-11 px-6"
             >
-              <Link to="/pre-order">
+              <Link to="/pre-order" onClick={() => window.scrollTo(0, 0)}>
                 Sužinoti, kaip veikia pre-order
                 <ArrowRight className="ml-2 h-4 w-4" />
               </Link>

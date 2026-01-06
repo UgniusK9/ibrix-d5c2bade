@@ -66,6 +66,7 @@ export function EditorialSection() {
                   </p>
                   <Link 
                     to="/pre-order" 
+                    onClick={() => window.scrollTo(0, 0)}
                     className="inline-flex items-center gap-2 text-primary hover:text-primary/80 font-medium text-sm"
                   >
                     Sužinoti daugiau
@@ -100,7 +101,7 @@ export function EditorialSection() {
                     Nežinai ką padovanoti? Leisk pasirinkti pačiam – dovanų kuponas bet kokiai sumai.
                   </p>
                   <Link 
-                    to="/produktai?tag=dovana" 
+                    to="/dovanu-kuponai" 
                     className="inline-flex items-center gap-2 text-accent hover:text-accent/80 font-medium text-sm"
                   >
                     Rinkti dovaną
