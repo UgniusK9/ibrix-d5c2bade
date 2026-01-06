@@ -79,3 +79,9 @@ verify_jwt = false
 
 [functions.verify-captcha]
 verify_jwt = false
+
+[functions.credits]
+verify_jwt = false
+
+[functions.activate-credits]
+verify_jwt = false
