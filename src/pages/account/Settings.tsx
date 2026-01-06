@@ -1,13 +1,24 @@
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { User, Mail, MapPin, Save, Loader2, ArrowLeft, AlertCircle, CheckCircle2, Lock, Eye, EyeOff } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { User, Mail, MapPin, Save, Loader2, ArrowLeft, AlertCircle, CheckCircle2, Lock, Eye, EyeOff, Trash2, Download, Shield } from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
 import { PageLayout } from '@/components/layout/PageLayout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -27,8 +38,9 @@ interface AddressData {
 }
 
 export default function Settings() {
-  const { user, updatePassword } = useAuth();
+  const { user, updatePassword, signOut } = useAuth();
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [savingEmail, setSavingEmail] = useState(false);
@@ -442,6 +454,118 @@ export default function Settings() {
                   onChange={(e) => setAddress({ ...address, country: e.target.value })}
                   placeholder="LT"
                 />
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Account Deletion Card */}
+          <Card className="border-destructive/30">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-destructive">
+                <Trash2 className="w-5 h-5" />
+                {t('settings.deleteAccount')}
+              </CardTitle>
+              <CardDescription>{t('settings.deleteAccountDesc')}</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <Alert variant="destructive">
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription>
+                  {t('settings.deleteAccountWarning')}
+                </AlertDescription>
+              </Alert>
+              
+              <div className="flex gap-3">
+                <Button 
+                  variant="outline"
+                  onClick={async () => {
+                    // Export user data
+                    try {
+                      const { data: userData } = await supabase
+                        .from('users')
+                        .select('*')
+                        .eq('id', user?.id)
+                        .single();
+                      
+                      const { data: ordersData } = await supabase
+                        .from('orders')
+                        .select('*, order_items(*)')
+                        .eq('user_id', user?.id);
+                      
+                      const { data: wishlistData } = await supabase
+                        .from('wishlists')
+                        .select('*, products(title, sku)')
+                        .eq('user_id', user?.id);
+                      
+                      const exportData = {
+                        user: userData,
+                        orders: ordersData,
+                        wishlist: wishlistData,
+                        exportedAt: new Date().toISOString(),
+                      };
+                      
+                      const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+                      const url = URL.createObjectURL(blob);
+                      const a = document.createElement('a');
+                      a.href = url;
+                      a.download = `ibrix-data-export-${new Date().toISOString().split('T')[0]}.json`;
+                      a.click();
+                      URL.revokeObjectURL(url);
+                      
+                      toast.success(t('settings.dataExported'));
+                    } catch (error) {
+                      console.error('Error exporting data:', error);
+                      toast.error(t('common.error'));
+                    }
+                  }}
+                >
+                  <Download className="w-4 h-4 mr-2" />
+                  {t('settings.exportData')}
+                </Button>
+                
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button variant="destructive">
+                      <Trash2 className="w-4 h-4 mr-2" />
+                      {t('settings.deleteAccount')}
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>{t('settings.deleteAccountConfirmTitle')}</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        {t('settings.deleteAccountConfirmDesc')}
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>{t('common.cancel')}</AlertDialogCancel>
+                      <AlertDialogAction
+                        className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                        onClick={async () => {
+                          try {
+                            // Delete user data from public.users (cascade will handle related data)
+                            const { error: deleteError } = await supabase
+                              .from('users')
+                              .delete()
+                              .eq('id', user?.id);
+                            
+                            if (deleteError) throw deleteError;
+                            
+                            // Sign out and redirect
+                            await signOut();
+                            toast.success(t('settings.accountDeleted'));
+                            navigate('/');
+                          } catch (error) {
+                            console.error('Error deleting account:', error);
+                            toast.error(t('common.error'));
+                          }
+                        }}
+                      >
+                        {t('settings.confirmDelete')}
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
               </div>
             </CardContent>
           </Card>

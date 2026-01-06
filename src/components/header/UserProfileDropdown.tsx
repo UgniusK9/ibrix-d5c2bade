@@ -115,7 +115,7 @@ export function UserProfileDropdown() {
           </DropdownMenuItem>
 
           <DropdownMenuItem asChild>
-            <Link to="/account" className="flex items-center gap-3 cursor-pointer">
+            <Link to="/wishlist" className="flex items-center gap-3 cursor-pointer">
               <Heart className="h-4 w-4 text-muted-foreground" />
               <span>{t('account.wishlist')}</span>
             </Link>
