@@ -4,22 +4,28 @@ import { lt } from './locales/lt';
 import { en } from './locales/en';
 
 // Get saved language or default to 'lt'
-const savedLanguage = typeof window !== 'undefined' 
-  ? localStorage.getItem('language') || 'lt'
-  : 'lt';
+const getSavedLanguage = () => {
+  if (typeof window !== 'undefined') {
+    return localStorage.getItem('language') || 'lt';
+  }
+  return 'lt';
+};
 
-i18n
-  .use(initReactI18next)
-  .init({
-    resources: {
-      lt: { translation: lt },
-      en: { translation: en },
-    },
-    lng: savedLanguage,
-    fallbackLng: 'lt',
-    interpolation: {
-      escapeValue: false,
-    },
-  });
+// Initialize i18n only once
+if (!i18n.isInitialized) {
+  i18n
+    .use(initReactI18next)
+    .init({
+      resources: {
+        lt: { translation: lt },
+        en: { translation: en },
+      },
+      lng: getSavedLanguage(),
+      fallbackLng: 'lt',
+      interpolation: {
+        escapeValue: false,
+      },
+    });
+}
 
 export default i18n;
