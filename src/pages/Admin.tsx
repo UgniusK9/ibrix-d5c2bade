@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Package, Settings, List, BarChart3, Tag, RefreshCw, ShoppingBag, Users, RotateCcw, Layers, Gift, FolderTree, Mail, Image, MessageSquare, Bell, TrendingUp } from "lucide-react";
+import { Package, Settings, List, BarChart3, Tag, RefreshCw, ShoppingBag, Users, RotateCcw, Layers, Gift, FolderTree, Mail, Image, MessageSquare, Bell, TrendingUp, Wallet } from "lucide-react";
 import { PageLayout } from "@/components/layout/PageLayout";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -18,6 +18,7 @@ import { NewsletterManager } from "@/components/admin/NewsletterManager";
 import { PromoBannersManager } from "@/components/admin/PromoBannersManager";
 import { ReviewsManager } from "@/components/admin/ReviewsManager";
 import { StockNotificationsManager } from "@/components/admin/StockNotificationsManager";
+import { CreditsManager } from "@/components/admin/CreditsManager";
 import { supabase } from "@/integrations/supabase/client";
 import { Link } from "react-router-dom";
 
@@ -119,6 +120,10 @@ export default function Admin() {
               <Bell className="w-4 h-4" />
               Sandėlis
             </TabsTrigger>
+            <TabsTrigger value="credits" className="gap-2">
+              <Wallet className="w-4 h-4" />
+              Kreditai
+            </TabsTrigger>
             <TabsTrigger value="setup" className="gap-2">
               <Settings className="w-4 h-4" />
               Nustatymai
@@ -185,6 +190,10 @@ export default function Admin() {
 
           <TabsContent value="stock-notifications">
             <StockNotificationsManager />
+          </TabsContent>
+
+          <TabsContent value="credits">
+            <CreditsManager />
           </TabsContent>
 
           <TabsContent value="setup">
