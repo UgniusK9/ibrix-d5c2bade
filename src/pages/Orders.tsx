@@ -11,6 +11,8 @@ import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { OrderCard } from '@/components/account/OrderCard';
 import { RefundRequestForm } from '@/components/refund/RefundRequestForm';
+import { useCartStore } from '@/stores/cartStore';
+import { transformProduct } from '@/hooks/useProducts';
 import { toast } from 'sonner';
 
 interface RefundOrder {
@@ -70,6 +72,7 @@ interface ShipmentEvent {
 interface OrderItem {
   id: string;
   order_id: string;
+  product_id: string;
   title_snapshot: string;
   quantity: number;
   unit_price_eur: number;
@@ -159,7 +162,7 @@ export default function Orders() {
 
             const { data: itemsData } = await supabase
               .from('order_items')
-              .select('id, order_id, title_snapshot, quantity, unit_price_eur, unit_deposit_eur')
+              .select('id, order_id, product_id, title_snapshot, quantity, unit_price_eur, unit_deposit_eur')
               .in('order_id', orderIds);
             
             if (itemsData) setOrderItems(itemsData as OrderItem[]);
@@ -209,6 +212,35 @@ export default function Orders() {
       orderNumber: order.order_number,
       maxAmount: totalPaid || order.deposit_total_eur,
     });
+  };
+
+  const addItem = useCartStore((state) => state.addItem);
+
+  const handleReorder = async (items: OrderItem[]) => {
+    let addedCount = 0;
+    for (const item of items) {
+      try {
+        const { data: product } = await supabase
+          .from('products')
+          .select('*')
+          .eq('id', item.product_id)
+          .eq('status', 'active')
+          .single();
+        
+        if (product) {
+          addItem(transformProduct(product), item.quantity);
+          addedCount++;
+        }
+      } catch (e) {
+        console.error('Failed to add item:', e);
+      }
+    }
+    
+    if (addedCount === items.length) {
+      toast.success(t('orders.reorderSuccess'));
+    } else if (addedCount > 0) {
+      toast.warning(t('orders.reorderPartial'));
+    }
   };
 
   // Filter orders
@@ -312,6 +344,7 @@ export default function Orders() {
                 items={getItemsForOrder(order.id)}
                 balanceRequest={getBalanceRequestForOrder(order.id)}
                 onRequestRefund={() => handleRequestRefund(order)}
+                onReorder={handleReorder}
               />
             ))}
           </div>
