@@ -63,12 +63,6 @@ export function LockerSearch({ shippingMethod, selectedLocker, onSelect }: Locke
     debounceRef.current = setTimeout(async () => {
       setIsLoading(true);
       try {
-        const { data, error } = await supabase.functions.invoke('parcel-terminals', {
-          body: null,
-          headers: {},
-        });
-        
-        // Use query params approach
         const response = await fetch(
           `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/parcel-terminals?carrier=${carrier}&q=${encodeURIComponent(query)}`,
           {
