@@ -247,6 +247,15 @@ export const en = {
     passwordMismatch: 'Passwords do not match',
     passwordChanged: 'Password changed',
     passwordChangedDesc: 'Your password has been successfully changed.',
+    deleteAccount: 'Delete Account',
+    deleteAccountDesc: 'Permanently remove your account and all data',
+    deleteAccountWarning: 'This action is irreversible. All your data, order history, and settings will be permanently deleted.',
+    deleteAccountConfirmTitle: 'Are you sure you want to delete your account?',
+    deleteAccountConfirmDesc: 'This action is irreversible. We recommend exporting your data before proceeding.',
+    confirmDelete: 'Yes, delete my account',
+    exportData: 'Export data',
+    dataExported: 'Data exported',
+    accountDeleted: 'Account deleted',
   },
   
   // Orders page

@@ -99,6 +99,11 @@ interface WalletData {
   balance_eur: number;
 }
 
+interface UserProfile {
+  first_name: string | null;
+  last_name: string | null;
+}
+
 export default function Account() {
   const { user, signOut } = useAuth();
   const { t } = useTranslation();
@@ -110,6 +115,7 @@ export default function Account() {
   const [balanceRequests, setBalanceRequests] = useState<BalanceRequest[]>([]);
   const [offers, setOffers] = useState<Offer[]>([]);
   const [wallet, setWallet] = useState<WalletData | null>(null);
+  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [refundOrder, setRefundOrder] = useState<RefundOrder | null>(null);
 
@@ -118,6 +124,17 @@ export default function Account() {
       if (!user) return;
 
       try {
+        // Load user profile
+        const { data: profileData } = await supabase
+          .from('users')
+          .select('first_name, last_name')
+          .eq('id', user.id)
+          .maybeSingle();
+        
+        if (profileData) {
+          setUserProfile(profileData);
+        }
+
         // Load orders
         const { data: ordersData } = await supabase
           .from('orders')
@@ -294,7 +311,11 @@ export default function Account() {
                 <User className="w-6 h-6 text-primary" />
               </div>
               <div>
-                <p className="font-semibold">{user?.email}</p>
+                <p className="font-semibold">
+                  {userProfile?.first_name && userProfile?.last_name 
+                    ? `${userProfile.first_name} ${userProfile.last_name}` 
+                    : user?.email}
+                </p>
                 <p className="text-sm text-muted-foreground">{t('account.title')}</p>
               </div>
             </div>

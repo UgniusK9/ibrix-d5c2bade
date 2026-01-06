@@ -102,8 +102,8 @@ export default function SignupStep2() {
       ? `${step1Data.dobYear}-${step1Data.dobMonth.padStart(2, '0')}-${step1Data.dobDay.padStart(2, '0')}`
       : null;
 
-    // Sign up with Supabase
-    const { error } = await signUp(email, password);
+    // Sign up with Supabase including name metadata
+    const { error } = await signUp(email, password, { firstName, lastName });
 
     if (error) {
       setIsLoading(false);

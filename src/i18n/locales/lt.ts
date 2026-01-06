@@ -247,6 +247,15 @@ export const lt = {
     passwordMismatch: 'Slaptažodžiai nesutampa',
     passwordChanged: 'Slaptažodis pakeistas',
     passwordChangedDesc: 'Jūsų slaptažodis sėkmingai pakeistas.',
+    deleteAccount: 'Ištrinti paskyrą',
+    deleteAccountDesc: 'Visam laikui pašalinti savo paskyrą ir visus duomenis',
+    deleteAccountWarning: 'Šis veiksmas yra negrįžtamas. Visi jūsų duomenys, užsakymų istorija ir nustatymai bus visam laikui ištrinti.',
+    deleteAccountConfirmTitle: 'Ar tikrai norite ištrinti paskyrą?',
+    deleteAccountConfirmDesc: 'Šis veiksmas yra negrįžtamas. Prieš tęsdami, rekomenduojame eksportuoti savo duomenis.',
+    confirmDelete: 'Taip, ištrinti paskyrą',
+    exportData: 'Eksportuoti duomenis',
+    dataExported: 'Duomenys eksportuoti',
+    accountDeleted: 'Paskyra ištrinta',
   },
   
   // Orders page

@@ -12,7 +12,7 @@ interface AuthContextType {
   isAdmin: boolean;
   signInWithMagicLink: (email: string) => Promise<{ error: Error | null }>;
   signInWithPassword: (email: string, password: string) => Promise<{ error: Error | null }>;
-  signUp: (email: string, password: string) => Promise<{ error: Error | null }>;
+  signUp: (email: string, password: string, metadata?: { firstName?: string; lastName?: string }) => Promise<{ error: Error | null }>;
   resetPassword: (email: string) => Promise<{ error: Error | null }>;
   updatePassword: (password: string) => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
@@ -51,23 +51,35 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // Check if user exists
       const { data: existingUser } = await supabase
         .from('users')
-        .select('id')
+        .select('id, first_name, last_name')
         .eq('id', authUser.id)
         .maybeSingle();
 
+      const metadata = authUser.user_metadata || {};
+      const firstName = metadata.first_name || null;
+      const lastName = metadata.last_name || null;
+
       if (!existingUser) {
-        // Create user with customer role
+        // Create user with customer role and name from metadata
         const { error } = await supabase
           .from('users')
           .insert({
             id: authUser.id,
             email: authUser.email || '',
-            role: 'customer'
+            role: 'customer',
+            first_name: firstName,
+            last_name: lastName,
           });
         
         if (error) {
           console.error('Error creating user:', error);
         }
+      } else if (firstName && lastName && !existingUser.first_name && !existingUser.last_name) {
+        // Update existing user if name is missing but available in metadata
+        await supabase
+          .from('users')
+          .update({ first_name: firstName, last_name: lastName })
+          .eq('id', authUser.id);
       }
     } catch (e) {
       console.error('Error in ensureUserExists:', e);
@@ -135,7 +147,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return { error: error as Error | null };
   };
 
-  const signUp = async (email: string, password: string) => {
+  const signUp = async (email: string, password: string, metadata?: { firstName?: string; lastName?: string }) => {
     const redirectUrl = `${window.location.origin}/`;
     
     const { error } = await supabase.auth.signUp({
@@ -143,6 +155,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       password,
       options: {
         emailRedirectTo: redirectUrl,
+        data: {
+          first_name: metadata?.firstName,
+          last_name: metadata?.lastName,
+        },
       },
     });
     
