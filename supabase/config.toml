@@ -70,3 +70,6 @@ verify_jwt = false
 
 [functions.paysera-callback]
 verify_jwt = false
+
+[functions.get-order-by-session]
+verify_jwt = false

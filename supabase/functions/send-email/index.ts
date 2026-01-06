@@ -3,6 +3,9 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+// Admin email for notifications
+const ADMIN_EMAIL = 'u.ciciurenas@gmail.com';
+
 // Generate request ID for tracing
 const generateRequestId = () => crypto.randomUUID().slice(0, 8);
 
@@ -267,6 +270,146 @@ function getNewsletterEmail(data: any): { subject: string; html: string } {
   };
 }
 
+// NEW: Admin order notification email
+function getAdminOrderNotificationEmail(data: any): { subject: string; html: string } {
+  const { 
+    orderNumber, 
+    customerName, 
+    customerEmail, 
+    customerPhone,
+    items, 
+    subtotalEur, 
+    discountEur, 
+    shippingEur, 
+    totalEur,
+    depositEur,
+    balanceEur,
+    shippingMethod,
+    shippingAddress,
+    paymentMethod,
+    paymentType,
+    hasPreorder,
+    etaWeeksMin,
+    etaWeeksMax,
+  } = data;
+
+  const itemsHtml = items?.map((item: any) => 
+    `<tr>
+      <td style="padding:10px;border-bottom:1px solid #eee;">${item.title_snapshot || item.title}</td>
+      <td style="padding:10px;border-bottom:1px solid #eee;text-align:center;">${item.quantity}</td>
+      <td style="padding:10px;border-bottom:1px solid #eee;text-align:right;">${item.unit_price_eur || item.unitPriceEur}€</td>
+      <td style="padding:10px;border-bottom:1px solid #eee;text-align:right;">${((item.unit_price_eur || item.unitPriceEur) * item.quantity).toFixed(2)}€</td>
+    </tr>`
+  ).join('') || '';
+
+  const addressHtml = shippingAddress?.lockerAddress 
+    ? shippingAddress.lockerAddress
+    : shippingAddress?.street 
+      ? `${shippingAddress.street}, ${shippingAddress.city} ${shippingAddress.postalCode}`
+      : 'Nenurodyta';
+
+  return {
+    subject: `🛒 Naujas užsakymas ${orderNumber} - ${depositEur}€`,
+    html: `
+      <div style="font-family:Arial,sans-serif;max-width:700px;margin:0 auto;">
+        <div style="background:#22c55e;color:white;padding:20px;border-radius:8px 8px 0 0;">
+          <h1 style="margin:0;font-size:24px;">🎉 Naujas užsakymas!</h1>
+          <p style="margin:10px 0 0;font-size:20px;font-weight:bold;">${orderNumber}</p>
+        </div>
+        
+        <div style="background:#f9f9f9;padding:20px;border:1px solid #eee;border-top:0;">
+          <!-- Customer Info -->
+          <div style="background:white;padding:15px;border-radius:8px;margin-bottom:15px;">
+            <h2 style="margin:0 0 10px;font-size:16px;color:#666;">👤 Klientas</h2>
+            <p style="margin:5px 0;"><strong>Vardas:</strong> ${customerName}</p>
+            <p style="margin:5px 0;"><strong>El. paštas:</strong> <a href="mailto:${customerEmail}">${customerEmail}</a></p>
+            ${customerPhone ? `<p style="margin:5px 0;"><strong>Telefonas:</strong> <a href="tel:${customerPhone}">${customerPhone}</a></p>` : ''}
+          </div>
+          
+          <!-- Order Items -->
+          <div style="background:white;padding:15px;border-radius:8px;margin-bottom:15px;">
+            <h2 style="margin:0 0 10px;font-size:16px;color:#666;">📦 Prekės</h2>
+            <table style="width:100%;border-collapse:collapse;">
+              <thead>
+                <tr style="background:#f5f5f5;">
+                  <th style="text-align:left;padding:10px;">Prekė</th>
+                  <th style="text-align:center;padding:10px;">Kiekis</th>
+                  <th style="text-align:right;padding:10px;">Vnt. kaina</th>
+                  <th style="text-align:right;padding:10px;">Suma</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${itemsHtml}
+              </tbody>
+            </table>
+          </div>
+          
+          <!-- Totals -->
+          <div style="background:white;padding:15px;border-radius:8px;margin-bottom:15px;">
+            <h2 style="margin:0 0 10px;font-size:16px;color:#666;">💰 Sumos</h2>
+            <table style="width:100%;">
+              <tr>
+                <td style="padding:5px 0;">Prekės:</td>
+                <td style="text-align:right;padding:5px 0;">${subtotalEur}€</td>
+              </tr>
+              ${discountEur > 0 ? `
+              <tr>
+                <td style="padding:5px 0;color:#22c55e;">Nuolaida:</td>
+                <td style="text-align:right;padding:5px 0;color:#22c55e;">-${discountEur}€</td>
+              </tr>
+              ` : ''}
+              <tr>
+                <td style="padding:5px 0;">Pristatymas:</td>
+                <td style="text-align:right;padding:5px 0;">${shippingEur === 0 ? 'Nemokamas' : shippingEur + '€'}</td>
+              </tr>
+              <tr style="border-top:2px solid #ddd;">
+                <td style="padding:10px 0;font-weight:bold;font-size:18px;">IŠ VISO:</td>
+                <td style="text-align:right;padding:10px 0;font-weight:bold;font-size:18px;">${totalEur}€</td>
+              </tr>
+            </table>
+            
+            ${hasPreorder ? `
+            <div style="background:#fff3cd;padding:10px;border-radius:4px;margin-top:10px;">
+              <p style="margin:0;"><strong>Pre-order mokėjimas:</strong></p>
+              <p style="margin:5px 0;">✅ Sumokėtas depozitas: <strong>${depositEur}€</strong></p>
+              <p style="margin:5px 0;">⏳ Liko sumokėti: <strong>${balanceEur}€</strong></p>
+              ${etaWeeksMin && etaWeeksMax ? `<p style="margin:5px 0;">📅 ETA: ${etaWeeksMin}-${etaWeeksMax} sav.</p>` : ''}
+            </div>
+            ` : `
+            <div style="background:#f0f9f0;padding:10px;border-radius:4px;margin-top:10px;">
+              <p style="margin:0;">✅ <strong>Pilnai apmokėta: ${depositEur}€</strong></p>
+            </div>
+            `}
+          </div>
+          
+          <!-- Shipping -->
+          <div style="background:white;padding:15px;border-radius:8px;margin-bottom:15px;">
+            <h2 style="margin:0 0 10px;font-size:16px;color:#666;">🚚 Pristatymas</h2>
+            <p style="margin:5px 0;"><strong>Būdas:</strong> ${shippingMethod}</p>
+            <p style="margin:5px 0;"><strong>Adresas:</strong> ${addressHtml}</p>
+          </div>
+          
+          <!-- Payment -->
+          <div style="background:white;padding:15px;border-radius:8px;">
+            <h2 style="margin:0 0 10px;font-size:16px;color:#666;">💳 Mokėjimas</h2>
+            <p style="margin:5px 0;"><strong>Būdas:</strong> ${paymentMethod}</p>
+            <p style="margin:5px 0;"><strong>Tipas:</strong> ${paymentType === 'deposit' ? 'Depozitas' : 'Pilnas mokėjimas'}</p>
+          </div>
+        </div>
+        
+        <div style="text-align:center;padding:20px;">
+          <a href="https://ibrix.lt/admin" style="display:inline-block;background:#4f46e5;color:white;padding:14px 28px;text-decoration:none;border-radius:6px;font-size:16px;">
+            Peržiūrėti Admin
+          </a>
+        </div>
+        
+        <hr style="border:none;border-top:1px solid #eee;margin:20px 0;">
+        <p style="color:#999;font-size:12px;text-align:center;">IBRIX Admin Notification</p>
+      </div>
+    `,
+  };
+}
+
 Deno.serve(async (req: Request) => {
   const requestId = generateRequestId();
   
@@ -278,25 +421,10 @@ Deno.serve(async (req: Request) => {
     const { type, email, ...data } = await req.json();
     log(requestId, 'Email request received', { type, email, orderNumber: data.orderNumber });
 
-    // Validate email (unless it's a support request which goes to admin)
-    if (type !== 'support_request' && (!email || !type)) {
-      log(requestId, 'Missing required fields', { hasEmail: !!email, hasType: !!type });
-      return new Response(JSON.stringify({ error: 'Missing email or type' }), {
-        status: 400,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
-    }
-
-    // Determine recipient email
-    let recipientEmail = email;
-    
-    // Support requests go to admin
-    if (type === 'support_request') {
-      recipientEmail = 'info@ibrix.lt'; // Admin email
-    }
-
     // Get email content based on type
     let emailContent: { subject: string; html: string };
+    let recipientEmail = email;
+    
     switch (type) {
       case 'deposit_confirmed':
         emailContent = getDepositConfirmedEmail(data);
@@ -312,12 +440,17 @@ Deno.serve(async (req: Request) => {
         break;
       case 'support_request':
         emailContent = getSupportRequestEmail(data);
+        recipientEmail = 'info@ibrix.lt'; // Admin email for support
         break;
       case 'gift_card':
         emailContent = getGiftCardEmail(data);
         break;
       case 'newsletter':
         emailContent = getNewsletterEmail(data);
+        break;
+      case 'admin_order_notification':
+        emailContent = getAdminOrderNotificationEmail(data);
+        recipientEmail = ADMIN_EMAIL; // Always send to admin
         break;
       default:
         log(requestId, 'Unknown email type', { type });
@@ -327,33 +460,31 @@ Deno.serve(async (req: Request) => {
         });
     }
 
+    // Validate email
+    if (!recipientEmail) {
+      log(requestId, 'Missing recipient email', { type });
+      return new Response(JSON.stringify({ error: 'Missing recipient email' }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
     // Check if RESEND_API_KEY is configured
     const resendApiKey = Deno.env.get('RESEND_API_KEY');
     
     if (!resendApiKey || resendApiKey === 'test' || resendApiKey.length < 10) {
       // Fallback: Log email content for manual sending
       log(requestId, '⚠️ WARNING: RESEND_API_KEY not configured - email logged for manual sending', {
-        to: email,
+        to: recipientEmail,
         subject: emailContent.subject,
         action_required: 'Configure RESEND_API_KEY and verify ibrix.lt domain in Resend dashboard',
-        resend_domain_setup_url: 'https://resend.com/domains',
       });
 
       return new Response(JSON.stringify({
         success: true,
         fallback: true,
         message: 'Email logged (RESEND not configured)',
-        email: {
-          to: email,
-          subject: emailContent.subject,
-        },
-        action_required: {
-          step1: 'Go to https://resend.com/domains',
-          step2: 'Add ibrix.lt domain',
-          step3: 'Add DNS records (TXT, CNAME) to your domain',
-          step4: 'Verify domain status shows "Verified"',
-          step5: 'Set RESEND_API_KEY secret in Lovable',
-        },
+        email: { to: recipientEmail, subject: emailContent.subject },
       }), {
         status: 200,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -372,7 +503,7 @@ Deno.serve(async (req: Request) => {
       },
       body: JSON.stringify({
         from: fromEmail,
-        to: [email],
+        to: [recipientEmail],
         subject: emailContent.subject,
         html: emailContent.html,
       }),
@@ -385,7 +516,6 @@ Deno.serve(async (req: Request) => {
       if (emailData.message?.includes('verify') || emailData.message?.includes('domain')) {
         log(requestId, '⚠️ DOMAIN NOT VERIFIED - Trying fallback sender', {
           error: emailData.message,
-          action_required: 'Verify ibrix.lt domain in Resend: https://resend.com/domains',
         });
         
         // Try with resend.dev fallback
@@ -397,7 +527,7 @@ Deno.serve(async (req: Request) => {
           },
           body: JSON.stringify({
             from: 'IBRIX <onboarding@resend.dev>',
-            to: [email],
+            to: [recipientEmail],
             subject: emailContent.subject,
             html: emailContent.html,
           }),
@@ -411,14 +541,13 @@ Deno.serve(async (req: Request) => {
         
         log(requestId, 'Email sent via fallback (resend.dev)', { 
           emailId: fallbackData.id,
-          warning: 'Domain not verified - emails sent from onboarding@resend.dev' 
+          to: recipientEmail,
         });
 
         return new Response(JSON.stringify({
           success: true,
           emailId: fallbackData.id,
-          warning: 'Domain ibrix.lt not verified. Email sent from resend.dev fallback.',
-          verify_domain: 'https://resend.com/domains',
+          warning: 'Domain not verified. Email sent from resend.dev fallback.',
         }), {
           status: 200,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -428,7 +557,7 @@ Deno.serve(async (req: Request) => {
       throw new Error(emailData.message || 'Failed to send email');
     }
 
-    log(requestId, 'Email sent via Resend', { emailId: emailData.id, to: email });
+    log(requestId, 'Email sent via Resend', { emailId: emailData.id, to: recipientEmail });
 
     return new Response(JSON.stringify({
       success: true,

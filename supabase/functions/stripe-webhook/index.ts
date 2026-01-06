@@ -221,15 +221,16 @@ Deno.serve(async (req) => {
           paymentIntentId: session.payment_intent 
         });
 
-        if (paymentType === 'deposit') {
-          // DEPOSIT PAYMENT - Create order items, shipment, update status
-          
-          // Update order status
+        if (paymentType === 'deposit' || paymentType === 'full_payment') {
+          // DEPOSIT or FULL PAYMENT - Create order items, shipment, update status
+          const isFullPayment = paymentType === 'full_payment';
+          // Update order status - balance_paid for full payment, deposit_paid for preorder
           const { error: updateError } = await supabase
             .from('orders')
             .update({
-              status: 'deposit_paid',
+              status: isFullPayment ? 'balance_paid' : 'deposit_paid',
               paid_at: new Date().toISOString(),
+              ...(isFullPayment ? { balance_paid_at: new Date().toISOString() } : {}),
             })
             .eq('id', orderId);
 
@@ -304,6 +305,7 @@ Deno.serve(async (req) => {
             .single();
 
           if (order) {
+            // Send customer confirmation email
             await sendEmail(requestId, 'deposit_confirmed', {
               email: order.email,
               firstName: order.first_name,
@@ -316,6 +318,39 @@ Deno.serve(async (req) => {
               etaWeeksMax: order.preorder_eta_weeks_max,
               trackingToken: trackingToken,
               items: order.order_items,
+            });
+
+            // Send admin notification email
+            const shippingAddress = order.shipping_address_json as Record<string, any>;
+            const shippingMethod = shippingAddress?.lockerName 
+              ? (shippingAddress.lockerName.includes('Omniva') ? 'Omniva paštomatas' : 
+                 shippingAddress.lockerName.includes('LP') ? 'LP EXPRESS paštomatas' : 
+                 shippingAddress.lockerName.includes('DPD') ? 'DPD paštomatas' : 'Paštomatas')
+              : 'Kurjeris į namus';
+            
+            await sendEmail(requestId, 'admin_order_notification', {
+              orderNumber: order.order_number,
+              customerName: `${order.first_name} ${order.last_name}`,
+              customerEmail: order.email,
+              customerPhone: order.phone,
+              items: order.order_items?.map((i: any) => ({
+                title_snapshot: i.title_snapshot,
+                quantity: i.quantity,
+                unit_price_eur: i.unit_price_eur,
+              })),
+              subtotalEur: order.subtotal_eur,
+              discountEur: order.discount_eur || 0,
+              shippingEur: order.shipping_eur,
+              totalEur: order.total_eur,
+              depositEur: order.deposit_total_eur,
+              balanceEur: order.balance_total_eur,
+              shippingMethod,
+              shippingAddress: order.shipping_address_json,
+              paymentMethod: order.payment_provider === 'stripe' ? 'Kortelė' : order.payment_provider || 'Stripe',
+              paymentType: 'deposit',
+              hasPreorder: order.preorder_flag,
+              etaWeeksMin: order.preorder_eta_weeks_min,
+              etaWeeksMax: order.preorder_eta_weeks_max,
             });
 
             // Send Meta CAPI Purchase event for deposit
