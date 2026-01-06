@@ -209,6 +209,82 @@ Deno.serve(async (req) => {
         const orderId = session.metadata?.order_id;
         const paymentType = session.metadata?.payment_type;
         const orderNumber = session.metadata?.order_number;
+        const giftCardId = session.metadata?.gift_card_id;
+        const sessionType = session.metadata?.type;
+
+        // Handle GIFT CARD purchases
+        if (sessionType === 'gift_card' && giftCardId) {
+          log(requestId, 'Processing gift card payment', { giftCardId, sessionId: session.id });
+
+          // Check if already processed
+          const { data: existingGiftCard } = await supabase
+            .from('gift_cards')
+            .select('status, code')
+            .eq('id', giftCardId)
+            .single();
+
+          if (existingGiftCard?.status === 'active') {
+            log(requestId, 'Gift card already active, skipping', { giftCardId });
+            await recordEventProcessed(requestId, event.id, event.type, undefined, { 
+              type: 'gift_card', 
+              gift_card_id: giftCardId,
+              skipped: true 
+            });
+            break;
+          }
+
+          // Activate gift card
+          const { error: updateError } = await supabase
+            .from('gift_cards')
+            .update({ status: 'active' })
+            .eq('id', giftCardId);
+
+          if (updateError) {
+            log(requestId, 'Failed to activate gift card', updateError);
+            throw new Error('Failed to activate gift card');
+          }
+
+          log(requestId, 'Gift card activated', { giftCardId });
+
+          // Get gift card details for emails
+          const { data: giftCard } = await supabase
+            .from('gift_cards')
+            .select('*')
+            .eq('id', giftCardId)
+            .single();
+
+          if (giftCard) {
+            // Send email to recipient
+            await sendEmail(requestId, 'gift_card', {
+              recipientName: giftCard.recipient_name,
+              recipientEmail: giftCard.recipient_email,
+              senderName: giftCard.purchased_by_email?.split('@')[0] || 'Draugas',
+              code: giftCard.code,
+              amount: giftCard.initial_value_eur,
+              personalMessage: giftCard.personal_message,
+            });
+
+            // Send confirmation to purchaser
+            await sendEmail(requestId, 'gift_card_confirmation', {
+              email: giftCard.purchased_by_email,
+              recipientName: giftCard.recipient_name,
+              amount: giftCard.initial_value_eur,
+              code: giftCard.code,
+            });
+
+            log(requestId, 'Gift card emails sent', { 
+              recipient: giftCard.recipient_email, 
+              purchaser: giftCard.purchased_by_email 
+            });
+          }
+
+          await recordEventProcessed(requestId, event.id, event.type, undefined, {
+            type: 'gift_card',
+            gift_card_id: giftCardId,
+            amount_eur: (session.amount_total || 0) / 100,
+          });
+          break;
+        }
 
         if (!orderId) {
           log(requestId, 'No order_id in session metadata', { sessionId: session.id });
