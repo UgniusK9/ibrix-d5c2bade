@@ -7,40 +7,42 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import logo from "@/assets/logo.png";
 import { useCookieConsentStore } from "@/stores/cookieConsentStore";
-
-const footerTrustBadges = [
-  { icon: Truck, title: "Nemokamas pristatymas", description: "Į paštomatą Lietuvoje" },
-  { icon: RotateCcw, title: "Grąžinimas per 14 d.", description: "Be papildomų klausimų" },
-  { icon: Shield, title: "Saugūs mokėjimai", description: "SSL šifravimas" },
-  { icon: CreditCard, title: "Patogūs mokėjimai", description: "Kortelė, bankas" },
-];
-
-const footerLinks = {
-  narsyti: [
-    { name: "Produktai", href: "/produktai/visi" },
-    { name: "Kaip veikia Pre-Order", href: "/pre-order" },
-    { name: "Apie mus", href: "/apie" },
-    { name: "Kontaktai", href: "/kontaktai" },
-  ],
-  informacija: [
-    { name: "Pristatymas", href: "/pristatymas" },
-    { name: "Grąžinimai", href: "/grazinimai" },
-    { name: "Garantija", href: "/garantija" },
-    { name: "Trūkstamos detalės", href: "/trukstamos-detales" },
-    { name: "Privatumo politika", href: "/privatumo-politika" },
-    { name: "Slapukų politika", href: "/slapukai" },
-    { name: "Taisyklės ir sąlygos", href: "/taisykles" },
-  ],
-};
+import { useTranslation } from "react-i18next";
 
 const paymentMethods = ["Visa", "Mastercard"];
 const shippingPartners = ["Omniva", "LP EXPRESS", "DPD"];
 
 export function Footer() {
   const { openModal } = useCookieConsentStore();
+  const { t } = useTranslation();
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
   const [subscribed, setSubscribed] = useState(false);
+
+  const footerTrustBadges = [
+    { icon: Truck, title: t('misc.trustBadge1'), description: t('header.freeShipping') },
+    { icon: RotateCcw, title: t('misc.trustBadge2'), description: t('nav.returns') },
+    { icon: Shield, title: t('checkout.paymentMethod'), description: "SSL" },
+    { icon: CreditCard, title: t('footer.paymentMethods'), description: t('checkout.card') },
+  ];
+
+  const footerLinks = {
+    narsyti: [
+      { name: t('nav.constructors'), href: "/produktai/visi" },
+      { name: t('nav.preOrder'), href: "/pre-order" },
+      { name: t('nav.about'), href: "/apie" },
+      { name: t('nav.contact'), href: "/kontaktai" },
+    ],
+    informacija: [
+      { name: t('nav.delivery'), href: "/pristatymas" },
+      { name: t('nav.returns'), href: "/grazinimai" },
+      { name: t('nav.warranty'), href: "/garantija" },
+      { name: t('nav.missingParts'), href: "/trukstamos-detales" },
+      { name: t('nav.privacy'), href: "/privatumo-politika" },
+      { name: t('nav.cookies'), href: "/slapukai" },
+      { name: t('nav.terms'), href: "/taisykles" },
+    ],
+  };
 
   const handleSubscribe = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -58,10 +60,10 @@ export function Footer() {
       if (error) throw error;
       setSubscribed(true);
       setEmail("");
-      toast.success("Sėkmingai užsiprenumeravote!");
+      toast.success(t('footer.subscribed'));
     } catch (err: any) {
       console.error('Newsletter subscribe error:', err);
-      toast.error("Nepavyko užsiprenumeruoti");
+      toast.error(t('common.error'));
     } finally {
       setLoading(false);
     }
@@ -75,10 +77,10 @@ export function Footer() {
           <div className="grid md:grid-cols-2 gap-8 items-center">
             <div>
               <h3 className="font-heading text-xl md:text-2xl font-bold text-primary-foreground mb-2">
-                Prisijunk prie IBRIX bendruomenės
+                {t('footer.newsletter')}
               </h3>
               <p className="text-primary-foreground/70 text-sm">
-                Gauk naujienas apie naujus produktus, akcijas ir išskirtinius pasiūlymus.
+                {t('footer.newsletterDesc')}
               </p>
             </div>
             <div>
@@ -88,15 +90,15 @@ export function Footer() {
                     <Check className="w-5 h-5 text-success" />
                   </div>
                   <div>
-                    <p className="font-medium text-primary-foreground">Ačiū!</p>
-                    <p className="text-sm text-primary-foreground/70">Sėkmingai užsiprenumeravote naujienlaiškį.</p>
+                    <p className="font-medium text-primary-foreground">{t('common.success')}</p>
+                    <p className="text-sm text-primary-foreground/70">{t('footer.subscribed')}</p>
                   </div>
                 </div>
               ) : (
                 <form onSubmit={handleSubscribe} className="flex gap-2">
                   <Input
                     type="email"
-                    placeholder="El. pašto adresas"
+                    placeholder={t('footer.emailPlaceholder')}
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     required
@@ -111,7 +113,7 @@ export function Footer() {
                       <Loader2 className="w-4 h-4 animate-spin" />
                     ) : (
                       <>
-                        Prenumeruoti
+                        {t('footer.subscribe')}
                         <ArrowRight className="w-4 h-4 ml-2" />
                       </>
                     )}
@@ -184,10 +186,10 @@ export function Footer() {
             </div>
           </div>
 
-          {/* Naršyti */}
+          {/* Browse */}
           <div>
             <h3 className="font-heading font-semibold text-sm mb-4">
-              Naršyti
+              {t('footer.quickLinks')}
             </h3>
             <ul className="space-y-2.5">
               {footerLinks.narsyti.map((link) => (
@@ -203,10 +205,10 @@ export function Footer() {
             </ul>
           </div>
 
-          {/* Informacija */}
+          {/* Information */}
           <div>
             <h3 className="font-heading font-semibold text-sm mb-4">
-              Informacija
+              {t('nav.information')}
             </h3>
             <ul className="space-y-2.5">
               {footerLinks.informacija.map((link) => (
@@ -222,16 +224,16 @@ export function Footer() {
             </ul>
           </div>
 
-          {/* Kontaktai */}
+          {/* Contact */}
           <div>
             <h3 className="font-heading font-semibold text-sm mb-4">
-              Kontaktai
+              {t('footer.contact')}
             </h3>
             <div className="space-y-3 text-sm">
               <div className="flex items-start gap-3">
                 <Mail className="h-4 w-4 text-accent mt-0.5" />
                 <div>
-                  <p className="text-footer-foreground/50 text-xs">El. paštas</p>
+                  <p className="text-footer-foreground/50 text-xs">{t('checkout.email')}</p>
                   <a href="mailto:support@ibrix.lt" className="text-footer-foreground hover:text-accent transition-colors">
                     support@ibrix.lt
                   </a>
@@ -240,14 +242,14 @@ export function Footer() {
               <div className="flex items-start gap-3">
                 <MapPin className="h-4 w-4 text-accent mt-0.5" />
                 <div>
-                  <p className="text-footer-foreground/50 text-xs">Miestas</p>
+                  <p className="text-footer-foreground/50 text-xs">{t('checkout.city')}</p>
                   <span className="text-footer-foreground/90">Vilnius, Lietuva</span>
                 </div>
               </div>
               <div className="flex items-start gap-3">
                 <Clock className="h-4 w-4 text-accent mt-0.5" />
                 <div>
-                  <p className="text-footer-foreground/50 text-xs">Darbo laikas</p>
+                  <p className="text-footer-foreground/50 text-xs">{t('misc.workingHours')}</p>
                   <span className="text-footer-foreground/90">I-V 10:00-18:00</span>
                 </div>
               </div>
@@ -259,7 +261,7 @@ export function Footer() {
         <div className="mt-12 pt-8 border-t border-footer-foreground/10">
           <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
             <p className="text-xs text-footer-foreground/50">
-              © {new Date().getFullYear()} IBRIX. Visos teisės saugomos.
+              © {new Date().getFullYear()} IBRIX. {t('footer.allRights')}.
             </p>
             <button
               onClick={openModal}
