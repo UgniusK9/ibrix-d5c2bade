@@ -46,6 +46,8 @@ import SignupStep2 from "./pages/auth/SignupStep2";
 import VerifyEmail from "./pages/auth/VerifyEmail";
 import AuthSuccess from "./pages/auth/AuthSuccess";
 import Credits from "./pages/account/Credits";
+import Settings from "./pages/account/Settings";
+import Orders from "./pages/Orders";
 
 // Global cart components wrapper
 function CartComponents() {
@@ -121,6 +123,16 @@ const App = () => (
                 <Route path="/account/credits" element={
                   <ProtectedRoute>
                     <Credits />
+                  </ProtectedRoute>
+                } />
+                <Route path="/account/settings" element={
+                  <ProtectedRoute>
+                    <Settings />
+                  </ProtectedRoute>
+                } />
+                <Route path="/orders" element={
+                  <ProtectedRoute>
+                    <Orders />
                   </ProtectedRoute>
                 } />
 

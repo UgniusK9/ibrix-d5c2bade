@@ -192,9 +192,43 @@ export const lt = {
     cart: 'Krepšelis',
     account: 'Paskyra',
     login: 'Prisijungti',
+    signUp: 'Tapti nariu',
     logout: 'Atsijungti',
     admin: 'Admin',
     myAccount: 'Mano paskyra',
+  },
+  
+  // Settings
+  settings: {
+    title: 'Profilio nustatymai',
+    subtitle: 'Redaguokite savo asmeninę informaciją',
+    backToAccount: 'Grįžti į paskyrą',
+    personalInfo: 'Asmeninė informacija',
+    personalInfoDesc: 'Jūsų vardas ir pavardė',
+    email: 'El. paštas',
+    emailDesc: 'Jūsų prisijungimo el. paštas',
+    emailHint: 'El. paštą galite pakeisti susisiekę su mumis',
+    address: 'Pristatymo adresas',
+    addressDesc: 'Išsaugokite adresą greitesniam apsipirkimui',
+    street: 'Gatvė',
+    streetPlaceholder: 'Gatvė ir namo numeris',
+    city: 'Miestas',
+    cityPlaceholder: 'Miestas',
+    postalCode: 'Pašto kodas',
+    postalCodePlaceholder: 'LT-XXXXX',
+    saveChanges: 'Išsaugoti pakeitimus',
+    saved: 'Nustatymai išsaugoti',
+  },
+  
+  // Orders page
+  orders: {
+    title: 'Mano užsakymai',
+    subtitle: 'Peržiūrėkite visus savo užsakymus',
+    backToAccount: 'Grįžti į paskyrą',
+    active: 'Aktyvūs',
+    delivered: 'Pristatyti',
+    searchPlaceholder: 'Ieškoti pagal užsakymo numerį...',
+    noResults: 'Pagal pasirinktus filtrus užsakymų nerasta',
   },
   
   // Hero Section

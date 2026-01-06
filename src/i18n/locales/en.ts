@@ -192,9 +192,43 @@ export const en = {
     cart: 'Cart',
     account: 'Account',
     login: 'Login',
+    signUp: 'Become a member',
     logout: 'Logout',
     admin: 'Admin',
     myAccount: 'My Account',
+  },
+  
+  // Settings
+  settings: {
+    title: 'Profile Settings',
+    subtitle: 'Edit your personal information',
+    backToAccount: 'Back to account',
+    personalInfo: 'Personal Information',
+    personalInfoDesc: 'Your name details',
+    email: 'Email',
+    emailDesc: 'Your login email address',
+    emailHint: 'Contact us to change your email',
+    address: 'Delivery Address',
+    addressDesc: 'Save your address for faster checkout',
+    street: 'Street',
+    streetPlaceholder: 'Street and house number',
+    city: 'City',
+    cityPlaceholder: 'City',
+    postalCode: 'Postal code',
+    postalCodePlaceholder: 'XXXXX',
+    saveChanges: 'Save changes',
+    saved: 'Settings saved',
+  },
+  
+  // Orders page
+  orders: {
+    title: 'My Orders',
+    subtitle: 'View all your orders',
+    backToAccount: 'Back to account',
+    active: 'Active',
+    delivered: 'Delivered',
+    searchPlaceholder: 'Search by order number...',
+    noResults: 'No orders match your filters',
   },
   
   // Hero Section
