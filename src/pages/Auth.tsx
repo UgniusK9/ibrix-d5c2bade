@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams, Link } from 'react-router-dom';
 import { Mail, Loader2, CheckCircle2, Lock, Eye, EyeOff, ArrowLeft, User, KeyRound } from 'lucide-react';
+import { Turnstile } from '@marsidev/react-turnstile';
 import { PageLayout } from '@/components/layout/PageLayout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -9,15 +10,20 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 import { z } from 'zod';
+import { useTranslation } from 'react-i18next';
 
 const emailSchema = z.string().email('Neteisingas el. pašto formatas');
 const passwordSchema = z.string().min(6, 'Slaptažodis turi būti bent 6 simbolių');
+
+// Turnstile site key - this is a publishable key, safe to include in frontend
+const TURNSTILE_SITE_KEY = '0x4AAAAAABfMVCkCKkJJhz3a';
 
 type AuthMode = 'login' | 'register' | 'forgot' | 'magic-link';
 
 export default function Auth() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  const { t } = useTranslation();
   const { user, isLoading, signInWithPassword, signInWithMagicLink, signUp, resetPassword } = useAuth();
   
   const [activeTab, setActiveTab] = useState<'login' | 'register'>('login');
@@ -29,8 +35,8 @@ export default function Auth() {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [emailSent, setEmailSent] = useState(false);
-  const [errors, setErrors] = useState<{ email?: string; password?: string; confirm?: string }>({});
-
+  const [errors, setErrors] = useState<{ email?: string; password?: string; confirm?: string; captcha?: string }>({});
+  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
   const redirectTo = searchParams.get('redirect') || '/';
 
   useEffect(() => {
@@ -56,6 +62,11 @@ export default function Auth() {
 
     if (mode === 'register' && password !== confirmPassword) {
       newErrors.confirm = 'Slaptažodžiai nesutampa';
+    }
+
+    // Require CAPTCHA for registration
+    if (mode === 'register' && !captchaToken) {
+      newErrors.captcha = 'Prašome patvirtinti, kad nesate robotas';
     }
 
     setErrors(newErrors);
@@ -130,6 +141,7 @@ export default function Auth() {
     setConfirmPassword('');
     setErrors({});
     setEmailSent(false);
+    setCaptchaToken(null);
   };
 
   const switchToForgot = () => {
@@ -484,16 +496,35 @@ export default function Auth() {
                     )}
                   </div>
 
-                  <Button type="submit" className="w-full h-12 text-base" disabled={loading}>
+                  {/* Turnstile CAPTCHA */}
+                  <div className="flex flex-col items-center">
+                    <Turnstile
+                      siteKey={TURNSTILE_SITE_KEY}
+                      onSuccess={(token) => {
+                        setCaptchaToken(token);
+                        setErrors((prev) => ({ ...prev, captcha: undefined }));
+                      }}
+                      onError={() => {
+                        setCaptchaToken(null);
+                        setErrors((prev) => ({ ...prev, captcha: 'CAPTCHA nepavyko. Bandykite dar kartą.' }));
+                      }}
+                      onExpire={() => setCaptchaToken(null)}
+                    />
+                    {errors.captcha && (
+                      <p className="text-sm text-destructive mt-1.5">{errors.captcha}</p>
+                    )}
+                  </div>
+
+                  <Button type="submit" className="w-full h-12 text-base" disabled={loading || !captchaToken}>
                     {loading ? (
                       <>
                         <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                        Kuriama...
+                        {t('auth.creating')}
                       </>
                     ) : (
                       <>
                         <User className="w-4 h-4 mr-2" />
-                        Sukurti paskyrą
+                        {t('auth.createAccount')}
                       </>
                     )}
                   </Button>

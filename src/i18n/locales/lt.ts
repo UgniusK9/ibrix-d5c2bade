@@ -232,6 +232,9 @@ export const lt = {
     checkSpam: 'Neradote laiško? Patikrinkite spam/šlamšto aplanką.',
     backToLogin: 'Grįžti į prisijungimą',
     captchaRequired: 'Užpildykite CAPTCHA',
+    creating: 'Kuriama...',
+    loggingIn: 'Jungiamasi...',
+    sending: 'Siunčiama...',
   },
   
   // Account

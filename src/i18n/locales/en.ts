@@ -232,6 +232,9 @@ export const en = {
     checkSpam: 'Didn\'t receive the email? Check your spam folder.',
     backToLogin: 'Back to login',
     captchaRequired: 'Please complete the CAPTCHA',
+    creating: 'Creating...',
+    loggingIn: 'Logging in...',
+    sending: 'Sending...',
   },
   
   // Account
