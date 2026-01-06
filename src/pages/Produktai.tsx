@@ -83,7 +83,7 @@ export default function Produktai() {
   // Determine current category from URL
   const currentCategory = useMemo(() => {
     if (!categorySlug || categorySlug === 'visi') {
-      return { id: 'all', name: 'Visi produktai', slug: 'visi', description: 'Peržiūrėkite visą mūsų produktų katalogą.' };
+      return { id: 'all', name: 'Visi konstruktoriai', slug: 'visi', description: 'Peržiūrėkite visą mūsų konstruktorių katalogą.' };
     }
     
     // Check special categories
@@ -94,10 +94,10 @@ export default function Produktai() {
     
     // Check stock filter slugs
     if (categorySlug === 'preorder') {
-      return { id: 'preorder', name: 'Pre-order', slug: 'preorder', description: 'Produktai, kuriuos galite užsisakyti iš anksto.' };
+      return { id: 'preorder', name: 'Pre-order', slug: 'preorder', description: 'Konstruktoriai, kuriuos galite užsisakyti iš anksto.' };
     }
     if (categorySlug === 'sandelyje') {
-      return { id: 'sandelyje', name: 'Sandėlyje', slug: 'sandelyje', description: 'Produktai, kurie yra mūsų sandėlyje ir paruošti siuntimui.' };
+      return { id: 'sandelyje', name: 'Sandėlyje', slug: 'sandelyje', description: 'Konstruktoriai, kurie yra mūsų sandėlyje ir paruošti siuntimui.' };
     }
     
     const found = categories.find(c => c.slug === categorySlug);
@@ -115,7 +115,7 @@ export default function Produktai() {
     if (legacy) {
       return { id: categorySlug, name: legacy.name, slug: categorySlug, description: legacy.description };
     }
-    return { id: 'all', name: 'Visi produktai', slug: 'visi', description: 'Peržiūrėkite visą mūsų produktų katalogą.' };
+    return { id: 'all', name: 'Visi konstruktoriai', slug: 'visi', description: 'Peržiūrėkite visą mūsų konstruktorių katalogą.' };
   }, [categorySlug, categories]);
 
   // Filter products by category and search
@@ -245,7 +245,7 @@ export default function Produktai() {
   // Build navigation items - combine DB categories with special ones
   const navCategories = useMemo(() => {
     const items: { id: string; name: string; slug: string; count: number }[] = [
-      { id: 'all', name: 'Visi produktai', slug: 'visi', count: categoryCounts['all'] || 0 }
+      { id: 'all', name: 'Visi konstruktoriai', slug: 'visi', count: categoryCounts['all'] || 0 }
     ];
     
     // Add DB categories
@@ -280,7 +280,7 @@ export default function Produktai() {
           <nav className="flex items-center gap-2 text-sm text-muted-foreground mb-6">
             <Link to="/" className="hover:text-foreground transition-colors">Pradžia</Link>
             <ChevronRight className="w-4 h-4" />
-            <Link to="/produktai/visi" className="hover:text-foreground transition-colors">Produktai</Link>
+            <Link to="/produktai/visi" className="hover:text-foreground transition-colors">Konstruktoriai</Link>
             {currentCategory.id !== 'all' && (
               <>
                 <ChevronRight className="w-4 h-4" />
@@ -385,7 +385,7 @@ export default function Produktai() {
                   </div>
                   
                   <span className="text-sm text-muted-foreground">
-                    {filteredProducts.length} {filteredProducts.length === 1 ? 'produktas' : 'produktai'}
+                    {filteredProducts.length} {filteredProducts.length === 1 ? 'konstruktorius' : 'konstruktoriai'}
                   </span>
                 </div>
 

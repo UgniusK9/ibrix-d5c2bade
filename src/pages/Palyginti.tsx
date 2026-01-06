@@ -170,8 +170,8 @@ export default function Palyginti() {
   return (
     <PageLayout>
       <SEOHead 
-        title="Produktų palyginimas"
-        description="Palyginkite produktus ir pasirinkite geriausią variantą"
+        title="Konstruktorių palyginimas"
+        description="Palyginkite konstruktorius ir pasirinkite geriausią variantą"
         canonical="/palyginti"
       />
       
@@ -182,17 +182,17 @@ export default function Palyginti() {
           className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground transition-colors mb-8"
         >
           <ArrowLeft className="w-4 h-4 mr-2" />
-          Grįžti į produktus
+          Grįžti į konstruktorius
         </Link>
 
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
           <div>
             <h1 className="font-heading text-3xl md:text-4xl font-bold mb-2">
-              Produktų palyginimas
+              Konstruktorių palyginimas
             </h1>
             <p className="text-muted-foreground">
-              Palyginkite iki 3 produktų vienu metu
+              Palyginkite iki 3 konstruktorių vienu metu
             </p>
           </div>
           
@@ -225,9 +225,9 @@ export default function Palyginti() {
         {products.length === 0 && (
           <div className="text-center py-16 bg-muted/30 rounded-2xl border border-dashed border-border">
             <Scale className="w-16 h-16 text-muted-foreground/30 mx-auto mb-4" />
-            <h2 className="font-heading text-xl font-semibold mb-2">Nėra produktų palyginimui</h2>
+            <h2 className="font-heading text-xl font-semibold mb-2">Nėra konstruktorių palyginimui</h2>
             <p className="text-muted-foreground mb-6">
-              Pridėkite produktus paspaudę palyginimo mygtuką produkto puslapyje
+              Pridėkite konstruktorius paspaudę palyginimo mygtuką konstruktoriaus puslapyje
             </p>
             <Button asChild>
               <Link to="/produktai/visi">Peržiūrėti konstruktorius</Link>
@@ -295,7 +295,7 @@ export default function Palyginti() {
                       <div className="w-32 h-32 bg-muted rounded-xl mx-auto mb-3 flex items-center justify-center border-2 border-dashed border-border">
                         <Scale className="w-10 h-10 text-muted-foreground/30" />
                       </div>
-                      <p className="text-sm text-muted-foreground">Pridėkite produktą</p>
+                      <p className="text-sm text-muted-foreground">Pridėkite konstruktorių</p>
                     </th>
                   ))}
                 </tr>

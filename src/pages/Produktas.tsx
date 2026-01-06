@@ -152,7 +152,7 @@ export default function Produktas() {
         });
       } else {
         toast.error("Palyginimo limitas", {
-          description: "Galite palyginti iki 3 produktų",
+          description: "Galite palyginti iki 3 konstruktorių",
           position: "top-center",
         });
       }
@@ -179,8 +179,8 @@ export default function Produktas() {
         <div className="container py-16">
           <div className="text-center">
             <Package className="w-16 h-16 text-muted-foreground/30 mx-auto mb-4" />
-            <h1 className="font-heading text-2xl font-bold mb-2">
-              Produktas nerastas
+          <h1 className="font-heading text-2xl font-bold mb-2">
+              Konstruktorius nerastas
             </h1>
             <p className="text-muted-foreground mb-6">
               Šio konstruktoriaus nepavyko rasti. Galite peržiūrėti kitus konstruktorius.
@@ -233,7 +233,7 @@ export default function Produktas() {
         }}
         breadcrumbs={[
           { name: 'Pradžia', url: '/' },
-          { name: 'Produktai', url: '/produktai/visi' },
+          { name: 'Konstruktoriai', url: '/produktai/visi' },
           { name: product.title, url: `/produktas/${product.slug}` },
         ]}
       />
