@@ -13,7 +13,7 @@ interface Category {
 }
 
 const quickLinks = [
-  { name: "Visi produktai", href: "/produktai/visi", highlight: true },
+  { name: "Visi konstruktoriai", href: "/produktai/visi", highlight: true },
   { name: "Naujienos", href: "/produktai/visi?new=true" },
   { name: "Populiariausi", href: "/produktai/visi?sort=popular" },
   { name: "Pre-order", href: "/produktai/visi?status=preorder" },
@@ -81,7 +81,7 @@ export function CategoriesMegaMenu({ onNavigate }: CategoriesMegaMenuProps) {
             : "text-muted-foreground hover:text-foreground hover:bg-muted"
         )}
       >
-        Produktai
+        Konstruktoriai
         <ChevronDown className={cn(
           "w-4 h-4 transition-transform duration-200",
           isOpen && "rotate-180"
@@ -178,7 +178,7 @@ export function CategoriesMegaMenu({ onNavigate }: CategoriesMegaMenuProps) {
               className="flex items-center justify-center gap-2 text-sm text-primary font-medium hover:underline"
             >
               <Grid3X3 className="w-4 h-4" />
-              Peržiūrėti visus produktus
+              Peržiūrėti visus konstruktorius
               <ArrowRight className="w-4 h-4" />
             </Link>
           </div>
