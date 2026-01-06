@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { Menu, ShoppingCart, Truck, Clock, Headphones, ArrowRight, User, LogOut, Search, ChevronDown, Info, FileText, Shield, Cookie, Undo2, Star, HelpCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -15,6 +16,7 @@ import { CartDrawer } from "@/components/cart/CartDrawer";
 import { useAuth } from "@/contexts/AuthContext";
 import { ProductSearch } from "@/components/header/ProductSearch";
 import { CategoriesMegaMenu } from "@/components/header/CategoriesMegaMenu";
+import { LanguageSelector } from "@/components/header/LanguageSelector";
 import logo from "@/assets/logo.png";
 
 const navigation = [
@@ -44,6 +46,7 @@ const topBarItems = [
 export function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const location = useLocation();
+  const { t } = useTranslation();
   const totalItems = useCartStore((state) => state.getTotalItems());
   const setCartOpen = useCartStore((state) => state.setOpen);
   const { user, isAdmin, signOut } = useAuth();
@@ -130,7 +133,7 @@ export function Header() {
               {/* CTA Button - Desktop only */}
               <Button asChild size="sm" className="hidden lg:flex bg-accent hover:bg-accent/90 text-accent-foreground h-9 px-4">
                 <Link to="/produktai/visi">
-                  Peržiūrėti konstruktorius
+                  {t('nav.viewConstructors')}
                   <ArrowRight className="ml-1.5 h-4 w-4" />
                 </Link>
               </Button>
@@ -140,20 +143,20 @@ export function Header() {
                 <div className="hidden lg:flex items-center gap-1">
                   {isAdmin && (
                     <Button asChild variant="ghost" size="sm">
-                      <Link to="/admin">Admin</Link>
+                      <Link to="/admin">{t('header.admin')}</Link>
                     </Button>
                   )}
                   <Button asChild variant="ghost" size="sm">
                     <Link to="/account" className="flex items-center gap-2">
                       <User className="h-4 w-4" />
-                      Paskyra
+                      {t('header.account')}
                     </Link>
                   </Button>
                   <Button 
                     variant="ghost" 
                     size="icon"
                     onClick={signOut}
-                    title="Atsijungti"
+                    title={t('header.logout')}
                   >
                     <LogOut className="h-4 w-4" />
                   </Button>
@@ -162,10 +165,13 @@ export function Header() {
                 <Button asChild variant="ghost" size="sm" className="hidden lg:flex">
                   <Link to="/auth">
                     <User className="h-4 w-4 mr-2" />
-                    Prisijungti
+                    {t('header.login')}
                   </Link>
                 </Button>
               )}
+
+              {/* Language Selector */}
+              <LanguageSelector />
 
               {/* Cart */}
               <Button

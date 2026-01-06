@@ -437,6 +437,36 @@ function getGiftCardEmail(data: any): { subject: string; html: string } {
   };
 }
 
+function getGiftCardConfirmationEmail(data: any): { subject: string; html: string } {
+  const { recipientName, amount, code } = data;
+
+  const content = `
+    <div style="text-align:center;margin-bottom:24px;">
+      <div style="width:64px;height:64px;background:#dcfce7;border-radius:50%;margin:0 auto 16px;display:flex;align-items:center;justify-content:center;">
+        <span style="font-size:32px;">✓</span>
+      </div>
+      <h2 style="margin:0 0 8px;font-size:24px;font-weight:700;color:#1f2937;">Dovanų kuponas išsiųstas!</h2>
+      <p style="margin:0;color:#6b7280;">Jūsų ${amount}€ dovanų kuponas sėkmingai nupirktas</p>
+    </div>
+
+    <div style="background:#f3f4f6;padding:20px;border-radius:8px;margin-bottom:24px;">
+      <p style="margin:0 0 8px;color:#6b7280;">Gavėjas:</p>
+      <p style="margin:0;font-weight:600;color:#1f2937;">${recipientName}</p>
+      <p style="margin:16px 0 8px;color:#6b7280;">Kupono kodas:</p>
+      <p style="margin:0;font-family:monospace;font-size:18px;color:#1f2937;">${code}</p>
+    </div>
+
+    <p style="margin:0;text-align:center;color:#6b7280;font-size:14px;">
+      Gavėjas gavo el. laišką su kuponu ir aktyvavimo instrukcijomis.
+    </p>
+  `;
+
+  return {
+    subject: `Dovanų kuponas ${amount}€ sėkmingai nupirktas ✓`,
+    html: wrapEmail(content),
+  };
+}
+
 function getNewsletterEmail(data: any): { subject: string; html: string } {
   const { firstName, subject, content } = data;
 
@@ -664,6 +694,10 @@ Deno.serve(async (req: Request) => {
         break;
       case 'gift_card':
         emailContent = getGiftCardEmail(data);
+        recipientEmail = data.recipientEmail || email;
+        break;
+      case 'gift_card_confirmation':
+        emailContent = getGiftCardConfirmationEmail(data);
         break;
       case 'newsletter':
         emailContent = getNewsletterEmail(data);
