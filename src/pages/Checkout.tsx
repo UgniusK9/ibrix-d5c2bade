@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Loader2, Package, ChevronLeft, CreditCard, MapPin, Truck, Wallet } from "lucide-react";
+import { Loader2, Package, ChevronLeft, CreditCard, MapPin, Truck } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { CartRecommendations } from "@/components/cart/CartRecommendations";
 import { PageLayout } from "@/components/layout/PageLayout";
@@ -12,7 +12,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Switch } from "@/components/ui/switch";
 import { useCartStore, formatCartPrice } from "@/stores/cartStore";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -23,6 +22,7 @@ import { InvoiceFields } from "@/components/checkout/InvoiceFields";
 import { LockerSearch } from "@/components/checkout/LockerSearch";
 import { PhoneInput } from "@/components/checkout/PhoneInput";
 import { PaymentMethodSelector, PaymentMethod, PAYMENT_METHODS } from "@/components/checkout/PaymentMethodSelector";
+import { CreditsBlock } from "@/components/checkout/CreditsBlock";
 import { type LockerTerminal } from "@/data/lockerTerminals";
 
 const checkoutSchema = z.object({
@@ -62,8 +62,7 @@ export default function Checkout() {
   const [appliedDiscount, setAppliedDiscount] = useState<AppliedDiscount | null>(null);
   const [wantsInvoice, setWantsInvoice] = useState(false);
   const [selectedLocker, setSelectedLocker] = useState<LockerTerminal | null>(null);
-  const [walletBalance, setWalletBalance] = useState(0);
-  const [useWallet, setUseWallet] = useState(true);
+  const [creditsToUse, setCreditsToUse] = useState(0);
   const [phoneValue, setPhoneValue] = useState("");
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<PaymentMethod | null>(
     PAYMENT_METHODS.find(m => m.enabled) || null
@@ -120,32 +119,13 @@ export default function Checkout() {
       : Math.min(appliedDiscount.value * 100, immediatePayment))
     : 0;
   
-  const walletDeduction = useWallet ? Math.min(walletBalance * 100, immediatePayment - discountAmount) : 0;
-  const finalImmediatePayment = Math.max(0, immediatePayment - discountAmount - walletDeduction) + shippingPrice;
+  const finalImmediatePayment = Math.max(0, immediatePayment - discountAmount - creditsToUse) + shippingPrice;
 
   useEffect(() => {
     if (items.length === 0) {
       navigate("/produktai/visi");
     }
   }, [items, navigate]);
-
-  useEffect(() => {
-    const loadWallet = async () => {
-      if (!user) return;
-      
-      const { data } = await supabase
-        .from('wallets')
-        .select('balance_eur')
-        .eq('user_id', user.id)
-        .maybeSingle();
-      
-      if (data) {
-        setWalletBalance(data.balance_eur);
-      }
-    };
-    
-    loadWallet();
-  }, [user]);
 
   useEffect(() => {
     if (items.length > 0) {
@@ -231,8 +211,8 @@ export default function Checkout() {
             invoiceVatCode: data.invoiceVatCode,
             invoiceAddress: data.invoiceAddress,
             invoiceCountry: "Lietuva",
-            useWalletBalance: useWallet && walletBalance > 0,
-            walletDeductionCents: walletDeduction,
+            useCredits: creditsToUse > 0,
+            creditsCents: creditsToUse,
             paymentProvider: 'stripe',
             paymentMethodCode: selectedPaymentMethod.code,
           },
@@ -276,8 +256,8 @@ export default function Checkout() {
             invoiceVatCode: data.invoiceVatCode,
             invoiceAddress: data.invoiceAddress,
             invoiceCountry: "Lietuva",
-            useWalletBalance: useWallet && walletBalance > 0,
-            walletDeductionCents: walletDeduction,
+            useCredits: creditsToUse > 0,
+            creditsCents: creditsToUse,
             paymentProvider: 'paysera',
             paymentMethodCode: selectedPaymentMethod.code,
             skipStripe: true, // Flag to skip Stripe session creation
@@ -464,37 +444,11 @@ export default function Checkout() {
                   />
                 </div>
 
-                {/* Wallet Balance */}
-                {user && walletBalance > 0 && (
-                  <div className="bg-gradient-to-r from-success/10 to-success/5 border border-success/30 rounded-xl p-6">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-full bg-success/20 flex items-center justify-center">
-                          <Wallet className="w-5 h-5 text-success" />
-                        </div>
-                        <div>
-                          <p className="font-semibold">Piniginės balansas</p>
-                          <p className="text-sm text-muted-foreground">
-                            Turimas likutis: {formatCartPrice(walletBalance * 100)}
-                          </p>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Label htmlFor="use-wallet" className="text-sm">Naudoti</Label>
-                        <Switch
-                          id="use-wallet"
-                          checked={useWallet}
-                          onCheckedChange={setUseWallet}
-                        />
-                      </div>
-                    </div>
-                    {useWallet && walletDeduction > 0 && (
-                      <p className="text-sm text-success mt-3">
-                        Bus panaudota: -{formatCartPrice(walletDeduction)}
-                      </p>
-                    )}
-                  </div>
-                )}
+                {/* Credits Block */}
+                <CreditsBlock
+                  subtotalCents={immediatePayment - discountAmount}
+                  onCreditsChange={setCreditsToUse}
+                />
 
                 {/* Invoice Fields */}
                 <div className="bg-card border border-border rounded-xl p-6">
@@ -585,10 +539,10 @@ export default function Checkout() {
                     <span>-{formatCartPrice(discountAmount)}</span>
                   </div>
                 )}
-                {useWallet && walletDeduction > 0 && (
+                {creditsToUse > 0 && (
                   <div className="flex justify-between text-sm text-green-600">
-                    <span>Piniginė</span>
-                    <span>-{formatCartPrice(walletDeduction)}</span>
+                    <span>{t('credits.title')}</span>
+                    <span>-{formatCartPrice(creditsToUse)}</span>
                   </div>
                 )}
                 <div className="flex justify-between font-semibold text-primary pt-2 border-t border-dashed">
