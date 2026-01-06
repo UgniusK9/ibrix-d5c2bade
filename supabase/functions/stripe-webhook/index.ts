@@ -177,8 +177,10 @@ Deno.serve(async (req) => {
   let event: Stripe.Event;
 
   try {
-    const body = await req.text();
-    event = stripe.webhooks.constructEvent(body, signature, webhookSecret);
+    // Read raw body FIRST before any parsing - required for signature verification
+    const rawBody = await req.text();
+    // Use ASYNC method for Deno/WebCrypto compatibility
+    event = await stripe.webhooks.constructEventAsync(rawBody, signature, webhookSecret);
   } catch (err: unknown) {
     log(requestId, 'Webhook signature verification failed', err);
     const errorMessage = err instanceof Error ? err.message : 'Unknown error';
