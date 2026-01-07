@@ -21,6 +21,7 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
+import { CreditsRewards } from '@/components/account/CreditsRewards';
 
 interface WalletTransaction {
   id: string;
@@ -306,6 +307,9 @@ export default function Credits() {
             </Button>
           </div>
         )}
+
+        {/* Rewards - Products for credits */}
+        <CreditsRewards userBalance={balance} />
 
         {/* Transaction history */}
         <div className="bg-card border border-border rounded-2xl overflow-hidden">
