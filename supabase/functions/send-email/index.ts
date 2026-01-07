@@ -1315,8 +1315,9 @@ Deno.serve(async (req: Request) => {
         recipientEmail = 'info@ibrix.lt';
         break;
       case 'gift_card':
+      case 'digital_gift_card':
         emailContent = getGiftCardEmail(data);
-        recipientEmail = data.recipientEmail || email;
+        recipientEmail = data.recipientEmail || data.to || email;
         break;
       case 'gift_card_confirmation':
         emailContent = getGiftCardConfirmationEmail(data);
