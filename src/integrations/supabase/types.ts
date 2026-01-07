@@ -315,6 +315,48 @@ export type Database = {
         }
         Relationships: []
       }
+      email_verification_codes: {
+        Row: {
+          code: string
+          country: string | null
+          created_at: string
+          date_of_birth: string | null
+          email: string
+          expires_at: string
+          first_name: string | null
+          id: string
+          last_name: string | null
+          password_hash: string
+          verified_at: string | null
+        }
+        Insert: {
+          code: string
+          country?: string | null
+          created_at?: string
+          date_of_birth?: string | null
+          email: string
+          expires_at: string
+          first_name?: string | null
+          id?: string
+          last_name?: string | null
+          password_hash: string
+          verified_at?: string | null
+        }
+        Update: {
+          code?: string
+          country?: string | null
+          created_at?: string
+          date_of_birth?: string | null
+          email?: string
+          expires_at?: string
+          first_name?: string | null
+          id?: string
+          last_name?: string | null
+          password_hash?: string
+          verified_at?: string | null
+        }
+        Relationships: []
+      }
       events: {
         Row: {
           created_at: string

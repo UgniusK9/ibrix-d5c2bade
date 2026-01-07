@@ -16,7 +16,7 @@ const TURNSTILE_SITE_KEY = import.meta.env.VITE_TURNSTILE_SITE_KEY || '0x4AAAAAA
 
 export default function SignupStep2() {
   const { t } = useTranslation();
-  const { user, signUp } = useAuth();
+  const { user } = useAuth();
   const navigate = useNavigate();
   
   const [firstName, setFirstName] = useState('');
@@ -134,32 +134,35 @@ export default function SignupStep2() {
       ? `${step1Data.dobYear}-${step1Data.dobMonth.padStart(2, '0')}-${step1Data.dobDay.padStart(2, '0')}`
       : null;
 
-    // Sign up with Supabase including name metadata
-    const { error } = await signUp(email, password, { firstName, lastName });
+    try {
+      // Call custom signup edge function (sends verification code)
+      const { data, error } = await supabase.functions.invoke('signup', {
+        body: {
+          email,
+          password,
+          firstName,
+          lastName,
+          country: step1Data.country,
+          dateOfBirth: dob,
+        },
+      });
 
-    if (error) {
-      setIsLoading(false);
-      if (error.message?.includes('already registered')) {
-        toast.error(t('auth.emailAlreadyRegistered'));
-      } else {
-        toast.error(error.message);
+      if (error || !data?.success) {
+        setIsLoading(false);
+        toast.error(data?.error || error?.message || 'Registracijos klaida');
+        return;
       }
-      return;
+
+      // Clean up step 1 data
+      localStorage.removeItem('signup_step1');
+
+      setIsLoading(false);
+      toast.success('Patvirtinimo kodas išsiųstas į el. paštą');
+      navigate('/auth/verify-email', { state: { email, firstName } });
+    } catch (err: any) {
+      setIsLoading(false);
+      toast.error(err.message || 'Registracijos klaida');
     }
-
-    // Store additional data for after verification
-    localStorage.setItem('signup_pending', JSON.stringify({
-      firstName,
-      lastName,
-      country: step1Data.country,
-      dateOfBirth: dob,
-    }));
-
-    // Clean up step 1 data
-    localStorage.removeItem('signup_step1');
-
-    setIsLoading(false);
-    navigate('/auth/verify-email', { state: { email } });
   };
 
   return (
