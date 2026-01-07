@@ -85,7 +85,29 @@ export function GiftCardsManager() {
 
       if (error) throw error;
 
-      toast.success(`Dovanų kuponas sukurtas: ${codeData}`);
+      // Send email to recipient if email provided
+      if (recipientEmail) {
+        try {
+          await supabase.functions.invoke('send-email', {
+            body: {
+              type: 'digital_gift_card',
+              to: recipientEmail,
+              recipientName: recipientName || 'Gerbiamas kliente',
+              senderName: 'IBRIX Administratorius',
+              amount: newCardValue,
+              code: codeData,
+              message: personalMessage || null,
+            },
+          });
+          toast.success(`Dovanų kuponas sukurtas ir išsiųstas į ${recipientEmail}`);
+        } catch (emailErr) {
+          console.error('Failed to send gift card email:', emailErr);
+          toast.success(`Dovanų kuponas sukurtas: ${codeData} (el. laiškas neišsiųstas)`);
+        }
+      } else {
+        toast.success(`Dovanų kuponas sukurtas: ${codeData}`);
+      }
+      
       setIsCreateOpen(false);
       setNewCardValue(25);
       setRecipientEmail('');
