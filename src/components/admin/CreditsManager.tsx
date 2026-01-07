@@ -1,12 +1,13 @@
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Loader2, Save, Search, Plus, Minus, Wallet, Settings } from 'lucide-react';
+import { Loader2, Save, Search, Plus, Minus, Wallet, Settings, Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { CreditsUsersList } from './CreditsUsersList';
 
 interface CreditSettings {
   earn_rate_percent: number;
@@ -238,9 +239,13 @@ export function CreditsManager() {
             <Settings className="w-4 h-4" />
             Nustatymai
           </TabsTrigger>
-          <TabsTrigger value="users" className="gap-2">
+          <TabsTrigger value="lookup" className="gap-2">
             <Search className="w-4 h-4" />
-            Vartotojai
+            Paieška
+          </TabsTrigger>
+          <TabsTrigger value="users" className="gap-2">
+            <Users className="w-4 h-4" />
+            Visi vartotojai
           </TabsTrigger>
         </TabsList>
 
@@ -317,7 +322,7 @@ export function CreditsManager() {
           </Button>
         </TabsContent>
 
-        <TabsContent value="users" className="space-y-6 mt-6">
+        <TabsContent value="lookup" className="space-y-6 mt-6">
           <div className="space-y-4">
             <Label>{t('credits.admin.userLookup')}</Label>
             <div className="flex gap-2">
@@ -405,6 +410,10 @@ export function CreditsManager() {
               </div>
             </div>
           )}
+        </TabsContent>
+
+        <TabsContent value="users" className="mt-6">
+          <CreditsUsersList />
         </TabsContent>
       </Tabs>
     </div>

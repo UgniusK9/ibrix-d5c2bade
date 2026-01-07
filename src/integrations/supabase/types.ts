@@ -1101,6 +1101,7 @@ export type Database = {
           category_id: string | null
           cost_price_eur: number | null
           created_at: string
+          credits_cost_eur: number | null
           deposit_eur: number
           description: string | null
           details_json: Json | null
@@ -1126,6 +1127,7 @@ export type Database = {
           category_id?: string | null
           cost_price_eur?: number | null
           created_at?: string
+          credits_cost_eur?: number | null
           deposit_eur: number
           description?: string | null
           details_json?: Json | null
@@ -1151,6 +1153,7 @@ export type Database = {
           category_id?: string | null
           cost_price_eur?: number | null
           created_at?: string
+          credits_cost_eur?: number | null
           deposit_eur?: number
           description?: string | null
           details_json?: Json | null

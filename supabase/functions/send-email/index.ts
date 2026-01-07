@@ -791,6 +791,53 @@ function getInquiryReceivedEmail(data: any): { subject: string; html: string } {
   };
 }
 
+// Password reset email
+function getPasswordResetEmail(data: any): { subject: string; html: string } {
+  const { email, resetUrl } = data;
+
+  const content = `
+    <div style="text-align:center;margin-bottom:32px;">
+      <div style="width:64px;height:64px;background:#fef3c7;border-radius:50%;margin:0 auto 16px;display:flex;align-items:center;justify-content:center;">
+        <span style="font-size:32px;">🔐</span>
+      </div>
+      <h2 style="margin:0 0 8px;font-size:24px;font-weight:700;color:#1f2937;">Slaptažodžio atkūrimas</h2>
+      <p style="margin:0;color:#6b7280;">Gavome prašymą atkurti jūsų slaptažodį.</p>
+    </div>
+
+    <!-- CTA Button -->
+    <div style="text-align:center;margin-bottom:24px;">
+      <a href="${resetUrl}" style="display:inline-block;background:#4f46e5;color:#ffffff;padding:16px 40px;text-decoration:none;border-radius:8px;font-weight:700;font-size:16px;">
+        Atkurti slaptažodį
+      </a>
+    </div>
+
+    <div style="background:#f3f4f6;padding:16px;border-radius:8px;margin-bottom:24px;">
+      <p style="margin:0;color:#6b7280;font-size:14px;text-align:center;">
+        Jei negalite paspausti mygtuko, nukopijuokite šią nuorodą į naršyklę:<br>
+        <a href="${resetUrl}" style="color:#4f46e5;word-break:break-all;">${resetUrl}</a>
+      </p>
+    </div>
+
+    <div style="background:#fef3c7;padding:16px;border-radius:8px;margin-bottom:24px;">
+      <p style="margin:0;color:#92400e;font-size:14px;text-align:center;">
+        ⏱ Ši nuoroda galioja <strong>1 valandą</strong>
+      </p>
+    </div>
+
+    <div style="text-align:center;padding:20px;background:#f9fafb;border-radius:8px;">
+      <p style="margin:0;font-size:13px;color:#9ca3af;">
+        Jei neprašėte atkurti slaptažodžio, tiesiog ignoruokite šį laišką.<br>
+        Jūsų paskyra išliks saugi.
+      </p>
+    </div>
+  `;
+
+  return {
+    subject: 'Slaptažodžio atkūrimas – IBRIX',
+    html: wrapEmail(content),
+  };
+}
+
 // Helper functions
 function getVerificationCodeEmail(data: any): { subject: string; html: string } {
   const { firstName, code } = data;
@@ -1016,6 +1063,10 @@ Deno.serve(async (req: Request) => {
       case 'inquiry_received':
         emailContent = getInquiryReceivedEmail(data.data || data);
         recipientEmail = data.data?.email || data.email || email;
+        break;
+      case 'password_reset':
+        emailContent = getPasswordResetEmail(data);
+        recipientEmail = data.email || email;
         break;
       default:
         log(requestId, 'Unknown email type', { type });

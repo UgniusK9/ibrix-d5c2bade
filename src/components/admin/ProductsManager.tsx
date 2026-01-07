@@ -73,6 +73,7 @@ interface ProductFormData {
   deposit_eur: string;
   sale_price_eur: string;
   cost_price_eur: string;
+  credits_cost_eur: string;
   stock_status: StockStatus;
   status: ProductStatus;
   category: ProductCategory;
@@ -96,6 +97,7 @@ const emptyFormData: ProductFormData = {
   deposit_eur: '',
   sale_price_eur: '',
   cost_price_eur: '',
+  credits_cost_eur: '',
   stock_status: 'preorder',
   status: 'active',
   category: 'engines',
@@ -206,6 +208,7 @@ export function ProductsManager() {
       deposit_eur: product.deposit_eur.toString(),
       sale_price_eur: product.sale_price_eur?.toString() || '',
       cost_price_eur: product.cost_price_eur?.toString() || '',
+      credits_cost_eur: (product as any).credits_cost_eur?.toString() || '',
       stock_status: product.stock_status,
       status: product.status,
       category: product.category,
@@ -301,6 +304,7 @@ export function ProductsManager() {
         deposit_eur: parseFloat(formData.deposit_eur),
         sale_price_eur: formData.sale_price_eur ? parseFloat(formData.sale_price_eur) : null,
         cost_price_eur: formData.cost_price_eur ? parseFloat(formData.cost_price_eur) : null,
+        credits_cost_eur: formData.credits_cost_eur ? parseFloat(formData.credits_cost_eur) : null,
         stock_status: formData.stock_status,
         status: formData.status,
         category: formData.category,
@@ -830,6 +834,28 @@ export function ProductsManager() {
               />
               <p className="text-xs text-muted-foreground">
                 Naudojamos susijusių produktų rekomendacijoms
+              </p>
+            </div>
+
+            {/* Credits Cost */}
+            <div className="bg-gradient-to-r from-amber-50 to-amber-100 dark:from-amber-950 dark:to-amber-900 border border-amber-200 dark:border-amber-800 rounded-xl p-4 space-y-3">
+              <div className="flex items-center gap-2">
+                <span className="text-lg">🎁</span>
+                <Label className="text-amber-700 dark:text-amber-300 font-semibold">Kreditų kaina</Label>
+              </div>
+              <Input
+                id="credits_cost_eur"
+                type="number"
+                step="0.01"
+                min="0"
+                value={formData.credits_cost_eur}
+                onChange={(e) => setFormData(prev => ({ ...prev, credits_cost_eur: e.target.value }))}
+                placeholder="Palikti tuščią jei negalima įsigyti už kreditus"
+                className="bg-white dark:bg-background"
+              />
+              <p className="text-xs text-amber-600 dark:text-amber-400">
+                Kiek kreditų (EUR vertė) reikia, kad klientas galėtų gauti šį produktą nemokamai. 
+                Jei tuščia - produkto negalima įsigyti už kreditus.
               </p>
             </div>
 
