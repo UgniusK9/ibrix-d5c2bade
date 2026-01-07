@@ -43,29 +43,41 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const supabase = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
-    );
-
-    // Validate admin authentication
     const authHeader = req.headers.get('authorization');
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
       return new Response(JSON.stringify({ success: false, error: 'Unauthorized' }), { status: 401, headers: { 'Content-Type': 'application/json', ...corsHeaders } });
     }
 
+    // Create client with user's auth header for getClaims
+    const supabaseAuth = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
+      { global: { headers: { Authorization: authHeader } } }
+    );
+
     const token = authHeader.replace('Bearer ', '');
-    const { data: { user }, error: authError } = await supabase.auth.getUser(token);
+    const { data: claimsData, error: claimsError } = await supabaseAuth.auth.getClaims(token);
     
-    if (authError || !user) {
+    if (claimsError || !claimsData?.claims) {
+      console.error('[ADMIN] Auth error:', claimsError);
       return new Response(JSON.stringify({ success: false, error: 'Unauthorized' }), { status: 401, headers: { 'Content-Type': 'application/json', ...corsHeaders } });
     }
 
-    const { data: userRecord } = await supabase.from('users').select('role').eq('id', user.id).maybeSingle();
+    const userId = claimsData.claims.sub as string;
+    
+    // Use service role client for database operations
+    const supabase = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+    );
+
+    const { data: userRecord } = await supabase.from('users').select('role').eq('id', userId).maybeSingle();
 
     if (!userRecord || userRecord.role !== 'admin') {
       return new Response(JSON.stringify({ success: false, error: 'Forbidden' }), { status: 403, headers: { 'Content-Type': 'application/json', ...corsHeaders } });
     }
+    
+    const user = { id: userId };
 
     const rawBody = await req.json();
     const validationResult = adminRequestSchema.safeParse(rawBody);
