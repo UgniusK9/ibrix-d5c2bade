@@ -85,3 +85,15 @@ verify_jwt = false
 
 [functions.activate-credits]
 verify_jwt = false
+
+[functions.signup]
+verify_jwt = false
+
+[functions.verify-email-code]
+verify_jwt = false
+
+[functions.resend-verification]
+verify_jwt = false
+
+[functions.request-password-reset]
+verify_jwt = false
