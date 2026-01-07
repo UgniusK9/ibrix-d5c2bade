@@ -236,7 +236,7 @@ export default function Account() {
           <Card className="border-2 border-border">
             <CardContent className="p-0">
               <Link 
-                to="/uzsakymai" 
+                to="/orders" 
                 className="flex items-center justify-between p-4 hover:bg-muted/50 transition-colors border-b border-border"
               >
                 <div className="flex items-center gap-3">
