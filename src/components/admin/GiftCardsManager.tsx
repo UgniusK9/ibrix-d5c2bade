@@ -88,18 +88,25 @@ export function GiftCardsManager() {
       // Send email to recipient if email provided
       if (recipientEmail) {
         try {
-          await supabase.functions.invoke('send-email', {
+          const { data: emailResult, error: emailError } = await supabase.functions.invoke('send-email', {
             body: {
-              type: 'digital_gift_card',
-              to: recipientEmail,
+              type: 'gift_card',
+              email: recipientEmail,
+              recipientEmail: recipientEmail,
               recipientName: recipientName || 'Gerbiamas kliente',
               senderName: 'IBRIX Administratorius',
               amount: newCardValue,
               code: codeData,
-              message: personalMessage || null,
+              personalMessage: personalMessage || null,
             },
           });
-          toast.success(`Dovanų kuponas sukurtas ir išsiųstas į ${recipientEmail}`);
+          
+          if (emailError) {
+            console.error('Email function error:', emailError);
+            toast.success(`Dovanų kuponas sukurtas: ${codeData} (el. laiškas neišsiųstas)`);
+          } else {
+            toast.success(`Dovanų kuponas sukurtas ir išsiųstas į ${recipientEmail}`);
+          }
         } catch (emailErr) {
           console.error('Failed to send gift card email:', emailErr);
           toast.success(`Dovanų kuponas sukurtas: ${codeData} (el. laiškas neišsiųstas)`);
