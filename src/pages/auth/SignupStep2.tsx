@@ -32,6 +32,30 @@ export default function SignupStep2() {
   const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
+  // Password strength calculation
+  const getPasswordStrength = (pwd: string) => {
+    let score = 0;
+    const checks = {
+      length: pwd.length >= 8,
+      uppercase: /[A-Z]/.test(pwd),
+      lowercase: /[a-z]/.test(pwd),
+      number: /\d/.test(pwd),
+      special: /[!@#$%^&*(),.?":{}|<>]/.test(pwd),
+    };
+    
+    if (checks.length) score++;
+    if (checks.uppercase) score++;
+    if (checks.lowercase) score++;
+    if (checks.number) score++;
+    if (checks.special) score++;
+    
+    return { score, checks };
+  };
+
+  const passwordStrength = getPasswordStrength(password);
+  const strengthLabels = ['', 'Labai silpnas', 'Silpnas', 'Vidutinis', 'Stiprus', 'Labai stiprus'];
+  const strengthColors = ['', 'bg-destructive', 'bg-orange-500', 'bg-yellow-500', 'bg-green-500', 'bg-green-600'];
+
   useEffect(() => {
     if (user) {
       navigate('/account');
@@ -233,7 +257,39 @@ export default function SignupStep2() {
                 </button>
               </div>
               {errors.password && <p className="text-[#DC2626] text-xs mt-1">{errors.password}</p>}
-              <p className="text-xs text-[#64748B] mt-1">{t('authFlow.passwordHint')}</p>
+              
+              {/* Password Strength Indicator */}
+              {password && (
+                <div className="mt-2 space-y-2">
+                  <div className="flex gap-1">
+                    {[1, 2, 3, 4, 5].map(i => (
+                      <div
+                        key={i}
+                        className={`h-1 flex-1 rounded-full transition-colors ${
+                          i <= passwordStrength.score ? strengthColors[passwordStrength.score] : 'bg-muted'
+                        }`}
+                      />
+                    ))}
+                  </div>
+                  <p className={`text-xs ${passwordStrength.score >= 4 ? 'text-green-600' : 'text-[#64748B]'}`}>
+                    {strengthLabels[passwordStrength.score]}
+                  </p>
+                  <div className="text-xs text-[#64748B] space-y-0.5">
+                    <p className={passwordStrength.checks.length ? 'text-green-600' : ''}>
+                      {passwordStrength.checks.length ? '✓' : '○'} Mažiausiai 8 simboliai
+                    </p>
+                    <p className={passwordStrength.checks.uppercase ? 'text-green-600' : ''}>
+                      {passwordStrength.checks.uppercase ? '✓' : '○'} Didžioji raidė (A-Z)
+                    </p>
+                    <p className={passwordStrength.checks.number ? 'text-green-600' : ''}>
+                      {passwordStrength.checks.number ? '✓' : '○'} Skaičius (0-9)
+                    </p>
+                    <p className={passwordStrength.checks.special ? 'text-green-600' : ''}>
+                      {passwordStrength.checks.special ? '✓' : '○'} Specialus simbolis (!@#$...)
+                    </p>
+                  </div>
+                </div>
+              )}
             </div>
 
             <div>

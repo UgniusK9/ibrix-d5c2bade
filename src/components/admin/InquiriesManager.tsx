@@ -4,7 +4,6 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
   Dialog,
@@ -23,8 +22,15 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { toast } from "sonner";
-import { Trash2, MessageSquare, Send, RefreshCw, Clock, User } from "lucide-react";
+import { Trash2, MessageSquare, Send, RefreshCw, Clock, User, Filter, Circle, CheckCircle2 } from "lucide-react";
 import { format } from "date-fns";
 import { lt } from "date-fns/locale";
 import { useNotificationSound } from "@/hooks/useNotificationSound";
@@ -75,6 +81,9 @@ export function InquiriesManager() {
   const [sendingReply, setSendingReply] = useState(false);
   const [deleteInquiry, setDeleteInquiry] = useState<Inquiry | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [unreadCounts, setUnreadCounts] = useState<Record<string, number>>({});
+  const [typingChannel, setTypingChannel] = useState<ReturnType<typeof supabase.channel> | null>(null);
 
   const fetchInquiries = async () => {
     setLoading(true);
@@ -105,6 +114,44 @@ export function InquiriesManager() {
       setMessages(data || []);
     }
   };
+
+  // Fetch unread message counts (customer messages after last admin reply)
+  const fetchUnreadCounts = async () => {
+    const counts: Record<string, number> = {};
+    
+    for (const inquiry of inquiries) {
+      // Get the last admin message timestamp
+      const { data: adminMsgs } = await supabase
+        .from("inquiry_messages")
+        .select("created_at")
+        .eq("inquiry_id", inquiry.id)
+        .eq("sender_type", "admin")
+        .order("created_at", { ascending: false })
+        .limit(1);
+      
+      const lastAdminTime = adminMsgs?.[0]?.created_at || inquiry.created_at;
+      
+      // Count customer messages after that
+      const { count } = await supabase
+        .from("inquiry_messages")
+        .select("*", { count: "exact", head: true })
+        .eq("inquiry_id", inquiry.id)
+        .eq("sender_type", "customer")
+        .gt("created_at", lastAdminTime);
+      
+      if (count && count > 0) {
+        counts[inquiry.id] = count;
+      }
+    }
+    
+    setUnreadCounts(counts);
+  };
+
+  useEffect(() => {
+    if (inquiries.length > 0) {
+      fetchUnreadCounts();
+    }
+  }, [inquiries]);
 
   useEffect(() => {
     fetchInquiries();
@@ -163,6 +210,12 @@ export function InquiriesManager() {
   useEffect(() => {
     if (selectedInquiry) {
       fetchMessages(selectedInquiry.id);
+    } else {
+      // Clean up typing channel when dialog closes
+      if (typingChannel) {
+        supabase.removeChannel(typingChannel);
+        setTypingChannel(null);
+      }
     }
   }, [selectedInquiry]);
 
@@ -220,26 +273,41 @@ export function InquiriesManager() {
         toast.success("Atsakymas išsiųstas!");
       }
 
-      // Refresh messages
+      // Refresh messages and unread counts
       await fetchMessages(selectedInquiry.id);
       setReplyMessage("");
-
-      // Update status to resolved
-      await supabase
-        .from("contact_inquiries")
-        .update({ status: "resolved" })
-        .eq("id", selectedInquiry.id);
-
-      setInquiries(prev =>
-        prev.map(i => i.id === selectedInquiry.id ? { ...i, status: "resolved" } : i)
-      );
+      
+      // Clear unread count for this inquiry
+      setUnreadCounts(prev => {
+        const { [selectedInquiry.id]: _, ...rest } = prev;
+        return rest;
+      });
 
     } catch (error) {
       console.error("Error sending reply:", error);
-      toast.error("Nepavyko išsiųsti atsakymo");
+      toast.error("Nepavyko išsiūsti atsakymo");
     }
 
     setSendingReply(false);
+  };
+
+  const handleStatusChange = async (inquiryId: string, newStatus: string) => {
+    const { error } = await supabase
+      .from("contact_inquiries")
+      .update({ status: newStatus })
+      .eq("id", inquiryId);
+
+    if (error) {
+      toast.error("Nepavyko pakeisti statuso");
+    } else {
+      setInquiries(prev =>
+        prev.map(i => i.id === inquiryId ? { ...i, status: newStatus } : i)
+      );
+      if (selectedInquiry?.id === inquiryId) {
+        setSelectedInquiry(prev => prev ? { ...prev, status: newStatus } : null);
+      }
+      toast.success("Statusas pakeistas");
+    }
   };
 
   const handleDelete = async () => {
@@ -266,12 +334,24 @@ export function InquiriesManager() {
 
   const newCount = inquiries.filter(i => i.status === "new").length;
   const inProgressCount = inquiries.filter(i => i.status === "in_progress").length;
+  const totalUnread = Object.values(unreadCounts).reduce((a, b) => a + b, 0);
+  
+  const filteredInquiries = statusFilter === "all" 
+    ? inquiries 
+    : inquiries.filter(i => i.status === statusFilter);
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between flex-wrap gap-4">
         <div>
-          <h2 className="text-xl font-semibold">Užklausos</h2>
+          <div className="flex items-center gap-2">
+            <h2 className="text-xl font-semibold">Užklausos</h2>
+            {totalUnread > 0 && (
+              <Badge variant="destructive" className="rounded-full px-2 py-0.5 text-xs">
+                {totalUnread} neperskaitytų
+              </Badge>
+            )}
+          </div>
           <p className="text-sm text-muted-foreground">
             {newCount > 0 && <span className="text-destructive font-medium">{newCount} naujos</span>}
             {newCount > 0 && inProgressCount > 0 && " · "}
@@ -279,10 +359,24 @@ export function InquiriesManager() {
             {newCount === 0 && inProgressCount === 0 && "Visos užklausos išspręstos"}
           </p>
         </div>
-        <Button variant="outline" size="sm" onClick={fetchInquiries} disabled={loading}>
-          <RefreshCw className={`w-4 h-4 mr-2 ${loading ? "animate-spin" : ""}`} />
-          Atnaujinti
-        </Button>
+        <div className="flex items-center gap-2">
+          <Select value={statusFilter} onValueChange={setStatusFilter}>
+            <SelectTrigger className="w-[160px]">
+              <Filter className="w-4 h-4 mr-2" />
+              <SelectValue placeholder="Filtruoti" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Visos</SelectItem>
+              <SelectItem value="new">Naujos</SelectItem>
+              <SelectItem value="in_progress">Vykdomos</SelectItem>
+              <SelectItem value="resolved">Išspręstos</SelectItem>
+            </SelectContent>
+          </Select>
+          <Button variant="outline" size="sm" onClick={fetchInquiries} disabled={loading}>
+            <RefreshCw className={`w-4 h-4 mr-2 ${loading ? "animate-spin" : ""}`} />
+            Atnaujinti
+          </Button>
+        </div>
       </div>
 
       {loading ? (
@@ -294,19 +388,21 @@ export function InquiriesManager() {
             </Card>
           ))}
         </div>
-      ) : inquiries.length === 0 ? (
+      ) : filteredInquiries.length === 0 ? (
         <Card className="p-8 text-center">
           <MessageSquare className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
-          <p className="text-muted-foreground">Nėra užklausų</p>
+          <p className="text-muted-foreground">
+            {statusFilter === "all" ? "Nėra užklausų" : "Nėra užklausų su šiuo statusu"}
+          </p>
         </Card>
       ) : (
         <div className="space-y-3">
-          {inquiries.map(inquiry => (
+          {filteredInquiries.map(inquiry => (
             <Card
               key={inquiry.id}
               className={`p-4 cursor-pointer hover:bg-muted/50 transition-colors ${
                 inquiry.status === "new" ? "border-destructive/50 bg-destructive/5" : ""
-              }`}
+              } ${unreadCounts[inquiry.id] ? "ring-2 ring-primary/50" : ""}`}
               onClick={() => handleOpenInquiry(inquiry)}
             >
               <div className="flex items-start justify-between gap-4">
@@ -316,6 +412,11 @@ export function InquiriesManager() {
                     <Badge variant={statusLabels[inquiry.status]?.variant || "outline"}>
                       {statusLabels[inquiry.status]?.label || inquiry.status}
                     </Badge>
+                    {unreadCounts[inquiry.id] && (
+                      <Badge variant="default" className="rounded-full px-2 py-0.5 text-xs">
+                        {unreadCounts[inquiry.id]} nauja
+                      </Badge>
+                    )}
                   </div>
                   <p className="text-sm text-muted-foreground truncate">{inquiry.email}</p>
                   <div className="flex items-center gap-3 mt-2 text-xs text-muted-foreground">
@@ -358,7 +459,7 @@ export function InquiriesManager() {
 
           {selectedInquiry && (
             <div className="flex-1 overflow-y-auto space-y-4">
-              {/* Contact Info */}
+              {/* Contact Info & Status Control */}
               <div className="grid grid-cols-2 gap-4 text-sm">
                 <div>
                   <Label className="text-muted-foreground">El. paštas</Label>
@@ -379,6 +480,31 @@ export function InquiriesManager() {
                   <p className="font-medium">
                     {format(new Date(selectedInquiry.created_at), "yyyy-MM-dd HH:mm", { locale: lt })}
                   </p>
+                </div>
+              </div>
+
+              {/* Status Selector */}
+              <div className="flex items-center gap-3 p-3 bg-muted/30 rounded-lg">
+                <Label className="text-muted-foreground whitespace-nowrap">Statusas:</Label>
+                <div className="flex gap-2">
+                  <Button
+                    size="sm"
+                    variant={selectedInquiry.status === "in_progress" ? "default" : "outline"}
+                    onClick={() => handleStatusChange(selectedInquiry.id, "in_progress")}
+                    className="gap-1"
+                  >
+                    <Circle className="w-3 h-3" />
+                    Vykdomas
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant={selectedInquiry.status === "resolved" ? "default" : "outline"}
+                    onClick={() => handleStatusChange(selectedInquiry.id, "resolved")}
+                    className="gap-1"
+                  >
+                    <CheckCircle2 className="w-3 h-3" />
+                    Išspręstas
+                  </Button>
                 </div>
               </div>
 
@@ -413,13 +539,37 @@ export function InquiriesManager() {
                 </div>
               )}
 
-              {/* Reply Form */}
+              {/* Reply Form with typing indicator */}
               <div className="space-y-2">
                 <Label>Atsakyti</Label>
                 <Textarea
                   placeholder="Rašykite atsakymą..."
                   value={replyMessage}
-                  onChange={(e) => setReplyMessage(e.target.value)}
+                  onChange={(e) => {
+                    setReplyMessage(e.target.value);
+                    // Broadcast typing status
+                    if (typingChannel) {
+                      typingChannel.track({ role: 'admin', typing: e.target.value.length > 0 });
+                    }
+                  }}
+                  onFocus={() => {
+                    // Subscribe to presence channel when focusing
+                    if (selectedInquiry && !typingChannel) {
+                      const channel = supabase.channel(`typing-${selectedInquiry.id}`);
+                      channel.subscribe(async (status) => {
+                        if (status === 'SUBSCRIBED') {
+                          await channel.track({ role: 'admin', typing: false });
+                        }
+                      });
+                      setTypingChannel(channel);
+                    }
+                  }}
+                  onBlur={() => {
+                    // Stop typing when blurring
+                    if (typingChannel) {
+                      typingChannel.track({ role: 'admin', typing: false });
+                    }
+                  }}
                   rows={4}
                 />
               </div>

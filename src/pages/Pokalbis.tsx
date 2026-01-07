@@ -47,6 +47,7 @@ export default function Pokalbis() {
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
   const [notFound, setNotFound] = useState(false);
+  const [adminTyping, setAdminTyping] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const fetchData = async () => {
@@ -86,11 +87,12 @@ export default function Pokalbis() {
     fetchData();
   }, [token]);
 
-  // Realtime subscription for new messages
+  // Realtime subscription for new messages and typing indicator
   useEffect(() => {
     if (!inquiry) return;
 
-    const channel = supabase
+    // Database changes channel for new messages
+    const messagesChannel = supabase
       .channel(`conversation-${inquiry.id}`)
       .on(
         'postgres_changes',
@@ -102,12 +104,26 @@ export default function Pokalbis() {
         },
         (payload) => {
           setMessages(prev => [...prev, payload.new as InquiryMessage]);
+          setAdminTyping(false);
         }
       )
       .subscribe();
 
+    // Presence channel for typing indicator
+    const presenceChannel = supabase
+      .channel(`typing-${inquiry.id}`)
+      .on('presence', { event: 'sync' }, () => {
+        const state = presenceChannel.presenceState();
+        const adminIsTyping = Object.values(state).some((presences: any) =>
+          presences.some((p: any) => p.role === 'admin' && p.typing)
+        );
+        setAdminTyping(adminIsTyping);
+      })
+      .subscribe();
+
     return () => {
-      supabase.removeChannel(channel);
+      supabase.removeChannel(messagesChannel);
+      supabase.removeChannel(presenceChannel);
     };
   }, [inquiry?.id]);
 
@@ -251,6 +267,16 @@ export default function Pokalbis() {
                   <p className="whitespace-pre-wrap">{msg.message}</p>
                 </Card>
               ))}
+              {adminTyping && (
+                <div className="flex items-center gap-2 text-sm text-muted-foreground animate-pulse pl-4">
+                  <div className="flex gap-1">
+                    <span className="w-2 h-2 bg-primary rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+                    <span className="w-2 h-2 bg-primary rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+                    <span className="w-2 h-2 bg-primary rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+                  </div>
+                  <span>IBRIX rašo...</span>
+                </div>
+              )}
               <div ref={messagesEndRef} />
             </div>
           )}
