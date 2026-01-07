@@ -24,9 +24,10 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
-import { Trash2, MessageSquare, Send, RefreshCw, Mail, Clock, User } from "lucide-react";
+import { Trash2, MessageSquare, Send, RefreshCw, Clock, User } from "lucide-react";
 import { format } from "date-fns";
 import { lt } from "date-fns/locale";
+import { useNotificationSound } from "@/hooks/useNotificationSound";
 
 interface Inquiry {
   id: string;
@@ -64,6 +65,8 @@ const statusLabels: Record<string, { label: string; variant: "default" | "second
 };
 
 export function InquiriesManager() {
+  const { play } = useNotificationSound();
+
   const [inquiries, setInquiries] = useState<Inquiry[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedInquiry, setSelectedInquiry] = useState<Inquiry | null>(null);
@@ -112,45 +115,45 @@ export function InquiriesManager() {
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'contact_inquiries' },
-        (payload) => {
-          console.log('Inquiry change:', payload);
-          if (payload.eventType === 'INSERT') {
-            setInquiries(prev => [payload.new as Inquiry, ...prev]);
-            toast.info("Nauja užklausa!", { description: (payload.new as Inquiry).name });
-          } else if (payload.eventType === 'UPDATE') {
-            setInquiries(prev => 
-              prev.map(i => i.id === (payload.new as Inquiry).id ? payload.new as Inquiry : i)
-            );
-          } else if (payload.eventType === 'DELETE') {
-            setInquiries(prev => prev.filter(i => i.id !== (payload.old as Inquiry).id));
-          }
-        }
-      )
-      .on(
-        'postgres_changes',
-        { event: 'INSERT', schema: 'public', table: 'inquiry_messages' },
-        (payload) => {
-          const newMessage = payload.new as InquiryMessage;
-          // If it's a customer message and we're viewing that inquiry, refresh messages
-          if (newMessage.sender_type === 'customer') {
-            toast.info("Naujas kliento atsakymas!", { 
-              description: "Klientas atsakė į užklausą",
-              action: {
-                label: "Peržiūrėti",
-                onClick: () => {
-                  const inquiry = inquiries.find(i => i.id === newMessage.inquiry_id);
-                  if (inquiry) handleOpenInquiry(inquiry);
-                }
-              }
-            });
-            // Refresh messages if viewing the same inquiry
-            if (selectedInquiry?.id === newMessage.inquiry_id) {
-              fetchMessages(newMessage.inquiry_id);
+          (payload) => {
+            console.log('Inquiry change:', payload);
+            if (payload.eventType === 'INSERT') {
+              setInquiries(prev => [payload.new as Inquiry, ...prev]);
+              play({ frequency: 784, durationMs: 160 });
+              toast.info("Nauja užklausa!", { description: (payload.new as Inquiry).name });
+            } else if (payload.eventType === 'UPDATE') {
+              setInquiries(prev => 
+                prev.map(i => i.id === (payload.new as Inquiry).id ? payload.new as Inquiry : i)
+              );
+            } else if (payload.eventType === 'DELETE') {
+              setInquiries(prev => prev.filter(i => i.id !== (payload.old as Inquiry).id));
             }
           }
-        }
-      )
-      .subscribe();
+        )
+        .on(
+          'postgres_changes',
+          { event: 'INSERT', schema: 'public', table: 'inquiry_messages' },
+          (payload) => {
+            const newMessage = payload.new as InquiryMessage;
+            if (newMessage.sender_type === 'customer') {
+              play({ frequency: 988, durationMs: 140 });
+              toast.info("Naujas kliento atsakymas!", {
+                description: "Klientas atsakė į užklausą",
+                action: {
+                  label: "Peržiūrėti",
+                  onClick: () => {
+                    const inquiry = inquiries.find(i => i.id === newMessage.inquiry_id);
+                    if (inquiry) handleOpenInquiry(inquiry);
+                  }
+                }
+              });
+              if (selectedInquiry?.id === newMessage.inquiry_id) {
+                fetchMessages(newMessage.inquiry_id);
+              }
+            }
+          }
+        )
+        .subscribe();
 
     return () => {
       supabase.removeChannel(inquiriesChannel);
