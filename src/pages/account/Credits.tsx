@@ -22,6 +22,7 @@ import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { CreditsRewards } from '@/components/account/CreditsRewards';
+import { RedeemGiftCard } from '@/components/account/RedeemGiftCard';
 
 interface WalletTransaction {
   id: string;
@@ -254,7 +255,15 @@ export default function Credits() {
             <p className="text-xs text-amber-600/70 dark:text-amber-400/70 mt-2">
               {t('credits.pendingHint', { days: activationDays })}
             </p>
-          </div>
+        </div>
+
+        {/* Redeem Gift Card */}
+        <div className="mb-8">
+          <RedeemGiftCard onSuccess={() => {
+            // Reload balance after redemption
+            window.location.reload();
+          }} />
+        </div>
         </div>
 
         {/* How it works */}
