@@ -723,6 +723,74 @@ function getAdminInquiryNotificationEmail(data: any): { subject: string; html: s
   };
 }
 
+// Inquiry received auto-reply email for customers
+function getInquiryReceivedEmail(data: any): { subject: string; html: string } {
+  const { firstName, topic, message, orderNumber, conversationToken } = data;
+  const baseUrl = 'https://ibrix.lt';
+  const conversationUrl = conversationToken ? `${baseUrl}/pokalbis/${conversationToken}` : baseUrl;
+
+  const content = `
+    <div style="text-align:center;margin-bottom:32px;">
+      <div style="width:64px;height:64px;background:#dbeafe;border-radius:50%;margin:0 auto 16px;display:flex;align-items:center;justify-content:center;">
+        <span style="font-size:32px;">📬</span>
+      </div>
+      <h2 style="margin:0 0 8px;font-size:24px;font-weight:700;color:#1f2937;">Gavome jūsų užklausą!</h2>
+      <p style="margin:0;color:#6b7280;">Sveiki, ${firstName}! Dėkojame, kad susisiekėte su mumis.</p>
+    </div>
+
+    <!-- Request Summary -->
+    <div style="background:#f3f4f6;padding:20px;border-radius:8px;margin-bottom:24px;">
+      <table width="100%" cellpadding="0" cellspacing="0">
+        <tr>
+          <td style="padding:8px 0;color:#6b7280;">Tema:</td>
+          <td style="padding:8px 0;text-align:right;font-weight:500;color:#1f2937;">${topic}</td>
+        </tr>
+        ${orderNumber ? `
+          <tr>
+            <td style="padding:8px 0;color:#6b7280;">Užsakymo nr.:</td>
+            <td style="padding:8px 0;text-align:right;font-weight:500;color:#1f2937;">${orderNumber}</td>
+          </tr>
+        ` : ''}
+      </table>
+    </div>
+
+    <!-- Original Message -->
+    <div style="background:#eff6ff;border-left:4px solid #3b82f6;padding:20px;border-radius:0 8px 8px 0;margin-bottom:24px;">
+      <p style="margin:0 0 8px;font-weight:600;color:#1e40af;">Jūsų žinutė:</p>
+      <p style="margin:0;color:#1e3a5f;line-height:1.6;white-space:pre-wrap;">${message}</p>
+    </div>
+
+    <!-- Response Time -->
+    <div style="background:#dcfce7;padding:16px;border-radius:8px;margin-bottom:24px;text-align:center;">
+      <p style="margin:0;color:#166534;font-size:14px;">
+        ⏱ Paprastai atsakome per <strong>24 valandas</strong> darbo dienomis
+      </p>
+    </div>
+
+    <!-- Conversation Link -->
+    ${conversationToken ? `
+      <div style="text-align:center;margin-bottom:24px;">
+        <p style="margin:0 0 16px;color:#4b5563;">Peržiūrėti savo užklausą ir atsakymą galite čia:</p>
+        <a href="${conversationUrl}" style="display:inline-block;background:#4f46e5;color:#ffffff;padding:14px 32px;text-decoration:none;border-radius:8px;font-weight:600;">
+          Peržiūrėti pokalbį
+        </a>
+      </div>
+    ` : ''}
+
+    <div style="text-align:center;padding:20px;background:#f9fafb;border-radius:8px;">
+      <p style="margin:0;font-size:13px;color:#9ca3af;">
+        Jei turite papildomų klausimų, galite atsakyti į šį laišką arba parašyti mums 
+        <a href="mailto:pagalba@ibrix.lt" style="color:#4f46e5;">pagalba@ibrix.lt</a>
+      </p>
+    </div>
+  `;
+
+  return {
+    subject: `Gavome jūsų užklausą – ${topic}`,
+    html: wrapEmail(content),
+  };
+}
+
 // Helper functions
 function getVerificationCodeEmail(data: any): { subject: string; html: string } {
   const { firstName, code } = data;
@@ -943,6 +1011,10 @@ Deno.serve(async (req: Request) => {
         break;
       case 'welcome':
         emailContent = getWelcomeEmail(data.data || data);
+        recipientEmail = data.data?.email || data.email || email;
+        break;
+      case 'inquiry_received':
+        emailContent = getInquiryReceivedEmail(data.data || data);
         recipientEmail = data.data?.email || data.email || email;
         break;
       default:

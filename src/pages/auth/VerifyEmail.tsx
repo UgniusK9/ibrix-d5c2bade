@@ -96,6 +96,18 @@ export default function VerifyEmail() {
         return;
       }
 
+      // Auto-login the user with returned credentials
+      if (data.email && data.password) {
+        const { error: signInError } = await supabase.auth.signInWithPassword({
+          email: data.email,
+          password: data.password,
+        });
+        
+        if (signInError) {
+          console.error('Auto-login failed:', signInError);
+        }
+      }
+
       toast.success('Paskyra sėkmingai sukurta!');
       navigate('/auth/success');
     } catch (err: any) {

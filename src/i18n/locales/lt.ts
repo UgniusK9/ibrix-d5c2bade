@@ -59,6 +59,8 @@ export const lt = {
   authFlow: {
     landingTitle: 'Tapk IBRIX nariu',
     landingSubtitle: 'Sukurk paskyrą greičiau apsipirkimui, užsakymų sekimui ir patogiam grįžimui.',
+    loginTitle: 'Prisijungti',
+    loginSubtitle: 'Prisijunkite prie savo IBRIX paskyros',
     becomeMember: 'Tapk nariu',
     trackOrder: 'Patikrinti užsakymo būseną',
     memberBenefits: 'Narystės privalumai',
