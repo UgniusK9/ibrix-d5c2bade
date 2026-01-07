@@ -838,44 +838,134 @@ function getPasswordResetEmail(data: any): { subject: string; html: string } {
   };
 }
 
-// Helper functions
+// Helper functions - LEGO-inspired email designs
+
 function getVerificationCodeEmail(data: any): { subject: string; html: string } {
   const { firstName, code } = data;
 
-  const content = `
-    <div style="text-align:center;margin-bottom:32px;">
-      <div style="width:64px;height:64px;background:#dbeafe;border-radius:50%;margin:0 auto 16px;display:flex;align-items:center;justify-content:center;">
-        <span style="font-size:32px;">✉️</span>
-      </div>
-      <h2 style="margin:0 0 8px;font-size:24px;font-weight:700;color:#1f2937;">Suaktyvinkite savo paskyrą</h2>
-      <p style="margin:0;color:#6b7280;">Sveiki, ${firstName}! Štai jūsų patvirtinimo kodas:</p>
-    </div>
+  const html = `
+    <!DOCTYPE html>
+    <html lang="lt">
+    <head>
+      <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>IBRIX – Suaktyvinkite savo paskyrą</title>
+    </head>
+    <body style="margin:0;padding:0;background-color:#d4e8f7;font-family:Arial,Helvetica,sans-serif;">
+      <!-- Background pattern wrapper -->
+      <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#d4e8f7;background-image:url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZGVmcz48cGF0dGVybiBpZD0icGF0dGVybiIgd2lkdGg9IjEwMCIgaGVpZ2h0PSIxMDAiIHBhdHRlcm5Vbml0cz0idXNlclNwYWNlT25Vc2UiPjxyZWN0IHg9IjEwIiB5PSIxMCIgd2lkdGg9IjMwIiBoZWlnaHQ9IjE1IiByeD0iMyIgZmlsbD0iI2M0ZGNlYyIgb3BhY2l0eT0iMC40Ii8+PHJlY3QgeD0iNjAiIHk9IjUwIiB3aWR0aD0iMjUiIGhlaWdodD0iMjUiIHJ4PSI0IiBmaWxsPSIjYzRkY2VjIiBvcGFjaXR5PSIwLjMiIHRyYW5zZm9ybT0icm90YXRlKDE1IDcyLjUgNjIuNSkiLz48cmVjdCB4PSIyMCIgeT0iNjUiIHdpZHRoPSIyMCIgaGVpZ2h0PSIxMiIgcng9IjIiIGZpbGw9IiNjNGRjZWMiIG9wYWNpdHk9IjAuMzUiIHRyYW5zZm9ybT0icm90YXRlKC0xMCAzMCA3MSkiLz48L3BhdHRlcm4+PC9kZWZzPjxyZWN0IHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiIGZpbGw9InVybCgjcGF0dGVybikiLz48L3N2Zz4=');">
+        <tr>
+          <td align="center" style="padding:40px 16px;">
+            
+            <!-- Main container -->
+            <table width="100%" cellpadding="0" cellspacing="0" style="max-width:600px;">
+              
+              <!-- Logo -->
+              <tr>
+                <td align="center" style="padding-bottom:24px;">
+                  <table cellpadding="0" cellspacing="0">
+                    <tr>
+                      <td style="background:#1a1a2e;padding:14px 28px;border-radius:8px;">
+                        <span style="font-size:26px;font-weight:800;color:#ffffff;letter-spacing:2px;">IBRIX</span>
+                      </td>
+                    </tr>
+                  </table>
+                </td>
+              </tr>
 
-    <!-- Code Display -->
-    <div style="background:#f3f4f6;padding:24px;border-radius:12px;text-align:center;margin-bottom:24px;border:2px dashed #d1d5db;">
-      <p style="margin:0;font-size:36px;font-weight:700;color:#1f2937;letter-spacing:8px;font-family:monospace;">${code}</p>
-    </div>
+              <!-- Main Heading -->
+              <tr>
+                <td align="center" style="padding-bottom:32px;">
+                  <h1 style="margin:0;font-size:32px;font-weight:700;color:#006cb7;line-height:1.2;">Suaktyvinkite savo paskyrą</h1>
+                </td>
+              </tr>
 
-    <div style="background:#fef3c7;padding:16px;border-radius:8px;margin-bottom:24px;">
-      <p style="margin:0;color:#92400e;font-size:14px;text-align:center;">
-        ⏱ Kodas galioja <strong>24 valandas</strong>
-      </p>
-    </div>
+              <!-- White Content Card -->
+              <tr>
+                <td>
+                  <table width="100%" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:10px;box-shadow:0 2px 8px rgba(0,0,0,0.06);">
+                    <tr>
+                      <td style="padding:32px 32px 28px;">
+                        
+                        <!-- Intro Text -->
+                        <p style="margin:0 0 28px;font-size:16px;color:#333333;line-height:1.6;text-align:center;">
+                          Dėkojame, kad užsiregistravote IBRIX paskyrai gauti. Štai kodas, kurio jums reikės norint tęsti. Tiesiog nukopijuokite jį į lauką ekrane, iš kurio ką tik atėjote, ir būsite pasirengę pradėti!
+                        </p>
 
-    <p style="margin:0 0 16px;color:#6b7280;font-size:14px;text-align:center;">
-      Tiesiog nukopijuokite šį kodą į patvirtinimo langą ir jūsų paskyra bus aktyvuota.
-    </p>
+                        <!-- Code Box -->
+                        <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:20px;">
+                          <tr>
+                            <td align="center">
+                              <table cellpadding="0" cellspacing="0" style="border:2px solid #006cb7;border-radius:6px;padding:20px 48px;">
+                                <tr>
+                                  <td style="font-size:36px;font-weight:700;color:#1a1a2e;letter-spacing:6px;font-family:Arial,Helvetica,sans-serif;">
+                                    ${code}
+                                  </td>
+                                </tr>
+                              </table>
+                            </td>
+                          </tr>
+                        </table>
 
-    <div style="text-align:center;padding:20px;background:#f9fafb;border-radius:8px;">
-      <p style="margin:0;font-size:13px;color:#9ca3af;">
-        Jei neprisiregistravote IBRIX paskyrą, tiesiog ignoruokite šį laišką.
-      </p>
-    </div>
+                        <!-- Expiration -->
+                        <p style="margin:0 0 24px;font-size:15px;color:#333333;text-align:center;">
+                          Jūsų kodas veiks <strong>24 valandas</strong>.
+                        </p>
+
+                        <!-- Ignore Text -->
+                        <p style="margin:0 0 24px;font-size:14px;color:#666666;text-align:center;line-height:1.5;">
+                          Jei neužsiregistravote gauti IBRIX paskyros, jums nieko daryti nereikia. Galite tiesiog ignoruoti šį el. laišką.
+                        </p>
+
+                        <!-- Support Line -->
+                        <p style="margin:0;font-size:14px;color:#666666;text-align:center;line-height:1.5;padding-top:16px;border-top:1px solid #e5e5e5;">
+                          Neįmanoma atsakyti į šį el. laišką. Jei turite klausimų, kreipkitės į <a href="mailto:pagalba@ibrix.lt" style="color:#006cb7;text-decoration:underline;">klientų aptarnavimo centrą</a>.
+                        </p>
+                        
+                      </td>
+                    </tr>
+                  </table>
+                </td>
+              </tr>
+
+              <!-- Footer -->
+              <tr>
+                <td style="padding:40px 20px 20px;">
+                  <table width="100%" cellpadding="0" cellspacing="0">
+                    <tr>
+                      <td align="center" style="padding-bottom:16px;">
+                        <p style="margin:0;font-size:13px;color:#555555;line-height:1.6;">
+                          IBRIX, IBRIX logotipas ir kiti IBRIX žymenys yra IBRIX prekių ženklai.<br>
+                          © 2026 IBRIX. Visos teisės saugomos.
+                        </p>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td align="center">
+                        <p style="margin:0;font-size:13px;">
+                          <a href="https://ibrix.lt/privatumo-politika" style="color:#006cb7;text-decoration:underline;">Privatumo politika</a>
+                          <span style="color:#999999;padding:0 8px;">|</span>
+                          <a href="https://ibrix.lt/slapukai-politika" style="color:#006cb7;text-decoration:underline;">Slapukų informacija</a>
+                          <span style="color:#999999;padding:0 8px;">|</span>
+                          <a href="https://ibrix.lt/pagalba" style="color:#006cb7;text-decoration:underline;">IBRIX.lt/service</a>
+                        </p>
+                      </td>
+                    </tr>
+                  </table>
+                </td>
+              </tr>
+
+            </table>
+          </td>
+        </tr>
+      </table>
+    </body>
+    </html>
   `;
 
   return {
-    subject: 'Jūsų IBRIX paskyros patvirtinimo kodas',
-    html: wrapEmail(content),
+    subject: 'IBRIX – Suaktyvinkite savo paskyrą',
+    html,
   };
 }
 
@@ -883,94 +973,288 @@ function getWelcomeEmail(data: any): { subject: string; html: string } {
   const { firstName, lastName, email } = data;
   const baseUrl = 'https://ibrix.lt';
 
-  const content = `
-    <div style="text-align:center;margin-bottom:32px;">
-      <div style="width:64px;height:64px;background:#dcfce7;border-radius:50%;margin:0 auto 16px;display:flex;align-items:center;justify-content:center;">
-        <span style="font-size:32px;">🎉</span>
-      </div>
-      <h2 style="margin:0 0 8px;font-size:24px;font-weight:700;color:#1f2937;">Sveikiname susikūrus IBRIX paskyrą!</h2>
-      <p style="margin:0;color:#6b7280;">Džiaugiamės, kad prisijungėte prie mūsų bendruomenės.</p>
-    </div>
+  const html = `
+    <!DOCTYPE html>
+    <html lang="lt">
+    <head>
+      <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>IBRIX – Sveikiname susikūrus IBRIX paskyrą!</title>
+    </head>
+    <body style="margin:0;padding:0;background-color:#ffffff;font-family:Arial,Helvetica,sans-serif;">
+      <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#ffffff;">
+        <tr>
+          <td align="center" style="padding:0;">
+            
+            <!-- Main container -->
+            <table width="100%" cellpadding="0" cellspacing="0" style="max-width:600px;">
+              
+              <!-- Decorative Header with Shapes -->
+              <tr>
+                <td style="position:relative;padding:24px 0 0;">
+                  <table width="100%" cellpadding="0" cellspacing="0">
+                    <tr>
+                      <td width="33%" align="left" valign="top" style="padding-left:20px;">
+                        <!-- Blue shape left -->
+                        <div style="width:60px;height:60px;background:#0073cf;border-radius:8px;transform:rotate(-15deg);"></div>
+                      </td>
+                      <td width="34%" align="center" valign="top">
+                        <!-- Purple shape center -->
+                        <div style="width:50px;height:50px;background:#6b4c9a;border-radius:8px;transform:rotate(10deg);margin-top:10px;"></div>
+                      </td>
+                      <td width="33%" align="right" valign="top" style="padding-right:20px;">
+                        <!-- Teal shape right -->
+                        <div style="width:55px;height:55px;background:#00a3a3;border-radius:8px;transform:rotate(20deg);"></div>
+                      </td>
+                    </tr>
+                  </table>
+                </td>
+              </tr>
 
-    <!-- Account Info -->
-    <div style="background:#f3f4f6;padding:24px;border-radius:12px;margin-bottom:24px;">
-      <h3 style="margin:0 0 16px;font-size:16px;font-weight:600;color:#1f2937;">Štai ką turi žinoti:</h3>
-      
-      <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;padding:12px;background:#ffffff;border-radius:8px;">
-        <div style="width:40px;height:40px;background:#ffd500;border-radius:50%;display:flex;align-items:center;justify-content:center;">
-          <span style="font-size:20px;">👤</span>
-        </div>
-        <div>
-          <p style="margin:0;font-size:12px;color:#6b7280;">Naudotojo vardas</p>
-          <p style="margin:0;font-weight:600;color:#1f2937;">${email}</p>
-          <p style="margin:4px 0 0;font-size:12px;color:#6b7280;">Vardas</p>
-          <p style="margin:0;font-weight:500;color:#1f2937;">${firstName} ${lastName}</p>
-        </div>
-      </div>
+              <!-- Logo -->
+              <tr>
+                <td align="center" style="padding:24px 0 32px;">
+                  <table cellpadding="0" cellspacing="0">
+                    <tr>
+                      <td style="background:#1a1a2e;padding:14px 28px;border-radius:8px;">
+                        <span style="font-size:26px;font-weight:800;color:#ffffff;letter-spacing:2px;">IBRIX</span>
+                      </td>
+                    </tr>
+                  </table>
+                </td>
+              </tr>
 
-      <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;padding:12px;background:#ffffff;border-radius:8px;">
-        <div style="width:40px;height:40px;background:#e5e7eb;border-radius:50%;display:flex;align-items:center;justify-content:center;">
-          <span style="font-size:20px;">⚙️</span>
-        </div>
-        <div>
-          <p style="margin:0;font-size:14px;color:#4b5563;">
-            Savo <a href="${baseUrl}/account/settings" style="color:#0b6bd3;">paskyros nustatymuose</a> gali pakeisti savo duomenis.
-          </p>
-        </div>
-      </div>
+              <!-- Main Heading -->
+              <tr>
+                <td align="center" style="padding:0 20px 12px;">
+                  <h1 style="margin:0;font-size:28px;font-weight:700;color:#1a1a2e;line-height:1.3;">Sveikiname susikūrus IBRIX paskyrą!</h1>
+                </td>
+              </tr>
 
-      <div style="display:flex;align-items:center;gap:12px;padding:12px;background:#ffffff;border-radius:8px;">
-        <div style="width:40px;height:40px;background:#e5e7eb;border-radius:50%;display:flex;align-items:center;justify-content:center;">
-          <span style="font-size:20px;">🛒</span>
-        </div>
-        <div>
-          <p style="margin:0;font-size:14px;color:#4b5563;">
-            IBRIX paskyrą gali naudoti apsipirkdamas svetainėje <a href="${baseUrl}" style="color:#0b6bd3;">ibrix.lt</a>
-          </p>
-        </div>
-      </div>
-    </div>
+              <!-- Subtext -->
+              <tr>
+                <td align="center" style="padding:0 20px 32px;">
+                  <p style="margin:0;font-size:16px;color:#666666;line-height:1.5;">
+                    Džiaugiamės, kad prisijungėte prie mūsų bendruomenės.
+                  </p>
+                </td>
+              </tr>
 
-    <!-- Benefits -->
-    <div style="background:#eff6ff;padding:24px;border-radius:12px;margin-bottom:24px;">
-      <h3 style="margin:0 0 16px;font-size:16px;font-weight:600;color:#1e40af;text-align:center;">Ką gauni su IBRIX paskyra?</h3>
-      
-      <div style="display:grid;gap:12px;">
-        <div style="display:flex;align-items:center;gap:12px;">
-          <span style="font-size:20px;">💰</span>
-          <div>
-            <p style="margin:0;font-weight:600;color:#1e40af;">Lojalumo taškai</p>
-            <p style="margin:0;font-size:13px;color:#3b82f6;">Rink taškus su kiekvienu pirkiniu</p>
-          </div>
-        </div>
-        <div style="display:flex;align-items:center;gap:12px;">
-          <span style="font-size:20px;">🏷️</span>
-          <div>
-            <p style="margin:0;font-weight:600;color:#1e40af;">Ypatingos nuolaidos</p>
-            <p style="margin:0;font-size:13px;color:#3b82f6;">Eksliuzyvūs pasiūlymai tik nariams</p>
-          </div>
-        </div>
-        <div style="display:flex;align-items:center;gap:12px;">
-          <span style="font-size:20px;">📦</span>
-          <div>
-            <p style="margin:0;font-weight:600;color:#1e40af;">Greitas apmokėjimas</p>
-            <p style="margin:0;font-size:13px;color:#3b82f6;">Išsaugoti adresai ir mokėjimo duomenys</p>
-          </div>
-        </div>
-      </div>
-    </div>
+              <!-- Section Title -->
+              <tr>
+                <td align="center" style="padding:0 20px 16px;">
+                  <h2 style="margin:0;font-size:18px;font-weight:700;color:#1a1a2e;">Štai ką turi žinoti:</h2>
+                </td>
+              </tr>
 
-    <!-- CTA -->
-    <div style="text-align:center;">
-      <a href="${baseUrl}/produktai" style="display:inline-block;background:#1a1a2e;color:#ffffff;padding:14px 32px;text-decoration:none;border-radius:8px;font-weight:600;">
-        Pradėti apsipirkti
-      </a>
-    </div>
+              <!-- Account Info Card -->
+              <tr>
+                <td style="padding:0 20px 24px;">
+                  <table width="100%" cellpadding="0" cellspacing="0" style="border:1px solid #e0e0e0;border-radius:10px;overflow:hidden;">
+                    <tr>
+                      <td style="padding:20px;">
+                        <table width="100%" cellpadding="0" cellspacing="0">
+                          <tr>
+                            <td width="56" valign="top">
+                              <!-- Avatar circle -->
+                              <div style="width:48px;height:48px;background:#ffd500;border-radius:50%;display:flex;align-items:center;justify-content:center;text-align:center;line-height:48px;">
+                                <span style="font-size:24px;">😊</span>
+                              </div>
+                            </td>
+                            <td valign="top" style="padding-left:12px;">
+                              <p style="margin:0 0 4px;font-size:13px;color:#888888;">Naudotojo el. paštas</p>
+                              <p style="margin:0 0 12px;font-size:15px;color:#006cb7;font-weight:500;">${email}</p>
+                              <p style="margin:0 0 4px;font-size:13px;color:#888888;">Vardas</p>
+                              <p style="margin:0;font-size:15px;color:#1a1a2e;font-weight:500;">${firstName} ${lastName}</p>
+                            </td>
+                          </tr>
+                        </table>
+                      </td>
+                    </tr>
+                  </table>
+                </td>
+              </tr>
+
+              <!-- Info Bullets -->
+              <tr>
+                <td style="padding:0 20px 12px;">
+                  <table width="100%" cellpadding="0" cellspacing="0">
+                    <tr>
+                      <td width="44" valign="top">
+                        <div style="width:36px;height:36px;background:#ff6b6b;border-radius:50%;text-align:center;line-height:36px;">
+                          <span style="font-size:18px;">⚙️</span>
+                        </div>
+                      </td>
+                      <td valign="middle" style="padding-left:12px;">
+                        <p style="margin:0;font-size:15px;color:#333333;line-height:1.5;">
+                          Savo <a href="${baseUrl}/account/settings" style="color:#006cb7;text-decoration:underline;">paskyros nustatymuose</a> galite pakeisti savo duomenis.
+                        </p>
+                      </td>
+                    </tr>
+                  </table>
+                </td>
+              </tr>
+
+              <tr>
+                <td style="padding:0 20px 32px;">
+                  <table width="100%" cellpadding="0" cellspacing="0">
+                    <tr>
+                      <td width="44" valign="top">
+                        <div style="width:36px;height:36px;background:#4ecdc4;border-radius:50%;text-align:center;line-height:36px;">
+                          <span style="font-size:18px;">🛒</span>
+                        </div>
+                      </td>
+                      <td valign="middle" style="padding-left:12px;">
+                        <p style="margin:0;font-size:15px;color:#333333;line-height:1.5;">
+                          IBRIX paskyrą galite naudoti apsipirkdami svetainėje <a href="${baseUrl}" style="color:#006cb7;text-decoration:underline;">ibrix.lt</a>
+                        </p>
+                      </td>
+                    </tr>
+                  </table>
+                </td>
+              </tr>
+
+              <!-- Purple Benefits Panel -->
+              <tr>
+                <td style="padding:0 20px 32px;">
+                  <table width="100%" cellpadding="0" cellspacing="0" style="background:#4a2c6a;border-radius:12px;overflow:hidden;">
+                    <tr>
+                      <td style="padding:28px 24px;">
+                        
+                        <!-- Panel Title -->
+                        <h3 style="margin:0 0 24px;font-size:20px;font-weight:700;color:#ffffff;text-align:center;">Taip pat gali gauti...</h3>
+
+                        <!-- Benefit 1 -->
+                        <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:20px;">
+                          <tr>
+                            <td width="70" valign="top">
+                              <div style="width:60px;height:60px;background:#5a3d7a;border-radius:8px;text-align:center;line-height:60px;">
+                                <span style="font-size:28px;">💰</span>
+                              </div>
+                            </td>
+                            <td valign="top" style="padding-left:14px;">
+                              <p style="margin:0 0 4px;font-size:15px;font-weight:700;color:#ffd500;">Lojalumo taškai</p>
+                              <p style="margin:0;font-size:14px;color:#e0d4ec;line-height:1.4;">Rink taškus už kiekvieną pirkinį ir paversk juos nuolaidomis.</p>
+                            </td>
+                          </tr>
+                        </table>
+
+                        <!-- Benefit 2 -->
+                        <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:20px;">
+                          <tr>
+                            <td width="70" valign="top">
+                              <div style="width:60px;height:60px;background:#5a3d7a;border-radius:8px;text-align:center;line-height:60px;">
+                                <span style="font-size:28px;">🏷️</span>
+                              </div>
+                            </td>
+                            <td valign="top" style="padding-left:14px;">
+                              <p style="margin:0 0 4px;font-size:15px;font-weight:700;color:#ffd500;">Ypatingos nuolaidos</p>
+                              <p style="margin:0;font-size:14px;color:#e0d4ec;line-height:1.4;">Ekskliuzyvūs pasiūlymai ir akcijos tik nariams.</p>
+                            </td>
+                          </tr>
+                        </table>
+
+                        <!-- Benefit 3 -->
+                        <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:20px;">
+                          <tr>
+                            <td width="70" valign="top">
+                              <div style="width:60px;height:60px;background:#5a3d7a;border-radius:8px;text-align:center;line-height:60px;">
+                                <span style="font-size:28px;">⚡</span>
+                              </div>
+                            </td>
+                            <td valign="top" style="padding-left:14px;">
+                              <p style="margin:0 0 4px;font-size:15px;font-weight:700;color:#ffd500;">Greitas apmokėjimas</p>
+                              <p style="margin:0;font-size:14px;color:#e0d4ec;line-height:1.4;">Išsaugoti adresai ir mokėjimo duomenys greitesniam apsipirkimui.</p>
+                            </td>
+                          </tr>
+                        </table>
+
+                        <!-- Benefit 4 -->
+                        <table width="100%" cellpadding="0" cellspacing="0">
+                          <tr>
+                            <td width="70" valign="top">
+                              <div style="width:60px;height:60px;background:#5a3d7a;border-radius:8px;text-align:center;line-height:60px;">
+                                <span style="font-size:28px;">🚀</span>
+                              </div>
+                            </td>
+                            <td valign="top" style="padding-left:14px;">
+                              <p style="margin:0 0 4px;font-size:15px;font-weight:700;color:#ffd500;">Išankstinė prieiga</p>
+                              <p style="margin:0;font-size:14px;color:#e0d4ec;line-height:1.4;">Pasinaudok išankstine prieiga prie naujų rinkinių, kad jų netektų laukti eilėje.</p>
+                            </td>
+                          </tr>
+                        </table>
+
+                      </td>
+                    </tr>
+                  </table>
+                </td>
+              </tr>
+
+              <!-- CTA Button -->
+              <tr>
+                <td align="center" style="padding:0 20px 40px;">
+                  <table cellpadding="0" cellspacing="0">
+                    <tr>
+                      <td style="background:#1a1a2e;border-radius:30px;">
+                        <a href="${baseUrl}/produktai" style="display:inline-block;padding:16px 40px;font-size:16px;font-weight:700;color:#ffffff;text-decoration:none;">
+                          Susipažinti su naryste
+                        </a>
+                      </td>
+                    </tr>
+                  </table>
+                </td>
+              </tr>
+
+              <!-- Footer -->
+              <tr>
+                <td style="padding:32px 20px;border-top:1px solid #e5e5e5;">
+                  <table width="100%" cellpadding="0" cellspacing="0">
+                    <tr>
+                      <td align="center" style="padding-bottom:12px;">
+                        <p style="margin:0;font-size:14px;font-weight:700;color:#1a1a2e;">Prašome neatsakyti į šį el. laišką.</p>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td align="center" style="padding-bottom:20px;">
+                        <p style="margin:0;font-size:14px;color:#555555;">
+                          Jei turite klausimų, susisiekite su <a href="mailto:pagalba@ibrix.lt" style="color:#006cb7;text-decoration:underline;">klientų aptarnavimo skyriumi</a>.
+                        </p>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td align="center" style="padding-bottom:16px;">
+                        <p style="margin:0;font-size:13px;color:#888888;line-height:1.6;">
+                          IBRIX, IBRIX logotipas ir kiti IBRIX žymenys yra IBRIX prekių ženklai.<br>
+                          © 2026 IBRIX. Visos teisės saugomos.
+                        </p>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td align="center">
+                        <p style="margin:0;font-size:13px;">
+                          <a href="${baseUrl}/privatumo-politika" style="color:#006cb7;text-decoration:underline;">Privatumo politika</a>
+                          <span style="color:#999999;padding:0 8px;">|</span>
+                          <a href="${baseUrl}/slapukai-politika" style="color:#006cb7;text-decoration:underline;">Slapukų informacija</a>
+                          <span style="color:#999999;padding:0 8px;">|</span>
+                          <a href="${baseUrl}/pagalba" style="color:#006cb7;text-decoration:underline;">IBRIX.lt/service</a>
+                        </p>
+                      </td>
+                    </tr>
+                  </table>
+                </td>
+              </tr>
+
+            </table>
+          </td>
+        </tr>
+      </table>
+    </body>
+    </html>
   `;
 
   return {
-    subject: 'Sveiki atvykę į IBRIX! 🎉',
-    html: wrapEmail(content),
+    subject: 'IBRIX – Sveikiname susikūrus IBRIX paskyrą!',
+    html,
   };
 }
 
