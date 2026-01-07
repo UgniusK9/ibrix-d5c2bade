@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useAuth } from '@/contexts/AuthContext';
+import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { z } from 'zod';
 import { Link } from 'react-router-dom';
@@ -17,7 +18,7 @@ type Step = 'email' | 'email-sent' | 'new-password' | 'success';
 
 export default function ResetPassword() {
   const navigate = useNavigate();
-  const { updatePassword, resetPassword, user, isLoading } = useAuth();
+  const { updatePassword, isLoading } = useAuth();
   
   const [step, setStep] = useState<Step>('email');
   const [email, setEmail] = useState('');
@@ -26,14 +27,35 @@ export default function ResetPassword() {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<{ email?: string; password?: string; confirm?: string }>({});
+  const [isRecoveryMode, setIsRecoveryMode] = useState(false);
 
-  // Check if user came from reset link (has active session with recovery event)
+  // Listen for PASSWORD_RECOVERY event from Supabase
   useEffect(() => {
-    if (!isLoading && user) {
-      // User has session - they clicked the reset link
-      setStep('new-password');
-    }
-  }, [user, isLoading]);
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      console.log('[ResetPassword] Auth event:', event);
+      
+      if (event === 'PASSWORD_RECOVERY') {
+        console.log('[ResetPassword] Password recovery mode detected');
+        setIsRecoveryMode(true);
+        setStep('new-password');
+      }
+    });
+
+    // Also check current session - if user came from recovery link, they'll have a session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      // Check URL for recovery tokens
+      const hashParams = new URLSearchParams(window.location.hash.substring(1));
+      const type = hashParams.get('type');
+      
+      if (type === 'recovery' && session) {
+        console.log('[ResetPassword] Recovery session detected from URL');
+        setIsRecoveryMode(true);
+        setStep('new-password');
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
 
   const validateEmail = () => {
     const result = emailSchema.safeParse(email);
@@ -68,15 +90,19 @@ export default function ResetPassword() {
     setLoading(true);
 
     try {
-      const { error } = await resetPassword(email);
+      // Call our custom edge function that sends branded email
+      const response = await supabase.functions.invoke('request-password-reset', {
+        body: { email },
+      });
       
-      if (error) {
-        // Don't reveal if email exists or not for security
+      if (response.error) {
+        console.error('[ResetPassword] Error:', response.error);
         toast.error('Nepavyko išsiųsti nuorodos. Bandykite dar kartą.');
       } else {
         setStep('email-sent');
       }
     } catch (e) {
+      console.error('[ResetPassword] Exception:', e);
       toast.error('Įvyko klaida. Bandykite dar kartą.');
     } finally {
       setLoading(false);
@@ -93,6 +119,7 @@ export default function ResetPassword() {
       const { error } = await updatePassword(password);
       
       if (error) {
+        console.error('[ResetPassword] Update password error:', error);
         toast.error('Nepavyko pakeisti slaptažodžio. Bandykite dar kartą.');
       } else {
         setStep('success');
@@ -100,6 +127,7 @@ export default function ResetPassword() {
         setTimeout(() => navigate('/'), 2000);
       }
     } catch (e) {
+      console.error('[ResetPassword] Exception:', e);
       toast.error('Įvyko klaida. Bandykite dar kartą.');
     } finally {
       setLoading(false);

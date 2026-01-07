@@ -791,50 +791,193 @@ function getInquiryReceivedEmail(data: any): { subject: string; html: string } {
   };
 }
 
-// Password reset email
+// Password reset email - IBRIX branded design
 function getPasswordResetEmail(data: any): { subject: string; html: string } {
   const { email, resetUrl } = data;
+  const baseUrl = 'https://ibrix.lt';
 
-  const content = `
-    <div style="text-align:center;margin-bottom:32px;">
-      <div style="width:64px;height:64px;background:#fef3c7;border-radius:50%;margin:0 auto 16px;display:flex;align-items:center;justify-content:center;">
-        <span style="font-size:32px;">🔐</span>
-      </div>
-      <h2 style="margin:0 0 8px;font-size:24px;font-weight:700;color:#1f2937;">Slaptažodžio atkūrimas</h2>
-      <p style="margin:0;color:#6b7280;">Gavome prašymą atkurti jūsų slaptažodį.</p>
-    </div>
+  const html = `
+    <!DOCTYPE html>
+    <html lang="lt">
+    <head>
+      <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>IBRIX – Slaptažodžio atkūrimas</title>
+    </head>
+    <body style="margin:0;padding:0;background-color:#d4e8f7;font-family:Arial,Helvetica,sans-serif;">
+      <!-- Background pattern wrapper -->
+      <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#d4e8f7;background-image:url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZGVmcz48cGF0dGVybiBpZD0icGF0dGVybiIgd2lkdGg9IjEwMCIgaGVpZ2h0PSIxMDAiIHBhdHRlcm5Vbml0cz0idXNlclNwYWNlT25Vc2UiPjxyZWN0IHg9IjEwIiB5PSIxMCIgd2lkdGg9IjMwIiBoZWlnaHQ9IjE1IiByeD0iMyIgZmlsbD0iI2M0ZGNlYyIgb3BhY2l0eT0iMC40Ii8+PHJlY3QgeD0iNjAiIHk9IjUwIiB3aWR0aD0iMjUiIGhlaWdodD0iMjUiIHJ4PSI0IiBmaWxsPSIjYzRkY2VjIiBvcGFjaXR5PSIwLjMiIHRyYW5zZm9ybT0icm90YXRlKDE1IDcyLjUgNjIuNSkiLz48cmVjdCB4PSIyMCIgeT0iNjUiIHdpZHRoPSIyMCIgaGVpZ2h0PSIxMiIgcng9IjIiIGZpbGw9IiNjNGRjZWMiIG9wYWNpdHk9IjAuMzUiIHRyYW5zZm9ybT0icm90YXRlKC0xMCAzMCA3MSkiLz48L3BhdHRlcm4+PC9kZWZzPjxyZWN0IHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiIGZpbGw9InVybCgjcGF0dGVybikiLz48L3N2Zz4=');">
+        <tr>
+          <td align="center" style="padding:40px 16px;">
+            
+            <!-- Main container -->
+            <table width="100%" cellpadding="0" cellspacing="0" style="max-width:600px;">
+              
+              <!-- Logo -->
+              <tr>
+                <td align="center" style="padding-bottom:24px;">
+                  <table cellpadding="0" cellspacing="0">
+                    <tr>
+                      <td style="background:#1a1a2e;padding:14px 28px;border-radius:8px;">
+                        <span style="font-size:26px;font-weight:800;color:#ffffff;letter-spacing:2px;">IBRIX</span>
+                      </td>
+                    </tr>
+                  </table>
+                </td>
+              </tr>
 
-    <!-- CTA Button -->
-    <div style="text-align:center;margin-bottom:24px;">
-      <a href="${resetUrl}" style="display:inline-block;background:#4f46e5;color:#ffffff;padding:16px 40px;text-decoration:none;border-radius:8px;font-weight:700;font-size:16px;">
-        Atkurti slaptažodį
-      </a>
-    </div>
+              <!-- Main Heading -->
+              <tr>
+                <td align="center" style="padding-bottom:32px;">
+                  <h1 style="margin:0;font-size:32px;font-weight:700;color:#006cb7;line-height:1.2;">Slaptažodžio atkūrimas</h1>
+                </td>
+              </tr>
 
-    <div style="background:#f3f4f6;padding:16px;border-radius:8px;margin-bottom:24px;">
-      <p style="margin:0;color:#6b7280;font-size:14px;text-align:center;">
-        Jei negalite paspausti mygtuko, nukopijuokite šią nuorodą į naršyklę:<br>
-        <a href="${resetUrl}" style="color:#4f46e5;word-break:break-all;">${resetUrl}</a>
-      </p>
-    </div>
+              <!-- White Card -->
+              <tr>
+                <td>
+                  <table width="100%" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:16px;box-shadow:0 4px 20px rgba(0,0,0,0.08);">
+                    
+                    <!-- Main Content -->
+                    <tr>
+                      <td style="padding:40px 32px;">
+                        <table width="100%" cellpadding="0" cellspacing="0">
+                          
+                          <!-- Lock Icon -->
+                          <tr>
+                            <td align="center" style="padding-bottom:24px;">
+                              <div style="width:80px;height:80px;background:#fef3c7;border-radius:50%;display:inline-block;line-height:80px;text-align:center;">
+                                <span style="font-size:40px;">🔐</span>
+                              </div>
+                            </td>
+                          </tr>
 
-    <div style="background:#fef3c7;padding:16px;border-radius:8px;margin-bottom:24px;">
-      <p style="margin:0;color:#92400e;font-size:14px;text-align:center;">
-        ⏱ Ši nuoroda galioja <strong>1 valandą</strong>
-      </p>
-    </div>
+                          <!-- Message -->
+                          <tr>
+                            <td align="center" style="padding-bottom:24px;">
+                              <p style="margin:0;font-size:16px;color:#555555;line-height:1.6;">
+                                Gavome prašymą atkurti jūsų IBRIX paskyros slaptažodį.<br>
+                                Paspauskite mygtuką žemiau, kad sukurtumėte naują slaptažodį.
+                              </p>
+                            </td>
+                          </tr>
 
-    <div style="text-align:center;padding:20px;background:#f9fafb;border-radius:8px;">
-      <p style="margin:0;font-size:13px;color:#9ca3af;">
-        Jei neprašėte atkurti slaptažodžio, tiesiog ignoruokite šį laišką.<br>
-        Jūsų paskyra išliks saugi.
-      </p>
-    </div>
+                          <!-- CTA Button -->
+                          <tr>
+                            <td align="center" style="padding-bottom:32px;">
+                              <table cellpadding="0" cellspacing="0">
+                                <tr>
+                                  <td style="background:#006cb7;border-radius:8px;">
+                                    <a href="${resetUrl}" style="display:inline-block;padding:16px 48px;font-size:18px;font-weight:700;color:#ffffff;text-decoration:none;letter-spacing:0.5px;">
+                                      Atkurti slaptažodį
+                                    </a>
+                                  </td>
+                                </tr>
+                              </table>
+                            </td>
+                          </tr>
+
+                          <!-- Expiry Warning -->
+                          <tr>
+                            <td align="center" style="padding-bottom:24px;">
+                              <table cellpadding="0" cellspacing="0" style="background:#fef3c7;border-radius:8px;">
+                                <tr>
+                                  <td style="padding:12px 20px;">
+                                    <p style="margin:0;font-size:14px;color:#92400e;">
+                                      ⏱ Ši nuoroda galioja <strong>1 valandą</strong>
+                                    </p>
+                                  </td>
+                                </tr>
+                              </table>
+                            </td>
+                          </tr>
+
+                          <!-- Alternative Link -->
+                          <tr>
+                            <td align="center" style="padding-bottom:24px;">
+                              <p style="margin:0;font-size:13px;color:#888888;line-height:1.6;">
+                                Jei mygtukas neveikia, nukopijuokite šią nuorodą į naršyklę:
+                              </p>
+                              <p style="margin:8px 0 0;font-size:12px;word-break:break-all;">
+                                <a href="${resetUrl}" style="color:#006cb7;text-decoration:underline;">${resetUrl}</a>
+                              </p>
+                            </td>
+                          </tr>
+
+                          <!-- Security Note -->
+                          <tr>
+                            <td align="center">
+                              <table cellpadding="0" cellspacing="0" style="background:#f9fafb;border-radius:8px;">
+                                <tr>
+                                  <td style="padding:16px 20px;">
+                                    <p style="margin:0;font-size:13px;color:#6b7280;line-height:1.5;text-align:center;">
+                                      Jei neprašėte atkurti slaptažodžio, tiesiog ignoruokite šį laišką.<br>
+                                      Jūsų paskyra išliks saugi.
+                                    </p>
+                                  </td>
+                                </tr>
+                              </table>
+                            </td>
+                          </tr>
+
+                        </table>
+                      </td>
+                    </tr>
+
+                  </table>
+                </td>
+              </tr>
+
+              <!-- Footer -->
+              <tr>
+                <td style="padding:32px 20px;">
+                  <table width="100%" cellpadding="0" cellspacing="0">
+                    <tr>
+                      <td align="center" style="padding-bottom:12px;">
+                        <p style="margin:0;font-size:14px;font-weight:700;color:#1a1a2e;">Prašome neatsakyti į šį el. laišką.</p>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td align="center" style="padding-bottom:20px;">
+                        <p style="margin:0;font-size:14px;color:#555555;">
+                          Jei turite klausimų, susisiekite su <a href="mailto:pagalba@ibrix.lt" style="color:#006cb7;text-decoration:underline;">klientų aptarnavimo skyriumi</a>.
+                        </p>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td align="center" style="padding-bottom:16px;">
+                        <p style="margin:0;font-size:13px;color:#888888;line-height:1.6;">
+                          IBRIX, IBRIX logotipas ir kiti IBRIX žymenys yra IBRIX prekių ženklai.<br>
+                          © 2026 IBRIX. Visos teisės saugomos.
+                        </p>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td align="center">
+                        <p style="margin:0;font-size:13px;">
+                          <a href="${baseUrl}/privatumo-politika" style="color:#006cb7;text-decoration:underline;">Privatumo politika</a>
+                          <span style="color:#999999;padding:0 8px;">|</span>
+                          <a href="${baseUrl}/slapukai-politika" style="color:#006cb7;text-decoration:underline;">Slapukų informacija</a>
+                          <span style="color:#999999;padding:0 8px;">|</span>
+                          <a href="${baseUrl}/pagalba" style="color:#006cb7;text-decoration:underline;">Pagalba</a>
+                        </p>
+                      </td>
+                    </tr>
+                  </table>
+                </td>
+              </tr>
+
+            </table>
+          </td>
+        </tr>
+      </table>
+    </body>
+    </html>
   `;
 
   return {
-    subject: 'Slaptažodžio atkūrimas – IBRIX',
-    html: wrapEmail(content),
+    subject: 'IBRIX – Slaptažodžio atkūrimas 🔐',
+    html,
   };
 }
 
