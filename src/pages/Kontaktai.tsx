@@ -60,15 +60,30 @@ export default function Kontaktai() {
     const message = formData.get("message") as string;
 
     try {
-      const { error } = await supabase.from("contact_inquiries").insert({
+      const { data: inquiryData, error } = await supabase.from("contact_inquiries").insert({
         name,
         email,
         topic: selectedTopic,
         order_number: order || null,
         message,
-      });
+      }).select().single();
 
       if (error) throw error;
+
+      // Send auto-reply email
+      await supabase.functions.invoke('send-email', {
+        body: {
+          type: 'inquiry_received',
+          data: {
+            email,
+            firstName: name,
+            topic: topics.find(t => t.value === selectedTopic)?.label || selectedTopic,
+            message,
+            orderNumber: order || null,
+            conversationToken: inquiryData?.conversation_token,
+          },
+        },
+      });
 
       setSubmitted(true);
       toast.success("Žinutė išsiųsta!", {

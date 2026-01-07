@@ -292,6 +292,8 @@ export function InquiriesManager() {
   };
 
   const handleStatusChange = async (inquiryId: string, newStatus: string) => {
+    const inquiry = inquiries.find(i => i.id === inquiryId);
+    
     const { error } = await supabase
       .from("contact_inquiries")
       .update({ status: newStatus })
@@ -300,11 +302,24 @@ export function InquiriesManager() {
     if (error) {
       toast.error("Nepavyko pakeisti statuso");
     } else {
+      // If marking as resolved, add a system message
+      if (newStatus === "resolved" && inquiry) {
+        await supabase
+          .from("inquiry_messages")
+          .insert({
+            inquiry_id: inquiryId,
+            sender_type: "system",
+            message: "✅ Ši užklausa buvo išspręsta. Jei turite papildomų klausimų, drąsiai atidarykite naują užklausą arba parašykite mums.",
+          });
+      }
+      
       setInquiries(prev =>
         prev.map(i => i.id === inquiryId ? { ...i, status: newStatus } : i)
       );
       if (selectedInquiry?.id === inquiryId) {
         setSelectedInquiry(prev => prev ? { ...prev, status: newStatus } : null);
+        // Refresh messages if dialog is open
+        await fetchMessages(inquiryId);
       }
       toast.success("Statusas pakeistas");
     }

@@ -94,6 +94,12 @@ Deno.serve(async (req) => {
       .update({ verified_at: new Date().toISOString() })
       .eq('id', verification.id);
 
+    // Generate session for auto-login
+    const { data: sessionData, error: sessionError } = await supabase.auth.admin.generateLink({
+      type: 'magiclink',
+      email: verification.email,
+    });
+
     // Send welcome email
     await fetch(`${supabaseUrl}/functions/v1/send-email`, {
       method: 'POST',
@@ -117,6 +123,8 @@ Deno.serve(async (req) => {
       success: true,
       message: 'Paskyra sėkmingai sukurta!',
       userId: authData.user.id,
+      email: verification.email,
+      password: verification.password_hash, // Will be used for auto-login
     }), {
       status: 200,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
