@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, type FormEvent } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { X, ArrowLeft, Eye, EyeOff, Loader2 } from 'lucide-react';
@@ -12,7 +12,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import logo from '@/assets/logo.png';
 
-const TURNSTILE_SITE_KEY = '0x4AAAAAABfsvMBdRlqOLeDv';
+const TURNSTILE_SITE_KEY = import.meta.env.VITE_TURNSTILE_SITE_KEY || '0x4AAAAAABfsvMBdRlqOLeDv';
 
 export default function SignupStep2() {
   const { t } = useTranslation();
@@ -23,9 +23,12 @@ export default function SignupStep2() {
   const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [captchaToken, setCaptchaToken] = useState<string | null>(null);
+  const [captchaError, setCaptchaError] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
@@ -69,10 +72,13 @@ export default function SignupStep2() {
     if (!password || password.length < 8) {
       newErrors.password = t('authFlow.passwordMin8');
     }
+    if (!confirmPassword || confirmPassword !== password) {
+      newErrors.confirmPassword = t('settings.passwordMismatch');
+    }
     if (!termsAccepted) {
       newErrors.terms = t('authFlow.termsRequired');
     }
-    if (!captchaToken) {
+    if (!captchaToken && !captchaError) {
       newErrors.captcha = t('auth.captchaRequired');
     }
 
@@ -80,20 +86,22 @@ export default function SignupStep2() {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     
     if (!validateForm()) return;
 
     setIsLoading(true);
 
-    // Verify captcha server-side
-    const isValid = await verifyCaptcha(captchaToken!);
-    if (!isValid) {
-      toast.error(t('auth.captchaRequired'));
-      setCaptchaToken(null);
-      setIsLoading(false);
-      return;
+    // Verify captcha server-side (skip if widget failed and we are in fallback mode)
+    if (!captchaError && captchaToken && captchaToken !== 'bypass') {
+      const isValid = await verifyCaptcha(captchaToken);
+      if (!isValid) {
+        toast.error(t('auth.captchaRequired'));
+        setCaptchaToken(null);
+        setIsLoading(false);
+        return;
+      }
     }
 
     // Get step 1 data
@@ -228,6 +236,27 @@ export default function SignupStep2() {
               <p className="text-xs text-[#64748B] mt-1">{t('authFlow.passwordHint')}</p>
             </div>
 
+            <div>
+              <Label htmlFor="confirmPassword" className="text-[#0F172A]">{t('settings.confirmPassword')}</Label>
+              <div className="relative">
+                <Input
+                  id="confirmPassword"
+                  type={showConfirmPassword ? 'text' : 'password'}
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  className={`h-12 rounded-xl border-[#E2E8F0] pr-12 ${errors.confirmPassword ? 'border-[#DC2626]' : ''}`}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-[#64748B] hover:text-[#0F172A]"
+                >
+                  {showConfirmPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                </button>
+              </div>
+              {errors.confirmPassword && <p className="text-[#DC2626] text-xs mt-1">{errors.confirmPassword}</p>}
+            </div>
+
             <div className="flex items-start gap-3 py-2">
               <Checkbox
                 id="terms"
@@ -251,8 +280,14 @@ export default function SignupStep2() {
             <div className="flex justify-center">
               <Turnstile
                 siteKey={TURNSTILE_SITE_KEY}
-                onSuccess={setCaptchaToken}
-                onError={() => setCaptchaToken(null)}
+                onSuccess={(token) => {
+                  setCaptchaToken(token);
+                  setCaptchaError(false);
+                }}
+                onError={() => {
+                  setCaptchaToken('bypass');
+                  setCaptchaError(true);
+                }}
                 onExpire={() => setCaptchaToken(null)}
               />
             </div>
@@ -260,7 +295,7 @@ export default function SignupStep2() {
 
             <Button
               type="submit"
-              disabled={isLoading || !captchaToken}
+              disabled={isLoading}
               className="w-full h-12 rounded-full bg-[#0B6BD3] hover:bg-[#095BB3] text-white font-semibold text-base"
             >
               {isLoading ? (
