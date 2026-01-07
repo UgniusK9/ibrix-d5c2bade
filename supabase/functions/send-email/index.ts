@@ -724,6 +724,141 @@ function getAdminInquiryNotificationEmail(data: any): { subject: string; html: s
 }
 
 // Helper functions
+function getVerificationCodeEmail(data: any): { subject: string; html: string } {
+  const { firstName, code } = data;
+
+  const content = `
+    <div style="text-align:center;margin-bottom:32px;">
+      <div style="width:64px;height:64px;background:#dbeafe;border-radius:50%;margin:0 auto 16px;display:flex;align-items:center;justify-content:center;">
+        <span style="font-size:32px;">✉️</span>
+      </div>
+      <h2 style="margin:0 0 8px;font-size:24px;font-weight:700;color:#1f2937;">Suaktyvinkite savo paskyrą</h2>
+      <p style="margin:0;color:#6b7280;">Sveiki, ${firstName}! Štai jūsų patvirtinimo kodas:</p>
+    </div>
+
+    <!-- Code Display -->
+    <div style="background:#f3f4f6;padding:24px;border-radius:12px;text-align:center;margin-bottom:24px;border:2px dashed #d1d5db;">
+      <p style="margin:0;font-size:36px;font-weight:700;color:#1f2937;letter-spacing:8px;font-family:monospace;">${code}</p>
+    </div>
+
+    <div style="background:#fef3c7;padding:16px;border-radius:8px;margin-bottom:24px;">
+      <p style="margin:0;color:#92400e;font-size:14px;text-align:center;">
+        ⏱ Kodas galioja <strong>24 valandas</strong>
+      </p>
+    </div>
+
+    <p style="margin:0 0 16px;color:#6b7280;font-size:14px;text-align:center;">
+      Tiesiog nukopijuokite šį kodą į patvirtinimo langą ir jūsų paskyra bus aktyvuota.
+    </p>
+
+    <div style="text-align:center;padding:20px;background:#f9fafb;border-radius:8px;">
+      <p style="margin:0;font-size:13px;color:#9ca3af;">
+        Jei neprisiregistravote IBRIX paskyrą, tiesiog ignoruokite šį laišką.
+      </p>
+    </div>
+  `;
+
+  return {
+    subject: 'Jūsų IBRIX paskyros patvirtinimo kodas',
+    html: wrapEmail(content),
+  };
+}
+
+function getWelcomeEmail(data: any): { subject: string; html: string } {
+  const { firstName, lastName, email } = data;
+  const baseUrl = 'https://ibrix.lt';
+
+  const content = `
+    <div style="text-align:center;margin-bottom:32px;">
+      <div style="width:64px;height:64px;background:#dcfce7;border-radius:50%;margin:0 auto 16px;display:flex;align-items:center;justify-content:center;">
+        <span style="font-size:32px;">🎉</span>
+      </div>
+      <h2 style="margin:0 0 8px;font-size:24px;font-weight:700;color:#1f2937;">Sveikiname susikūrus IBRIX paskyrą!</h2>
+      <p style="margin:0;color:#6b7280;">Džiaugiamės, kad prisijungėte prie mūsų bendruomenės.</p>
+    </div>
+
+    <!-- Account Info -->
+    <div style="background:#f3f4f6;padding:24px;border-radius:12px;margin-bottom:24px;">
+      <h3 style="margin:0 0 16px;font-size:16px;font-weight:600;color:#1f2937;">Štai ką turi žinoti:</h3>
+      
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;padding:12px;background:#ffffff;border-radius:8px;">
+        <div style="width:40px;height:40px;background:#ffd500;border-radius:50%;display:flex;align-items:center;justify-content:center;">
+          <span style="font-size:20px;">👤</span>
+        </div>
+        <div>
+          <p style="margin:0;font-size:12px;color:#6b7280;">Naudotojo vardas</p>
+          <p style="margin:0;font-weight:600;color:#1f2937;">${email}</p>
+          <p style="margin:4px 0 0;font-size:12px;color:#6b7280;">Vardas</p>
+          <p style="margin:0;font-weight:500;color:#1f2937;">${firstName} ${lastName}</p>
+        </div>
+      </div>
+
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;padding:12px;background:#ffffff;border-radius:8px;">
+        <div style="width:40px;height:40px;background:#e5e7eb;border-radius:50%;display:flex;align-items:center;justify-content:center;">
+          <span style="font-size:20px;">⚙️</span>
+        </div>
+        <div>
+          <p style="margin:0;font-size:14px;color:#4b5563;">
+            Savo <a href="${baseUrl}/account/settings" style="color:#0b6bd3;">paskyros nustatymuose</a> gali pakeisti savo duomenis.
+          </p>
+        </div>
+      </div>
+
+      <div style="display:flex;align-items:center;gap:12px;padding:12px;background:#ffffff;border-radius:8px;">
+        <div style="width:40px;height:40px;background:#e5e7eb;border-radius:50%;display:flex;align-items:center;justify-content:center;">
+          <span style="font-size:20px;">🛒</span>
+        </div>
+        <div>
+          <p style="margin:0;font-size:14px;color:#4b5563;">
+            IBRIX paskyrą gali naudoti apsipirkdamas svetainėje <a href="${baseUrl}" style="color:#0b6bd3;">ibrix.lt</a>
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Benefits -->
+    <div style="background:#eff6ff;padding:24px;border-radius:12px;margin-bottom:24px;">
+      <h3 style="margin:0 0 16px;font-size:16px;font-weight:600;color:#1e40af;text-align:center;">Ką gauni su IBRIX paskyra?</h3>
+      
+      <div style="display:grid;gap:12px;">
+        <div style="display:flex;align-items:center;gap:12px;">
+          <span style="font-size:20px;">💰</span>
+          <div>
+            <p style="margin:0;font-weight:600;color:#1e40af;">Lojalumo taškai</p>
+            <p style="margin:0;font-size:13px;color:#3b82f6;">Rink taškus su kiekvienu pirkiniu</p>
+          </div>
+        </div>
+        <div style="display:flex;align-items:center;gap:12px;">
+          <span style="font-size:20px;">🏷️</span>
+          <div>
+            <p style="margin:0;font-weight:600;color:#1e40af;">Ypatingos nuolaidos</p>
+            <p style="margin:0;font-size:13px;color:#3b82f6;">Eksliuzyvūs pasiūlymai tik nariams</p>
+          </div>
+        </div>
+        <div style="display:flex;align-items:center;gap:12px;">
+          <span style="font-size:20px;">📦</span>
+          <div>
+            <p style="margin:0;font-weight:600;color:#1e40af;">Greitas apmokėjimas</p>
+            <p style="margin:0;font-size:13px;color:#3b82f6;">Išsaugoti adresai ir mokėjimo duomenys</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CTA -->
+    <div style="text-align:center;">
+      <a href="${baseUrl}/produktai" style="display:inline-block;background:#1a1a2e;color:#ffffff;padding:14px 32px;text-decoration:none;border-radius:8px;font-weight:600;">
+        Pradėti apsipirkti
+      </a>
+    </div>
+  `;
+
+  return {
+    subject: 'Sveiki atvykę į IBRIX! 🎉',
+    html: wrapEmail(content),
+  };
+}
+
 function getShippingMethodLabel(method: string): string {
   const labels: Record<string, string> = {
     'omniva_locker': 'Omniva paštomatas',
@@ -801,6 +936,14 @@ Deno.serve(async (req: Request) => {
       case 'admin_order_notification':
         emailContent = getAdminOrderNotificationEmail(data);
         recipientEmail = ADMIN_EMAIL;
+        break;
+      case 'verification_code':
+        emailContent = getVerificationCodeEmail(data.data || data);
+        recipientEmail = data.data?.email || data.email || email;
+        break;
+      case 'welcome':
+        emailContent = getWelcomeEmail(data.data || data);
+        recipientEmail = data.data?.email || data.email || email;
         break;
       default:
         log(requestId, 'Unknown email type', { type });

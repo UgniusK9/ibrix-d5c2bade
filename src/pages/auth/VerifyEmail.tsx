@@ -13,6 +13,7 @@ export default function VerifyEmail() {
   const navigate = useNavigate();
   const location = useLocation();
   const email = location.state?.email || '';
+  const firstName = location.state?.firstName || '';
   
   const [code, setCode] = useState(['', '', '', '', '', '']);
   const [isLoading, setIsLoading] = useState(false);
@@ -24,6 +25,13 @@ export default function VerifyEmail() {
     // Focus first input on mount
     inputRefs.current[0]?.focus();
   }, []);
+
+  useEffect(() => {
+    // Redirect if no email
+    if (!email) {
+      navigate('/auth/signup/step-2');
+    }
+  }, [email, navigate]);
 
   useEffect(() => {
     // Cooldown timer
@@ -75,39 +83,23 @@ export default function VerifyEmail() {
     setError('');
 
     try {
-      const { error: verifyError } = await supabase.auth.verifyOtp({
-        email,
-        token: verificationCode,
-        type: 'email',
+      const { data, error: verifyError } = await supabase.functions.invoke('verify-email-code', {
+        body: {
+          email,
+          code: verificationCode,
+        },
       });
 
-      if (verifyError) {
-        setError(t('authFlow.invalidCode'));
+      if (verifyError || !data?.success) {
+        setError(data?.error || 'Neteisingas arba pasibaigęs kodas');
         setIsLoading(false);
         return;
       }
 
-      // Update user profile with pending data
-      const pendingData = localStorage.getItem('signup_pending');
-      if (pendingData) {
-        const { firstName, lastName, country, dateOfBirth } = JSON.parse(pendingData);
-        const { data: { user } } = await supabase.auth.getUser();
-        
-        if (user) {
-          await supabase.from('users').update({
-            first_name: firstName,
-            last_name: lastName,
-            country,
-            date_of_birth: dateOfBirth,
-          }).eq('id', user.id);
-        }
-        
-        localStorage.removeItem('signup_pending');
-      }
-
+      toast.success('Paskyra sėkmingai sukurta!');
       navigate('/auth/success');
-    } catch (err) {
-      setError(t('authFlow.verificationError'));
+    } catch (err: any) {
+      setError(err.message || 'Patvirtinimo klaida');
       setIsLoading(false);
     }
   };
@@ -116,19 +108,18 @@ export default function VerifyEmail() {
     if (resendCooldown > 0) return;
     
     try {
-      const { error } = await supabase.auth.resend({
-        type: 'signup',
-        email,
+      const { data, error } = await supabase.functions.invoke('resend-verification', {
+        body: { email },
       });
 
-      if (error) {
-        toast.error(error.message);
+      if (error || !data?.success) {
+        toast.error(data?.error || 'Nepavyko išsiųsti kodo');
       } else {
-        toast.success(t('authFlow.codeSent'));
+        toast.success('Naujas kodas išsiųstas');
         setResendCooldown(60);
       }
     } catch {
-      toast.error(t('common.error'));
+      toast.error('Nepavyko išsiųsti kodo');
     }
   };
 
@@ -165,11 +156,12 @@ export default function VerifyEmail() {
             </div>
 
             <h1 className="font-heading text-2xl md:text-3xl font-bold text-[#0F172A] mb-2">
-              {t('authFlow.verifyTitle')}
+              Suaktyvinkite savo paskyrą
             </h1>
-            <p className="text-[#64748B] mb-8">
-              {t('authFlow.verifySubtitle')} <strong>{email}</strong>
+            <p className="text-[#64748B] mb-2">
+              Patvirtinimo kodas išsiųstas į:
             </p>
+            <p className="font-semibold text-[#0F172A] mb-6">{email}</p>
 
             {/* Code inputs */}
             <div className="flex justify-center gap-2 mb-4">
@@ -194,6 +186,10 @@ export default function VerifyEmail() {
 
             {error && <p className="text-[#DC2626] text-sm mb-4">{error}</p>}
 
+            <p className="text-[#64748B] text-sm mb-6">
+              Jūsų kodas galioja <strong>24 valandas</strong>
+            </p>
+
             <Button
               onClick={() => handleVerify(code.join(''))}
               disabled={isLoading || code.some(d => !d)}
@@ -202,7 +198,7 @@ export default function VerifyEmail() {
               {isLoading ? (
                 <>
                   <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  {t('common.processing')}
+                  Tikrinama...
                 </>
               ) : (
                 t('common.continue')
@@ -215,8 +211,8 @@ export default function VerifyEmail() {
               className="text-sm text-[#0B6BD3] hover:text-[#095BB3] disabled:text-[#64748B] disabled:cursor-not-allowed"
             >
               {resendCooldown > 0
-                ? `${t('authFlow.resendIn')} ${resendCooldown}s`
-                : t('authFlow.resendCode')}
+                ? `Siųsti kodą iš naujo (${resendCooldown}s)`
+                : 'Negavote kodo? Siųsti iš naujo'}
             </button>
           </div>
         </div>
