@@ -1,8 +1,9 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ChevronDown, ChevronUp, Mail, Sparkles } from 'lucide-react';
-import { Dialog, DialogContent } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
+import * as VisuallyHidden from '@radix-ui/react-visually-hidden';
 
 interface ConsentModalProps {
   isOpen: boolean;
@@ -25,6 +26,15 @@ export function ConsentModal({ isOpen, type, onAccept, onDecline }: ConsentModal
         onPointerDownOutside={(e) => e.preventDefault()}
         onEscapeKeyDown={(e) => e.preventDefault()}
       >
+        <VisuallyHidden.Root>
+          <DialogTitle>
+            {isMarketing ? t('consent.marketingTitle') : t('consent.personalizationTitle')}
+          </DialogTitle>
+          <DialogDescription>
+            {isMarketing ? t('consent.marketingBody') : t('consent.personalizationBody')}
+          </DialogDescription>
+        </VisuallyHidden.Root>
+
         {/* Header */}
         <div className="bg-[#0B6BD3] p-6 text-white">
           <div className="w-14 h-14 rounded-full bg-white/20 flex items-center justify-center mb-4">
