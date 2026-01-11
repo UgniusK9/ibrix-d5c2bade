@@ -126,12 +126,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const signInWithMagicLink = async (email: string) => {
+    // First check if user exists
+    const { data: existingUser } = await supabase
+      .from('users')
+      .select('id')
+      .eq('email', email.toLowerCase().trim())
+      .maybeSingle();
+    
+    if (!existingUser) {
+      return { error: new Error('Šis el. paštas nėra užregistruotas. Prašome susikurti paskyrą.') };
+    }
+    
     const redirectUrl = `${window.location.origin}/`;
     
     const { error } = await supabase.auth.signInWithOtp({
       email,
       options: {
         emailRedirectTo: redirectUrl,
+        shouldCreateUser: false, // Prevent creating new users
       },
     });
     

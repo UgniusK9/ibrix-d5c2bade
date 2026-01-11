@@ -101,11 +101,60 @@ export default function Atsiliepimai() {
   };
 
   const loadProducts = async () => {
+    if (!user) return;
+    
     try {
+      // Get products that the user has purchased
+      const { data: orders, error: ordersError } = await supabase
+        .from('orders')
+        .select('id')
+        .eq('user_id', user.id)
+        .not('status', 'in', '("cancelled","created")');
+
+      if (ordersError) throw ordersError;
+
+      if (!orders || orders.length === 0) {
+        setProducts([]);
+        return;
+      }
+
+      const orderIds = orders.map(o => o.id);
+      
+      // Get product IDs from order items
+      const { data: orderItems, error: itemsError } = await supabase
+        .from('order_items')
+        .select('product_id')
+        .in('order_id', orderIds);
+
+      if (itemsError) throw itemsError;
+
+      if (!orderItems || orderItems.length === 0) {
+        setProducts([]);
+        return;
+      }
+
+      const productIds = [...new Set(orderItems.map(item => item.product_id))];
+
+      // Check which products user hasn't reviewed yet
+      const { data: existingReviews } = await supabase
+        .from('product_reviews')
+        .select('product_id')
+        .eq('user_id', user.id)
+        .in('product_id', productIds);
+
+      const reviewedProductIds = new Set(existingReviews?.map(r => r.product_id) || []);
+      const availableProductIds = productIds.filter(id => !reviewedProductIds.has(id));
+
+      if (availableProductIds.length === 0) {
+        setProducts([]);
+        return;
+      }
+
+      // Get product details
       const { data, error } = await supabase
         .from('products')
         .select('id, title, slug')
-        .eq('status', 'active')
+        .in('id', availableProductIds)
         .order('title');
 
       if (error) throw error;
@@ -180,7 +229,7 @@ export default function Atsiliepimai() {
         imageUrl = urlData.publicUrl;
       }
 
-      // Create review
+      // Create review (verified_purchase = true since we only show purchased products)
       const { error } = await supabase
         .from('product_reviews')
         .insert({
@@ -190,7 +239,7 @@ export default function Atsiliepimai() {
           title: title.trim() || null,
           content: content.trim() || null,
           image_url: imageUrl,
-          verified_purchase: false,
+          verified_purchase: true,
           status: 'pending',
         });
 
@@ -249,15 +298,27 @@ export default function Atsiliepimai() {
       <div className="container mx-auto px-4 py-8">
         <div className="flex items-center justify-between mb-8">
           <h1 className="text-3xl font-bold">Klientų atsiliepimai</h1>
-          {user && !showForm && (
+          {user && !showForm && products.length > 0 && (
             <Button onClick={() => setShowForm(true)}>
               Rašyti atsiliepimą
             </Button>
           )}
         </div>
 
+        {/* Info when user has no products to review */}
+        {user && products.length === 0 && !showForm && (
+          <Card className="mb-8">
+            <CardContent className="py-6 text-center">
+              <p className="text-muted-foreground">
+                Norėdami parašyti atsiliepimą, pirmiausia turite įsigyti produktą. 
+                Jei jau esate užsakę, laukite kol užsakymas bus apmokėtas.
+              </p>
+            </CardContent>
+          </Card>
+        )}
+
         {/* Review Form */}
-        {user && showForm && (
+        {user && showForm && products.length > 0 && (
           <Card className="mb-8">
             <CardContent className="pt-6">
               <form onSubmit={handleSubmit} className="space-y-4">
