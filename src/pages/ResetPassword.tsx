@@ -29,26 +29,49 @@ export default function ResetPassword() {
   const [errors, setErrors] = useState<{ email?: string; password?: string; confirm?: string }>({});
   const [isRecoveryMode, setIsRecoveryMode] = useState(false);
 
-  // Listen for PASSWORD_RECOVERY event from Supabase
+  // Listen for PASSWORD_RECOVERY event and check URL for recovery tokens
   useEffect(() => {
+    // First, check URL for recovery tokens (access_token, refresh_token, type=recovery)
+    const checkUrlForRecovery = async () => {
+      const hashParams = new URLSearchParams(window.location.hash.substring(1));
+      const type = hashParams.get('type');
+      const accessToken = hashParams.get('access_token');
+      const refreshToken = hashParams.get('refresh_token');
+      
+      console.log('[ResetPassword] URL check - type:', type, 'has access_token:', !!accessToken);
+      
+      if (type === 'recovery' && accessToken && refreshToken) {
+        console.log('[ResetPassword] Recovery tokens found in URL, setting session');
+        
+        // Set the session from the URL tokens
+        const { data, error } = await supabase.auth.setSession({
+          access_token: accessToken,
+          refresh_token: refreshToken,
+        });
+        
+        if (error) {
+          console.error('[ResetPassword] Error setting session:', error);
+          toast.error('Nuoroda nebegalioja arba yra neteisinga. Bandykite iš naujo.');
+          // Clear the hash and stay on email step
+          window.history.replaceState(null, '', window.location.pathname);
+        } else if (data.session) {
+          console.log('[ResetPassword] Session established, switching to new-password step');
+          setIsRecoveryMode(true);
+          setStep('new-password');
+          // Clear the hash from URL for cleaner appearance
+          window.history.replaceState(null, '', window.location.pathname);
+        }
+      }
+    };
+    
+    checkUrlForRecovery();
+    
+    // Also listen for PASSWORD_RECOVERY event (in case Supabase triggers it)
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       console.log('[ResetPassword] Auth event:', event);
       
       if (event === 'PASSWORD_RECOVERY') {
-        console.log('[ResetPassword] Password recovery mode detected');
-        setIsRecoveryMode(true);
-        setStep('new-password');
-      }
-    });
-
-    // Also check current session - if user came from recovery link, they'll have a session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      // Check URL for recovery tokens
-      const hashParams = new URLSearchParams(window.location.hash.substring(1));
-      const type = hashParams.get('type');
-      
-      if (type === 'recovery' && session) {
-        console.log('[ResetPassword] Recovery session detected from URL');
+        console.log('[ResetPassword] PASSWORD_RECOVERY event received');
         setIsRecoveryMode(true);
         setStep('new-password');
       }

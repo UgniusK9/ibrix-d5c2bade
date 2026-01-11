@@ -57,8 +57,9 @@ Deno.serve(async (req: Request) => {
 
     console.log('[PASSWORD_RESET] User found, generating reset link');
 
-    // Generate password reset link
+    // Generate password reset link - redirect directly to reset password page
     const baseUrl = 'https://ibrix.lt';
+    // Use /auth/reset-password for consistent URL structure
     const redirectTo = `${baseUrl}/auth/reset-password`;
     
     const { data: resetData, error: resetError } = await supabase.auth.admin.generateLink({

@@ -115,6 +115,7 @@ const App = () => (
                 <Route path="/auth/verify-email" element={<VerifyEmail />} />
                 <Route path="/auth/success" element={<AuthSuccess />} />
                 <Route path="/auth/reset-password" element={<ResetPassword />} />
+                <Route path="/reset-password" element={<ResetPassword />} />
                 <Route path="/auth/legacy" element={<Auth />} />
 
                 {/* Protected: Customer account */}
