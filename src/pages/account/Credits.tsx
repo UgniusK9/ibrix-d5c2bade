@@ -255,6 +255,7 @@ export default function Credits() {
             <p className="text-xs text-amber-600/70 dark:text-amber-400/70 mt-2">
               {t('credits.pendingHint', { days: activationDays })}
             </p>
+          </div>
         </div>
 
         {/* Redeem Gift Card */}
@@ -263,7 +264,6 @@ export default function Credits() {
             // Reload balance after redemption
             window.location.reload();
           }} />
-        </div>
         </div>
 
         {/* How it works */}
