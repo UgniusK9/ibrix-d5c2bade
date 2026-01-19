@@ -35,6 +35,7 @@ const SPECIAL_CATEGORIES = {
   'dovanu-kuponai': { name: 'Dovanų kuponai', description: 'Dovanų kuponai artimiesiems' },
   'pasiulymai': { name: 'Pasiūlymai ir išpardavimai', description: 'Specialūs pasiūlymai ir nuolaidos' },
   'naujienos': { name: 'Naujienos', description: 'Naujausi produktai mūsų parduotuvėje' },
+  'populiariausi': { name: 'Populiariausi', description: 'Populiariausi konstruktoriai pagal pirkėjų pasirinkimą' },
 };
 
 export default function Produktai() {
@@ -141,6 +142,10 @@ export default function Produktai() {
         const badges = p.badges || [];
         return badges.includes('new');
       }
+      if (categorySlug === 'populiariausi') {
+        const badges = p.badges || [];
+        return badges.includes('popular');
+      }
       if (categorySlug === 'pasiulymai') {
         return p.sale_price_eur !== null && p.sale_price_eur !== undefined;
       }
@@ -160,7 +165,7 @@ export default function Produktai() {
       }
       
       // Category filter (skip for special categories)
-      if (currentCategory.id !== 'all' && !['preorder', 'sandelyje', 'naujienos', 'pasiulymai', 'dovanu-kuponai'].includes(currentCategory.id)) {
+      if (currentCategory.id !== 'all' && !['preorder', 'sandelyje', 'naujienos', 'populiariausi', 'pasiulymai', 'dovanu-kuponai'].includes(currentCategory.id)) {
         // Check category_id first (DB category)
         const matchesCategoryId = categories.find(c => c.slug === categorySlug)?.id === p.category_id;
         // Fallback to legacy enum category
@@ -230,6 +235,7 @@ export default function Produktai() {
     counts['preorder'] = products.filter(p => p.stock_status === 'preorder').length;
     counts['sandelyje'] = products.filter(p => p.stock_status === 'in_stock').length;
     counts['naujienos'] = products.filter(p => (p.badges || []).includes('new')).length;
+    counts['populiariausi'] = products.filter(p => (p.badges || []).includes('popular')).length;
     counts['pasiulymai'] = products.filter(p => p.sale_price_eur !== null && p.sale_price_eur !== undefined).length;
     counts['dovanu-kuponai'] = products.filter(p => (p.tags || []).includes('dovanu-kuponas') || (p.tags || []).includes('gift-card')).length;
     

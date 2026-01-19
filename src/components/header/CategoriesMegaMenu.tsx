@@ -14,10 +14,10 @@ interface Category {
 
 const quickLinks = [
   { name: "Visi konstruktoriai", href: "/produktai/visi", highlight: true },
-  { name: "Naujienos", href: "/produktai/visi?new=true" },
-  { name: "Populiariausi", href: "/produktai/visi?sort=popular" },
-  { name: "Pre-order", href: "/produktai/visi?status=preorder" },
-  { name: "Sandėlyje", href: "/produktai/visi?status=in_stock" },
+  { name: "Naujienos", href: "/produktai/naujienos" },
+  { name: "Populiariausi", href: "/produktai/populiariausi" },
+  { name: "Pre-order", href: "/produktai/preorder" },
+  { name: "Sandėlyje", href: "/produktai/sandelyje" },
 ];
 
 interface CategoriesMegaMenuProps {
