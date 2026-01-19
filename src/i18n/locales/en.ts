@@ -670,7 +670,7 @@ export const en = {
     myOrders: 'My Orders',
     orders: 'Orders',
     wishlist: 'Wishlist',
-    rewards: 'Rewards',
+    rewards: 'Gifts',
     settings: 'Settings',
     redeemGiftCard: 'Redeem Gift Card',
     wallet: 'Wallet',
