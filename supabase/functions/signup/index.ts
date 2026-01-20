@@ -1,9 +1,23 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+// CORS with allowed origins only
+const ALLOWED_ORIGINS = [
+  'https://ibrix.lt',
+  'https://www.ibrix.lt',
+  'https://ibrix.lovable.app',
+  'http://localhost:5173',
+  'http://localhost:3000',
+];
+
+function getCorsHeaders(req: Request) {
+  const origin = req.headers.get('origin') || '';
+  const allowedOrigin = ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0];
+  return {
+    'Access-Control-Allow-Origin': allowedOrigin,
+    'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+    'Access-Control-Allow-Methods': 'POST, OPTIONS',
+  };
+}
 
 // Generate a 6-digit code
 function generateVerificationCode(): string {
@@ -11,17 +25,32 @@ function generateVerificationCode(): string {
 }
 
 Deno.serve(async (req) => {
+  const corsHeaders = getCorsHeaders(req);
+  
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    const { email, password, firstName, lastName, country, dateOfBirth } = await req.json();
+    const { email, firstName, lastName, country, dateOfBirth } = await req.json();
 
-    if (!email || !password || !firstName || !lastName) {
+    // Validate required fields (NO PASSWORD - password is collected at verification time)
+    if (!email || !firstName || !lastName) {
       return new Response(JSON.stringify({ 
         success: false, 
-        error: 'Būtini laukai: el. paštas, slaptažodis, vardas, pavardė' 
+        error: 'Būtini laukai: el. paštas, vardas, pavardė' 
+      }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      return new Response(JSON.stringify({ 
+        success: false, 
+        error: 'Neteisingas el. pašto formatas' 
       }), {
         status: 400,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -32,11 +61,16 @@ Deno.serve(async (req) => {
     const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, serviceRoleKey);
 
-    // Check if email already exists in auth.users
-    const { data: existingUsers } = await supabase.auth.admin.listUsers();
-    const emailExists = existingUsers?.users?.some(u => u.email?.toLowerCase() === email.toLowerCase());
+    const normalizedEmail = email.toLowerCase().trim();
+
+    // Check if user already exists in public.users table (faster than listUsers)
+    const { data: existingUser } = await supabase
+      .from('users')
+      .select('id')
+      .eq('email', normalizedEmail)
+      .maybeSingle();
     
-    if (emailExists) {
+    if (existingUser) {
       return new Response(JSON.stringify({ 
         success: false, 
         error: 'Šis el. paštas jau registruotas' 
@@ -50,28 +84,27 @@ Deno.serve(async (req) => {
     await supabase
       .from('email_verification_codes')
       .delete()
-      .eq('email', email.toLowerCase());
+      .eq('email', normalizedEmail);
 
     // Generate code
     const code = generateVerificationCode();
     const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
 
-    // Store verification data (password is hashed by Supabase later)
+    // Store verification data (NO PASSWORD STORED)
     const { error: insertError } = await supabase
       .from('email_verification_codes')
       .insert({
-        email: email.toLowerCase(),
+        email: normalizedEmail,
         code,
-        first_name: firstName,
-        last_name: lastName,
-        password_hash: password, // Will be properly hashed when creating user
-        country,
-        date_of_birth: dateOfBirth,
+        first_name: firstName.trim(),
+        last_name: lastName.trim(),
+        country: country || null,
+        date_of_birth: dateOfBirth || null,
         expires_at: expiresAt.toISOString(),
       });
 
     if (insertError) {
-      console.error('Failed to store verification code:', insertError);
+      console.error('[SIGNUP] Failed to store verification code:', insertError.message);
       return new Response(JSON.stringify({ 
         success: false, 
         error: 'Nepavyko sukurti patvirtinimo kodo' 
@@ -91,19 +124,21 @@ Deno.serve(async (req) => {
       body: JSON.stringify({
         type: 'verification_code',
         data: {
-          email: email.toLowerCase(),
-          firstName,
+          email: normalizedEmail,
+          firstName: firstName.trim(),
           code,
         },
       }),
     });
 
     if (!emailResponse.ok) {
-      console.error('Failed to send email:', await emailResponse.text());
+      console.error('[SIGNUP] Failed to send verification email');
       // Don't fail - code is stored, they can request resend
     }
 
-    console.log(`Verification code sent to ${email}: ${code}`);
+    // Log only email domain for debugging, not full email or code
+    const emailDomain = normalizedEmail.split('@')[1];
+    console.log(`[SIGNUP] Verification code sent to ***@${emailDomain}`);
 
     return new Response(JSON.stringify({ 
       success: true,
@@ -113,10 +148,10 @@ Deno.serve(async (req) => {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   } catch (error: any) {
-    console.error('Signup error:', error);
+    console.error('[SIGNUP] Error:', error.message);
     return new Response(JSON.stringify({ 
       success: false, 
-      error: error.message 
+      error: 'Registracijos klaida' 
     }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },

@@ -1,22 +1,50 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+// CORS with allowed origins only
+const ALLOWED_ORIGINS = [
+  'https://ibrix.lt',
+  'https://www.ibrix.lt',
+  'https://ibrix.lovable.app',
+  'http://localhost:5173',
+  'http://localhost:3000',
+];
+
+function getCorsHeaders(req: Request) {
+  const origin = req.headers.get('origin') || '';
+  const allowedOrigin = ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0];
+  return {
+    'Access-Control-Allow-Origin': allowedOrigin,
+    'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+    'Access-Control-Allow-Methods': 'POST, OPTIONS',
+  };
+}
 
 Deno.serve(async (req) => {
+  const corsHeaders = getCorsHeaders(req);
+  
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    const { email, code } = await req.json();
+    // Password is now required at verification time (not stored during signup)
+    const { email, code, password } = await req.json();
 
-    if (!email || !code) {
+    if (!email || !code || !password) {
       return new Response(JSON.stringify({ 
         success: false, 
-        error: 'Būtini laukai: el. paštas ir kodas' 
+        error: 'Būtini laukai: el. paštas, kodas ir slaptažodis' 
+      }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    // Validate password strength
+    if (password.length < 8) {
+      return new Response(JSON.stringify({ 
+        success: false, 
+        error: 'Slaptažodis turi būti bent 8 simbolių' 
       }), {
         status: 400,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -27,11 +55,13 @@ Deno.serve(async (req) => {
     const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, serviceRoleKey);
 
+    const normalizedEmail = email.toLowerCase().trim();
+
     // Find the verification record
     const { data: verification, error: fetchError } = await supabase
       .from('email_verification_codes')
       .select('*')
-      .eq('email', email.toLowerCase())
+      .eq('email', normalizedEmail)
       .eq('code', code)
       .is('verified_at', null)
       .gt('expires_at', new Date().toISOString())
@@ -49,10 +79,10 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Create the user in auth.users
+    // Create the user in auth.users with the password provided now (NOT stored previously)
     const { data: authData, error: authError } = await supabase.auth.admin.createUser({
       email: verification.email,
-      password: verification.password_hash,
+      password: password, // Password provided at verification time
       email_confirm: true, // Auto-confirm since they verified via code
       user_metadata: {
         first_name: verification.first_name,
@@ -61,10 +91,22 @@ Deno.serve(async (req) => {
     });
 
     if (authError) {
-      console.error('Failed to create user:', authError);
+      console.error('[VERIFY] Failed to create user:', authError.message);
+      
+      // Handle duplicate email error gracefully
+      if (authError.message.includes('already') || authError.message.includes('exists')) {
+        return new Response(JSON.stringify({ 
+          success: false, 
+          error: 'Šis el. paštas jau registruotas' 
+        }), {
+          status: 400,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+      
       return new Response(JSON.stringify({ 
         success: false, 
-        error: authError.message 
+        error: 'Nepavyko sukurti paskyros' 
       }), {
         status: 400,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -85,7 +127,7 @@ Deno.serve(async (req) => {
       }, { onConflict: 'id' });
 
     if (userError) {
-      console.error('Failed to update user profile:', userError);
+      console.error('[VERIFY] Failed to update user profile:', userError.message);
     }
 
     // Mark verification as used
@@ -94,14 +136,14 @@ Deno.serve(async (req) => {
       .update({ verified_at: new Date().toISOString() })
       .eq('id', verification.id);
 
-    // Generate session for auto-login
-    const { data: sessionData, error: sessionError } = await supabase.auth.admin.generateLink({
+    // Generate magic link for auto-login (instead of returning password)
+    const { data: linkData, error: linkError } = await supabase.auth.admin.generateLink({
       type: 'magiclink',
       email: verification.email,
     });
 
-    // Send welcome email
-    await fetch(`${supabaseUrl}/functions/v1/send-email`, {
+    // Send welcome email (fire and forget)
+    fetch(`${supabaseUrl}/functions/v1/send-email`, {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${serviceRoleKey}`,
@@ -115,25 +157,28 @@ Deno.serve(async (req) => {
           lastName: verification.last_name,
         },
       }),
-    });
+    }).catch(() => {});
 
-    console.log(`User ${verification.email} verified and created successfully`);
+    // Log only email domain for debugging
+    const emailDomain = verification.email.split('@')[1];
+    console.log(`[VERIFY] User ***@${emailDomain} verified and created successfully`);
 
+    // Return success with magic link for auto-login (NO PASSWORD RETURNED)
     return new Response(JSON.stringify({ 
       success: true,
       message: 'Paskyra sėkmingai sukurta!',
       userId: authData.user.id,
-      email: verification.email,
-      password: verification.password_hash, // Will be used for auto-login
+      // Return magic link action_link for auto-login redirect
+      actionLink: linkData?.properties?.action_link || null,
     }), {
       status: 200,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   } catch (error: any) {
-    console.error('Verification error:', error);
+    console.error('[VERIFY] Error:', error.message);
     return new Response(JSON.stringify({ 
       success: false, 
-      error: error.message 
+      error: 'Patvirtinimo klaida' 
     }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },

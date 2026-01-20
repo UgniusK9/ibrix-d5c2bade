@@ -7,13 +7,14 @@ import {
   useElements,
 } from "@stripe/react-stripe-js";
 import { Button } from "@/components/ui/button";
-import { Loader2, CreditCard, CheckCircle2, AlertCircle } from "lucide-react";
+import { Loader2, CreditCard, AlertCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
-// Initialize Stripe - using test publishable key
-const stripePromise = loadStripe(
-  "pk_test_51RjEIJG4PNvCiSr8xhNcmgpRmQVaO0LGpHgp2fJ1pqCrEVDBBnvb1VNYjBGKLXBHspVxvPgKJBZ0HjGrYd8jZJsM00Zz4pK3Ya"
-);
+// Load Stripe publishable key from environment variable
+const stripePublishableKey = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY;
+
+// Initialize Stripe only if key is available
+const stripePromise = stripePublishableKey ? loadStripe(stripePublishableKey) : null;
 
 interface PaymentFormProps {
   orderId: string;
@@ -106,7 +107,17 @@ export function StripePayment({ orderId, amount, trackingToken, onSuccess, onErr
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // Check if Stripe is configured - must be before useEffect
+  const isConfigured = !!(stripePublishableKey && stripePromise);
+
   useEffect(() => {
+    // Skip if not configured
+    if (!isConfigured) {
+      setIsLoading(false);
+      setError('Mokėjimų sistema nekonfigūruota');
+      return;
+    }
+
     const createPaymentIntent = async () => {
       try {
         // Build headers with tracking token for guest orders
@@ -143,7 +154,20 @@ export function StripePayment({ orderId, amount, trackingToken, onSuccess, onErr
     };
 
     createPaymentIntent();
-  }, [orderId, trackingToken, onError]);
+  }, [orderId, trackingToken, onError, isConfigured]);
+
+  // Error states after hooks
+  if (!isConfigured) {
+    return (
+      <div className="bg-destructive/10 border border-destructive/30 rounded-lg p-4 text-center">
+        <AlertCircle className="w-8 h-8 text-destructive mx-auto mb-2" />
+        <p className="text-sm text-destructive font-medium">Mokėjimų sistema nekonfigūruota</p>
+        <p className="text-xs text-muted-foreground mt-1">
+          Susisiekite su administratoriumi
+        </p>
+      </div>
+    );
+  }
 
   if (isLoading) {
     return (

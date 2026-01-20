@@ -83,12 +83,25 @@ export default function VerifyEmail() {
     setError('');
 
     try {
+      // Get password from localStorage (stored during signup step 2)
+      const password = localStorage.getItem('signup_pending_password');
+      
+      if (!password) {
+        setError('Slaptažodis nerastas. Pradėkite registraciją iš naujo.');
+        setIsLoading(false);
+        return;
+      }
+
       const { data, error: verifyError } = await supabase.functions.invoke('verify-email-code', {
         body: {
           email,
           code: verificationCode,
+          password, // Password sent at verification time (not stored on server)
         },
       });
+
+      // Clear password from localStorage immediately
+      localStorage.removeItem('signup_pending_password');
 
       if (verifyError || !data?.success) {
         setError(data?.error || 'Neteisingas arba pasibaigęs kodas');
@@ -96,21 +109,16 @@ export default function VerifyEmail() {
         return;
       }
 
-      // Auto-login the user with returned credentials
-      if (data.email && data.password) {
-        const { error: signInError } = await supabase.auth.signInWithPassword({
-          email: data.email,
-          password: data.password,
-        });
-        
-        if (signInError) {
-          console.error('Auto-login failed:', signInError);
-        }
+      // Auto-login via magic link if provided
+      if (data.actionLink) {
+        window.location.href = data.actionLink;
+        return;
       }
 
       toast.success('Paskyra sėkmingai sukurta!');
       navigate('/auth/success');
     } catch (err: any) {
+      localStorage.removeItem('signup_pending_password');
       setError(err.message || 'Patvirtinimo klaida');
       setIsLoading(false);
     }
