@@ -57,30 +57,38 @@ export default function Pokalbis() {
       return;
     }
 
-    // Fetch inquiry
-    const { data: inquiryData, error: inquiryError } = await supabase
-      .from("contact_inquiries")
-      .select("*")
-      .eq("conversation_token", token)
-      .single();
+    try {
+      // Use edge function for secure token-based access (no direct DB query)
+      const { data, error } = await supabase.functions.invoke("get-inquiry-by-token", {
+        body: { token }
+      });
 
-    if (inquiryError || !inquiryData) {
+      if (error || !data?.success) {
+        setNotFound(true);
+        setLoading(false);
+        return;
+      }
+
+      // Map edge function response to expected format
+      setInquiry({
+        id: data.inquiry.id,
+        name: data.inquiry.name,
+        email: '', // Not returned for privacy
+        topic: data.inquiry.topic,
+        order_number: data.inquiry.order_number,
+        message: '', // Original message is in messages list
+        status: data.inquiry.status,
+        conversation_token: token,
+        created_at: data.inquiry.created_at,
+      });
+
+      setMessages(data.messages || []);
+      setLoading(false);
+    } catch (err) {
+      console.error("Error fetching inquiry:", err);
       setNotFound(true);
       setLoading(false);
-      return;
     }
-
-    setInquiry(inquiryData);
-
-    // Fetch messages
-    const { data: messagesData } = await supabase
-      .from("inquiry_messages")
-      .select("*")
-      .eq("inquiry_id", inquiryData.id)
-      .order("created_at", { ascending: true });
-
-    setMessages(messagesData || []);
-    setLoading(false);
   };
 
   useEffect(() => {
@@ -132,47 +140,31 @@ export default function Pokalbis() {
   }, [messages]);
 
   const handleSendMessage = async () => {
-    if (!inquiry || !newMessage.trim()) return;
+    if (!inquiry || !newMessage.trim() || !token) return;
 
     setSending(true);
 
     try {
       const messageText = newMessage.trim();
       
-      const { error } = await supabase
-        .from("inquiry_messages")
-        .insert({
-          inquiry_id: inquiry.id,
-          sender_type: "customer",
-          message: messageText,
-        });
-
-      if (error) throw error;
-
-      // Update inquiry status back to in_progress
-      await supabase
-        .from("contact_inquiries")
-        .update({ status: "in_progress" })
-        .eq("id", inquiry.id);
-
-      // Send email notification to admin
-      await supabase.functions.invoke("send-email", {
-        body: {
-          type: "admin_inquiry_notification",
-          customerName: inquiry.name,
-          customerEmail: inquiry.email,
-          topic: topicLabels[inquiry.topic] || inquiry.topic,
-          message: messageText,
-          conversationUrl: `${window.location.origin}/admin`,
-        },
+      // Use edge function for secure message sending (validates token server-side)
+      const { data, error } = await supabase.functions.invoke("add-inquiry-message", {
+        body: { 
+          token,
+          message: messageText 
+        }
       });
+
+      if (error || !data?.success) {
+        throw new Error(data?.error || "Failed to send message");
+      }
 
       toast.success("Žinutė išsiųsta!");
       setNewMessage("");
       await fetchData();
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error sending message:", error);
-      toast.error("Nepavyko išsiųsti žinutės");
+      toast.error(error.message || "Nepavyko išsiųsti žinutės");
     }
 
     setSending(false);

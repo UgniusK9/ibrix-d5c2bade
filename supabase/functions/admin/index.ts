@@ -1,10 +1,24 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { z } from 'https://deno.land/x/zod@v3.22.4/mod.ts';
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+// CORS with allowed origins only - prevents CSRF attacks on admin endpoints
+const ALLOWED_ORIGINS = [
+  'https://ibrix.lt',
+  'https://www.ibrix.lt',
+  'https://ibrix.lovable.app',
+  'http://localhost:5173',
+  'http://localhost:3000',
+];
+
+function getCorsHeaders(req: Request) {
+  const origin = req.headers.get('origin') || '';
+  const allowedOrigin = ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0];
+  return {
+    'Access-Control-Allow-Origin': allowedOrigin,
+    'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+    'Access-Control-Allow-Methods': 'POST, OPTIONS',
+  };
+}
 
 // Validation schemas
 const adminRequestSchema = z.discriminatedUnion('action', [
@@ -38,6 +52,8 @@ const adminRequestSchema = z.discriminatedUnion('action', [
 ]);
 
 Deno.serve(async (req) => {
+  const corsHeaders = getCorsHeaders(req);
+  
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
