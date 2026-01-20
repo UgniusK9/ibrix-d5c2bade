@@ -108,6 +108,43 @@ async function trackEvent(requestId: string, name: string, orderId: string, prop
   }
 }
 
+// Auto-add builders from online order
+async function addBuildersFromOrder(requestId: string, orderId: string, userId: string, orderItems: any[]) {
+  if (!orderItems || orderItems.length === 0) {
+    log(requestId, 'No order items for builders', { orderId });
+    return;
+  }
+
+  try {
+    for (const item of orderItems) {
+      // Check if already added (idempotency)
+      const { data: existing } = await supabase
+        .from('user_builders')
+        .select('id')
+        .eq('user_id', userId)
+        .eq('product_id', item.product_id)
+        .eq('order_id', orderId)
+        .maybeSingle();
+
+      if (existing) {
+        log(requestId, 'Builder already exists, skipping', { orderId, productId: item.product_id });
+        continue;
+      }
+
+      await supabase.from('user_builders').insert({
+        user_id: userId,
+        product_id: item.product_id,
+        source: 'online',
+        order_id: orderId,
+        quantity: item.quantity || 1,
+      });
+    }
+    log(requestId, 'Builders added from order', { orderId, count: orderItems.length });
+  } catch (err) {
+    log(requestId, 'Add builders failed (non-blocking)', err);
+  }
+}
+
 // Earn credits for eligible order
 async function earnCreditsForOrder(requestId: string, orderId: string, userId: string | null) {
   if (!userId) {
@@ -695,6 +732,11 @@ Deno.serve(async (req) => {
 
             // EARN CREDITS for logged-in users after successful payment
             await earnCreditsForOrder(requestId, orderId, order.user_id);
+
+            // AUTO-ADD BUILDERS for logged-in users
+            if (order.user_id) {
+              await addBuildersFromOrder(requestId, orderId, order.user_id, order.order_items);
+            }
           }
           
           // Record event as processed

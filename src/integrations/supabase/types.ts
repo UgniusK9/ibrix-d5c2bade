@@ -1355,6 +1355,35 @@ export type Database = {
           },
         ]
       }
+      serial_numbers: {
+        Row: {
+          issued_at: string | null
+          product_id: string
+          serial: string
+          status: string
+        }
+        Insert: {
+          issued_at?: string | null
+          product_id: string
+          serial: string
+          status?: string
+        }
+        Update: {
+          issued_at?: string | null
+          product_id?: string
+          serial?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "serial_numbers_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       sessions: {
         Row: {
           anonymous_id: string
@@ -1565,8 +1594,64 @@ export type Database = {
           },
         ]
       }
+      user_builders: {
+        Row: {
+          created_at: string
+          id: string
+          order_id: string | null
+          product_id: string
+          quantity: number
+          serial: string | null
+          source: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          order_id?: string | null
+          product_id: string
+          quantity?: number
+          serial?: string | null
+          source: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          order_id?: string | null
+          product_id?: string
+          quantity?: number
+          serial?: string | null
+          source?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_builders_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_builders_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_builders_serial_fkey"
+            columns: ["serial"]
+            isOneToOne: false
+            referencedRelation: "serial_numbers"
+            referencedColumns: ["serial"]
+          },
+        ]
+      }
       users: {
         Row: {
+          collection_public: boolean
           country: string | null
           created_at: string
           date_of_birth: string | null
@@ -1581,8 +1666,11 @@ export type Database = {
           personalization_opt_in_at: string | null
           role: Database["public"]["Enums"]["app_role"]
           updated_at: string
+          username: string | null
+          username_lower: string | null
         }
         Insert: {
+          collection_public?: boolean
           country?: string | null
           created_at?: string
           date_of_birth?: string | null
@@ -1597,8 +1685,11 @@ export type Database = {
           personalization_opt_in_at?: string | null
           role?: Database["public"]["Enums"]["app_role"]
           updated_at?: string
+          username?: string | null
+          username_lower?: string | null
         }
         Update: {
+          collection_public?: boolean
           country?: string | null
           created_at?: string
           date_of_birth?: string | null
@@ -1613,6 +1704,8 @@ export type Database = {
           personalization_opt_in_at?: string | null
           role?: Database["public"]["Enums"]["app_role"]
           updated_at?: string
+          username?: string | null
+          username_lower?: string | null
         }
         Relationships: []
       }
@@ -1793,9 +1886,26 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      check_username_available: {
+        Args: { check_username: string }
+        Returns: boolean
+      }
       generate_gift_card_code: { Args: never; Returns: string }
       generate_invoice_number: { Args: never; Returns: string }
       generate_order_number: { Args: never; Returns: string }
+      get_public_collection: {
+        Args: { target_username: string }
+        Returns: {
+          created_at: string
+          product_details_json: Json
+          product_id: string
+          product_images: Json
+          product_slug: string
+          product_title: string
+          quantity: number
+          source: string
+        }[]
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
