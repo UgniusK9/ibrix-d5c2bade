@@ -113,7 +113,7 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Update/create the public.users record
+    // Update/create the public.users record (including username if provided)
     const { error: userError } = await supabase
       .from('users')
       .upsert({
@@ -121,6 +121,7 @@ Deno.serve(async (req) => {
         email: verification.email,
         first_name: verification.first_name,
         last_name: verification.last_name,
+        username: verification.username || null,
         country: verification.country,
         date_of_birth: verification.date_of_birth,
         role: 'customer',

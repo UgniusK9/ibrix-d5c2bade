@@ -91,6 +91,10 @@ export const lt = {
     termsLink: 'Taisyklėmis',
     privacyLink: 'Privatumo politika',
     createAccountBtn: 'Taip, sukurti paskyrą!',
+    username: 'Slapyvardis',
+    usernameHint: 'Raidės, skaičiai, taškas ir pabraukimas. 3-20 simbolių.',
+    usernameInvalid: 'Neteisingas formatas (3-20 simboliai, raidės, skaičiai, _ arba .)',
+    usernameTaken: 'Šis slapyvardis jau užimtas',
     // Verify
     verifyTitle: 'Patvirtinkite el. paštą',
     verifySubtitle: '6 skaitmenų kodas išsiųstas į',
@@ -258,6 +262,13 @@ export const lt = {
     exportData: 'Eksportuoti duomenis',
     dataExported: 'Duomenys eksportuoti',
     accountDeleted: 'Paskyra ištrinta',
+    username: 'Slapyvardis',
+    usernameHint: 'Raidės, skaičiai, taškas ir pabraukimas. 3-20 simbolių.',
+    usernameTaken: 'Šis slapyvardis jau užimtas',
+    privacy: 'Privatumas',
+    privacyDesc: 'Valdykite savo kolekcijos matomumą',
+    collectionPublic: 'Rodyti mano kolekciją viešai',
+    collectionPublicDesc: 'Kiti nariai galės matyti jūsų konstruktorių kolekciją ieškodami pagal slapyvardį.',
   },
   
   // Orders page

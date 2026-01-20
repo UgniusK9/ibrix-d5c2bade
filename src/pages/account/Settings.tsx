@@ -1,11 +1,12 @@
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { User, Mail, MapPin, Save, Loader2, ArrowLeft, AlertCircle, CheckCircle2, Lock, Eye, EyeOff, Trash2, Download, Shield } from 'lucide-react';
+import { User, Mail, MapPin, Save, Loader2, ArrowLeft, AlertCircle, CheckCircle2, Lock, Eye, EyeOff, Trash2, Download, Shield, AtSign, Globe } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { PageLayout } from '@/components/layout/PageLayout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Switch } from '@/components/ui/switch';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import {
@@ -56,6 +57,9 @@ export default function Settings() {
   const [showCurrentPassword, setShowCurrentPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [usernameAvailable, setUsernameAvailable] = useState<boolean | null>(null);
+  const [checkingUsername, setCheckingUsername] = useState(false);
+  const [originalUsername, setOriginalUsername] = useState('');
   
   const [profile, setProfile] = useState<ProfileData>({
     first_name: '',
@@ -96,6 +100,7 @@ export default function Settings() {
             collection_public: data.collection_public || false,
           });
           setNewEmail(data.email || '');
+          setOriginalUsername(data.username || '');
         }
         
         const savedAddress = localStorage.getItem(`user_address_${user.id}`);
@@ -111,6 +116,44 @@ export default function Settings() {
 
     loadProfile();
   }, [user]);
+
+  // Debounced username availability check
+  useEffect(() => {
+    // Skip check if username unchanged or empty
+    if (!profile.username || profile.username === originalUsername) {
+      setUsernameAvailable(null);
+      return;
+    }
+    
+    if (profile.username.length < 3) {
+      setUsernameAvailable(null);
+      return;
+    }
+    
+    const usernameRegex = /^[a-zA-Z0-9_.]{3,20}$/;
+    if (!usernameRegex.test(profile.username)) {
+      setUsernameAvailable(false);
+      return;
+    }
+    
+    const timer = setTimeout(async () => {
+      setCheckingUsername(true);
+      try {
+        const { data, error } = await supabase.rpc('check_username_available', {
+          check_username: profile.username
+        });
+        if (!error) {
+          setUsernameAvailable(data === true);
+        }
+      } catch {
+        setUsernameAvailable(null);
+      } finally {
+        setCheckingUsername(false);
+      }
+    }, 400);
+    
+    return () => clearTimeout(timer);
+  }, [profile.username, originalUsername]);
 
   const handleSaveProfile = async () => {
     if (!user) return;
@@ -257,6 +300,74 @@ export default function Settings() {
                     placeholder={t('authFlow.lastName')}
                   />
                 </div>
+              </div>
+
+              {/* Username field */}
+              <div className="space-y-2">
+                <Label htmlFor="username" className="flex items-center gap-2">
+                  <AtSign className="w-4 h-4" />
+                  {t('settings.username')}
+                  <span className="text-muted-foreground font-normal text-sm">({t('common.optional')})</span>
+                </Label>
+                <div className="relative">
+                  <Input
+                    id="username"
+                    value={profile.username}
+                    onChange={(e) => setProfile({ ...profile, username: e.target.value.toLowerCase().replace(/[^a-z0-9_.]/g, '') })}
+                    placeholder="jonas_123"
+                    maxLength={20}
+                    className={`pr-10 ${
+                      profile.username && profile.username !== originalUsername
+                        ? usernameAvailable === true
+                          ? 'border-green-500'
+                          : usernameAvailable === false
+                          ? 'border-destructive'
+                          : ''
+                        : ''
+                    }`}
+                  />
+                  {checkingUsername && (
+                    <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 animate-spin text-muted-foreground" />
+                  )}
+                  {!checkingUsername && profile.username && profile.username !== originalUsername && profile.username.length >= 3 && usernameAvailable === true && (
+                    <CheckCircle2 className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-green-500" />
+                  )}
+                  {!checkingUsername && profile.username && profile.username !== originalUsername && usernameAvailable === false && (
+                    <AlertCircle className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-destructive" />
+                  )}
+                </div>
+                <p className="text-muted-foreground text-xs">{t('settings.usernameHint')}</p>
+                {profile.username && profile.username !== originalUsername && usernameAvailable === false && (
+                  <p className="text-destructive text-xs">{t('settings.usernameTaken')}</p>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Privacy Settings Card */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Globe className="w-5 h-5 text-primary" />
+                {t('settings.privacy')}
+              </CardTitle>
+              <CardDescription>{t('settings.privacyDesc')}</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-center justify-between">
+                <div className="space-y-0.5">
+                  <Label htmlFor="collection-public" className="font-medium">
+                    {t('settings.collectionPublic')}
+                  </Label>
+                  <p className="text-sm text-muted-foreground">
+                    {t('settings.collectionPublicDesc')}
+                  </p>
+                </div>
+                <Switch
+                  id="collection-public"
+                  checked={profile.collection_public}
+                  onCheckedChange={(checked) => setProfile({ ...profile, collection_public: checked })}
+                />
               </div>
             </CardContent>
           </Card>
