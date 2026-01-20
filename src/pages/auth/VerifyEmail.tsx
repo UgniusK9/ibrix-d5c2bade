@@ -83,8 +83,9 @@ export default function VerifyEmail() {
     setError('');
 
     try {
-      // Get password from localStorage (stored during signup step 2)
-      const password = localStorage.getItem('signup_pending_password');
+      // Get password from sessionStorage (stored during signup step 2)
+      // sessionStorage is cleared when tab closes, reducing XSS exposure
+      const password = sessionStorage.getItem('signup_pending_password');
       
       if (!password) {
         setError('Slaptažodis nerastas. Pradėkite registraciją iš naujo.');
@@ -100,8 +101,8 @@ export default function VerifyEmail() {
         },
       });
 
-      // Clear password from localStorage immediately
-      localStorage.removeItem('signup_pending_password');
+      // Clear password from sessionStorage immediately
+      sessionStorage.removeItem('signup_pending_password');
 
       if (verifyError || !data?.success) {
         setError(data?.error || 'Neteisingas arba pasibaigęs kodas');
@@ -118,7 +119,7 @@ export default function VerifyEmail() {
       toast.success('Paskyra sėkmingai sukurta!');
       navigate('/auth/success');
     } catch (err: any) {
-      localStorage.removeItem('signup_pending_password');
+      sessionStorage.removeItem('signup_pending_password');
       setError(err.message || 'Patvirtinimo klaida');
       setIsLoading(false);
     }
