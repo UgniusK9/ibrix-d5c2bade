@@ -32,7 +32,7 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const { email, firstName, lastName, country, dateOfBirth } = await req.json();
+    const { email, firstName, lastName, username, country, dateOfBirth } = await req.json();
 
     // Validate required fields (NO PASSWORD - password is collected at verification time)
     if (!email || !firstName || !lastName) {
@@ -86,6 +86,38 @@ Deno.serve(async (req) => {
       .delete()
       .eq('email', normalizedEmail);
 
+    // Validate username if provided
+    let validatedUsername: string | null = null;
+    if (username) {
+      const usernameRegex = /^[a-zA-Z0-9_.]{3,20}$/;
+      if (!usernameRegex.test(username)) {
+        return new Response(JSON.stringify({ 
+          success: false, 
+          error: 'Neteisingas slapyvardžio formatas' 
+        }), {
+          status: 400,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+      
+      // Check username availability
+      const { data: usernameAvailable } = await supabase.rpc('check_username_available', {
+        check_username: username
+      });
+      
+      if (!usernameAvailable) {
+        return new Response(JSON.stringify({ 
+          success: false, 
+          error: 'Šis slapyvardis jau užimtas' 
+        }), {
+          status: 400,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+      
+      validatedUsername = username.toLowerCase().trim();
+    }
+
     // Generate code
     const code = generateVerificationCode();
     const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
@@ -98,6 +130,7 @@ Deno.serve(async (req) => {
         code,
         first_name: firstName.trim(),
         last_name: lastName.trim(),
+        username: validatedUsername,
         country: country || null,
         date_of_birth: dateOfBirth || null,
         expires_at: expiresAt.toISOString(),

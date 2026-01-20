@@ -89,6 +89,10 @@ export const en = {
     termsLink: 'Terms & Conditions',
     privacyLink: 'Privacy Policy',
     createAccountBtn: 'Yes, create my account!',
+    username: 'Username',
+    usernameHint: 'Letters, numbers, dots and underscores. 3-20 characters.',
+    usernameInvalid: 'Invalid format (3-20 characters, letters, numbers, _ or .)',
+    usernameTaken: 'This username is already taken',
     // Verify
     verifyTitle: 'Verify your email',
     verifySubtitle: 'Enter the 6-digit code sent to',
@@ -256,6 +260,13 @@ export const en = {
     exportData: 'Export data',
     dataExported: 'Data exported',
     accountDeleted: 'Account deleted',
+    username: 'Username',
+    usernameHint: 'Letters, numbers, dots and underscores. 3-20 characters.',
+    usernameTaken: 'This username is already taken',
+    privacy: 'Privacy',
+    privacyDesc: 'Manage your collection visibility',
+    collectionPublic: 'Show my collection publicly',
+    collectionPublicDesc: 'Other members can view your constructor collection by searching your username.',
   },
   
   // Orders page

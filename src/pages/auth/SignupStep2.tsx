@@ -22,6 +22,9 @@ export default function SignupStep2() {
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
+  const [username, setUsername] = useState('');
+  const [usernameAvailable, setUsernameAvailable] = useState<boolean | null>(null);
+  const [checkingUsername, setCheckingUsername] = useState(false);
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -70,6 +73,38 @@ export default function SignupStep2() {
     }
   }, [navigate]);
 
+  // Debounced username availability check
+  useEffect(() => {
+    if (!username || username.length < 3) {
+      setUsernameAvailable(null);
+      return;
+    }
+    
+    const usernameRegex = /^[a-zA-Z0-9_.]{3,20}$/;
+    if (!usernameRegex.test(username)) {
+      setUsernameAvailable(false);
+      return;
+    }
+    
+    const timer = setTimeout(async () => {
+      setCheckingUsername(true);
+      try {
+        const { data, error } = await supabase.rpc('check_username_available', {
+          check_username: username
+        });
+        if (!error) {
+          setUsernameAvailable(data === true);
+        }
+      } catch {
+        setUsernameAvailable(null);
+      } finally {
+        setCheckingUsername(false);
+      }
+    }, 400);
+    
+    return () => clearTimeout(timer);
+  }, [username]);
+
   const verifyCaptcha = async (token: string): Promise<boolean> => {
     try {
       const { data, error } = await supabase.functions.invoke('verify-captcha', {
@@ -92,6 +127,15 @@ export default function SignupStep2() {
     }
     if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
       newErrors.email = t('auth.invalidEmail');
+    }
+    // Username validation (optional, but if provided must be valid)
+    if (username) {
+      const usernameRegex = /^[a-zA-Z0-9_.]{3,20}$/;
+      if (!usernameRegex.test(username)) {
+        newErrors.username = t('authFlow.usernameInvalid');
+      } else if (usernameAvailable === false) {
+        newErrors.username = t('authFlow.usernameTaken');
+      }
     }
     if (!password || password.length < 8) {
       newErrors.password = t('authFlow.passwordMin8');
@@ -145,6 +189,7 @@ export default function SignupStep2() {
           email,
           firstName,
           lastName,
+          username: username || null,
           country: step1Data.country,
           dateOfBirth: dob,
         },
@@ -242,6 +287,33 @@ export default function SignupStep2() {
                 placeholder="jonas@pavyzdys.lt"
               />
               {errors.email && <p className="text-[#DC2626] text-xs mt-1">{errors.email}</p>}
+            </div>
+
+            <div>
+              <Label htmlFor="username" className="text-[#0F172A]">
+                {t('authFlow.username')} <span className="text-[#64748B] font-normal">({t('common.optional')})</span>
+              </Label>
+              <div className="relative">
+                <Input
+                  id="username"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value.toLowerCase().replace(/[^a-z0-9_.]/g, ''))}
+                  className={`h-12 rounded-xl border-[#E2E8F0] pr-10 ${errors.username ? 'border-[#DC2626]' : usernameAvailable === true ? 'border-green-500' : ''}`}
+                  placeholder="jonas_123"
+                  maxLength={20}
+                />
+                {checkingUsername && (
+                  <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 animate-spin text-[#64748B]" />
+                )}
+                {!checkingUsername && username.length >= 3 && usernameAvailable === true && (
+                  <span className="absolute right-3 top-1/2 -translate-y-1/2 text-green-500 text-sm">✓</span>
+                )}
+                {!checkingUsername && username.length >= 3 && usernameAvailable === false && (
+                  <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[#DC2626] text-sm">✗</span>
+                )}
+              </div>
+              <p className="text-[#64748B] text-xs mt-1">{t('authFlow.usernameHint')}</p>
+              {errors.username && <p className="text-[#DC2626] text-xs mt-1">{errors.username}</p>}
             </div>
 
             <div>
