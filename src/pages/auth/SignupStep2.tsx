@@ -135,8 +135,9 @@ export default function SignupStep2() {
       : null;
 
     try {
-      // Store password temporarily for verification step (NOT sent to server)
-      localStorage.setItem('signup_pending_password', password);
+      // Store password temporarily for verification step using sessionStorage
+      // sessionStorage is cleared when tab closes, reducing XSS exposure window
+      sessionStorage.setItem('signup_pending_password', password);
       
       // Call custom signup edge function (sends verification code - NO password sent)
       const { data, error } = await supabase.functions.invoke('signup', {
