@@ -135,11 +135,13 @@ export default function SignupStep2() {
       : null;
 
     try {
-      // Call custom signup edge function (sends verification code)
+      // Store password temporarily for verification step (NOT sent to server)
+      localStorage.setItem('signup_pending_password', password);
+      
+      // Call custom signup edge function (sends verification code - NO password sent)
       const { data, error } = await supabase.functions.invoke('signup', {
         body: {
           email,
-          password,
           firstName,
           lastName,
           country: step1Data.country,

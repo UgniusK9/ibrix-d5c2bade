@@ -408,27 +408,8 @@ async function sendMetaCapi(requestId: string, eventData: {
 
 Deno.serve(async (req) => {
   const requestId = generateRequestId();
-  const url = new URL(req.url);
   
-  // Health check endpoint
-  if (url.pathname.endsWith('/health') || url.searchParams.has('health')) {
-    const config = {
-      stripe_secret_configured: !!Deno.env.get('STRIPE_SECRET_KEY'),
-      webhook_secret_configured: !!Deno.env.get('STRIPE_WEBHOOK_SECRET'),
-      supabase_url_configured: !!Deno.env.get('SUPABASE_URL'),
-      service_role_configured: !!Deno.env.get('SUPABASE_SERVICE_ROLE_KEY'),
-      resend_configured: !!Deno.env.get('RESEND_API_KEY'),
-    };
-    log(requestId, 'Health check', config);
-    return new Response(JSON.stringify({
-      status: 'ok',
-      timestamp: new Date().toISOString(),
-      config,
-    }), {
-      status: 200,
-      headers: { 'Content-Type': 'application/json' },
-    });
-  }
+  // SECURITY: No public health endpoint - config state should not be exposed
   
   const signature = req.headers.get('stripe-signature');
   const webhookSecret = Deno.env.get('STRIPE_WEBHOOK_SECRET');
