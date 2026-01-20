@@ -47,6 +47,8 @@ import VerifyEmail from "./pages/auth/VerifyEmail";
 import AuthSuccess from "./pages/auth/AuthSuccess";
 import Credits from "./pages/account/Credits";
 import Settings from "./pages/account/Settings";
+import MyBuilders from "./pages/account/MyBuilders";
+import CollectionSearch from "./pages/account/CollectionSearch";
 import Orders from "./pages/Orders";
 import Wishlist from "./pages/Wishlist";
 import Pokalbis from "./pages/Pokalbis";
@@ -132,6 +134,16 @@ const App = () => (
                 <Route path="/account/settings" element={
                   <ProtectedRoute>
                     <Settings />
+                  </ProtectedRoute>
+                } />
+                <Route path="/account/my-builders" element={
+                  <ProtectedRoute>
+                    <MyBuilders />
+                  </ProtectedRoute>
+                } />
+                <Route path="/account/collection-search" element={
+                  <ProtectedRoute>
+                    <CollectionSearch />
                   </ProtectedRoute>
                 } />
                 <Route path="/orders" element={

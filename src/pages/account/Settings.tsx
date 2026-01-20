@@ -28,6 +28,8 @@ interface ProfileData {
   last_name: string;
   email: string;
   country: string | null;
+  username: string;
+  collection_public: boolean;
 }
 
 interface AddressData {
@@ -60,6 +62,8 @@ export default function Settings() {
     last_name: '',
     email: '',
     country: null,
+    username: '',
+    collection_public: false,
   });
   
   const [address, setAddress] = useState<AddressData>({
@@ -76,7 +80,7 @@ export default function Settings() {
       try {
         const { data, error } = await supabase
           .from('users')
-          .select('first_name, last_name, email, country')
+          .select('first_name, last_name, email, country, username, collection_public')
           .eq('id', user.id)
           .single();
         
@@ -88,6 +92,8 @@ export default function Settings() {
             last_name: data.last_name || '',
             email: data.email || '',
             country: data.country,
+            username: data.username || '',
+            collection_public: data.collection_public || false,
           });
           setNewEmail(data.email || '');
         }
@@ -117,6 +123,8 @@ export default function Settings() {
           first_name: profile.first_name,
           last_name: profile.last_name,
           country: profile.country,
+          username: profile.username || null,
+          collection_public: profile.collection_public,
         })
         .eq('id', user.id);
       

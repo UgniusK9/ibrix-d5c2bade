@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { 
   User, LogOut, Loader2, Tag, Wallet, Gift, Heart, 
   Settings, Package, HelpCircle, Truck, MessageSquare, 
-  BookOpen, Star, ChevronRight, Award
+  BookOpen, Star, ChevronRight, Award, Puzzle
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { PageLayout } from '@/components/layout/PageLayout';
@@ -262,6 +262,16 @@ export default function Account() {
                 <div className="flex items-center gap-3">
                   <Heart className="w-5 h-5 text-muted-foreground" />
                   <span className="font-medium">{t('wishlist.title')}</span>
+                </div>
+                <ChevronRight className="w-5 h-5 text-muted-foreground" />
+              </Link>
+              <Link 
+                to="/account/my-builders" 
+                className="flex items-center justify-between p-4 hover:bg-muted/50 transition-colors border-b border-border"
+              >
+                <div className="flex items-center gap-3">
+                  <Puzzle className="w-5 h-5 text-muted-foreground" />
+                  <span className="font-medium">Mano konstruktoriai</span>
                 </div>
                 <ChevronRight className="w-5 h-5 text-muted-foreground" />
               </Link>
