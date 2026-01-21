@@ -40,7 +40,7 @@ export function ProductsSection() {
 
   if (isLoading) {
     return (
-      <section className="py-12 md:py-16 bg-slate-50">
+      <section className="py-12 md:py-16 bg-secondary/50">
         <div className="container">
           <div className="flex items-center justify-center py-12">
             <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
@@ -55,7 +55,7 @@ export function ProductsSection() {
   }
 
   return (
-    <section className="py-12 md:py-16 bg-slate-50">
+    <section className="py-12 md:py-16 bg-secondary/50">
       <div className="container">
         {/* Header */}
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8">
@@ -89,10 +89,10 @@ export function ProductsSection() {
               <Link
                 key={product.id}
                 to={`/produktas/${product.slug}`}
-                className="group block bg-white rounded-2xl overflow-hidden border border-slate-200 transition-all duration-200 hover:-translate-y-1 hover:shadow-md"
+                className="group block bg-card rounded-2xl overflow-hidden border border-border transition-all duration-200 hover:-translate-y-1 hover:shadow-md"
               >
                 {/* Image container - takes ~70% of card */}
-                <div className="relative aspect-[4/3] bg-slate-100 overflow-hidden p-4">
+                <div className="relative aspect-[4/3] bg-muted overflow-hidden p-4">
                   <img
                     src={image}
                     alt={product.title}
@@ -155,7 +155,7 @@ export function ProductsSection() {
                     
                     <Button 
                       size="sm" 
-                      className="bg-yellow-400 hover:bg-yellow-500 text-foreground font-bold h-9 px-4"
+                      className="bg-accent hover:bg-accent/90 text-accent-foreground font-bold h-9 px-4"
                       onClick={(e) => handleAddToCart(product, e)}
                     >
                       <ShoppingCart className="h-4 w-4 mr-1" />
