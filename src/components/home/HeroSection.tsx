@@ -12,22 +12,10 @@ export function HeroSection() {
   const featuredProduct = products?.[0];
 
   return (
-    <section className="relative min-h-[80vh] lg:min-h-[85vh] flex items-center overflow-hidden">
-      {/* Background */}
-      <div className="absolute inset-0">
-        <div className="absolute inset-0 bg-gradient-to-br from-[hsl(220,50%,10%)] via-primary to-[hsl(220,45%,15%)]" />
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_30%_30%,hsl(var(--primary)/0.5)_0%,transparent_60%)]" />
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_70%_80%,hsl(var(--accent)/0.2)_0%,transparent_50%)]" />
-        
-        {/* Subtle pattern */}
-        <div 
-          className="absolute inset-0 opacity-[0.04]"
-          style={{
-            backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg stroke='%23ffffff' stroke-width='0.5'%3E%3Cpath d='M0 30h60M30 0v60'/%3E%3Ccircle cx='30' cy='30' r='10'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
-            backgroundSize: '60px 60px'
-          }}
-        />
-      </div>
+    <section className="relative min-h-[80vh] lg:min-h-[85vh] flex items-center overflow-hidden gradient-hero">
+      {/* Background overlay for depth */}
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_30%_20%,hsl(210_100%_55%/0.3)_0%,transparent_50%)]" />
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_80%_80%,hsl(220_40%_20%/0.5)_0%,transparent_60%)]" />
 
       <div className="container relative z-10">
         <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
