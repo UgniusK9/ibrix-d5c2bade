@@ -18,6 +18,7 @@ import { ProductSearch } from "@/components/header/ProductSearch";
 import { CategoriesMegaMenu } from "@/components/header/CategoriesMegaMenu";
 import { LanguageSelector } from "@/components/header/LanguageSelector";
 import { UserProfileDropdown } from "@/components/header/UserProfileDropdown";
+import { ThemeToggle } from "@/components/theme/ThemeToggle";
 import logo from "@/assets/logo.png";
 
 const navigation = [
@@ -169,6 +170,9 @@ export function Header() {
                   </Button>
                 </div>
               )}
+
+              {/* Theme Toggle */}
+              <ThemeToggle />
 
               {/* Language Selector */}
               <LanguageSelector />
