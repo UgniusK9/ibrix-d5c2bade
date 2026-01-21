@@ -10,10 +10,12 @@ import { cn } from "@/lib/utils";
 interface ProductSearchProps {
   className?: string;
   onClose?: () => void;
+  onSelect?: () => void;
   isMobile?: boolean;
+  autoFocus?: boolean;
 }
 
-export function ProductSearch({ className, onClose, isMobile }: ProductSearchProps) {
+export function ProductSearch({ className, onClose, onSelect, isMobile, autoFocus }: ProductSearchProps) {
   const [query, setQuery] = useState("");
   const [isOpen, setIsOpen] = useState(false);
   const { data: products, isLoading } = useProducts();
@@ -58,7 +60,15 @@ export function ProductSearch({ className, onClose, isMobile }: ProductSearchPro
     setQuery("");
     setIsOpen(false);
     onClose?.();
+    onSelect?.();
   };
+
+  // Auto focus on mount if prop is set
+  useEffect(() => {
+    if (autoFocus) {
+      inputRef.current?.focus();
+    }
+  }, [autoFocus]);
 
   return (
     <div ref={containerRef} className={cn("relative", className)}>

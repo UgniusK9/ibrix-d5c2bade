@@ -4,109 +4,117 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Ibrix.lt Design System - Premium LEGO Engine Models Store */
+/* IBRIX Design System - LEGO-Inspired Premium Store
+   Clean, bright, friendly, structured with playful accents */
 
 @layer base {
   :root {
-    /* Primary - OR mėlyna */
-    --primary: 224 77% 48%;
+    /* Primary - LEGO Blue (bright, confident) */
+    --primary: 210 100% 45%;
     --primary-foreground: 0 0% 100%;
     
-    /* Accent - BRIK oranžinė */
-    --accent: 24 95% 53%;
-    --accent-foreground: 0 0% 100%;
+    /* Accent - LEGO Yellow (playful, energetic) */
+    --accent: 45 100% 51%;
+    --accent-foreground: 0 0% 10%;
     
-    /* Background */
-    --background: 220 20% 97%;
-    --foreground: 220 40% 9%;
+    /* Background - Clean white with subtle warmth */
+    --background: 0 0% 99%;
+    --foreground: 220 20% 15%;
     
-    /* Card */
+    /* Card - Pure white with subtle depth */
     --card: 0 0% 100%;
-    --card-foreground: 220 40% 9%;
+    --card-foreground: 220 20% 15%;
     
     /* Popover */
     --popover: 0 0% 100%;
-    --popover-foreground: 220 40% 9%;
+    --popover-foreground: 220 20% 15%;
     
-    /* Secondary */
-    --secondary: 220 14% 96%;
-    --secondary-foreground: 220 40% 9%;
+    /* Secondary - Light gray (soft, supportive) */
+    --secondary: 220 15% 96%;
+    --secondary-foreground: 220 20% 15%;
     
-    /* Muted */
-    --muted: 220 14% 96%;
-    --muted-foreground: 220 9% 46%;
+    /* Muted - Subtle gray */
+    --muted: 220 15% 95%;
+    --muted-foreground: 220 10% 45%;
     
-    /* Border */
-    --border: 220 13% 91%;
-    --input: 220 13% 91%;
-    --ring: 224 77% 48%;
+    /* Border - Soft, non-intrusive */
+    --border: 220 15% 90%;
+    --input: 220 15% 90%;
+    --ring: 210 100% 45%;
     
-    /* Destructive */
-    --destructive: 0 84% 60%;
+    /* Destructive - LEGO Red */
+    --destructive: 4 90% 58%;
     --destructive-foreground: 0 0% 100%;
     
-    /* Footer dark */
-    --footer: 220 40% 9%;
-    --footer-foreground: 220 14% 96%;
-    
-    /* Trust colors */
-    --success: 142 71% 45%;
+    /* Success - LEGO Green */
+    --success: 145 65% 42%;
     --success-foreground: 0 0% 100%;
     
-    /* Radius - premium rounded */
-    --radius: 0.875rem;
+    /* Warning - LEGO Orange */
+    --warning: 28 100% 55%;
+    --warning-foreground: 0 0% 100%;
     
-    /* Sidebar (keeping for compatibility) */
-    --sidebar-background: 0 0% 98%;
-    --sidebar-foreground: 240 5.3% 26.1%;
-    --sidebar-primary: 240 5.9% 10%;
-    --sidebar-primary-foreground: 0 0% 98%;
-    --sidebar-accent: 240 4.8% 95.9%;
-    --sidebar-accent-foreground: 240 5.9% 10%;
-    --sidebar-border: 220 13% 91%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    /* Footer - Dark but friendly */
+    --footer: 220 25% 12%;
+    --footer-foreground: 220 15% 92%;
+    
+    /* Radius - Friendly rounded corners */
+    --radius: 0.75rem;
+    
+    /* Sidebar */
+    --sidebar-background: 0 0% 99%;
+    --sidebar-foreground: 220 20% 15%;
+    --sidebar-primary: 210 100% 45%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 220 15% 96%;
+    --sidebar-accent-foreground: 220 20% 15%;
+    --sidebar-border: 220 15% 90%;
+    --sidebar-ring: 210 100% 45%;
   }
 
   .dark {
-    --primary: 224 77% 55%;
+    --primary: 210 100% 55%;
     --primary-foreground: 0 0% 100%;
     
-    --accent: 24 95% 53%;
-    --accent-foreground: 0 0% 100%;
+    --accent: 45 100% 51%;
+    --accent-foreground: 0 0% 10%;
     
-    --background: 220 40% 9%;
-    --foreground: 220 14% 96%;
+    --background: 220 20% 8%;
+    --foreground: 220 15% 95%;
     
-    --card: 220 35% 12%;
-    --card-foreground: 220 14% 96%;
+    --card: 220 20% 11%;
+    --card-foreground: 220 15% 95%;
     
-    --popover: 220 35% 12%;
-    --popover-foreground: 220 14% 96%;
+    --popover: 220 20% 11%;
+    --popover-foreground: 220 15% 95%;
     
-    --secondary: 220 30% 15%;
-    --secondary-foreground: 220 14% 96%;
+    --secondary: 220 15% 15%;
+    --secondary-foreground: 220 15% 95%;
     
-    --muted: 220 30% 15%;
-    --muted-foreground: 220 9% 60%;
+    --muted: 220 15% 15%;
+    --muted-foreground: 220 10% 55%;
     
-    --border: 220 25% 20%;
-    --input: 220 25% 20%;
-    --ring: 224 77% 55%;
+    --border: 220 15% 18%;
+    --input: 220 15% 18%;
+    --ring: 210 100% 55%;
     
-    --destructive: 0 62% 30%;
+    --destructive: 4 70% 50%;
     --destructive-foreground: 0 0% 100%;
     
-    --footer: 220 40% 6%;
-    --footer-foreground: 220 14% 96%;
+    --success: 145 55% 45%;
+    --success-foreground: 0 0% 100%;
     
-    --sidebar-background: 240 5.9% 10%;
-    --sidebar-foreground: 240 4.8% 95.9%;
-    --sidebar-primary: 224.3 76.3% 48%;
+    --footer: 220 25% 6%;
+    --footer-foreground: 220 15% 92%;
+    
+    --sidebar-background: 220 20% 8%;
+    --sidebar-foreground: 220 15% 95%;
+    --sidebar-primary: 210 100% 55%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 3.7% 15.9%;
-    --sidebar-accent-foreground: 240 4.8% 95.9%;
-    --sidebar-border: 240 3.7% 15.9%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    --sidebar-accent: 220 15% 15%;
+    --sidebar-accent-foreground: 220 15% 95%;
+    --sidebar-border: 220 15% 18%;
+    --sidebar-ring: 210 100% 55%;
   }
 }
 
@@ -117,10 +125,68 @@
 
   body {
     @apply bg-background text-foreground font-sans antialiased;
+    font-feature-settings: "cv11", "ss01";
+    line-height: 1.6;
   }
   
+  /* Typography scale - clean LEGO-like hierarchy */
   h1, h2, h3, h4, h5, h6 {
-    @apply font-heading font-semibold tracking-tight;
+    @apply font-heading font-bold tracking-tight;
+    line-height: 1.2;
+  }
+  
+  h1 {
+    @apply text-3xl md:text-4xl lg:text-5xl;
+  }
+  
+  h2 {
+    @apply text-2xl md:text-3xl;
+  }
+  
+  h3 {
+    @apply text-xl md:text-2xl;
+  }
+  
+  p {
+    @apply leading-relaxed;
+  }
+}
+
+@layer components {
+  /* Section spacing - consistent rhythm */
+  .section {
+    @apply py-12 md:py-16 lg:py-20;
+  }
+  
+  .section-tight {
+    @apply py-8 md:py-12;
+  }
+  
+  /* Card variants */
+  .card-interactive {
+    @apply bg-card rounded-xl border border-border transition-all duration-200;
+    @apply hover:shadow-lg hover:border-primary/20 hover:-translate-y-0.5;
+  }
+  
+  .card-highlight {
+    @apply bg-card rounded-xl border-2 border-primary/20 shadow-sm;
+  }
+  
+  /* Empty state container */
+  .empty-state {
+    @apply flex flex-col items-center justify-center py-16 px-6 text-center;
+  }
+  
+  .empty-state-icon {
+    @apply w-16 h-16 text-muted-foreground/30 mb-6;
+  }
+  
+  .empty-state-title {
+    @apply font-heading text-xl font-semibold mb-2;
+  }
+  
+  .empty-state-description {
+    @apply text-muted-foreground mb-6 max-w-sm;
   }
 }
 
@@ -129,12 +195,29 @@
     text-wrap: balance;
   }
   
-  /* Premium gradient backgrounds */
+  /* LEGO-inspired gradients - bright and playful */
   .gradient-hero {
     background: linear-gradient(
       135deg,
-      hsl(224 77% 48% / 0.95) 0%,
-      hsl(220 40% 9% / 0.98) 100%
+      hsl(210 100% 45%) 0%,
+      hsl(210 90% 35%) 50%,
+      hsl(220 25% 12%) 100%
+    );
+  }
+  
+  .gradient-hero-light {
+    background: linear-gradient(
+      180deg,
+      hsl(210 100% 45% / 0.05) 0%,
+      hsl(0 0% 100%) 100%
+    );
+  }
+  
+  .gradient-accent {
+    background: linear-gradient(
+      135deg,
+      hsl(45 100% 51%) 0%,
+      hsl(35 100% 55%) 100%
     );
   }
   
@@ -142,39 +225,69 @@
     background: linear-gradient(
       180deg,
       hsl(var(--background)) 0%,
-      hsl(220 14% 96%) 100%
+      hsl(220 15% 97%) 100%
     );
   }
   
-  /* Premium shadows */
+  /* Clean shadows - LEGO-like depth */
+  .shadow-soft {
+    box-shadow: 
+      0 1px 3px hsl(220 20% 15% / 0.04),
+      0 4px 12px hsl(220 20% 15% / 0.06);
+  }
+  
+  .shadow-medium {
+    box-shadow: 
+      0 2px 4px hsl(220 20% 15% / 0.04),
+      0 8px 24px hsl(220 20% 15% / 0.08);
+  }
+  
+  .shadow-strong {
+    box-shadow: 
+      0 4px 8px hsl(220 20% 15% / 0.06),
+      0 16px 48px hsl(220 20% 15% / 0.12);
+  }
+  
   .shadow-premium {
     box-shadow: 
-      0 4px 6px -1px hsl(220 40% 9% / 0.05),
-      0 10px 20px -2px hsl(220 40% 9% / 0.08);
+      0 4px 6px -1px hsl(220 20% 15% / 0.05),
+      0 10px 20px -2px hsl(220 20% 15% / 0.08);
   }
   
   .shadow-premium-lg {
     box-shadow: 
-      0 10px 25px -5px hsl(220 40% 9% / 0.1),
-      0 20px 40px -5px hsl(220 40% 9% / 0.12);
+      0 10px 25px -5px hsl(220 20% 15% / 0.08),
+      0 20px 40px -5px hsl(220 20% 15% / 0.1);
   }
   
   .shadow-glow {
-    box-shadow: 0 0 40px hsl(224 77% 48% / 0.15);
+    box-shadow: 0 0 40px hsl(210 100% 45% / 0.12);
   }
   
-  /* Hover animations */
+  .shadow-glow-accent {
+    box-shadow: 0 0 40px hsl(45 100% 51% / 0.2);
+  }
+  
+  /* Hover animations - playful but not distracting */
   .hover-lift {
-    @apply transition-all duration-300 ease-out;
+    @apply transition-all duration-200 ease-out;
   }
   
   .hover-lift:hover {
     transform: translateY(-2px);
   }
   
-  /* Fade in animation */
+  .hover-scale {
+    @apply transition-transform duration-200 ease-out;
+  }
+  
+  .hover-scale:hover {
+    transform: scale(1.02);
+  }
+  
+  /* Fade in animations */
   .animate-fade-in {
-    animation: fadeIn 0.5s ease-out forwards;
+    animation: fadeIn 0.4s ease-out forwards;
   }
   
   .animate-fade-in-up {
@@ -184,6 +297,19 @@
   .animate-scale-in {
     animation: scaleIn 0.3s ease-out forwards;
   }
+  
+  /* Stagger children animations */
+  .stagger-children > * {
+    opacity: 0;
+    animation: fadeInUp 0.4s ease-out forwards;
+  }
+  
+  .stagger-children > *:nth-child(1) { animation-delay: 0.05s; }
+  .stagger-children > *:nth-child(2) { animation-delay: 0.1s; }
+  .stagger-children > *:nth-child(3) { animation-delay: 0.15s; }
+  .stagger-children > *:nth-child(4) { animation-delay: 0.2s; }
+  .stagger-children > *:nth-child(5) { animation-delay: 0.25s; }
+  .stagger-children > *:nth-child(6) { animation-delay: 0.3s; }
 }
 
 @keyframes fadeIn {
@@ -198,7 +324,7 @@
 @keyframes fadeInUp {
   from {
     opacity: 0;
-    transform: translateY(20px);
+    transform: translateY(16px);
   }
   to {
     opacity: 1;
@@ -209,7 +335,7 @@
 @keyframes scaleIn {
   from {
     opacity: 0;
-    transform: scale(0.95);
+    transform: scale(0.96);
   }
   to {
     opacity: 1;
@@ -217,7 +343,7 @@
   }
 }
 
-/* Scrollbar styling */
+/* Scrollbar styling - subtle and clean */
 ::-webkit-scrollbar {
   width: 8px;
   height: 8px;
@@ -228,10 +354,22 @@
 }
 
 ::-webkit-scrollbar-thumb {
-  background: hsl(var(--muted-foreground) / 0.3);
+  background: hsl(var(--muted-foreground) / 0.25);
   border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: hsl(var(--muted-foreground) / 0.5);
+  background: hsl(var(--muted-foreground) / 0.4);
+}
+
+/* Focus states - accessible and visible */
+*:focus-visible {
+  outline: 2px solid hsl(var(--ring));
+  outline-offset: 2px;
+}
+
+/* Selection - branded */
+::selection {
+  background: hsl(210 100% 45% / 0.2);
+  color: hsl(var(--foreground));
 }

@@ -1,15 +1,16 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { 
-  User, LogOut, Loader2, Tag, Wallet, Gift, Heart, 
+  User, LogOut, Loader2, Tag, Gift, Heart, 
   Settings, Package, HelpCircle, Truck, MessageSquare, 
-  BookOpen, Star, ChevronRight, Award, Puzzle
+  BookOpen, ChevronRight, Award, Puzzle, Sparkles, Star
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { PageLayout } from '@/components/layout/PageLayout';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
+import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -31,6 +32,8 @@ interface WalletData {
 interface UserProfile {
   first_name: string | null;
   last_name: string | null;
+  username: string | null;
+  avatar_url: string | null;
 }
 
 export default function Account() {
@@ -40,6 +43,7 @@ export default function Account() {
   const [wallet, setWallet] = useState<WalletData | null>(null);
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [wishlistCount, setWishlistCount] = useState(0);
+  const [buildersCount, setBuildersCount] = useState(0);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -50,7 +54,7 @@ export default function Account() {
         // Load user profile
         const { data: profileData } = await supabase
           .from('users')
-          .select('first_name, last_name')
+          .select('first_name, last_name, username, avatar_url')
           .eq('id', user.id)
           .maybeSingle();
         
@@ -87,12 +91,20 @@ export default function Account() {
         }
 
         // Load wishlist count
-        const { count } = await supabase
+        const { count: wishCount } = await supabase
           .from('wishlists')
           .select('id', { count: 'exact', head: true })
           .eq('user_id', user.id);
         
-        setWishlistCount(count || 0);
+        setWishlistCount(wishCount || 0);
+
+        // Load builders count
+        const { count: buildCount } = await supabase
+          .from('user_builders')
+          .select('id', { count: 'exact', head: true })
+          .eq('user_id', user.id);
+        
+        setBuildersCount(buildCount || 0);
       } catch (e) {
         console.error('Error loading account data:', e);
       } finally {
@@ -110,6 +122,10 @@ export default function Account() {
     }).format(amount);
   };
 
+  const displayName = userProfile?.first_name && userProfile?.last_name 
+    ? `${userProfile.first_name} ${userProfile.last_name}` 
+    : user?.email;
+
   if (loading) {
     return (
       <PageLayout>
@@ -122,89 +138,125 @@ export default function Account() {
 
   return (
     <PageLayout>
-      <div className="container py-8 md:py-12 max-w-6xl">
-        <h1 className="font-heading text-2xl md:text-3xl font-bold mb-8">{t('account.title')}</h1>
+      <div className="container py-8 md:py-12 max-w-5xl">
+        {/* Header */}
+        <div className="mb-8">
+          <h1 className="font-heading text-3xl md:text-4xl font-bold">{t('account.title')}</h1>
+          <p className="text-muted-foreground mt-2">Valdykite savo paskyrą ir stebėkite užsakymus</p>
+        </div>
         
-        <div className="grid md:grid-cols-2 gap-6">
+        <div className="grid md:grid-cols-2 gap-5">
           {/* Profile Card */}
-          <Card className="border-2 border-border">
+          <Card className="md:col-span-2">
             <CardContent className="p-6">
-              <div className="flex items-center gap-4">
-                <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center">
-                  <User className="w-8 h-8 text-primary" />
-                </div>
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+                <Avatar className="w-16 h-16 border-2 border-border">
+                  {userProfile?.avatar_url ? (
+                    <AvatarImage src={userProfile.avatar_url} alt={displayName || ''} />
+                  ) : null}
+                  <AvatarFallback className="bg-primary/10 text-primary text-xl font-bold">
+                    <User className="w-7 h-7" />
+                  </AvatarFallback>
+                </Avatar>
                 <div className="flex-1">
-                  <p className="font-heading font-semibold text-lg">
-                    {userProfile?.first_name && userProfile?.last_name 
-                      ? `${userProfile.first_name} ${userProfile.last_name}` 
-                      : user?.email}
+                  <p className="font-heading font-bold text-xl">
+                    {displayName}
                   </p>
-                  <Link to="/account/settings" className="text-sm text-primary hover:underline">
-                    {t('account.memberCard')}
+                  {userProfile?.username && (
+                    <p className="text-sm text-muted-foreground">@{userProfile.username}</p>
+                  )}
+                  <Link to="/account/settings" className="text-sm text-primary hover:underline mt-1 inline-block">
+                    Redaguoti profilį →
                   </Link>
                 </div>
-                <div className="text-right">
-                  <p className="text-sm text-muted-foreground">{t('account.credits')}</p>
-                  <p className="text-2xl font-bold">{formatPrice(wallet?.balance_eur || 0)}</p>
+                <div className="sm:text-right">
+                  <p className="text-sm text-muted-foreground mb-1">Jūsų kreditai</p>
+                  <p className="text-3xl font-bold font-heading text-primary">{formatPrice(wallet?.balance_eur || 0)}</p>
                 </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Quick Stats */}
+          <Card>
+            <CardContent className="p-5">
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center">
+                  <Puzzle className="w-6 h-6 text-primary" />
+                </div>
+                <div className="flex-1">
+                  <p className="text-2xl font-bold">{buildersCount}</p>
+                  <p className="text-sm text-muted-foreground">Mano konstruktoriai</p>
+                </div>
+                <Button asChild variant="ghost" size="icon">
+                  <Link to="/account/my-builders">
+                    <ChevronRight className="w-5 h-5" />
+                  </Link>
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="p-5">
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 rounded-xl bg-destructive/10 flex items-center justify-center">
+                  <Heart className="w-6 h-6 text-destructive" />
+                </div>
+                <div className="flex-1">
+                  <p className="text-2xl font-bold">{wishlistCount}</p>
+                  <p className="text-sm text-muted-foreground">Norų sąraše</p>
+                </div>
+                <Button asChild variant="ghost" size="icon">
+                  <Link to="/wishlist">
+                    <ChevronRight className="w-5 h-5" />
+                  </Link>
+                </Button>
               </div>
             </CardContent>
           </Card>
 
           {/* Credits Info Card */}
-          <Card className="border-2 border-border bg-gradient-to-br from-primary/5 to-transparent">
+          <Card className="bg-gradient-to-br from-primary/5 via-transparent to-accent/5 border-primary/20">
             <CardContent className="p-6">
-              <h3 className="font-heading font-semibold text-lg mb-2">{t('account.creditsInfo')}</h3>
-              <p className="text-sm text-muted-foreground mb-4">
-                {t('account.creditsDescription')}
-              </p>
-              <div className="flex gap-3">
-                <Button asChild size="sm">
-                  <Link to="/account/credits">{t('account.learnMore')}</Link>
-                </Button>
-                <Button asChild variant="outline" size="sm">
-                  <Link to="/dovanu-kuponai">{t('nav.giftCards')}</Link>
-                </Button>
+              <div className="flex items-start gap-4">
+                <div className="w-12 h-12 rounded-xl bg-accent/20 flex items-center justify-center flex-shrink-0">
+                  <Sparkles className="w-6 h-6 text-accent" />
+                </div>
+                <div className="flex-1">
+                  <h3 className="font-heading font-bold text-lg mb-1">Uždirbkite kreditus</h3>
+                  <p className="text-sm text-muted-foreground mb-4">
+                    Gaukite 3% kreditų nuo kiekvieno pirkinio ir naudokite juos sekančiam užsakymui.
+                  </p>
+                  <div className="flex gap-2">
+                    <Button asChild size="sm">
+                      <Link to="/account/credits">Sužinoti daugiau</Link>
+                    </Button>
+                    <Button asChild variant="outline" size="sm">
+                      <Link to="/dovanu-kuponai">Dovanų kuponai</Link>
+                    </Button>
+                  </div>
+                </div>
               </div>
             </CardContent>
           </Card>
 
-          {/* Wishlist Card */}
-          <Card className="border-2 border-dashed border-primary/40 bg-gradient-to-br from-rose-50 to-transparent dark:from-rose-950/20">
-            <CardContent className="p-6">
-              <h3 className="font-heading font-semibold text-lg mb-2 flex items-center gap-2">
-                <Heart className="w-5 h-5 text-rose-500" />
-                {t('account.createWishlist')}
-              </h3>
-              <p className="text-sm text-muted-foreground mb-4">
-                {t('account.wishlistDescription')}
-              </p>
-              <Button asChild variant="outline" size="sm">
-                <Link to="/wishlist">
-                  {wishlistCount > 0 
-                    ? `${t('account.viewWishlist')} (${wishlistCount})` 
-                    : t('account.viewWishlist')}
-                </Link>
-              </Button>
-            </CardContent>
-          </Card>
-
-          {/* My Deals */}
+          {/* Deals or Rewards */}
           {offers.length > 0 ? (
-            <Card className="border-2 border-border">
+            <Card>
               <CardContent className="p-6">
-                <h3 className="font-heading font-semibold text-lg mb-4 flex items-center gap-2">
+                <h3 className="font-heading font-bold text-lg mb-4 flex items-center gap-2">
                   <Tag className="w-5 h-5 text-primary" />
-                  {t('account.myDeals')}
+                  Jūsų pasiūlymai
                 </h3>
                 <div className="space-y-3">
                   {offers.slice(0, 2).map((offer) => (
-                    <div key={offer.id} className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
+                    <div key={offer.id} className="flex items-center justify-between p-3 bg-secondary/50 rounded-xl">
                       <div>
-                        <p className="font-medium">{offer.title}</p>
-                        <code className="text-xs bg-background px-2 py-0.5 rounded">{offer.code}</code>
+                        <p className="font-semibold text-sm">{offer.title}</p>
+                        <code className="text-xs bg-card px-2 py-0.5 rounded border border-border font-mono">{offer.code}</code>
                       </div>
-                      <Badge className="bg-primary text-primary-foreground">
+                      <Badge className="bg-accent text-accent-foreground font-bold">
                         {offer.type === 'percent' ? `-${offer.value}%` : `-${formatPrice(offer.value)}`}
                       </Badge>
                     </div>
@@ -213,75 +265,88 @@ export default function Account() {
               </CardContent>
             </Card>
           ) : (
-            <Card className="border-2 border-border bg-gradient-to-br from-amber-50 to-transparent dark:from-amber-950/20">
+            <Card className="bg-gradient-to-br from-accent/5 via-transparent to-transparent">
               <CardContent className="p-6">
-                <h3 className="font-heading font-semibold text-lg mb-2 flex items-center gap-2">
-                  <Star className="w-5 h-5 text-amber-500" />
-                  {t('account.rewards')}
-                </h3>
-                <p className="text-sm text-muted-foreground mb-4">
-                  {t('account.rewardsDescription')}
-                </p>
-                <Button asChild variant="outline" size="sm">
-                  <Link to="/account/credits">{t('account.viewAllRewards')}</Link>
-                </Button>
+                <div className="flex items-start gap-4">
+                  <div className="w-12 h-12 rounded-xl bg-accent/20 flex items-center justify-center flex-shrink-0">
+                    <Star className="w-6 h-6 text-accent" />
+                  </div>
+                  <div>
+                    <h3 className="font-heading font-bold text-lg mb-1">Apdovanojimai</h3>
+                    <p className="text-sm text-muted-foreground mb-3">
+                      Pirkite daugiau ir gaukite specialius pasiūlymus!
+                    </p>
+                    <Button asChild variant="outline" size="sm">
+                      <Link to="/account/credits">Peržiūrėti</Link>
+                    </Button>
+                  </div>
+                </div>
               </CardContent>
             </Card>
           )}
         </div>
 
-        {/* Quick Links */}
-        <div className="grid md:grid-cols-2 gap-6 mt-8">
-          {/* Navigation Links */}
-          <Card className="border-2 border-border">
-            <CardContent className="p-0">
+        {/* Navigation Links */}
+        <div className="grid md:grid-cols-2 gap-5 mt-6">
+          <Card>
+            <CardContent className="p-0 divide-y divide-border">
               <Link 
                 to="/orders" 
-                className="flex items-center justify-between p-4 hover:bg-muted/50 transition-colors border-b border-border"
+                className="flex items-center justify-between p-4 hover:bg-secondary/50 transition-colors"
               >
                 <div className="flex items-center gap-3">
-                  <Package className="w-5 h-5 text-muted-foreground" />
-                  <span className="font-medium">{t('account.orders')}</span>
+                  <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
+                    <Package className="w-5 h-5 text-primary" />
+                  </div>
+                  <span className="font-medium">Mano užsakymai</span>
                 </div>
                 <ChevronRight className="w-5 h-5 text-muted-foreground" />
               </Link>
               <Link 
                 to="/account/credits" 
-                className="flex items-center justify-between p-4 hover:bg-muted/50 transition-colors border-b border-border"
+                className="flex items-center justify-between p-4 hover:bg-secondary/50 transition-colors"
               >
                 <div className="flex items-center gap-3">
-                  <Award className="w-5 h-5 text-muted-foreground" />
-                  <span className="font-medium">{t('account.credits')}</span>
+                  <div className="w-10 h-10 rounded-lg bg-accent/10 flex items-center justify-center">
+                    <Award className="w-5 h-5 text-accent" />
+                  </div>
+                  <span className="font-medium">Kreditai ir apdovanojimai</span>
                 </div>
                 <ChevronRight className="w-5 h-5 text-muted-foreground" />
               </Link>
               <Link 
                 to="/wishlist" 
-                className="flex items-center justify-between p-4 hover:bg-muted/50 transition-colors border-b border-border"
+                className="flex items-center justify-between p-4 hover:bg-secondary/50 transition-colors"
               >
                 <div className="flex items-center gap-3">
-                  <Heart className="w-5 h-5 text-muted-foreground" />
-                  <span className="font-medium">{t('wishlist.title')}</span>
+                  <div className="w-10 h-10 rounded-lg bg-destructive/10 flex items-center justify-center">
+                    <Heart className="w-5 h-5 text-destructive" />
+                  </div>
+                  <span className="font-medium">Norų sąrašas</span>
                 </div>
                 <ChevronRight className="w-5 h-5 text-muted-foreground" />
               </Link>
               <Link 
                 to="/account/my-builders" 
-                className="flex items-center justify-between p-4 hover:bg-muted/50 transition-colors border-b border-border"
+                className="flex items-center justify-between p-4 hover:bg-secondary/50 transition-colors"
               >
                 <div className="flex items-center gap-3">
-                  <Puzzle className="w-5 h-5 text-muted-foreground" />
+                  <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
+                    <Puzzle className="w-5 h-5 text-primary" />
+                  </div>
                   <span className="font-medium">Mano konstruktoriai</span>
                 </div>
                 <ChevronRight className="w-5 h-5 text-muted-foreground" />
               </Link>
               <Link 
                 to="/account/settings" 
-                className="flex items-center justify-between p-4 hover:bg-muted/50 transition-colors"
+                className="flex items-center justify-between p-4 hover:bg-secondary/50 transition-colors"
               >
                 <div className="flex items-center gap-3">
-                  <Settings className="w-5 h-5 text-muted-foreground" />
-                  <span className="font-medium">{t('account.settings')}</span>
+                  <div className="w-10 h-10 rounded-lg bg-muted flex items-center justify-center">
+                    <Settings className="w-5 h-5 text-muted-foreground" />
+                  </div>
+                  <span className="font-medium">Nustatymai</span>
                 </div>
                 <ChevronRight className="w-5 h-5 text-muted-foreground" />
               </Link>
@@ -289,40 +354,40 @@ export default function Account() {
           </Card>
 
           {/* Help Section */}
-          <Card className="border-2 border-border">
+          <Card>
             <CardContent className="p-6">
-              <h3 className="font-heading font-semibold text-lg mb-4 flex items-center gap-2">
+              <h3 className="font-heading font-bold text-lg mb-4 flex items-center gap-2">
                 <HelpCircle className="w-5 h-5" />
-                {t('account.help')}
+                Reikia pagalbos?
               </h3>
               <div className="grid grid-cols-2 gap-3">
                 <Link 
                   to="/pristatymas" 
-                  className="flex items-center gap-2 p-3 rounded-lg bg-muted/50 hover:bg-muted transition-colors text-sm"
+                  className="flex items-center gap-2 p-3 rounded-xl bg-secondary/50 hover:bg-secondary transition-colors text-sm font-medium"
                 >
                   <Truck className="w-4 h-4 text-muted-foreground" />
-                  {t('account.deliveryReturns')}
+                  Pristatymas
                 </Link>
                 <Link 
                   to="/pagalba" 
-                  className="flex items-center gap-2 p-3 rounded-lg bg-muted/50 hover:bg-muted transition-colors text-sm"
+                  className="flex items-center gap-2 p-3 rounded-xl bg-secondary/50 hover:bg-secondary transition-colors text-sm font-medium"
                 >
                   <BookOpen className="w-4 h-4 text-muted-foreground" />
-                  {t('account.faq')}
+                  D.U.K.
                 </Link>
                 <Link 
                   to="/kontaktai" 
-                  className="flex items-center gap-2 p-3 rounded-lg bg-muted/50 hover:bg-muted transition-colors text-sm"
+                  className="flex items-center gap-2 p-3 rounded-xl bg-secondary/50 hover:bg-secondary transition-colors text-sm font-medium"
                 >
                   <MessageSquare className="w-4 h-4 text-muted-foreground" />
-                  {t('account.contactUs')}
+                  Susisiekite
                 </Link>
                 <Link 
                   to="/grazinimai" 
-                  className="flex items-center gap-2 p-3 rounded-lg bg-muted/50 hover:bg-muted transition-colors text-sm"
+                  className="flex items-center gap-2 p-3 rounded-xl bg-secondary/50 hover:bg-secondary transition-colors text-sm font-medium"
                 >
                   <Package className="w-4 h-4 text-muted-foreground" />
-                  {t('account.returns')}
+                  Grąžinimai
                 </Link>
               </div>
             </CardContent>
@@ -331,7 +396,7 @@ export default function Account() {
 
         {/* Logout */}
         <div className="mt-8 flex justify-center">
-          <Button variant="outline" onClick={signOut} className="gap-2">
+          <Button variant="ghost" onClick={signOut} className="gap-2 text-muted-foreground hover:text-destructive hover:bg-destructive/10">
             <LogOut className="w-4 h-4" />
             {t('auth.logout')}
           </Button>
