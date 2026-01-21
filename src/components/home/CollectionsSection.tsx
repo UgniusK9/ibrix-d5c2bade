@@ -1,9 +1,8 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { Loader2, Sparkles, Tag, Cog, Car, Flower2, Puzzle, Gift } from "lucide-react";
+import { Loader2, Sparkles, Tag, Cog, Car, Flower2, Puzzle, Gift, ArrowRight, LucideIcon } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { cn } from "@/lib/utils";
-import { motion } from "framer-motion";
+import { CategoryCard } from "./CategoryCard";
 
 interface Category {
   id: string;
@@ -13,18 +12,22 @@ interface Category {
   image_url: string | null;
 }
 
-// LEGO-style bright colors for categories with glow colors for hover
-const categoryStyles: Record<string, { bg: string; hover: string; icon: React.ElementType; glow: string }> = {
-  varikliai: { bg: "bg-red-500", hover: "hover:bg-red-600", icon: Cog, glow: "rgba(239, 68, 68, 0.5)" },
-  automobiliai: { bg: "bg-blue-500", hover: "hover:bg-blue-600", icon: Car, glow: "rgba(59, 130, 246, 0.5)" },
-  geles: { bg: "bg-pink-500", hover: "hover:bg-pink-600", icon: Flower2, glow: "rgba(236, 72, 153, 0.5)" },
-  konstruktoriai: { bg: "bg-green-500", hover: "hover:bg-green-600", icon: Puzzle, glow: "rgba(34, 197, 94, 0.5)" },
-  visi: { bg: "bg-yellow-400", hover: "hover:bg-yellow-500", icon: Sparkles, glow: "rgba(250, 204, 21, 0.5)" },
-  pasiulymai: { bg: "bg-orange-500", hover: "hover:bg-orange-600", icon: Tag, glow: "rgba(249, 115, 22, 0.5)" },
-  "dovanu-kuponai": { bg: "bg-purple-500", hover: "hover:bg-purple-600", icon: Gift, glow: "rgba(168, 85, 247, 0.5)" },
+// Category configuration with accent colors and icons
+const categoryConfig: Record<string, { icon: LucideIcon; accentColor: string; subtitle?: string }> = {
+  visi: { icon: Sparkles, accentColor: "bg-amber-400", subtitle: "Naujausi produktai" },
+  pasiulymai: { icon: Tag, accentColor: "bg-orange-500", subtitle: "Specialūs pasiūlymai" },
+  varikliai: { icon: Cog, accentColor: "bg-red-500", subtitle: "Mechaniniai modeliai" },
+  automobiliai: { icon: Car, accentColor: "bg-blue-500", subtitle: "Transporto modeliai" },
+  geles: { icon: Flower2, accentColor: "bg-pink-500", subtitle: "Gėlių kolekcija" },
+  konstruktoriai: { icon: Puzzle, accentColor: "bg-green-500", subtitle: "Visi rinkiniai" },
+  "dovanu-kuponai": { icon: Gift, accentColor: "bg-purple-500", subtitle: "Dovanokite džiaugsmą" },
 };
 
-const defaultStyle = { bg: "bg-indigo-500", hover: "hover:bg-indigo-600", icon: Puzzle, glow: "rgba(99, 102, 241, 0.5)" };
+const defaultConfig: { icon: LucideIcon; accentColor: string; subtitle?: string } = { 
+  icon: Puzzle, 
+  accentColor: "bg-primary", 
+  subtitle: undefined 
+};
 
 export function CollectionsSection() {
   const [categories, setCategories] = useState<Category[]>([]);
@@ -53,93 +56,72 @@ export function CollectionsSection() {
 
   if (loading) {
     return (
-      <section className="py-12 bg-background">
-        <div className="container flex items-center justify-center">
-          <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
+      <section className="py-10 md:py-12 bg-background">
+        <div className="container flex items-center justify-center py-8">
+          <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
         </div>
       </section>
     );
   }
 
   // Build category tiles with special ones first
-  const allTiles: Array<{
-    id: string;
-    name: string;
-    slug: string;
-    style: { bg: string; hover: string; icon: React.ElementType; glow: string };
-  }> = [
-    { id: 'all', name: 'Naujienos', slug: 'visi', style: categoryStyles.visi },
-    { id: 'offers', name: 'Pasiūlymai', slug: 'pasiulymai', style: categoryStyles.pasiulymai },
+  const allTiles = [
+    { id: 'all', name: 'Naujienos', slug: 'visi', config: categoryConfig.visi },
+    { id: 'offers', name: 'Pasiūlymai', slug: 'pasiulymai', config: categoryConfig.pasiulymai },
     ...categories.map(c => ({
       id: c.id,
       name: c.name,
       slug: c.slug,
-      style: categoryStyles[c.slug] || defaultStyle,
+      config: categoryConfig[c.slug] || defaultConfig,
     })),
   ];
 
   return (
-    <section className="py-10 md:py-14 bg-background">
+    <section className="py-10 md:py-12 bg-background">
       <div className="container">
-        <h2 className="font-heading text-2xl md:text-3xl font-bold text-center text-foreground mb-8">
-          Naršyk pagal kategoriją
-        </h2>
+        {/* Section header */}
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="font-heading text-xl md:text-2xl font-bold text-foreground">
+            Naršyk pagal kategoriją
+          </h2>
+          <Link
+            to="/produktai/visi"
+            className="hidden sm:flex items-center gap-1.5 text-sm font-medium text-muted-foreground hover:text-primary transition-colors duration-200"
+          >
+            Visos kategorijos
+            <ArrowRight className="h-4 w-4" />
+          </Link>
+        </div>
         
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3 md:gap-4">
-          {allTiles.map((tile, index) => {
-            const IconComponent = tile.style.icon;
+        {/* Category grid */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
+          {allTiles.slice(0, 8).map((tile) => {
             const linkUrl = tile.slug === 'pasiulymai' 
               ? '/produktai/visi?offers=true' 
               : `/produktai/${tile.slug}`;
             
             return (
-              <motion.div
+              <CategoryCard
                 key={tile.id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ 
-                  delay: index * 0.05,
-                  duration: 0.3,
-                  ease: "easeOut"
-                }}
-              >
-                <Link
-                  to={linkUrl}
-                  className="block"
-                >
-                  <motion.div
-                    className={cn(
-                      "relative flex flex-col items-center justify-center p-5 md:p-6 rounded-2xl text-white transition-shadow duration-300",
-                      tile.style.bg
-                    )}
-                    whileHover={{ 
-                      scale: 1.08,
-                      y: -4,
-                      boxShadow: `0 12px 28px -8px ${tile.style.glow}`,
-                      transition: { 
-                        type: "spring", 
-                        stiffness: 400, 
-                        damping: 17 
-                      }
-                    }}
-                    whileTap={{ scale: 0.95 }}
-                  >
-                    <motion.div
-                      whileHover={{ 
-                        rotate: [0, -10, 10, -5, 0],
-                        transition: { duration: 0.5 }
-                      }}
-                    >
-                      <IconComponent className="w-8 h-8 md:w-10 md:h-10 mb-3 opacity-90" strokeWidth={1.5} />
-                    </motion.div>
-                    <span className="font-bold text-sm md:text-base text-center leading-tight">
-                      {tile.name}
-                    </span>
-                  </motion.div>
-                </Link>
-              </motion.div>
+                title={tile.name}
+                subtitle={tile.config.subtitle}
+                icon={tile.config.icon}
+                href={linkUrl}
+                accentColorClass={tile.config.accentColor}
+              />
             );
           })}
+        </div>
+
+        {/* Mobile "View all" link */}
+        <div className="mt-4 sm:hidden">
+          <Link
+            to="/produktai/visi"
+            className="flex items-center justify-center gap-1.5 text-sm font-medium text-muted-foreground hover:text-primary transition-colors duration-200"
+          >
+            Visos kategorijos
+            <ArrowRight className="h-4 w-4" />
+          </Link>
         </div>
       </div>
     </section>
