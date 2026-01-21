@@ -1,120 +1,105 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Sora:wght@400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Sora:wght@400;500;600;700&display=swap');
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-/* IBRIX Design System - LEGO-Inspired Premium Store
-   Clean, bright, friendly, structured with playful accents */
-
 @layer base {
   :root {
-    /* Primary - LEGO Blue (bright, confident) */
-    --primary: 210 100% 45%;
+    /* Original blue/orange palette */
+    --background: 210 40% 98%;
+    --foreground: 222 47% 11%;
+    
+    --card: 0 0% 100%;
+    --card-foreground: 222 47% 11%;
+    
+    --popover: 0 0% 100%;
+    --popover-foreground: 222 47% 11%;
+    
+    /* Deep Blue primary */
+    --primary: 211 100% 44%;
     --primary-foreground: 0 0% 100%;
     
-    /* Accent - LEGO Yellow (playful, energetic) */
-    --accent: 45 100% 51%;
-    --accent-foreground: 0 0% 10%;
+    --secondary: 210 40% 96%;
+    --secondary-foreground: 222 47% 11%;
     
-    /* Background - Clean white with subtle warmth */
-    --background: 0 0% 99%;
-    --foreground: 220 20% 15%;
+    --muted: 210 40% 96%;
+    --muted-foreground: 215 16% 47%;
     
-    /* Card - Pure white with subtle depth */
-    --card: 0 0% 100%;
-    --card-foreground: 220 20% 15%;
+    /* Orange accent */
+    --accent: 24 100% 50%;
+    --accent-foreground: 0 0% 100%;
     
-    /* Popover */
-    --popover: 0 0% 100%;
-    --popover-foreground: 220 20% 15%;
-    
-    /* Secondary - Light gray (soft, supportive) */
-    --secondary: 220 15% 96%;
-    --secondary-foreground: 220 20% 15%;
-    
-    /* Muted - Subtle gray */
-    --muted: 220 15% 95%;
-    --muted-foreground: 220 10% 45%;
-    
-    /* Border - Soft, non-intrusive */
-    --border: 220 15% 90%;
-    --input: 220 15% 90%;
-    --ring: 210 100% 45%;
-    
-    /* Destructive - LEGO Red */
-    --destructive: 4 90% 58%;
+    --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
     
-    /* Success - LEGO Green */
-    --success: 145 65% 42%;
+    --success: 142 76% 36%;
     --success-foreground: 0 0% 100%;
     
-    /* Warning - LEGO Orange */
-    --warning: 28 100% 55%;
-    --warning-foreground: 0 0% 100%;
+    --border: 214 32% 91%;
+    --input: 214 32% 91%;
+    --ring: 211 100% 44%;
     
-    /* Footer - Dark but friendly */
-    --footer: 220 25% 12%;
-    --footer-foreground: 220 15% 92%;
+    --radius: 0.5rem;
     
-    /* Radius - Friendly rounded corners */
-    --radius: 0.75rem;
+    /* Footer */
+    --footer: 222 47% 11%;
+    --footer-foreground: 210 40% 98%;
     
     /* Sidebar */
-    --sidebar-background: 0 0% 99%;
-    --sidebar-foreground: 220 20% 15%;
-    --sidebar-primary: 210 100% 45%;
+    --sidebar-background: 0 0% 100%;
+    --sidebar-foreground: 222 47% 11%;
+    --sidebar-primary: 211 100% 44%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 220 15% 96%;
-    --sidebar-accent-foreground: 220 20% 15%;
-    --sidebar-border: 220 15% 90%;
-    --sidebar-ring: 210 100% 45%;
+    --sidebar-accent: 210 40% 96%;
+    --sidebar-accent-foreground: 222 47% 11%;
+    --sidebar-border: 214 32% 91%;
+    --sidebar-ring: 211 100% 44%;
   }
 
   .dark {
-    --primary: 210 100% 55%;
+    --background: 222 47% 11%;
+    --foreground: 210 40% 98%;
+    
+    --card: 222 47% 14%;
+    --card-foreground: 210 40% 98%;
+    
+    --popover: 222 47% 14%;
+    --popover-foreground: 210 40% 98%;
+    
+    --primary: 211 100% 50%;
     --primary-foreground: 0 0% 100%;
     
-    --accent: 45 100% 51%;
-    --accent-foreground: 0 0% 10%;
+    --secondary: 217 33% 17%;
+    --secondary-foreground: 210 40% 98%;
     
-    --background: 220 20% 8%;
-    --foreground: 220 15% 95%;
+    --muted: 217 33% 17%;
+    --muted-foreground: 215 20% 65%;
     
-    --card: 220 20% 11%;
-    --card-foreground: 220 15% 95%;
+    --accent: 24 100% 50%;
+    --accent-foreground: 0 0% 100%;
     
-    --popover: 220 20% 11%;
-    --popover-foreground: 220 15% 95%;
-    
-    --secondary: 220 15% 15%;
-    --secondary-foreground: 220 15% 95%;
-    
-    --muted: 220 15% 15%;
-    --muted-foreground: 220 10% 55%;
-    
-    --border: 220 15% 18%;
-    --input: 220 15% 18%;
-    --ring: 210 100% 55%;
-    
-    --destructive: 4 70% 50%;
+    --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
     
-    --success: 145 55% 45%;
+    --success: 142 76% 36%;
     --success-foreground: 0 0% 100%;
     
-    --footer: 220 25% 6%;
-    --footer-foreground: 220 15% 92%;
+    --border: 217 33% 17%;
+    --input: 217 33% 17%;
+    --ring: 211 100% 50%;
     
-    --sidebar-background: 220 20% 8%;
-    --sidebar-foreground: 220 15% 95%;
-    --sidebar-primary: 210 100% 55%;
+    --footer: 222 47% 8%;
+    --footer-foreground: 210 40% 98%;
+    
+    --sidebar-background: 222 47% 11%;
+    --sidebar-foreground: 210 40% 98%;
+    --sidebar-primary: 211 100% 50%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 220 15% 15%;
-    --sidebar-accent-foreground: 220 15% 95%;
-    --sidebar-border: 220 15% 18%;
-    --sidebar-ring: 210 100% 55%;
+    --sidebar-accent: 217 33% 17%;
+    --sidebar-accent-foreground: 210 40% 98%;
+    --sidebar-border: 217 33% 17%;
+    --sidebar-ring: 211 100% 50%;
   }
 }
 
