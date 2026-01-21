@@ -73,22 +73,21 @@ Deno.serve(async (req) => {
       return new Response(JSON.stringify({ success: false, error: 'Unauthorized' }), { status: 401, headers: { 'Content-Type': 'application/json', ...corsHeaders } });
     }
 
-    // Create client with user's auth header for getClaims
+    // Create client with user's auth header to get user info
     const supabaseAuth = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_ANON_KEY') ?? '',
       { global: { headers: { Authorization: authHeader } } }
     );
 
-    const token = authHeader.replace('Bearer ', '');
-    const { data: claimsData, error: claimsError } = await supabaseAuth.auth.getClaims(token);
+    const { data: { user: authUser }, error: authError } = await supabaseAuth.auth.getUser();
     
-    if (claimsError || !claimsData?.claims) {
-      console.error('[ADMIN] Auth error:', claimsError);
+    if (authError || !authUser) {
+      console.error('[ADMIN] Auth error:', authError);
       return new Response(JSON.stringify({ success: false, error: 'Unauthorized' }), { status: 401, headers: { 'Content-Type': 'application/json', ...corsHeaders } });
     }
 
-    const userId = claimsData.claims.sub as string;
+    const userId = authUser.id;
     
     // Use service role client for database operations
     const supabase = createClient(
