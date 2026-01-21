@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import { User, Mail, MapPin, Save, Loader2, ArrowLeft, AlertCircle, CheckCircle2, Lock, Eye, EyeOff, Trash2, Download, Shield, AtSign, Globe } from 'lucide-react';
+import { User, Mail, MapPin, Save, Loader2, ArrowLeft, AlertCircle, CheckCircle2, Lock, Eye, EyeOff, Trash2, Download, Shield, AtSign, Globe, Camera, X } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { PageLayout } from '@/components/layout/PageLayout';
 import { Button } from '@/components/ui/button';
@@ -9,6 +9,7 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -31,6 +32,7 @@ interface ProfileData {
   country: string | null;
   username: string;
   collection_public: boolean;
+  avatar_url: string | null;
 }
 
 interface AddressData {
@@ -68,7 +70,10 @@ export default function Settings() {
     country: null,
     username: '',
     collection_public: false,
+    avatar_url: null,
   });
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   
   const [address, setAddress] = useState<AddressData>({
     street: '',
@@ -84,7 +89,7 @@ export default function Settings() {
       try {
         const { data, error } = await supabase
           .from('users')
-          .select('first_name, last_name, email, country, username, collection_public')
+          .select('first_name, last_name, email, country, username, collection_public, avatar_url')
           .eq('id', user.id)
           .single();
         
@@ -98,6 +103,7 @@ export default function Settings() {
             country: data.country,
             username: data.username || '',
             collection_public: data.collection_public || false,
+            avatar_url: data.avatar_url || null,
           });
           setNewEmail(data.email || '');
           setOriginalUsername(data.username || '');
@@ -247,6 +253,96 @@ export default function Settings() {
     }
   };
 
+  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !user) return;
+
+    // Validate file type and size
+    const validTypes = ['image/jpeg', 'image/png', 'image/webp'];
+    if (!validTypes.includes(file.type)) {
+      toast.error(t('settings.invalidImageType'));
+      return;
+    }
+    if (file.size > 2 * 1024 * 1024) {
+      toast.error(t('settings.imageTooLarge'));
+      return;
+    }
+
+    setUploadingAvatar(true);
+    try {
+      // Delete old avatar if exists
+      if (profile.avatar_url) {
+        const oldPath = profile.avatar_url.split('/avatars/')[1];
+        if (oldPath) {
+          await supabase.storage.from('avatars').remove([oldPath]);
+        }
+      }
+
+      // Upload new avatar
+      const fileExt = file.name.split('.').pop();
+      const filePath = `${user.id}/avatar.${fileExt}`;
+      
+      const { error: uploadError } = await supabase.storage
+        .from('avatars')
+        .upload(filePath, file, { upsert: true });
+
+      if (uploadError) throw uploadError;
+
+      // Get public URL
+      const { data: { publicUrl } } = supabase.storage
+        .from('avatars')
+        .getPublicUrl(filePath);
+
+      // Update user profile
+      const { error: updateError } = await supabase
+        .from('users')
+        .update({ avatar_url: publicUrl })
+        .eq('id', user.id);
+
+      if (updateError) throw updateError;
+
+      setProfile({ ...profile, avatar_url: publicUrl });
+      toast.success(t('settings.avatarUpdated'));
+    } catch (error) {
+      console.error('Error uploading avatar:', error);
+      toast.error(t('common.error'));
+    } finally {
+      setUploadingAvatar(false);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    }
+  };
+
+  const handleRemoveAvatar = async () => {
+    if (!user || !profile.avatar_url) return;
+
+    setUploadingAvatar(true);
+    try {
+      // Delete from storage
+      const oldPath = profile.avatar_url.split('/avatars/')[1];
+      if (oldPath) {
+        await supabase.storage.from('avatars').remove([oldPath]);
+      }
+
+      // Update user profile
+      const { error } = await supabase
+        .from('users')
+        .update({ avatar_url: null })
+        .eq('id', user.id);
+
+      if (error) throw error;
+
+      setProfile({ ...profile, avatar_url: null });
+      toast.success(t('settings.avatarRemoved'));
+    } catch (error) {
+      console.error('Error removing avatar:', error);
+      toast.error(t('common.error'));
+    } finally {
+      setUploadingAvatar(false);
+    }
+  };
+
   if (loading) {
     return (
       <PageLayout>
@@ -272,6 +368,67 @@ export default function Settings() {
         <p className="text-muted-foreground mb-8">{t('settings.subtitle')}</p>
 
         <div className="space-y-6">
+          {/* Avatar Card */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Camera className="w-5 h-5 text-primary" />
+                {t('settings.avatar')}
+              </CardTitle>
+              <CardDescription>{t('settings.avatarDesc')}</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-center gap-6">
+                <div className="relative">
+                  <Avatar className="h-20 w-20 border-2 border-border">
+                    {profile.avatar_url ? (
+                      <AvatarImage src={profile.avatar_url} alt="Avatar" className="object-cover" />
+                    ) : null}
+                    <AvatarFallback className="bg-muted text-muted-foreground">
+                      <User className="h-8 w-8" />
+                    </AvatarFallback>
+                  </Avatar>
+                  {uploadingAvatar && (
+                    <div className="absolute inset-0 flex items-center justify-center bg-background/80 rounded-full">
+                      <Loader2 className="h-6 w-6 animate-spin text-primary" />
+                    </div>
+                  )}
+                </div>
+                <div className="flex flex-col gap-2">
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/png,image/jpeg,image/webp"
+                    className="hidden"
+                    onChange={handleAvatarUpload}
+                  />
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={uploadingAvatar}
+                  >
+                    <Camera className="w-4 h-4 mr-2" />
+                    {profile.avatar_url ? t('settings.changeAvatar') : t('settings.uploadAvatar')}
+                  </Button>
+                  {profile.avatar_url && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={handleRemoveAvatar}
+                      disabled={uploadingAvatar}
+                      className="text-destructive hover:text-destructive"
+                    >
+                      <X className="w-4 h-4 mr-2" />
+                      {t('settings.removeAvatar')}
+                    </Button>
+                  )}
+                  <p className="text-xs text-muted-foreground">{t('settings.avatarHint')}</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">

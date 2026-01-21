@@ -16,7 +16,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useAuth } from '@/contexts/AuthContext';
 import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
@@ -24,6 +24,8 @@ import { supabase } from '@/integrations/supabase/client';
 interface UserData {
   first_name: string | null;
   last_name: string | null;
+  username: string | null;
+  avatar_url: string | null;
 }
 
 export function UserProfileDropdown() {
@@ -38,7 +40,7 @@ export function UserProfileDropdown() {
       
       const { data } = await supabase
         .from('users')
-        .select('first_name, last_name')
+        .select('first_name, last_name, username, avatar_url')
         .eq('id', user.id)
         .maybeSingle();
       
@@ -55,17 +57,22 @@ export function UserProfileDropdown() {
     navigate('/auth');
   };
 
-  const getInitials = () => {
+  // Header display: username if set, otherwise name
+  const getHeaderDisplayName = () => {
+    if (userData?.username) {
+      return userData.username;
+    }
     if (userData?.first_name && userData?.last_name) {
-      return `${userData.first_name[0]}${userData.last_name[0]}`.toUpperCase();
+      return `${userData.first_name} ${userData.last_name}`;
     }
-    if (user?.email) {
-      return user.email[0].toUpperCase();
+    if (userData?.first_name) {
+      return userData.first_name;
     }
-    return 'U';
+    return user?.email?.split('@')[0] || t('header.account');
   };
 
-  const getDisplayName = () => {
+  // Dropdown display: always show full name
+  const getFullName = () => {
     if (userData?.first_name && userData?.last_name) {
       return `${userData.first_name} ${userData.last_name}`;
     }
@@ -82,20 +89,23 @@ export function UserProfileDropdown() {
       <DropdownMenuTrigger asChild>
         <button className="flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-muted transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary">
           <Avatar className="h-8 w-8 border-2 border-primary/20">
-            <AvatarFallback className="bg-primary/10 text-primary font-semibold text-sm">
-              {getInitials()}
+            {userData?.avatar_url ? (
+              <AvatarImage src={userData.avatar_url} alt="Avatar" className="object-cover" />
+            ) : null}
+            <AvatarFallback className="bg-primary/10 text-primary">
+              <User className="h-4 w-4" />
             </AvatarFallback>
           </Avatar>
           <span className="hidden md:block text-sm font-medium max-w-[120px] truncate">
-            {getDisplayName()}
+            {getHeaderDisplayName()}
           </span>
           <ChevronDown className="h-4 w-4 text-muted-foreground hidden md:block" />
         </button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-56 bg-popover border border-border z-50">
-        {/* User info header */}
+        {/* User info header - always shows full name + email */}
         <div className="px-3 py-2 border-b border-border">
-          <p className="font-medium text-sm truncate">{getDisplayName()}</p>
+          <p className="font-medium text-sm truncate">{getFullName()}</p>
           <p className="text-xs text-muted-foreground truncate">{user.email}</p>
         </div>
 
