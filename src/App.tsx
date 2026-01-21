@@ -7,6 +7,7 @@ import { HelmetProvider } from "react-helmet-async";
 import { CookieConsentProvider } from "@/components/cookies/CookieConsentProvider";
 import { PageViewTracker } from "@/components/analytics/PageViewTracker";
 import { AuthProvider } from "@/contexts/AuthContext";
+import { ThemeProvider } from "@/components/theme/ThemeProvider";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { CartDrawer } from "@/components/cart/CartDrawer";
 import { AddToCartModal } from "@/components/cart/AddToCartModal";
@@ -74,15 +75,16 @@ const queryClient = new QueryClient();
 
 const App = () => (
   <HelmetProvider>
-    <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <Toaster />
-        <Sonner position="top-center" />
-        <BrowserRouter>
-          <AuthProvider>
-            <CookieConsentProvider>
-              <PageViewTracker />
-              <CartComponents />
+    <ThemeProvider>
+      <QueryClientProvider client={queryClient}>
+        <TooltipProvider>
+          <Toaster />
+          <Sonner position="top-center" />
+          <BrowserRouter>
+            <AuthProvider>
+              <CookieConsentProvider>
+                <PageViewTracker />
+                <CartComponents />
               <Routes>
                 {/* Public routes */}
                 <Route path="/" element={<Index />} />
@@ -181,6 +183,7 @@ const App = () => (
         </BrowserRouter>
       </TooltipProvider>
     </QueryClientProvider>
+    </ThemeProvider>
   </HelmetProvider>
 );
 
