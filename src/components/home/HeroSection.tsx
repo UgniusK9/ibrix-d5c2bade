@@ -13,9 +13,9 @@ export function HeroSection() {
 
   return (
     <section className="relative min-h-[80vh] lg:min-h-[85vh] flex items-center overflow-hidden gradient-hero">
-      {/* Background overlay for depth */}
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_30%_20%,hsl(210_100%_55%/0.3)_0%,transparent_50%)]" />
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_80%_80%,hsl(220_40%_20%/0.5)_0%,transparent_60%)]" />
+      {/* Blueprint grid + soft vignette (like previous version) */}
+      <div className="absolute inset-0 pattern-hero-grid opacity-[0.12]" />
+      <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-[hsl(220_40%_10%/0.45)]" />
 
       <div className="container relative z-10">
         <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
