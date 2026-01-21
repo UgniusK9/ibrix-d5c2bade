@@ -1654,6 +1654,7 @@ export type Database = {
       }
       users: {
         Row: {
+          avatar_url: string | null
           collection_public: boolean
           country: string | null
           created_at: string
@@ -1673,6 +1674,7 @@ export type Database = {
           username_lower: string | null
         }
         Insert: {
+          avatar_url?: string | null
           collection_public?: boolean
           country?: string | null
           created_at?: string
@@ -1692,6 +1694,7 @@ export type Database = {
           username_lower?: string | null
         }
         Update: {
+          avatar_url?: string | null
           collection_public?: boolean
           country?: string | null
           created_at?: string

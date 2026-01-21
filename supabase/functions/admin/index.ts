@@ -10,15 +10,24 @@ const ALLOWED_ORIGINS = [
   'http://localhost:3000',
 ];
 
+function isAllowedOrigin(origin: string): boolean {
+  if (ALLOWED_ORIGINS.includes(origin)) return true;
+  // Allow lovable.app preview URLs
+  if (origin.endsWith('.lovable.app')) return true;
+  return false;
+}
+
 function getCorsHeaders(req: Request) {
   const origin = req.headers.get('origin') || '';
-  const allowedOrigin = ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0];
+  const allowedOrigin = isAllowedOrigin(origin) ? origin : ALLOWED_ORIGINS[0];
   return {
     'Access-Control-Allow-Origin': allowedOrigin,
     'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
     'Access-Control-Allow-Methods': 'POST, OPTIONS',
   };
 }
+
+// getCorsHeaders moved above
 
 // Validation schemas
 const adminRequestSchema = z.discriminatedUnion('action', [

@@ -269,6 +269,16 @@ export const lt = {
     privacyDesc: 'Valdykite savo kolekcijos matomumą',
     collectionPublic: 'Rodyti mano kolekciją viešai',
     collectionPublicDesc: 'Kiti nariai galės matyti jūsų konstruktorių kolekciją ieškodami pagal slapyvardį.',
+    avatar: 'Nuotrauka',
+    avatarDesc: 'Įkelkite savo profilio nuotrauką',
+    uploadAvatar: 'Įkelti nuotrauką',
+    changeAvatar: 'Keisti nuotrauką',
+    removeAvatar: 'Pašalinti nuotrauką',
+    avatarHint: 'PNG, JPG arba WebP. Maks. 2 MB.',
+    avatarUpdated: 'Nuotrauka atnaujinta',
+    avatarRemoved: 'Nuotrauka pašalinta',
+    invalidImageType: 'Netinkamas nuotraukos formatas. Naudokite PNG, JPG arba WebP.',
+    imageTooLarge: 'Nuotrauka per didelė. Maksimalus dydis 2 MB.',
   },
   
   // Orders page

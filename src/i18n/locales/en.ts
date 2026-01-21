@@ -267,6 +267,16 @@ export const en = {
     privacyDesc: 'Manage your collection visibility',
     collectionPublic: 'Show my collection publicly',
     collectionPublicDesc: 'Other members can view your constructor collection by searching your username.',
+    avatar: 'Profile Photo',
+    avatarDesc: 'Upload your profile picture',
+    uploadAvatar: 'Upload photo',
+    changeAvatar: 'Change photo',
+    removeAvatar: 'Remove photo',
+    avatarHint: 'PNG, JPG or WebP. Max 2 MB.',
+    avatarUpdated: 'Photo updated',
+    avatarRemoved: 'Photo removed',
+    invalidImageType: 'Invalid image format. Use PNG, JPG or WebP.',
+    imageTooLarge: 'Image too large. Maximum size is 2 MB.',
   },
   
   // Orders page
