@@ -55,22 +55,29 @@ export function ProductsSection() {
   }
 
   return (
-    <section className="py-12 md:py-16 bg-secondary/50">
+    <section className="py-10 md:py-14 bg-secondary/30 dark:bg-secondary/10">
       <div className="container">
+        {/* Section divider */}
+        <div className="w-full h-px bg-border mb-8" />
+        
         {/* Header */}
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8">
+        <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3 mb-8">
           <div>
-            <h2 className="font-heading text-2xl md:text-3xl font-bold text-foreground">
+            <h2 className="font-heading text-xl md:text-2xl font-bold text-foreground">
               Populiarūs konstruktoriai
             </h2>
-            <p className="text-muted-foreground mt-1">
+            <p className="text-sm text-muted-foreground mt-1">
               Atrask mūsų geriausius modelius
             </p>
           </div>
           
-          <Button asChild variant="outline" className="w-fit">
+          <Button 
+            asChild 
+            variant="outline" 
+            className="w-fit h-10 px-5 text-sm font-medium border-primary/30 hover:bg-primary hover:text-primary-foreground hover:border-primary transition-all duration-200"
+          >
             <Link to="/produktai/visi">
-              Peržiūrėti visus konstruktorius
+              Peržiūrėti visus
               <ArrowRight className="ml-2 h-4 w-4" />
             </Link>
           </Button>
