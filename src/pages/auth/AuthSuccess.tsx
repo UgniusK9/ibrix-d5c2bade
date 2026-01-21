@@ -107,44 +107,44 @@ export default function AuthSuccess() {
   };
 
   return (
-    <div className="min-h-screen bg-[#F5F7FA] flex flex-col">
+    <div className="min-h-screen bg-background flex flex-col">
       {/* Header */}
-      <div className="bg-[#FFD500] h-16 flex items-center justify-between px-4 md:px-8">
+      <div className="bg-accent h-16 flex items-center justify-between px-4 md:px-8">
         <Link to="/" className="flex items-center gap-2">
           <img src={logo} alt="IBRIX" className="h-8 w-auto" />
-          <span className="font-heading font-bold text-xl text-[#0F172A]">IBRIX</span>
+          <span className="font-heading font-bold text-xl text-accent-foreground">IBRIX</span>
         </Link>
         <Link to="/" className="p-2 hover:bg-black/10 rounded-full transition-colors">
-          <X className="w-6 h-6 text-[#0F172A]" />
+          <X className="w-6 h-6 text-accent-foreground" />
         </Link>
       </div>
 
       {/* Main content */}
       <div className="flex-1 flex items-center justify-center p-4 py-8">
-        <div className="w-full max-w-[560px] bg-white rounded-2xl shadow-lg p-6 md:p-8 animate-fade-in-up">
+        <div className="w-full max-w-[560px] bg-card rounded-2xl shadow-lg p-6 md:p-8 animate-fade-in-up">
           <div className="text-center mb-8">
-            <div className="w-20 h-20 rounded-full bg-[#16A34A]/10 flex items-center justify-center mx-auto mb-4">
-              <CheckCircle2 className="w-10 h-10 text-[#16A34A]" />
+            <div className="w-20 h-20 rounded-full bg-success/10 flex items-center justify-center mx-auto mb-4">
+              <CheckCircle2 className="w-10 h-10 text-success" />
             </div>
 
-            <h1 className="font-heading text-2xl md:text-3xl font-bold text-[#0F172A] mb-2">
+            <h1 className="font-heading text-2xl md:text-3xl font-bold text-foreground mb-2">
               {t('authFlow.successTitle')}
             </h1>
-            <p className="text-[#64748B]">
+            <p className="text-muted-foreground">
               {t('authFlow.successSubtitle')}
             </p>
           </div>
 
           {/* Benefits card */}
-          <div className="bg-[#F5F7FA] rounded-xl p-5 mb-6">
-            <h3 className="text-sm font-semibold text-[#64748B] uppercase tracking-wider mb-4">
+          <div className="bg-muted rounded-xl p-5 mb-6">
+            <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-4">
               {t('authFlow.memberBenefits')}
             </h3>
             <div className="space-y-3">
               {benefits.map((benefit, i) => (
-                <div key={i} className="flex items-center gap-3 text-[#0F172A]">
-                  <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center flex-shrink-0 shadow-sm">
-                    <benefit.icon className="w-5 h-5 text-[#0B6BD3]" />
+                <div key={i} className="flex items-center gap-3 text-foreground">
+                  <div className="w-10 h-10 rounded-full bg-card flex items-center justify-center flex-shrink-0 shadow-sm">
+                    <benefit.icon className="w-5 h-5 text-primary" />
                   </div>
                   <span className="text-sm">{benefit.text}</span>
                 </div>
@@ -154,7 +154,7 @@ export default function AuthSuccess() {
 
           <Button
             onClick={handleContinue}
-            className="w-full h-12 rounded-full bg-[#0B6BD3] hover:bg-[#095BB3] text-white font-semibold text-base"
+            className="w-full h-12 rounded-full bg-primary hover:bg-primary/90 text-primary-foreground font-semibold text-base"
           >
             {t('common.continue')}
           </Button>

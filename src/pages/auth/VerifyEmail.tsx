@@ -145,44 +145,44 @@ export default function VerifyEmail() {
   };
 
   return (
-    <div className="min-h-screen bg-[#F5F7FA] flex flex-col">
+    <div className="min-h-screen bg-background flex flex-col">
       {/* Header */}
-      <div className="bg-[#FFD500] h-16 flex items-center justify-between px-4 md:px-8">
+      <div className="bg-accent h-16 flex items-center justify-between px-4 md:px-8">
         <Link to="/" className="flex items-center gap-2">
           <img src={logo} alt="IBRIX" className="h-8 w-auto" />
-          <span className="font-heading font-bold text-xl text-[#0F172A]">IBRIX</span>
+          <span className="font-heading font-bold text-xl text-accent-foreground">IBRIX</span>
         </Link>
         <Link to="/" className="p-2 hover:bg-black/10 rounded-full transition-colors">
-          <X className="w-6 h-6 text-[#0F172A]" />
+          <X className="w-6 h-6 text-accent-foreground" />
         </Link>
       </div>
 
       {/* Main content */}
       <div className="flex-1 flex items-center justify-center p-4 py-8">
-        <div className="w-full max-w-[560px] bg-white rounded-2xl shadow-lg p-6 md:p-8 animate-fade-in-up">
+        <div className="w-full max-w-[560px] bg-card rounded-2xl shadow-lg p-6 md:p-8 animate-fade-in-up">
           {/* Back button */}
           <Link 
             to="/auth/signup/step-2" 
-            className="inline-flex items-center gap-2 text-[#64748B] hover:text-[#0F172A] text-sm mb-6 transition-colors"
+            className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground text-sm mb-6 transition-colors"
           >
             <ArrowLeft className="w-4 h-4" />
             {t('common.back')}
           </Link>
 
           <div className="text-center">
-            <div className="w-16 h-16 rounded-full bg-[#0B6BD3]/10 flex items-center justify-center mx-auto mb-4">
-              <svg className="w-8 h-8 text-[#0B6BD3]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-4">
+              <svg className="w-8 h-8 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
               </svg>
             </div>
 
-            <h1 className="font-heading text-2xl md:text-3xl font-bold text-[#0F172A] mb-2">
+            <h1 className="font-heading text-2xl md:text-3xl font-bold text-foreground mb-2">
               Suaktyvinkite savo paskyrą
             </h1>
-            <p className="text-[#64748B] mb-2">
+            <p className="text-muted-foreground mb-2">
               Patvirtinimo kodas išsiųstas į:
             </p>
-            <p className="font-semibold text-[#0F172A] mb-6">{email}</p>
+            <p className="font-semibold text-foreground mb-6">{email}</p>
 
             {/* Code inputs */}
             <div className="flex justify-center gap-2 mb-4">
@@ -198,23 +198,23 @@ export default function VerifyEmail() {
                   onPaste={handlePaste}
                   maxLength={1}
                   className={`w-12 h-14 text-center text-xl font-semibold rounded-xl border-2 ${
-                    error ? 'border-[#DC2626]' : 'border-[#E2E8F0]'
-                  } focus:border-[#0B6BD3] focus:ring-[#0B6BD3]`}
+                    error ? 'border-destructive' : 'border-border'
+                  } focus:border-primary focus:ring-primary`}
                   disabled={isLoading}
                 />
               ))}
             </div>
 
-            {error && <p className="text-[#DC2626] text-sm mb-4">{error}</p>}
+            {error && <p className="text-destructive text-sm mb-4">{error}</p>}
 
-            <p className="text-[#64748B] text-sm mb-6">
+            <p className="text-muted-foreground text-sm mb-6">
               Jūsų kodas galioja <strong>24 valandas</strong>
             </p>
 
             <Button
               onClick={() => handleVerify(code.join(''))}
               disabled={isLoading || code.some(d => !d)}
-              className="w-full h-12 rounded-full bg-[#0B6BD3] hover:bg-[#095BB3] text-white font-semibold text-base mb-4"
+              className="w-full h-12 rounded-full bg-primary hover:bg-primary/90 text-primary-foreground font-semibold text-base mb-4"
             >
               {isLoading ? (
                 <>
@@ -229,7 +229,7 @@ export default function VerifyEmail() {
             <button
               onClick={handleResend}
               disabled={resendCooldown > 0}
-              className="text-sm text-[#0B6BD3] hover:text-[#095BB3] disabled:text-[#64748B] disabled:cursor-not-allowed"
+              className="text-sm text-primary hover:text-primary/80 disabled:text-muted-foreground disabled:cursor-not-allowed"
             >
               {resendCooldown > 0
                 ? `Siųsti kodą iš naujo (${resendCooldown}s)`
