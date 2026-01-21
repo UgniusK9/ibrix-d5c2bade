@@ -97,29 +97,29 @@ export default function AuthLogin() {
 
   if (magicLinkSent) {
     return (
-      <div className="min-h-screen bg-[#F5F7FA] flex flex-col">
-        <div className="bg-[#FFD500] h-16 flex items-center justify-between px-4 md:px-8">
+      <div className="min-h-screen bg-background flex flex-col">
+        <div className="bg-accent h-16 flex items-center justify-between px-4 md:px-8">
           <Link to="/" className="flex items-center gap-2">
             <img src={logo} alt="IBRIX" className="h-8 w-auto" />
-            <span className="font-heading font-bold text-xl text-[#0F172A]">IBRIX</span>
+            <span className="font-heading font-bold text-xl text-accent-foreground">IBRIX</span>
           </Link>
           <Link to="/" className="p-2 hover:bg-black/10 rounded-full transition-colors">
-            <X className="w-6 h-6 text-[#0F172A]" />
+            <X className="w-6 h-6 text-accent-foreground" />
           </Link>
         </div>
 
         <div className="flex-1 flex items-center justify-center p-4">
-          <div className="w-full max-w-[560px] bg-white rounded-2xl shadow-lg p-6 md:p-8 text-center animate-fade-in-up">
-            <div className="w-16 h-16 rounded-full bg-[#16A34A]/10 flex items-center justify-center mx-auto mb-4">
-              <svg className="w-8 h-8 text-[#16A34A]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <div className="w-full max-w-[560px] bg-card rounded-2xl shadow-lg p-6 md:p-8 text-center animate-fade-in-up">
+            <div className="w-16 h-16 rounded-full bg-success/10 flex items-center justify-center mx-auto mb-4">
+              <svg className="w-8 h-8 text-success" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
               </svg>
             </div>
-            <h1 className="font-heading text-2xl font-bold text-[#0F172A] mb-2">
+            <h1 className="font-heading text-2xl font-bold text-foreground mb-2">
               {t('auth.magicLinkSent')}
             </h1>
-            <p className="text-[#64748B] mb-6">{t('auth.checkEmail')}</p>
-            <p className="text-sm text-[#64748B]">{t('auth.checkSpam')}</p>
+            <p className="text-muted-foreground mb-6">{t('auth.checkEmail')}</p>
+            <p className="text-sm text-muted-foreground">{t('auth.checkSpam')}</p>
             <Button
               variant="outline"
               onClick={() => setMagicLinkSent(false)}
@@ -134,34 +134,34 @@ export default function AuthLogin() {
   }
 
   return (
-    <div className="min-h-screen bg-[#F5F7FA] flex flex-col">
+    <div className="min-h-screen bg-background flex flex-col">
       {/* Header */}
-      <div className="bg-[#FFD500] h-16 flex items-center justify-between px-4 md:px-8">
+      <div className="bg-accent h-16 flex items-center justify-between px-4 md:px-8">
         <Link to="/" className="flex items-center gap-2">
           <img src={logo} alt="IBRIX" className="h-8 w-auto" />
-          <span className="font-heading font-bold text-xl text-[#0F172A]">IBRIX</span>
+          <span className="font-heading font-bold text-xl text-accent-foreground">IBRIX</span>
         </Link>
         <Link to="/" className="p-2 hover:bg-black/10 rounded-full transition-colors">
-          <X className="w-6 h-6 text-[#0F172A]" />
+          <X className="w-6 h-6 text-accent-foreground" />
         </Link>
       </div>
 
       {/* Main content */}
       <div className="flex-1 flex items-center justify-center p-4 py-8">
-        <div className="w-full max-w-[560px] bg-white rounded-2xl shadow-lg p-6 md:p-8 animate-fade-in-up">
+        <div className="w-full max-w-[560px] bg-card rounded-2xl shadow-lg p-6 md:p-8 animate-fade-in-up">
           {/* Back button */}
           <Link 
             to="/auth" 
-            className="inline-flex items-center gap-2 text-[#64748B] hover:text-[#0F172A] text-sm mb-6 transition-colors"
+            className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground text-sm mb-6 transition-colors"
           >
             <ArrowLeft className="w-4 h-4" />
             {t('common.back')}
           </Link>
 
-          <h1 className="font-heading text-2xl md:text-3xl font-bold text-[#0F172A] text-center mb-2">
+          <h1 className="font-heading text-2xl md:text-3xl font-bold text-foreground text-center mb-2">
             {t('auth.login')}
           </h1>
-          <p className="text-[#64748B] text-center mb-6">
+          <p className="text-muted-foreground text-center mb-6">
             {t('authFlow.loginSubtitle')}
           </p>
 
@@ -171,8 +171,8 @@ export default function AuthLogin() {
               onClick={() => setMode('password')}
               className={`flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-colors ${
                 mode === 'password'
-                  ? 'bg-[#0B6BD3] text-white'
-                  : 'bg-[#F5F7FA] text-[#64748B] hover:text-[#0F172A]'
+                  ? 'bg-primary text-primary-foreground'
+                  : 'bg-muted text-muted-foreground hover:text-foreground'
               }`}
             >
               {t('auth.loginWithPassword')}
@@ -181,8 +181,8 @@ export default function AuthLogin() {
               onClick={() => setMode('magic')}
               className={`flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-colors ${
                 mode === 'magic'
-                  ? 'bg-[#0B6BD3] text-white'
-                  : 'bg-[#F5F7FA] text-[#64748B] hover:text-[#0F172A]'
+                  ? 'bg-primary text-primary-foreground'
+                  : 'bg-muted text-muted-foreground hover:text-foreground'
               }`}
             >
               {t('auth.getMagicLink')}
@@ -191,13 +191,13 @@ export default function AuthLogin() {
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <Label htmlFor="email" className="text-[#0F172A]">{t('auth.email')}</Label>
+              <Label htmlFor="email" className="text-foreground">{t('auth.email')}</Label>
               <Input
                 id="email"
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="h-12 rounded-xl border-[#E2E8F0] focus:ring-[#0B6BD3] focus:border-[#0B6BD3]"
+                className="h-12 rounded-xl"
                 placeholder="jonas@pavyzdys.lt"
               />
             </div>
@@ -206,10 +206,10 @@ export default function AuthLogin() {
               <>
                 <div>
                   <div className="flex items-center justify-between mb-1">
-                    <Label htmlFor="password" className="text-[#0F172A]">{t('auth.password')}</Label>
+                    <Label htmlFor="password" className="text-foreground">{t('auth.password')}</Label>
                     <Link 
                       to="/auth/reset-password" 
-                      className="text-sm text-[#0B6BD3] hover:text-[#095BB3]"
+                      className="text-sm text-primary hover:text-primary/80"
                     >
                       {t('auth.forgotPassword')}
                     </Link>
@@ -220,12 +220,12 @@ export default function AuthLogin() {
                       type={showPassword ? 'text' : 'password'}
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
-                      className="h-12 rounded-xl border-[#E2E8F0] focus:ring-[#0B6BD3] focus:border-[#0B6BD3] pr-12"
+                      className="h-12 rounded-xl pr-12"
                     />
                     <button
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-[#64748B] hover:text-[#0F172A]"
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
                     >
                       {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                     </button>
@@ -254,7 +254,7 @@ export default function AuthLogin() {
             <Button
               type="submit"
               disabled={isLoading || (mode === 'password' && !captchaToken)}
-              className="w-full h-12 rounded-full bg-[#0B6BD3] hover:bg-[#095BB3] text-white font-semibold text-base"
+              className="w-full h-12 rounded-full bg-primary hover:bg-primary/90 text-primary-foreground font-semibold text-base"
             >
               {isLoading ? (
                 <>
@@ -269,9 +269,9 @@ export default function AuthLogin() {
             </Button>
           </form>
 
-          <p className="text-center text-[#64748B] text-sm mt-6">
+          <p className="text-center text-muted-foreground text-sm mt-6">
             {t('auth.dontHaveAccount')}{' '}
-            <Link to="/auth/signup/step-1" className="text-[#0B6BD3] hover:text-[#095BB3] font-medium">
+            <Link to="/auth/signup/step-1" className="text-primary hover:text-primary/80 font-medium">
               {t('auth.register')}
             </Link>
           </p>

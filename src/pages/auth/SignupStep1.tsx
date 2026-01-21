@@ -97,25 +97,25 @@ export default function SignupStep1() {
   };
 
   return (
-    <div className="min-h-screen bg-[#F5F7FA] flex flex-col">
+    <div className="min-h-screen bg-background flex flex-col">
       {/* Header */}
-      <div className="bg-[#FFD500] h-16 flex items-center justify-between px-4 md:px-8">
+      <div className="bg-accent h-16 flex items-center justify-between px-4 md:px-8">
         <Link to="/" className="flex items-center gap-2">
           <img src={logo} alt="IBRIX" className="h-8 w-auto" />
-          <span className="font-heading font-bold text-xl text-[#0F172A]">IBRIX</span>
+          <span className="font-heading font-bold text-xl text-accent-foreground">IBRIX</span>
         </Link>
         <Link to="/" className="p-2 hover:bg-black/10 rounded-full transition-colors">
-          <X className="w-6 h-6 text-[#0F172A]" />
+          <X className="w-6 h-6 text-accent-foreground" />
         </Link>
       </div>
 
       {/* Main content */}
       <div className="flex-1 flex items-center justify-center p-4 py-8">
-        <div className="w-full max-w-[560px] bg-white rounded-2xl shadow-lg p-6 md:p-8 animate-fade-in-up">
+        <div className="w-full max-w-[560px] bg-card rounded-2xl shadow-lg p-6 md:p-8 animate-fade-in-up">
           {/* Back button */}
           <Link 
             to="/auth" 
-            className="inline-flex items-center gap-2 text-[#64748B] hover:text-[#0F172A] text-sm mb-6 transition-colors"
+            className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground text-sm mb-6 transition-colors"
           >
             <ArrowLeft className="w-4 h-4" />
             {t('common.back')}
@@ -123,24 +123,24 @@ export default function SignupStep1() {
 
           {/* Progress indicator */}
           <div className="flex items-center gap-2 mb-6">
-            <div className="h-1 flex-1 rounded-full bg-[#0B6BD3]" />
-            <div className="h-1 flex-1 rounded-full bg-[#E2E8F0]" />
+            <div className="h-1 flex-1 rounded-full bg-primary" />
+            <div className="h-1 flex-1 rounded-full bg-muted" />
           </div>
 
-          <p className="text-sm text-[#64748B] mb-2">{t('common.step')} 1 / 2</p>
-          <h1 className="font-heading text-2xl md:text-3xl font-bold text-[#0F172A] mb-2">
+          <p className="text-sm text-muted-foreground mb-2">{t('common.step')} 1 / 2</p>
+          <h1 className="font-heading text-2xl md:text-3xl font-bold text-foreground mb-2">
             {t('authFlow.step1Title')}
           </h1>
-          <p className="text-[#64748B] mb-8">
+          <p className="text-muted-foreground mb-8">
             {t('authFlow.step1Subtitle')}
           </p>
 
           <div className="space-y-6">
             {/* Country select */}
             <div>
-              <Label className="text-[#0F172A]">{t('authFlow.country')}</Label>
+              <Label className="text-foreground">{t('authFlow.country')}</Label>
               <Select value={country} onValueChange={setCountry}>
-                <SelectTrigger className="h-12 rounded-xl border-[#E2E8F0]">
+                <SelectTrigger className="h-12 rounded-xl">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -155,53 +155,53 @@ export default function SignupStep1() {
 
             {/* Date of birth */}
             <div>
-              <Label className="text-[#0F172A]">{t('authFlow.dateOfBirth')}</Label>
+              <Label className="text-foreground">{t('authFlow.dateOfBirth')}</Label>
               <div className="grid grid-cols-3 gap-3 mt-1">
                 <div>
                   <Input
                     placeholder="DD"
                     value={dobDay}
                     onChange={(e) => setDobDay(e.target.value.replace(/\D/g, '').slice(0, 2))}
-                    className={`h-12 rounded-xl border-[#E2E8F0] text-center ${errors.day ? 'border-[#DC2626]' : ''}`}
+                    className={`h-12 rounded-xl text-center ${errors.day ? 'border-destructive' : ''}`}
                     maxLength={2}
                   />
-                  {errors.day && <p className="text-[#DC2626] text-xs mt-1">{errors.day}</p>}
+                  {errors.day && <p className="text-destructive text-xs mt-1">{errors.day}</p>}
                 </div>
                 <div>
                   <Input
                     placeholder="MM"
                     value={dobMonth}
                     onChange={(e) => setDobMonth(e.target.value.replace(/\D/g, '').slice(0, 2))}
-                    className={`h-12 rounded-xl border-[#E2E8F0] text-center ${errors.month ? 'border-[#DC2626]' : ''}`}
+                    className={`h-12 rounded-xl text-center ${errors.month ? 'border-destructive' : ''}`}
                     maxLength={2}
                   />
-                  {errors.month && <p className="text-[#DC2626] text-xs mt-1">{errors.month}</p>}
+                  {errors.month && <p className="text-destructive text-xs mt-1">{errors.month}</p>}
                 </div>
                 <div>
                   <Input
                     placeholder="YYYY"
                     value={dobYear}
                     onChange={(e) => setDobYear(e.target.value.replace(/\D/g, '').slice(0, 4))}
-                    className={`h-12 rounded-xl border-[#E2E8F0] text-center ${errors.year ? 'border-[#DC2626]' : ''}`}
+                    className={`h-12 rounded-xl text-center ${errors.year ? 'border-destructive' : ''}`}
                     maxLength={4}
                   />
-                  {errors.year && <p className="text-[#DC2626] text-xs mt-1">{errors.year}</p>}
+                  {errors.year && <p className="text-destructive text-xs mt-1">{errors.year}</p>}
                 </div>
               </div>
-              <p className="text-xs text-[#64748B] mt-2">{t('authFlow.dobHint')}</p>
+              <p className="text-xs text-muted-foreground mt-2">{t('authFlow.dobHint')}</p>
             </div>
 
             <Button
               onClick={handleContinue}
-              className="w-full h-12 rounded-full bg-[#0B6BD3] hover:bg-[#095BB3] text-white font-semibold text-base"
+              className="w-full h-12 rounded-full bg-primary hover:bg-primary/90 text-primary-foreground font-semibold text-base"
             >
               {t('common.continue')}
             </Button>
           </div>
 
-          <p className="text-center text-[#64748B] text-sm mt-6">
+          <p className="text-center text-muted-foreground text-sm mt-6">
             {t('auth.alreadyHaveAccount')}{' '}
-            <Link to="/auth/login" className="text-[#0B6BD3] hover:text-[#095BB3] font-medium">
+            <Link to="/auth/login" className="text-primary hover:text-primary/80 font-medium">
               {t('auth.login')}
             </Link>
           </p>

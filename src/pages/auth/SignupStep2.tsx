@@ -214,25 +214,25 @@ export default function SignupStep2() {
   };
 
   return (
-    <div className="min-h-screen bg-[#F5F7FA] flex flex-col">
+    <div className="min-h-screen bg-background flex flex-col">
       {/* Header */}
-      <div className="bg-[#FFD500] h-16 flex items-center justify-between px-4 md:px-8">
+      <div className="bg-accent h-16 flex items-center justify-between px-4 md:px-8">
         <Link to="/" className="flex items-center gap-2">
           <img src={logo} alt="IBRIX" className="h-8 w-auto" />
-          <span className="font-heading font-bold text-xl text-[#0F172A]">IBRIX</span>
+          <span className="font-heading font-bold text-xl text-accent-foreground">IBRIX</span>
         </Link>
         <Link to="/" className="p-2 hover:bg-black/10 rounded-full transition-colors">
-          <X className="w-6 h-6 text-[#0F172A]" />
+          <X className="w-6 h-6 text-accent-foreground" />
         </Link>
       </div>
 
       {/* Main content */}
       <div className="flex-1 flex items-center justify-center p-4 py-8">
-        <div className="w-full max-w-[560px] bg-white rounded-2xl shadow-lg p-6 md:p-8 animate-fade-in-up">
+        <div className="w-full max-w-[560px] bg-card rounded-2xl shadow-lg p-6 md:p-8 animate-fade-in-up">
           {/* Back button */}
           <Link 
             to="/auth/signup/step-1" 
-            className="inline-flex items-center gap-2 text-[#64748B] hover:text-[#0F172A] text-sm mb-6 transition-colors"
+            className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground text-sm mb-6 transition-colors"
           >
             <ArrowLeft className="w-4 h-4" />
             {t('common.back')}
@@ -240,101 +240,101 @@ export default function SignupStep2() {
 
           {/* Progress indicator */}
           <div className="flex items-center gap-2 mb-6">
-            <div className="h-1 flex-1 rounded-full bg-[#0B6BD3]" />
-            <div className="h-1 flex-1 rounded-full bg-[#0B6BD3]" />
+            <div className="h-1 flex-1 rounded-full bg-primary" />
+            <div className="h-1 flex-1 rounded-full bg-primary" />
           </div>
 
-          <p className="text-sm text-[#64748B] mb-2">{t('common.step')} 2 / 2</p>
-          <h1 className="font-heading text-2xl md:text-3xl font-bold text-[#0F172A] mb-2">
+          <p className="text-sm text-muted-foreground mb-2">{t('common.step')} 2 / 2</p>
+          <h1 className="font-heading text-2xl md:text-3xl font-bold text-foreground mb-2">
             {t('authFlow.step2Title')}
           </h1>
-          <p className="text-[#64748B] mb-8">
+          <p className="text-muted-foreground mb-8">
             {t('authFlow.step2Subtitle')}
           </p>
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <Label htmlFor="firstName" className="text-[#0F172A]">{t('authFlow.firstName')}</Label>
+                <Label htmlFor="firstName" className="text-foreground">{t('authFlow.firstName')}</Label>
                 <Input
                   id="firstName"
                   value={firstName}
                   onChange={(e) => setFirstName(e.target.value)}
-                  className={`h-12 rounded-xl border-[#E2E8F0] ${errors.firstName ? 'border-[#DC2626]' : ''}`}
+                  className={`h-12 rounded-xl ${errors.firstName ? 'border-destructive' : ''}`}
                 />
-                {errors.firstName && <p className="text-[#DC2626] text-xs mt-1">{errors.firstName}</p>}
+                {errors.firstName && <p className="text-destructive text-xs mt-1">{errors.firstName}</p>}
               </div>
               <div>
-                <Label htmlFor="lastName" className="text-[#0F172A]">{t('authFlow.lastName')}</Label>
+                <Label htmlFor="lastName" className="text-foreground">{t('authFlow.lastName')}</Label>
                 <Input
                   id="lastName"
                   value={lastName}
                   onChange={(e) => setLastName(e.target.value)}
-                  className={`h-12 rounded-xl border-[#E2E8F0] ${errors.lastName ? 'border-[#DC2626]' : ''}`}
+                  className={`h-12 rounded-xl ${errors.lastName ? 'border-destructive' : ''}`}
                 />
-                {errors.lastName && <p className="text-[#DC2626] text-xs mt-1">{errors.lastName}</p>}
+                {errors.lastName && <p className="text-destructive text-xs mt-1">{errors.lastName}</p>}
               </div>
             </div>
 
             <div>
-              <Label htmlFor="email" className="text-[#0F172A]">{t('auth.email')}</Label>
+              <Label htmlFor="email" className="text-foreground">{t('auth.email')}</Label>
               <Input
                 id="email"
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className={`h-12 rounded-xl border-[#E2E8F0] ${errors.email ? 'border-[#DC2626]' : ''}`}
+                className={`h-12 rounded-xl ${errors.email ? 'border-destructive' : ''}`}
                 placeholder="jonas@pavyzdys.lt"
               />
-              {errors.email && <p className="text-[#DC2626] text-xs mt-1">{errors.email}</p>}
+              {errors.email && <p className="text-destructive text-xs mt-1">{errors.email}</p>}
             </div>
 
             <div>
-              <Label htmlFor="username" className="text-[#0F172A]">
-                {t('authFlow.username')} <span className="text-[#64748B] font-normal">({t('common.optional')})</span>
+              <Label htmlFor="username" className="text-foreground">
+                {t('authFlow.username')} <span className="text-muted-foreground font-normal">({t('common.optional')})</span>
               </Label>
               <div className="relative">
                 <Input
                   id="username"
                   value={username}
                   onChange={(e) => setUsername(e.target.value.toLowerCase().replace(/[^a-z0-9_.]/g, ''))}
-                  className={`h-12 rounded-xl border-[#E2E8F0] pr-10 ${errors.username ? 'border-[#DC2626]' : usernameAvailable === true ? 'border-green-500' : ''}`}
+                  className={`h-12 rounded-xl pr-10 ${errors.username ? 'border-destructive' : usernameAvailable === true ? 'border-success' : ''}`}
                   placeholder="jonas_123"
                   maxLength={20}
                 />
                 {checkingUsername && (
-                  <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 animate-spin text-[#64748B]" />
+                  <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 animate-spin text-muted-foreground" />
                 )}
                 {!checkingUsername && username.length >= 3 && usernameAvailable === true && (
-                  <span className="absolute right-3 top-1/2 -translate-y-1/2 text-green-500 text-sm">✓</span>
+                  <span className="absolute right-3 top-1/2 -translate-y-1/2 text-success text-sm">✓</span>
                 )}
                 {!checkingUsername && username.length >= 3 && usernameAvailable === false && (
-                  <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[#DC2626] text-sm">✗</span>
+                  <span className="absolute right-3 top-1/2 -translate-y-1/2 text-destructive text-sm">✗</span>
                 )}
               </div>
-              <p className="text-[#64748B] text-xs mt-1">{t('authFlow.usernameHint')}</p>
-              {errors.username && <p className="text-[#DC2626] text-xs mt-1">{errors.username}</p>}
+              <p className="text-muted-foreground text-xs mt-1">{t('authFlow.usernameHint')}</p>
+              {errors.username && <p className="text-destructive text-xs mt-1">{errors.username}</p>}
             </div>
 
             <div>
-              <Label htmlFor="password" className="text-[#0F172A]">{t('auth.password')}</Label>
+              <Label htmlFor="password" className="text-foreground">{t('auth.password')}</Label>
               <div className="relative">
                 <Input
                   id="password"
                   type={showPassword ? 'text' : 'password'}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className={`h-12 rounded-xl border-[#E2E8F0] pr-12 ${errors.password ? 'border-[#DC2626]' : ''}`}
+                  className={`h-12 rounded-xl pr-12 ${errors.password ? 'border-destructive' : ''}`}
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-[#64748B] hover:text-[#0F172A]"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
                 >
                   {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                 </button>
               </div>
-              {errors.password && <p className="text-[#DC2626] text-xs mt-1">{errors.password}</p>}
+              {errors.password && <p className="text-destructive text-xs mt-1">{errors.password}</p>}
               
               {/* Password Strength Indicator */}
               {password && (
@@ -349,20 +349,20 @@ export default function SignupStep2() {
                       />
                     ))}
                   </div>
-                  <p className={`text-xs ${passwordStrength.score >= 4 ? 'text-green-600' : 'text-[#64748B]'}`}>
+                  <p className={`text-xs ${passwordStrength.score >= 4 ? 'text-success' : 'text-muted-foreground'}`}>
                     {strengthLabels[passwordStrength.score]}
                   </p>
-                  <div className="text-xs text-[#64748B] space-y-0.5">
-                    <p className={passwordStrength.checks.length ? 'text-green-600' : ''}>
+                  <div className="text-xs text-muted-foreground space-y-0.5">
+                    <p className={passwordStrength.checks.length ? 'text-success' : ''}>
                       {passwordStrength.checks.length ? '✓' : '○'} Mažiausiai 8 simboliai
                     </p>
-                    <p className={passwordStrength.checks.uppercase ? 'text-green-600' : ''}>
+                    <p className={passwordStrength.checks.uppercase ? 'text-success' : ''}>
                       {passwordStrength.checks.uppercase ? '✓' : '○'} Didžioji raidė (A-Z)
                     </p>
-                    <p className={passwordStrength.checks.number ? 'text-green-600' : ''}>
+                    <p className={passwordStrength.checks.number ? 'text-success' : ''}>
                       {passwordStrength.checks.number ? '✓' : '○'} Skaičius (0-9)
                     </p>
-                    <p className={passwordStrength.checks.special ? 'text-green-600' : ''}>
+                    <p className={passwordStrength.checks.special ? 'text-success' : ''}>
                       {passwordStrength.checks.special ? '✓' : '○'} Specialus simbolis (!@#$...)
                     </p>
                   </div>
@@ -371,24 +371,24 @@ export default function SignupStep2() {
             </div>
 
             <div>
-              <Label htmlFor="confirmPassword" className="text-[#0F172A]">{t('settings.confirmPassword')}</Label>
+              <Label htmlFor="confirmPassword" className="text-foreground">{t('settings.confirmPassword')}</Label>
               <div className="relative">
                 <Input
                   id="confirmPassword"
                   type={showConfirmPassword ? 'text' : 'password'}
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
-                  className={`h-12 rounded-xl border-[#E2E8F0] pr-12 ${errors.confirmPassword ? 'border-[#DC2626]' : ''}`}
+                  className={`h-12 rounded-xl pr-12 ${errors.confirmPassword ? 'border-destructive' : ''}`}
                 />
                 <button
                   type="button"
                   onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-[#64748B] hover:text-[#0F172A]"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
                 >
                   {showConfirmPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                 </button>
               </div>
-              {errors.confirmPassword && <p className="text-[#DC2626] text-xs mt-1">{errors.confirmPassword}</p>}
+              {errors.confirmPassword && <p className="text-destructive text-xs mt-1">{errors.confirmPassword}</p>}
             </div>
 
             <div className="flex items-start gap-3 py-2">
@@ -398,18 +398,18 @@ export default function SignupStep2() {
                 onCheckedChange={(checked) => setTermsAccepted(checked === true)}
                 className="mt-0.5"
               />
-              <label htmlFor="terms" className="text-sm text-[#0F172A] leading-snug cursor-pointer">
+              <label htmlFor="terms" className="text-sm text-foreground leading-snug cursor-pointer">
                 {t('authFlow.termsLabel')}{' '}
-                <Link to="/taisykles" className="text-[#0B6BD3] hover:underline" target="_blank">
+                <Link to="/taisykles" className="text-primary hover:underline" target="_blank">
                   {t('authFlow.termsLink')}
                 </Link>{' '}
                 {t('common.and')}{' '}
-                <Link to="/privatumo-politika" className="text-[#0B6BD3] hover:underline" target="_blank">
+                <Link to="/privatumo-politika" className="text-primary hover:underline" target="_blank">
                   {t('authFlow.privacyLink')}
                 </Link>
               </label>
             </div>
-            {errors.terms && <p className="text-[#DC2626] text-xs -mt-2">{errors.terms}</p>}
+            {errors.terms && <p className="text-destructive text-xs -mt-2">{errors.terms}</p>}
 
             <div className="flex justify-center">
               <Turnstile
@@ -425,12 +425,12 @@ export default function SignupStep2() {
                 onExpire={() => setCaptchaToken(null)}
               />
             </div>
-            {errors.captcha && <p className="text-[#DC2626] text-xs text-center">{errors.captcha}</p>}
+            {errors.captcha && <p className="text-destructive text-xs text-center">{errors.captcha}</p>}
 
             <Button
               type="submit"
               disabled={isLoading}
-              className="w-full h-12 rounded-full bg-[#0B6BD3] hover:bg-[#095BB3] text-white font-semibold text-base"
+              className="w-full h-12 rounded-full bg-primary hover:bg-primary/90 text-primary-foreground font-semibold text-base"
             >
               {isLoading ? (
                 <>
@@ -443,9 +443,9 @@ export default function SignupStep2() {
             </Button>
           </form>
 
-          <p className="text-center text-[#64748B] text-sm mt-6">
+          <p className="text-center text-muted-foreground text-sm mt-6">
             {t('auth.alreadyHaveAccount')}{' '}
-            <Link to="/auth/login" className="text-[#0B6BD3] hover:text-[#095BB3] font-medium">
+            <Link to="/auth/login" className="text-primary hover:text-primary/80 font-medium">
               {t('auth.login')}
             </Link>
           </p>
