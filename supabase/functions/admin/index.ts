@@ -14,6 +14,8 @@ function isAllowedOrigin(origin: string): boolean {
   if (ALLOWED_ORIGINS.includes(origin)) return true;
   // Allow lovable.app preview URLs
   if (origin.endsWith('.lovable.app')) return true;
+  // Allow Lovable preview iframe domains
+  if (origin.endsWith('.lovableproject.com')) return true;
   return false;
 }
 
