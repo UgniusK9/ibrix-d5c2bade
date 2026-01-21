@@ -1,4 +1,4 @@
-import { ShoppingCart, Minus, Plus, Trash2, ArrowRight, Loader2 } from "lucide-react";
+import { ShoppingCart, Minus, Plus, Trash2, ArrowRight, Loader2, Package, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -8,8 +8,9 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
+import { EmptyState } from "@/components/ui/empty-state";
 import { useCartStore, formatCartPrice } from "@/stores/cartStore";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 
 export function CartDrawer() {
@@ -36,36 +37,51 @@ export function CartDrawer() {
 
   return (
     <Sheet open={isOpen} onOpenChange={setOpen}>
-      <SheetContent className="w-full sm:max-w-lg flex flex-col h-full">
-        <SheetHeader className="flex-shrink-0">
-          <SheetTitle className="font-heading">{t('cart.title')}</SheetTitle>
-          <SheetDescription>
-            {totalItems === 0 
-              ? t('cart.empty')
-              : `${totalItems} ${t('order.items')}`
-            }
-          </SheetDescription>
+      <SheetContent className="w-full sm:max-w-lg flex flex-col h-full p-0">
+        {/* Header */}
+        <SheetHeader className="flex-shrink-0 px-6 pt-6 pb-4 border-b border-border">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-accent/10 flex items-center justify-center">
+              <ShoppingCart className="w-5 h-5 text-accent" />
+            </div>
+            <div>
+              <SheetTitle className="font-heading text-xl">{t('cart.title')}</SheetTitle>
+              <SheetDescription className="text-sm">
+                {totalItems === 0 
+                  ? t('cart.empty')
+                  : `${totalItems} ${totalItems === 1 ? 'prekė' : 'prekės'}`
+                }
+              </SheetDescription>
+            </div>
+          </div>
         </SheetHeader>
         
-        <div className="flex flex-col flex-1 pt-6 min-h-0">
+        <div className="flex flex-col flex-1 min-h-0">
           {items.length === 0 ? (
-            <div className="flex-1 flex items-center justify-center">
-              <div className="text-center">
-                <ShoppingCart className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                <p className="text-muted-foreground">{t('cart.empty')}</p>
-                <p className="text-sm text-muted-foreground/70 mt-1">
-                  {t('cart.continueShopping')}
-                </p>
-              </div>
+            <div className="flex-1 flex items-center justify-center px-6">
+              <EmptyState
+                variant="cart"
+                title={t('cart.emptyTitle') || "Krepšelis tuščias"}
+                description={t('cart.emptyDescription') || "Pridėkite konstruktorių, kad pradėtumėte apsipirkimą"}
+                actionLabel={t('cart.startShopping') || "Pradėti apsipirkimą"}
+                actionHref="/produktai/visi"
+              />
             </div>
           ) : (
             <>
               {/* Scrollable items area */}
-              <div className="flex-1 overflow-y-auto pr-2 min-h-0">
-                <div className="space-y-4">
+              <div className="flex-1 overflow-y-auto px-6 py-4 min-h-0">
+                <div className="space-y-3">
                   {items.map((item) => (
-                    <div key={`${item.productId}-${item.variantId || 'base'}`} className="flex gap-4 p-3 bg-muted/30 rounded-lg">
-                      <div className="w-20 h-20 bg-secondary rounded-lg overflow-hidden flex-shrink-0">
+                    <div 
+                      key={`${item.productId}-${item.variantId || 'base'}`} 
+                      className="flex gap-4 p-4 bg-secondary/50 rounded-xl border border-border"
+                    >
+                      <Link 
+                        to={`/produktas/${item.productSlug}`}
+                        onClick={() => setOpen(false)}
+                        className="w-20 h-20 bg-card rounded-lg overflow-hidden flex-shrink-0 border border-border hover:border-primary/30 transition-colors"
+                      >
                         {item.image ? (
                           <img
                             src={item.image}
@@ -74,29 +90,39 @@ export function CartDrawer() {
                           />
                         ) : (
                           <div className="w-full h-full flex items-center justify-center text-muted-foreground">
-                            <ShoppingCart className="w-6 h-6" />
+                            <Package className="w-6 h-6" />
                           </div>
                         )}
-                      </div>
+                      </Link>
                       
                       <div className="flex-1 min-w-0">
-                        <h4 className="font-medium text-sm truncate">
+                        <Link 
+                          to={`/produktas/${item.productSlug}`}
+                          onClick={() => setOpen(false)}
+                          className="font-medium text-sm line-clamp-2 hover:text-primary transition-colors"
+                        >
                           {item.title}
-                        </h4>
-                        {item.eta && (
-                          <p className="text-xs text-muted-foreground mt-0.5">
-                            {t('nav.delivery')}: {item.eta}
-                          </p>
-                        )}
-                        <div className="flex items-center gap-2 mt-1">
+                        </Link>
+                        
+                        <div className="flex items-center gap-2 mt-1.5">
                           <Badge 
                             variant="outline" 
-                            className={`text-xs ${item.status === 'in_stock' ? 'border-success/50 text-success' : 'border-primary/50 text-primary'}`}
+                            className={`text-xs px-2 py-0.5 ${
+                              item.status === 'in_stock' 
+                                ? 'border-success/50 text-success bg-success/5' 
+                                : 'border-primary/50 text-primary bg-primary/5'
+                            }`}
                           >
                             {item.status === 'in_stock' ? t('products.inStock') : t('products.preOrder')}
                           </Badge>
+                          {item.eta && (
+                            <span className="text-xs text-muted-foreground">
+                              {item.eta}
+                            </span>
+                          )}
                         </div>
-                        <p className="font-semibold text-sm mt-1">
+                        
+                        <p className="font-bold text-base mt-2 text-foreground">
                           {formatCartPrice(item.price, item.currency)}
                         </p>
                       </div>
@@ -104,29 +130,29 @@ export function CartDrawer() {
                       <div className="flex flex-col items-end gap-2 flex-shrink-0">
                         <Button
                           variant="ghost"
-                          size="icon"
-                          className="h-7 w-7 text-muted-foreground hover:text-destructive"
+                          size="icon-sm"
+                          className="text-muted-foreground hover:text-destructive hover:bg-destructive/10"
                           onClick={() => removeItem(item.productId, item.variantId)}
                         >
                           <Trash2 className="h-4 w-4" />
                         </Button>
                         
-                        <div className="flex items-center gap-1">
+                        <div className="flex items-center gap-1 bg-card rounded-lg border border-border">
                           <Button
-                            variant="outline"
-                            size="icon"
-                            className="h-7 w-7"
+                            variant="ghost"
+                            size="icon-sm"
+                            className="h-8 w-8 rounded-l-lg rounded-r-none"
                             onClick={() => updateQuantity(item.productId, item.quantity - 1, item.variantId)}
                           >
                             <Minus className="h-3 w-3" />
                           </Button>
-                          <span className="w-8 text-center text-sm font-medium">
+                          <span className="w-8 text-center text-sm font-semibold">
                             {item.quantity}
                           </span>
                           <Button
-                            variant="outline"
-                            size="icon"
-                            className="h-7 w-7"
+                            variant="ghost"
+                            size="icon-sm"
+                            className="h-8 w-8 rounded-r-lg rounded-l-none"
                             onClick={() => updateQuantity(item.productId, item.quantity + 1, item.variantId)}
                           >
                             <Plus className="h-3 w-3" />
@@ -139,33 +165,38 @@ export function CartDrawer() {
               </div>
               
               {/* Fixed checkout section */}
-              <div className="flex-shrink-0 space-y-4 pt-4 border-t bg-background mt-4">
-                <div className="flex justify-between items-center">
-                  <span className="text-base font-medium">{t('cart.total')}</span>
-                  <span className="text-xl font-bold font-heading">
+              <div className="flex-shrink-0 p-6 border-t border-border bg-card">
+                {/* Free shipping notice */}
+                <div className="flex items-center gap-2 justify-center mb-4 p-3 bg-success/10 rounded-lg border border-success/20">
+                  <Sparkles className="w-4 h-4 text-success" />
+                  <p className="text-sm font-medium text-success">
+                    {t('header.freeShipping')}
+                  </p>
+                </div>
+                
+                <div className="flex justify-between items-center mb-4">
+                  <span className="text-base font-medium text-muted-foreground">{t('cart.total')}</span>
+                  <span className="text-2xl font-bold font-heading text-foreground">
                     {formatCartPrice(totalPrice, 'EUR')}
                   </span>
                 </div>
                 
-                <p className="text-xs text-muted-foreground text-center">
-                  {t('header.freeShipping')}
-                </p>
-                
                 <Button 
                   onClick={handleCheckout}
-                  className="w-full bg-accent hover:bg-accent/90 text-accent-foreground" 
-                  size="lg"
+                  variant="accent"
+                  size="xl"
+                  className="w-full"
                   disabled={items.length === 0 || isLoading}
                 >
                   {isLoading ? (
                     <>
-                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      <Loader2 className="w-5 h-5 animate-spin" />
                       {t('common.loading')}
                     </>
                   ) : (
                     <>
-                      <ArrowRight className="w-4 h-4 mr-2" />
                       {t('cart.checkout')}
+                      <ArrowRight className="w-5 h-5" />
                     </>
                   )}
                 </Button>

@@ -1,10 +1,10 @@
 import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { Menu, ShoppingCart, Truck, Clock, Headphones, ArrowRight, User, LogOut, ChevronDown, FileText, Shield, Cookie, Undo2, Star, HelpCircle, Package, Heart, Gift } from "lucide-react";
+import { Menu, ShoppingCart, Truck, Clock, Headphones, ArrowRight, User, LogOut, ChevronDown, FileText, Shield, Cookie, Undo2, Star, HelpCircle, Package, Heart, Gift, Search, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -39,13 +39,14 @@ const infoLinks = [
 ];
 
 const topBarItems = [
-  { icon: Truck, text: "Nemokamas pristatymas LT į paštomatą" },
-  { icon: Clock, text: "Pre-order su aiškiu pristatymo terminu" },
-  { icon: Headphones, text: "Pagalba lietuviškai + trūkstamų detalių sprendimas" },
+  { icon: Truck, text: "Nemokamas pristatymas LT" },
+  { icon: Clock, text: "Aiškus pre-order terminas" },
+  { icon: Headphones, text: "Pagalba lietuviškai" },
 ];
 
 export function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
   const location = useLocation();
   const { t } = useTranslation();
   const totalItems = useCartStore((state) => state.getTotalItems());
@@ -55,20 +56,20 @@ export function Header() {
   const isActive = (href: string) => location.pathname === href;
 
   return (
-    <header className="sticky top-0 z-50">
-      {/* Top Bar */}
-      <div className="bg-primary text-primary-foreground">
+    <header className="sticky top-0 z-50 bg-card shadow-soft">
+      {/* Top Bar - LEGO-like bright strip */}
+      <div className="bg-primary">
         <div className="container">
           <div className="flex items-center justify-center gap-8 py-2 text-xs md:text-sm overflow-hidden">
             {topBarItems.map((item, index) => (
-              <span key={index} className="hidden md:inline-flex items-center gap-2 whitespace-nowrap">
-                <item.icon className="h-3.5 w-3.5" strokeWidth={1.5} />
+              <span key={index} className="hidden md:inline-flex items-center gap-2 whitespace-nowrap text-primary-foreground/90 font-medium">
+                <item.icon className="h-3.5 w-3.5" strokeWidth={2} />
                 {item.text}
               </span>
             ))}
             {/* Mobile - show only first item */}
-            <span className="md:hidden inline-flex items-center gap-2">
-              <Truck className="h-3.5 w-3.5" strokeWidth={1.5} />
+            <span className="md:hidden inline-flex items-center gap-2 text-primary-foreground font-medium">
+              <Truck className="h-3.5 w-3.5" strokeWidth={2} />
               {topBarItems[0].text}
             </span>
           </div>
@@ -78,29 +79,29 @@ export function Header() {
       {/* Main Header */}
       <div className="bg-card border-b border-border">
         <div className="container">
-          <div className="flex items-center justify-between h-16">
+          <div className="flex items-center justify-between h-16 lg:h-18">
             {/* Logo */}
             <Link to="/" className="flex-shrink-0">
-              <img src={logo} alt="IBRIX" className="h-12 md:h-14 w-auto" />
+              <img src={logo} alt="IBRIX" className="h-10 md:h-12 w-auto" />
             </Link>
 
             {/* Desktop Navigation */}
-            <nav className="hidden lg:flex items-center gap-0.5">
+            <nav className="hidden lg:flex items-center gap-1">
               {/* Products Mega Menu */}
               <CategoriesMegaMenu />
               
               {/* Informacija Dropdown */}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <button className="px-3 py-2 text-sm font-medium rounded-lg transition-colors whitespace-nowrap text-muted-foreground hover:text-foreground hover:bg-muted flex items-center gap-1">
+                  <button className="px-4 py-2 text-sm font-medium rounded-lg transition-colors whitespace-nowrap text-foreground/70 hover:text-foreground hover:bg-secondary flex items-center gap-1.5">
                     Informacija
                     <ChevronDown className="h-3.5 w-3.5" />
                   </button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="start" className="w-48 bg-popover border border-border z-50">
+                <DropdownMenuContent align="start" className="w-52 p-2">
                   {infoLinks.map((item) => (
                     <DropdownMenuItem key={item.name} asChild>
-                      <Link to={item.href} className="flex items-center gap-2 cursor-pointer">
+                      <Link to={item.href} className="flex items-center gap-3 px-3 py-2.5 cursor-pointer rounded-lg">
                         <item.icon className="h-4 w-4 text-muted-foreground" />
                         {item.name}
                       </Link>
@@ -113,10 +114,10 @@ export function Header() {
                 <Link
                   key={item.name}
                   to={item.href}
-                  className={`px-3 py-2 text-sm font-medium rounded-lg transition-colors whitespace-nowrap ${
+                  className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors whitespace-nowrap ${
                     isActive(item.href)
-                      ? "text-primary bg-primary/5"
-                      : "text-muted-foreground hover:text-foreground hover:bg-muted"
+                      ? "text-primary bg-primary/10"
+                      : "text-foreground/70 hover:text-foreground hover:bg-secondary"
                   }`}
                 >
                   {item.name}
@@ -125,14 +126,24 @@ export function Header() {
             </nav>
 
             {/* Search - Desktop */}
-            <div className="hidden lg:block">
+            <div className="hidden lg:block flex-1 max-w-sm mx-6">
               <ProductSearch />
             </div>
 
             {/* Right Actions */}
             <div className="flex items-center gap-2">
+              {/* Mobile Search Toggle */}
+              <Button
+                variant="ghost"
+                size="icon"
+                className="lg:hidden"
+                onClick={() => setMobileSearchOpen(true)}
+              >
+                <Search className="h-5 w-5" />
+              </Button>
+
               {/* CTA Button - Desktop only */}
-              <Button asChild size="sm" className="hidden lg:flex bg-accent hover:bg-accent/90 text-accent-foreground h-9 px-4">
+              <Button asChild size="sm" variant="accent" className="hidden lg:flex h-10 px-5">
                 <Link to="/produktai/visi">
                   {t('nav.viewConstructors')}
                   <ArrowRight className="ml-1.5 h-4 w-4" />
@@ -146,12 +157,12 @@ export function Header() {
                 </div>
               ) : (
                 <div className="hidden lg:flex items-center gap-2">
-                  <Button asChild variant="outline" size="sm" className="border-primary text-primary hover:bg-primary hover:text-primary-foreground transition-colors">
+                  <Button asChild variant="ghost" size="sm">
                     <Link to="/auth/login">
                       {t('header.login')}
                     </Link>
                   </Button>
-                  <Button asChild size="sm" className="bg-accent hover:bg-accent/90 text-accent-foreground">
+                  <Button asChild variant="outline" size="sm">
                     <Link to="/auth/signup/step-1">
                       {t('header.signUp')}
                     </Link>
@@ -171,8 +182,8 @@ export function Header() {
               >
                 <ShoppingCart className="h-5 w-5" />
                 {totalItems > 0 && (
-                  <Badge className="absolute -top-1 -right-1 h-5 w-5 rounded-full p-0 flex items-center justify-center text-xs bg-accent text-accent-foreground border-2 border-card">
-                    {totalItems}
+                  <Badge className="absolute -top-1 -right-1 h-5 min-w-5 rounded-full p-0 flex items-center justify-center text-xs bg-accent text-accent-foreground font-bold border-2 border-card">
+                    {totalItems > 9 ? '9+' : totalItems}
                   </Badge>
                 )}
               </Button>
@@ -184,97 +195,104 @@ export function Header() {
                     <Menu className="h-5 w-5" />
                   </Button>
                 </SheetTrigger>
-                <SheetContent side="right" className="w-[300px] sm:w-[350px]">
-                  <nav className="flex flex-col gap-1 mt-8">
-                    {navigation.map((item) => (
-                      <Link
-                        key={item.name}
-                        to={item.href}
-                        onClick={() => setMobileMenuOpen(false)}
-                        className={`px-4 py-3 text-base font-medium rounded-lg transition-colors ${
-                          isActive(item.href)
-                            ? "bg-primary/10 text-primary"
-                            : "text-muted-foreground hover:text-foreground hover:bg-muted"
-                        }`}
-                      >
-                        {item.name}
-                      </Link>
-                    ))}
-                  </nav>
+                <SheetContent side="right" className="w-[300px] sm:w-[350px] p-0">
+                  <SheetHeader className="p-6 border-b border-border">
+                    <SheetTitle className="text-left">Meniu</SheetTitle>
+                  </SheetHeader>
                   
-                  <div className="mt-6 px-4 space-y-2">
-                    <Button asChild className="w-full bg-accent hover:bg-accent/90 text-accent-foreground">
-                      <Link to="/produktai/visi" onClick={() => setMobileMenuOpen(false)}>
-                        {t('nav.viewConstructors')}
-                        <ArrowRight className="ml-2 h-4 w-4" />
-                      </Link>
-                    </Button>
+                  <div className="p-4">
+                    <nav className="flex flex-col gap-1">
+                      {navigation.map((item) => (
+                        <Link
+                          key={item.name}
+                          to={item.href}
+                          onClick={() => setMobileMenuOpen(false)}
+                          className={`px-4 py-3 text-base font-medium rounded-xl transition-colors ${
+                            isActive(item.href)
+                              ? "bg-primary/10 text-primary"
+                              : "text-foreground/70 hover:text-foreground hover:bg-secondary"
+                          }`}
+                        >
+                          {item.name}
+                        </Link>
+                      ))}
+                    </nav>
                     
-                    {user ? (
-                      <div className="space-y-1 pt-2">
-                        <Link
-                          to="/account"
-                          onClick={() => setMobileMenuOpen(false)}
-                          className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-muted transition-colors"
-                        >
-                          <User className="h-5 w-5 text-muted-foreground" />
-                          <span className="font-medium">{t('account.myAccount')}</span>
+                    <div className="mt-6 space-y-3">
+                      <Button asChild variant="accent" size="lg" className="w-full">
+                        <Link to="/produktai/visi" onClick={() => setMobileMenuOpen(false)}>
+                          {t('nav.viewConstructors')}
+                          <ArrowRight className="ml-2 h-4 w-4" />
                         </Link>
-                        <Link
-                          to="/orders"
-                          onClick={() => setMobileMenuOpen(false)}
-                          className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-muted transition-colors"
-                        >
-                          <Package className="h-5 w-5 text-muted-foreground" />
-                          <span className="font-medium">{t('account.myOrders')}</span>
-                        </Link>
-                        <Link
-                          to="/account"
-                          onClick={() => setMobileMenuOpen(false)}
-                          className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-muted transition-colors"
-                        >
-                          <Heart className="h-5 w-5 text-muted-foreground" />
-                          <span className="font-medium">{t('account.wishlist')}</span>
-                        </Link>
-                        <Link
-                          to="/account/credits"
-                          onClick={() => setMobileMenuOpen(false)}
-                          className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-muted transition-colors"
-                        >
-                          <Gift className="h-5 w-5 text-muted-foreground" />
-                          <span className="font-medium">{t('account.rewards')}</span>
-                        </Link>
-                        {isAdmin && (
+                      </Button>
+                      
+                      {user ? (
+                        <div className="space-y-1 pt-4 border-t border-border">
                           <Link
-                            to="/admin"
+                            to="/account"
                             onClick={() => setMobileMenuOpen(false)}
-                            className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-muted transition-colors"
+                            className="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-secondary transition-colors"
                           >
-                            <span className="font-medium">{t('header.admin')}</span>
+                            <User className="h-5 w-5 text-muted-foreground" />
+                            <span className="font-medium">{t('account.myAccount')}</span>
                           </Link>
-                        )}
-                        <button
-                          onClick={() => { signOut(); setMobileMenuOpen(false); }}
-                          className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-muted transition-colors w-full text-left text-destructive"
-                        >
-                          <LogOut className="h-5 w-5" />
-                          <span className="font-medium">{t('auth.logout')}</span>
-                        </button>
-                      </div>
-                    ) : (
-                      <div className="space-y-2">
-                        <Button asChild variant="outline" className="w-full border-primary text-primary hover:bg-primary hover:text-primary-foreground">
-                          <Link to="/auth/login" onClick={() => setMobileMenuOpen(false)}>
-                            {t('header.login')}
+                          <Link
+                            to="/orders"
+                            onClick={() => setMobileMenuOpen(false)}
+                            className="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-secondary transition-colors"
+                          >
+                            <Package className="h-5 w-5 text-muted-foreground" />
+                            <span className="font-medium">{t('account.myOrders')}</span>
                           </Link>
-                        </Button>
-                        <Button asChild className="w-full bg-accent hover:bg-accent/90 text-accent-foreground">
-                          <Link to="/auth/signup/step-1" onClick={() => setMobileMenuOpen(false)}>
-                            {t('header.signUp')}
+                          <Link
+                            to="/wishlist"
+                            onClick={() => setMobileMenuOpen(false)}
+                            className="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-secondary transition-colors"
+                          >
+                            <Heart className="h-5 w-5 text-muted-foreground" />
+                            <span className="font-medium">{t('account.wishlist')}</span>
                           </Link>
-                        </Button>
-                      </div>
-                    )}
+                          <Link
+                            to="/account/credits"
+                            onClick={() => setMobileMenuOpen(false)}
+                            className="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-secondary transition-colors"
+                          >
+                            <Gift className="h-5 w-5 text-muted-foreground" />
+                            <span className="font-medium">{t('account.rewards')}</span>
+                          </Link>
+                          {isAdmin && (
+                            <Link
+                              to="/admin"
+                              onClick={() => setMobileMenuOpen(false)}
+                              className="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-secondary transition-colors"
+                            >
+                              <Shield className="h-5 w-5 text-muted-foreground" />
+                              <span className="font-medium">{t('header.admin')}</span>
+                            </Link>
+                          )}
+                          <button
+                            onClick={() => { signOut(); setMobileMenuOpen(false); }}
+                            className="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-destructive/10 transition-colors w-full text-left text-destructive"
+                          >
+                            <LogOut className="h-5 w-5" />
+                            <span className="font-medium">{t('auth.logout')}</span>
+                          </button>
+                        </div>
+                      ) : (
+                        <div className="space-y-2 pt-4 border-t border-border">
+                          <Button asChild variant="outline" className="w-full">
+                            <Link to="/auth/login" onClick={() => setMobileMenuOpen(false)}>
+                              {t('header.login')}
+                            </Link>
+                          </Button>
+                          <Button asChild className="w-full">
+                            <Link to="/auth/signup/step-1" onClick={() => setMobileMenuOpen(false)}>
+                              {t('header.signUp')}
+                            </Link>
+                          </Button>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </SheetContent>
               </Sheet>
@@ -282,6 +300,20 @@ export function Header() {
           </div>
         </div>
       </div>
+
+      {/* Mobile Search Overlay */}
+      {mobileSearchOpen && (
+        <div className="fixed inset-0 z-50 bg-background lg:hidden">
+          <div className="flex items-center gap-3 p-4 border-b border-border">
+            <div className="flex-1">
+              <ProductSearch autoFocus onSelect={() => setMobileSearchOpen(false)} />
+            </div>
+            <Button variant="ghost" size="icon" onClick={() => setMobileSearchOpen(false)}>
+              <X className="h-5 w-5" />
+            </Button>
+          </div>
+        </div>
+      )}
 
       {/* Cart Drawer */}
       <CartDrawer />
