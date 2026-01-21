@@ -124,7 +124,7 @@ export function BundlesSection() {
 
   if (loading) {
     return (
-      <section className="py-12 bg-gradient-to-b from-slate-50 to-white">
+      <section className="py-12 bg-secondary/50">
         <div className="container flex items-center justify-center">
           <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
         </div>
@@ -137,13 +137,13 @@ export function BundlesSection() {
   }
 
   return (
-    <section className="py-12 md:py-16 bg-gradient-to-b from-slate-50 to-white">
+    <section className="py-12 md:py-16 bg-secondary/50">
       <div className="container">
         {/* Header */}
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-yellow-400 flex items-center justify-center">
-              <Sparkles className="w-5 h-5 text-foreground" />
+            <div className="w-10 h-10 rounded-full bg-accent flex items-center justify-center">
+              <Sparkles className="w-5 h-5 text-accent-foreground" />
             </div>
             <div>
               <h2 className="font-heading text-2xl md:text-3xl font-bold text-foreground">
@@ -168,13 +168,13 @@ export function BundlesSection() {
                 y: -4,
                 transition: { type: "spring", stiffness: 300 }
               }}
-              className="group bg-white rounded-2xl border border-slate-200 overflow-hidden hover:shadow-lg transition-shadow"
+              className="group bg-card rounded-2xl border border-border overflow-hidden hover:shadow-lg transition-shadow"
             >
               {/* Images Row */}
-              <div className="relative p-4 bg-slate-50">
+              <div className="relative p-4 bg-muted">
                 <div className="flex items-center justify-center gap-2">
                   {/* Trigger Product Image */}
-                  <div className="w-24 h-24 rounded-xl bg-white border border-slate-100 overflow-hidden p-2">
+                  <div className="w-24 h-24 rounded-xl bg-card border border-border overflow-hidden p-2">
                     <img 
                       src={bundle.triggerProduct?.images[0] || '/placeholder.svg'} 
                       alt={bundle.triggerProduct?.title}
@@ -183,12 +183,12 @@ export function BundlesSection() {
                   </div>
                   
                   {/* Plus Sign */}
-                  <div className="w-8 h-8 rounded-full bg-yellow-400 flex items-center justify-center font-bold text-lg">
+                  <div className="w-8 h-8 rounded-full bg-accent text-accent-foreground flex items-center justify-center font-bold text-lg">
                     +
                   </div>
                   
                   {/* Discount Product Image */}
-                  <div className="w-24 h-24 rounded-xl bg-white border border-slate-100 overflow-hidden p-2">
+                  <div className="w-24 h-24 rounded-xl bg-card border border-border overflow-hidden p-2">
                     <img 
                       src={bundle.discountProduct?.images[0] || '/placeholder.svg'} 
                       alt={bundle.discountProduct?.title}
@@ -242,7 +242,7 @@ export function BundlesSection() {
                 {/* CTA */}
                 <Button 
                   asChild 
-                  className="w-full bg-yellow-400 hover:bg-yellow-500 text-foreground font-bold"
+                  className="w-full bg-accent hover:bg-accent/90 text-accent-foreground font-bold"
                 >
                   <Link to={`/produktas/${bundle.triggerProduct?.id}`}>
                     Peržiūrėti rinkinį

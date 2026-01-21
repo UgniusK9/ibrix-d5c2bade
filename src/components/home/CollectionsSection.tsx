@@ -53,7 +53,7 @@ export function CollectionsSection() {
 
   if (loading) {
     return (
-      <section className="py-12 bg-white">
+      <section className="py-12 bg-background">
         <div className="container flex items-center justify-center">
           <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
         </div>
@@ -79,9 +79,9 @@ export function CollectionsSection() {
   ];
 
   return (
-    <section className="py-10 md:py-14 bg-white">
+    <section className="py-10 md:py-14 bg-background">
       <div className="container">
-        <h2 className="font-heading text-2xl md:text-3xl font-bold text-center mb-8">
+        <h2 className="font-heading text-2xl md:text-3xl font-bold text-center text-foreground mb-8">
           Naršyk pagal kategoriją
         </h2>
         
