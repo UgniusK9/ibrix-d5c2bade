@@ -1459,8 +1459,8 @@ Deno.serve(async (req: Request) => {
         break;
       case 'gift_card':
       case 'digital_gift_card':
-        emailContent = getGiftCardEmail(data);
-        recipientEmail = data.recipientEmail || data.to || email;
+        emailContent = getGiftCardEmail(data.data || data);
+        recipientEmail = data.data?.recipientEmail || data.recipientEmail || data.to || email;
         break;
       case 'gift_card_confirmation':
         emailContent = getGiftCardConfirmationEmail(data);

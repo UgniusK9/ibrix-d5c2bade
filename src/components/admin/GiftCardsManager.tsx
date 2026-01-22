@@ -92,12 +92,14 @@ export function GiftCardsManager() {
             body: {
               type: 'gift_card',
               email: recipientEmail,
-              recipientEmail: recipientEmail,
-              recipientName: recipientName || 'Gerbiamas kliente',
-              senderName: 'IBRIX Administratorius',
-              amount: newCardValue,
-              code: codeData,
-              personalMessage: personalMessage || null,
+              data: {
+                recipientEmail: recipientEmail,
+                recipientName: recipientName || 'Gerbiamas kliente',
+                senderName: 'IBRIX Administratorius',
+                amount: newCardValue,
+                code: codeData,
+                personalMessage: personalMessage || null,
+              },
             },
           });
           
