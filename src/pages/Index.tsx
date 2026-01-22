@@ -48,7 +48,7 @@ const Index = () => {
         description="IBRIX - Aukštos kokybės variklių ir mechaninių modelių parduotuvė Lietuvoje. Pre-order sistema, nemokamas pristatymas, 14 dienų grąžinimas."
         canonical="/"
       />
-      <div className="min-h-screen flex flex-col">
+      <div className="min-h-screen flex flex-col overflow-x-hidden">
         <Header />
         <main className="flex-1">
           {/* Show PromoBanner if there are active banners, otherwise show HeroSection */}

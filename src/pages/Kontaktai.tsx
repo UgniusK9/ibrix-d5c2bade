@@ -60,6 +60,13 @@ export default function Kontaktai() {
     const message = formData.get("message") as string;
 
     try {
+      // Validate that topic is selected
+      if (!selectedTopic) {
+        toast.error("Pasirinkite temą");
+        setLoading(false);
+        return;
+      }
+
       const { data: inquiryData, error } = await supabase.from("contact_inquiries").insert({
         name,
         email,
@@ -68,32 +75,41 @@ export default function Kontaktai() {
         message,
       }).select().single();
 
-      if (error) throw error;
+      if (error) {
+        console.error("Database insert error:", error);
+        throw new Error(error.message || "Nepavyko išsaugoti žinutės");
+      }
 
-      // Send auto-reply email
-      await supabase.functions.invoke('send-email', {
-        body: {
-          type: 'inquiry_received',
-          data: {
+      // Send auto-reply email (don't fail the whole submission if email fails)
+      try {
+        await supabase.functions.invoke('send-email', {
+          body: {
+            type: 'inquiry_received',
             email,
-            firstName: name,
-            topic: topics.find(t => t.value === selectedTopic)?.label || selectedTopic,
-            message,
-            orderNumber: order || null,
-            conversationToken: inquiryData?.conversation_token,
+            data: {
+              email,
+              firstName: name,
+              topic: topics.find(t => t.value === selectedTopic)?.label || selectedTopic,
+              message,
+              orderNumber: order || null,
+              conversationToken: inquiryData?.conversation_token,
+            },
           },
-        },
-      });
+        });
+      } catch (emailError) {
+        console.warn("Email notification failed:", emailError);
+        // Don't throw - the inquiry was saved successfully
+      }
 
       setSubmitted(true);
       toast.success("Žinutė išsiųsta!", {
         description: "Atsakysime per 24 valandas",
         position: "top-center",
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error submitting inquiry:", error);
       toast.error("Klaida siunčiant žinutę", {
-        description: "Bandykite dar kartą vėliau",
+        description: error.message || "Bandykite dar kartą vėliau",
       });
     }
 

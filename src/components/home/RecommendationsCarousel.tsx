@@ -71,8 +71,8 @@ export function RecommendationsCarousel() {
   ];
 
   return (
-    <section className="py-16 md:py-24 bg-gradient-to-b from-secondary/20 to-background">
-      <div className="container">
+    <section className="py-16 md:py-24 bg-gradient-to-b from-secondary/20 to-background overflow-hidden">
+      <div className="container overflow-visible">
         {/* Header */}
         <div className="text-center mb-10">
           <h2 className="font-heading text-2xl md:text-3xl font-bold mb-2">
