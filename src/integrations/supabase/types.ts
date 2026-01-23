@@ -405,6 +405,44 @@ export type Database = {
           },
         ]
       }
+      gift_card_email_logs: {
+        Row: {
+          created_at: string
+          error_message: string | null
+          gift_card_id: string | null
+          id: string
+          recipient_email: string
+          sent_at: string
+          status: string
+        }
+        Insert: {
+          created_at?: string
+          error_message?: string | null
+          gift_card_id?: string | null
+          id?: string
+          recipient_email: string
+          sent_at?: string
+          status?: string
+        }
+        Update: {
+          created_at?: string
+          error_message?: string | null
+          gift_card_id?: string | null
+          id?: string
+          recipient_email?: string
+          sent_at?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "gift_card_email_logs_gift_card_id_fkey"
+            columns: ["gift_card_id"]
+            isOneToOne: false
+            referencedRelation: "gift_cards"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       gift_cards: {
         Row: {
           code: string

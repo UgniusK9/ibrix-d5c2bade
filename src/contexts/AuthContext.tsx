@@ -126,28 +126,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const signInWithMagicLink = async (email: string) => {
-    // First check if user exists
-    const { data: existingUser } = await supabase
-      .from('users')
-      .select('id')
-      .eq('email', email.toLowerCase().trim())
-      .maybeSingle();
-    
-    if (!existingUser) {
-      return { error: new Error('Šis el. paštas nėra užregistruotas. Prašome susikurti paskyrą.') };
-    }
-    
     const redirectUrl = `${window.location.origin}/`;
     
+    // Use Supabase's built-in check - shouldCreateUser: false will return error if user doesn't exist
     const { error } = await supabase.auth.signInWithOtp({
-      email,
+      email: email.toLowerCase().trim(),
       options: {
         emailRedirectTo: redirectUrl,
-        shouldCreateUser: false, // Prevent creating new users
+        shouldCreateUser: false,
       },
     });
     
-    return { error: error as Error | null };
+    // Transform Supabase error message to Lithuanian
+    if (error) {
+      if (error.message.includes('Signups not allowed') || error.message.includes('not allowed')) {
+        return { error: new Error('Šis el. paštas nėra užregistruotas. Prašome susikurti paskyrą.') };
+      }
+      return { error: error as Error };
+    }
+    
+    return { error: null };
   };
 
   const signInWithPassword = async (email: string, password: string) => {
