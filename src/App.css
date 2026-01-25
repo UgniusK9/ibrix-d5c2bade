@@ -1,8 +1,8 @@
+/* Legacy styles - no longer used */
 #root {
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 2rem;
-  text-align: center;
+  width: 100%;
+  min-width: 320px;
+  overflow-x: hidden;
 }
 
 .logo {
