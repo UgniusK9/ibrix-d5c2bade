@@ -107,11 +107,18 @@
   * {
     @apply border-border;
   }
+  
+  html {
+    overflow-x: hidden;
+    scroll-behavior: smooth;
+  }
 
   body {
     @apply bg-background text-foreground font-sans antialiased;
     font-feature-settings: "cv11", "ss01";
     line-height: 1.6;
+    overflow-x: hidden;
+    min-width: 320px;
   }
   
   /* Typography scale - clean LEGO-like hierarchy */

@@ -57,53 +57,53 @@ export function Header() {
   const isActive = (href: string) => location.pathname === href;
 
   return (
-    <header className="sticky top-0 z-50 bg-card shadow-soft">
+    <header className="sticky top-0 z-50 bg-card shadow-soft w-full min-w-0">
       {/* Top Bar - LEGO-like bright strip */}
-      <div className="bg-primary">
-        <div className="container">
-          <div className="flex items-center justify-center gap-8 py-2 text-xs md:text-sm overflow-hidden">
+      <div className="bg-primary w-full">
+        <div className="container max-w-full px-4 md:px-6 lg:px-8">
+          <div className="flex items-center justify-center gap-4 md:gap-8 py-2 text-xs md:text-sm">
             {topBarItems.map((item, index) => (
-              <span key={index} className="hidden md:inline-flex items-center gap-2 whitespace-nowrap text-primary-foreground/90 font-medium">
-                <item.icon className="h-3.5 w-3.5" strokeWidth={2} />
-                {item.text}
+              <span key={index} className="hidden md:inline-flex items-center gap-2 whitespace-nowrap text-primary-foreground/90 font-medium flex-shrink-0">
+                <item.icon className="h-3.5 w-3.5 flex-shrink-0" strokeWidth={2} />
+                <span className="truncate">{item.text}</span>
               </span>
             ))}
             {/* Mobile - show only first item */}
             <span className="md:hidden inline-flex items-center gap-2 text-primary-foreground font-medium">
-              <Truck className="h-3.5 w-3.5" strokeWidth={2} />
-              {topBarItems[0].text}
+              <Truck className="h-3.5 w-3.5 flex-shrink-0" strokeWidth={2} />
+              <span className="truncate">{topBarItems[0].text}</span>
             </span>
           </div>
         </div>
       </div>
 
       {/* Main Header */}
-      <div className="bg-card border-b border-border">
-        <div className="container">
-          <div className="flex items-center justify-between h-16 lg:h-18">
+      <div className="bg-card border-b border-border w-full">
+        <div className="container max-w-full px-4 md:px-6 lg:px-8">
+          <div className="flex items-center justify-between h-16 lg:h-18 gap-2 md:gap-4 min-w-0">
             {/* Logo */}
             <Link to="/" className="flex-shrink-0">
-              <img src={logo} alt="IBRIX" className="h-10 md:h-12 w-auto" />
+              <img src={logo} alt="IBRIX" className="h-10 md:h-12 w-auto max-w-[120px] md:max-w-none object-contain" />
             </Link>
 
             {/* Desktop Navigation */}
-            <nav className="hidden lg:flex items-center gap-1">
+            <nav className="hidden lg:flex items-center gap-1 flex-shrink-0 min-w-0">
               {/* Products Mega Menu */}
               <CategoriesMegaMenu />
               
               {/* Informacija Dropdown */}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <button className="px-4 py-2 text-sm font-medium rounded-lg transition-colors whitespace-nowrap text-foreground/70 hover:text-foreground hover:bg-secondary flex items-center gap-1.5">
+                  <button className="px-3 xl:px-4 py-2 text-sm font-medium rounded-lg transition-colors whitespace-nowrap text-foreground/70 hover:text-foreground hover:bg-secondary flex items-center gap-1.5 flex-shrink-0">
                     Informacija
-                    <ChevronDown className="h-3.5 w-3.5" />
+                    <ChevronDown className="h-3.5 w-3.5 flex-shrink-0" />
                   </button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="start" className="w-52 p-2">
                   {infoLinks.map((item) => (
                     <DropdownMenuItem key={item.name} asChild>
                       <Link to={item.href} className="flex items-center gap-3 px-3 py-2.5 cursor-pointer rounded-lg">
-                        <item.icon className="h-4 w-4 text-muted-foreground" />
+                        <item.icon className="h-4 w-4 text-muted-foreground flex-shrink-0" />
                         {item.name}
                       </Link>
                     </DropdownMenuItem>
@@ -115,7 +115,7 @@ export function Header() {
                 <Link
                   key={item.name}
                   to={item.href}
-                  className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors whitespace-nowrap ${
+                  className={`px-3 xl:px-4 py-2 text-sm font-medium rounded-lg transition-colors whitespace-nowrap flex-shrink-0 ${
                     isActive(item.href)
                       ? "text-primary bg-primary/10"
                       : "text-foreground/70 hover:text-foreground hover:bg-secondary"
@@ -127,12 +127,12 @@ export function Header() {
             </nav>
 
             {/* Search - Desktop */}
-            <div className="hidden lg:block flex-1 max-w-sm mx-6">
+            <div className="hidden lg:block flex-1 max-w-xs xl:max-w-sm mx-4 xl:mx-6 min-w-0">
               <ProductSearch />
             </div>
 
             {/* Right Actions */}
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1 md:gap-2 flex-shrink-0">
               {/* Mobile Search Toggle */}
               <Button
                 variant="ghost"
@@ -144,10 +144,10 @@ export function Header() {
               </Button>
 
               {/* CTA Button - Desktop only */}
-              <Button asChild size="sm" variant="accent" className="hidden lg:flex h-10 px-5">
+              <Button asChild size="sm" variant="accent" className="hidden xl:flex h-10 px-4 xl:px-5 flex-shrink-0">
                 <Link to="/produktai/visi">
-                  {t('nav.viewConstructors')}
-                  <ArrowRight className="ml-1.5 h-4 w-4" />
+                  <span className="truncate">{t('nav.viewConstructors')}</span>
+                  <ArrowRight className="ml-1.5 h-4 w-4 flex-shrink-0" />
                 </Link>
               </Button>
 
