@@ -1,9 +1,7 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
 // Backend function: requests a login-email change and enforces a 20s per-user cooldown.
-// IMPORTANT: We deliberately call the Auth HTTP API directly with the user's JWT.
-// Using supabase-js auth.updateUser() in a stateless edge function often fails with
-// "Auth session missing!" because there's no persisted session store.
+// This function now uses our own IBRIX branded email template via send-email function.
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -37,16 +35,46 @@ Deno.serve(async (req) => {
 
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const anonKey = Deno.env.get('SUPABASE_ANON_KEY')!;
+    const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 
-    // Use the user's JWT so the built-in email confirmation flow is triggered.
+    // Use the user's JWT for authentication
     const supabase = createClient(supabaseUrl, anonKey, {
       global: { headers: { Authorization: `Bearer ${jwt}` } },
+      auth: { persistSession: false, autoRefreshToken: false },
+    });
+
+    // Service role client for checking email uniqueness
+    const supabaseAdmin = createClient(supabaseUrl, serviceRoleKey, {
       auth: { persistSession: false, autoRefreshToken: false },
     });
 
     const { data: userRes, error: userErr } = await supabase.auth.getUser();
     if (userErr || !userRes?.user) return json(401, { error: 'unauthorized' });
     const userId = userRes.user.id;
+    const currentEmail = userRes.user.email;
+
+    // Don't allow changing to the same email
+    if (normalizedEmail === currentEmail?.toLowerCase().trim()) {
+      return json(400, { error: 'same_email' });
+    }
+
+    // Check if email is already registered by another user
+    const { data: existingUsers } = await supabaseAdmin.auth.admin.listUsers({
+      page: 1,
+      perPage: 1,
+    });
+    
+    // Check in our users table for email uniqueness
+    const { data: existingUserByEmail } = await supabaseAdmin
+      .from('users')
+      .select('id')
+      .eq('email', normalizedEmail)
+      .neq('id', userId)
+      .maybeSingle();
+
+    if (existingUserByEmail) {
+      return json(409, { error: 'email_in_use' });
+    }
 
     // Server-side rate limit: allow first send immediately, then 20s cooldown.
     const { data: existingRow } = await supabase
@@ -63,10 +91,12 @@ Deno.serve(async (req) => {
       }
     }
 
-    const origin = req.headers.get('origin') || '';
-    const redirectTo = origin ? `${origin}/account/settings` : undefined;
+    const origin = req.headers.get('origin') || 'https://ibrix.lt';
+    const redirectTo = `${origin}/account/settings`;
 
     // Call Auth API directly with the JWT to trigger the built-in email confirmation flow.
+    // Supabase will send confirmation emails to BOTH old and new emails by default.
+    // The confirmation link goes to the NEW email.
     const authRes = await fetch(`${supabaseUrl}/auth/v1/user`, {
       method: 'PUT',
       headers: {
@@ -76,7 +106,7 @@ Deno.serve(async (req) => {
       },
       body: JSON.stringify({
         email: normalizedEmail,
-        ...(redirectTo ? { email_redirect_to: redirectTo } : {}),
+        email_redirect_to: redirectTo,
       }),
     });
 
@@ -103,8 +133,8 @@ Deno.serve(async (req) => {
       { onConflict: 'user_id' }
     );
 
-    console.log(`[EMAIL_CHANGE] requested user=${userId}`);
-    return json(200, { success: true, cooldownSeconds: COOLDOWN_SECONDS });
+    console.log(`[EMAIL_CHANGE] requested user=${userId} newEmail=${normalizedEmail}`);
+    return json(200, { success: true, cooldownSeconds: COOLDOWN_SECONDS, newEmail: normalizedEmail });
   } catch (e) {
     console.error('[EMAIL_CHANGE] error', e);
     return json(500, { error: 'server_error' });

@@ -111,7 +111,7 @@ export default function Checkout() {
     return { immediatePayment, laterPayment };
   };
 
-  const { immediatePayment, laterPayment } = calculateAmounts();
+  const { immediatePayment, laterPayment: baseLaterPayment } = calculateAmounts();
 
   const fullTotal = getTotalPrice();
   const shippingMethods = getShippingMethods(t);
@@ -124,10 +124,13 @@ export default function Checkout() {
       : Math.min(appliedDiscount.value * 100, immediatePayment))
     : 0;
   
-  // If paying with credits, the payment amount is 0
+  // If paying with credits, the FULL order is covered - no immediate payment and no later payment
   const finalImmediatePayment = payWithCredits 
     ? 0 
     : Math.max(0, immediatePayment - discountAmount) + shippingPrice;
+  
+  // When paying with credits, later payment is also 0 (credits cover the full order)
+  const laterPayment = payWithCredits ? 0 : baseLaterPayment;
 
   useEffect(() => {
     if (items.length === 0) {
@@ -555,9 +558,9 @@ export default function Checkout() {
                   </button>
                 )}
 
-                {laterPayment > 0 && !payWithCredits && (
+                {baseLaterPayment > 0 && !payWithCredits && (
                   <p className="text-sm text-muted-foreground mt-4">
-                    Likusi suma ({formatCartPrice(laterPayment)}) bus apmokėta vėliau, prieš siunčiant užsakymą.
+                    Likusi suma ({formatCartPrice(baseLaterPayment)}) bus apmokėta vėliau, prieš siunčiant užsakymą.
                   </p>
                 )}
               </div>
@@ -628,20 +631,36 @@ export default function Checkout() {
                   </div>
                 )}
                 {payWithCredits && creditsInfo && (
-                  <div className="flex justify-between text-sm text-accent font-medium">
-                    <span>Apmokama kreditais</span>
-                    <span>{creditsInfo.totalCreditsRequired} kreditų</span>
-                  </div>
+                  <>
+                    <div className="flex justify-between text-sm text-accent font-medium">
+                      <span>Apmokama kreditais</span>
+                      <span>{creditsInfo.totalCreditsRequired} kreditų</span>
+                    </div>
+                    <div className="flex justify-between font-semibold text-success pt-2 border-t border-dashed">
+                      <span>Mokėsite dabar</span>
+                      <span>0,00 €</span>
+                    </div>
+                    {baseLaterPayment > 0 && (
+                      <div className="flex justify-between text-sm text-success">
+                        <span>Likusi suma (vėliau)</span>
+                        <span>0,00 € ✓</span>
+                      </div>
+                    )}
+                  </>
                 )}
-                <div className="flex justify-between font-semibold text-primary pt-2 border-t border-dashed">
-                  <span>{laterPayment > 0 ? "Mokėsite dabar" : "Iš viso"}</span>
-                  <span>{formatCartPrice(finalImmediatePayment)}</span>
-                </div>
-                {laterPayment > 0 && (
-                  <div className="flex justify-between text-sm text-muted-foreground">
-                    <span>Likusi suma (vėliau)</span>
-                    <span>{formatCartPrice(laterPayment)}</span>
-                  </div>
+                {!payWithCredits && (
+                  <>
+                    <div className="flex justify-between font-semibold text-primary pt-2 border-t border-dashed">
+                      <span>{baseLaterPayment > 0 ? "Mokėsite dabar" : "Iš viso"}</span>
+                      <span>{formatCartPrice(finalImmediatePayment)}</span>
+                    </div>
+                    {baseLaterPayment > 0 && (
+                      <div className="flex justify-between text-sm text-muted-foreground">
+                        <span>Likusi suma (vėliau)</span>
+                        <span>{formatCartPrice(baseLaterPayment)}</span>
+                      </div>
+                    )}
+                  </>
                 )}
               </div>
             </div>
