@@ -13,6 +13,7 @@ const ALLOWED_ORIGINS = [
 function isAllowedOrigin(origin: string): boolean {
   if (ALLOWED_ORIGINS.includes(origin)) return true;
   if (origin.endsWith('.lovable.app')) return true;
+  if (origin.endsWith('.lovableproject.com')) return true;
   return false;
 }
 
