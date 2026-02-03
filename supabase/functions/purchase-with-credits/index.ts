@@ -256,7 +256,7 @@ serve(async (req) => {
         last_name: lastName || "",
         phone: phone || null,
         status: "paid",
-        payment_plan: "full",
+        payment_plan: "full_payment",
         payment_provider: "credits",
         payment_method_code: idempotencyKey ? `credits_idem_${idempotencyKey}` : "credits",
         paid_at: new Date().toISOString(),
