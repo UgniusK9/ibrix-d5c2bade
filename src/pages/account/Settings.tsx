@@ -193,17 +193,17 @@ export default function Settings() {
 
   const handleChangeEmail = async () => {
     if (!user || !newEmail || newEmail === profile.email) return;
-
-    // Prevent repeated sends (provider rate limit)
-    if (emailCooldownUntil && Date.now() < emailCooldownUntil) {
-      const secondsLeft = Math.max(1, Math.ceil((emailCooldownUntil - Date.now()) / 1000));
-      toast.error(t('settings.emailRateLimit', { seconds: secondsLeft }));
-      return;
-    }
     
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(newEmail)) {
       toast.error(t('settings.invalidEmail'));
+      return;
+    }
+
+    // Prevent repeated sends (provider rate limit) - only check if cooldown is active
+    if (emailCooldownUntil && Date.now() < emailCooldownUntil) {
+      const secondsLeft = Math.max(1, Math.ceil((emailCooldownUntil - Date.now()) / 1000));
+      toast.error(t('settings.emailRateLimit', { seconds: secondsLeft }));
       return;
     }
     
@@ -221,9 +221,6 @@ export default function Settings() {
         setSavingEmail(false);
         return;
       }
-      
-      // Set a short cooldown to avoid 429 over_email_send_rate_limit from the auth provider
-      setEmailCooldownUntil(Date.now() + 20_000);
 
       // Update email with proper redirect URL for confirmation
       const { error } = await supabase.auth.updateUser(
@@ -233,6 +230,8 @@ export default function Settings() {
       
       if (error) throw error;
       
+      // Set cooldown AFTER successful send to prevent spam
+      setEmailCooldownUntil(Date.now() + 30_000);
       setEmailSent(true);
       toast.success(t('settings.emailVerificationSent'));
     } catch (error: any) {
