@@ -270,40 +270,72 @@ export default function Settings() {
     setSavingEmail(true);
     setEmailError(null);
     try {
-      // Send through backend to enforce server-side rate limit.
-      const { data, error } = await supabase.functions.invoke('request-email-change', {
-        body: { email: normalizedEmail },
-      });
+      // Use direct fetch to access response body even on non-2xx status codes.
+      // supabase.functions.invoke doesn't expose the body on error responses.
+      const session = await supabase.auth.getSession();
+      const accessToken = session.data.session?.access_token;
+      
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/request-email-change`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${accessToken}`,
+            'apikey': import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+          },
+          body: JSON.stringify({ email: normalizedEmail }),
+        }
+      );
 
-      if (error) {
-        const status = (error as any)?.context?.status;
-        const body = (error as any)?.context?.body;
-        if (status === 429 && body?.retryAfter) {
-          const seconds = Number(body.retryAfter) || 20;
-          setEmailCooldownFor(normalizedEmail);
-          setEmailCooldownUntil(Date.now() + seconds * 1000);
-          setEmailError(`Per dažnai siunčiate. Bandykite po ${Math.max(1, seconds)}s.`);
-          return { success: false, rateLimited: true, retryAfter: seconds };
-        }
-        if (status === 409 || body?.error === 'email_in_use') {
-          setEmailError(t('settings.emailAlreadyUsed'));
-          return { success: false };
-        }
-        if (status === 400 || body?.error === 'invalid_email') {
-          setEmailError(t('settings.invalidEmail'));
-          return { success: false };
-        }
-        throw error;
+      const responseBody = await response.json().catch(() => ({})) as {
+        success?: boolean;
+        error?: string;
+        retryAfter?: number;
+        cooldownSeconds?: number;
+        message?: string;
+      };
+
+      // Handle rate limit (429)
+      if (response.status === 429 || responseBody.error === 'rate_limited' || responseBody.retryAfter) {
+        const seconds = Number(responseBody.retryAfter) || 20;
+        setEmailCooldownFor(normalizedEmail);
+        setEmailCooldownUntil(Date.now() + seconds * 1000);
+        setEmailError(`Per dažnai siunčiate. Bandykite po ${Math.max(1, seconds)}s.`);
+        return { success: false, rateLimited: true, retryAfter: seconds };
       }
 
-      const cooldown = Number((data as any)?.cooldownSeconds) || 20;
-      
-      // Set cooldown AFTER successful send to prevent spam (20 seconds)
-      setEmailCooldownFor(normalizedEmail);
-      setEmailCooldownUntil(Date.now() + cooldown * 1000);
-      setPendingEmail(normalizedEmail);
-      setEmailSent(true);
-      return { success: true };
+      // Handle email already in use (409)
+      if (response.status === 409 || responseBody.error === 'email_in_use') {
+        setEmailError(t('settings.emailAlreadyUsed'));
+        return { success: false };
+      }
+
+      // Handle invalid email (400)
+      if (response.status === 400 || responseBody.error === 'invalid_email') {
+        setEmailError(t('settings.invalidEmail'));
+        return { success: false };
+      }
+
+      // Handle other provider errors
+      if (!response.ok || responseBody.error) {
+        setEmailError(responseBody.message || t('common.error'));
+        return { success: false };
+      }
+
+      // Success path
+      if (responseBody.success) {
+        const cooldown = Number(responseBody.cooldownSeconds) || 20;
+        
+        // Set cooldown AFTER successful send to prevent spam (20 seconds)
+        setEmailCooldownFor(normalizedEmail);
+        setEmailCooldownUntil(Date.now() + cooldown * 1000);
+        setPendingEmail(normalizedEmail);
+        setEmailSent(true);
+        return { success: true };
+      }
+
+      return { success: false };
     } catch (error: any) {
       console.error('Error changing email:', error);
       const msg: string = error?.message || '';
