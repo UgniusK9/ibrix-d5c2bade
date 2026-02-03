@@ -24,20 +24,25 @@ serve(async (req) => {
     
     // Get user from auth header
     const authHeader = req.headers.get("Authorization");
-    if (!authHeader) {
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
         status: 401,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
+    const token = authHeader.replace("Bearer ", "");
+    const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
+    
     const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
-    const supabaseClient = createClient(supabaseUrl, supabaseServiceKey, {
+    const supabaseClient = createClient(supabaseUrl, supabaseAnonKey, {
       global: { headers: { Authorization: authHeader } },
     });
 
-    const { data: { user }, error: userError } = await supabaseClient.auth.getUser();
+    // Pass token explicitly for Lovable Cloud ES256 signing
+    const { data: { user }, error: userError } = await supabaseClient.auth.getUser(token);
     if (userError || !user) {
+      console.error("JWT validation error:", userError);
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
         status: 401,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
