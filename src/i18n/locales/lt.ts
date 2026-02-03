@@ -234,6 +234,7 @@ export const lt = {
     emailVerificationSent: 'Patvirtinimo laiškas išsiųstas',
     emailVerificationSentDesc: 'Patikrinkite savo naują el. pašto dėžutę ir paspauskite patvirtinimo nuorodą.',
     emailAlreadyUsed: 'Šis el. paštas jau užregistruotas',
+    emailSameAsCurrent: 'Naujas el. paštas negali būti toks pat kaip dabartinis',
     invalidEmail: 'Neteisingas el. pašto formatas',
     address: 'Pristatymo adresas',
     addressDesc: 'Išsaugokite adresą greitesniam apsipirkimui',
@@ -443,6 +444,9 @@ export const lt = {
   cart: {
     title: 'Krepšelis',
     empty: 'Jūsų krepšelis tuščias',
+    emptyTitle: 'Krepšelis tuščias',
+    emptyDescription: 'Pridėkite konstruktorių, kad pradėtumėte apsipirkimą',
+    startShopping: 'Pradėti apsipirkimą',
     continueShopping: 'Tęsti apsipirkimą',
     subtotal: 'Tarpinė suma',
     shipping: 'Pristatymas',
