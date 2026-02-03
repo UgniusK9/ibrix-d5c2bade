@@ -49,6 +49,7 @@ export default function Settings() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [savingEmail, setSavingEmail] = useState(false);
+  const [emailCooldownUntil, setEmailCooldownUntil] = useState<number | null>(null);
   const [savingPassword, setSavingPassword] = useState(false);
   const [emailSent, setEmailSent] = useState(false);
   const [passwordChanged, setPasswordChanged] = useState(false);
@@ -192,6 +193,13 @@ export default function Settings() {
 
   const handleChangeEmail = async () => {
     if (!user || !newEmail || newEmail === profile.email) return;
+
+    // Prevent repeated sends (provider rate limit)
+    if (emailCooldownUntil && Date.now() < emailCooldownUntil) {
+      const secondsLeft = Math.max(1, Math.ceil((emailCooldownUntil - Date.now()) / 1000));
+      toast.error(t('settings.emailRateLimit', { seconds: secondsLeft }));
+      return;
+    }
     
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(newEmail)) {
@@ -214,12 +222,14 @@ export default function Settings() {
         return;
       }
       
+      // Set a short cooldown to avoid 429 over_email_send_rate_limit from the auth provider
+      setEmailCooldownUntil(Date.now() + 20_000);
+
       // Update email with proper redirect URL for confirmation
-      const { error } = await supabase.auth.updateUser({
-        email: newEmail.toLowerCase().trim(),
-      }, {
-        emailRedirectTo: `${window.location.origin}/account/settings`,
-      });
+      const { error } = await supabase.auth.updateUser(
+        { email: newEmail.toLowerCase().trim() },
+        { emailRedirectTo: `${window.location.origin}/account/settings` }
+      );
       
       if (error) throw error;
       
@@ -227,12 +237,19 @@ export default function Settings() {
       toast.success(t('settings.emailVerificationSent'));
     } catch (error: any) {
       console.error('Error changing email:', error);
-      if (error.message?.includes('already registered') || error.message?.includes('already been registered')) {
+      const msg: string = error?.message || '';
+      // Example: "429: For security purposes, you can only request this after 11 seconds."
+      const match = msg.match(/after\s+(\d+)\s+seconds/i);
+      if (msg.includes('429') || msg.toLowerCase().includes('rate limit') || match) {
+        const seconds = match ? Number(match[1]) : 20;
+        setEmailCooldownUntil(Date.now() + Math.max(5, seconds) * 1000);
+        toast.error(t('settings.emailRateLimit', { seconds: Math.max(1, seconds) }));
+      } else if (msg.includes('already registered') || msg.includes('already been registered')) {
         toast.error(t('settings.emailAlreadyUsed'));
-      } else if (error.message?.includes('same as')) {
+      } else if (msg.includes('same as')) {
         toast.error(t('settings.emailSameAsCurrent'));
       } else {
-        toast.error(error.message || t('common.error'));
+        toast.error(msg || t('common.error'));
       }
     } finally {
       setSavingEmail(false);

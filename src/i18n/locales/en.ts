@@ -233,6 +233,7 @@ export const en = {
     emailVerificationSentDesc: 'Check your new email inbox and click the confirmation link.',
     emailAlreadyUsed: 'This email is already registered',
     emailSameAsCurrent: 'New email cannot be the same as current',
+    emailRateLimit: 'Please wait {{seconds}}s and try again',
     invalidEmail: 'Invalid email format',
     address: 'Delivery Address',
     addressDesc: 'Save your address for faster checkout',
