@@ -1,40 +1,43 @@
 import { Truck, Shield, Headphones } from "lucide-react";
-import { TrustCard } from "./TrustCard";
+import { cn } from "@/lib/utils";
 
 const badges = [
   {
     icon: Truck,
     title: "Nemokamas pristatymas",
-    description: "Į paštomatą Lietuvoje – visada nemokamai",
-    accentColor: "sky" as const,
+    description: "Į paštomatą – visada nemokamai",
   },
   {
     icon: Shield,
     title: "Aiškus pre-order",
     description: "Atšaukti galima iki išsiuntimo",
-    accentColor: "amber" as const,
   },
   {
     icon: Headphones,
     title: "Trūkstamos detalės",
-    description: "Nemokamai išsiunčiame trūkstamą dalį",
-    accentColor: "emerald" as const,
+    description: "Nemokamai išsiunčiame",
   },
 ];
 
 export function TrustBadges() {
   return (
-    <section className="py-8 md:py-10 bg-secondary/30 dark:bg-secondary/10">
+    <section className="py-6 md:py-8 bg-secondary/30 dark:bg-secondary/10">
       <div className="container">
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 md:gap-4">
+        <div className="flex flex-wrap items-center justify-center gap-4 md:gap-8 lg:gap-12">
           {badges.map((badge, index) => (
-            <TrustCard
+            <div
               key={index}
-              icon={badge.icon}
-              title={badge.title}
-              description={badge.description}
-              accentColor={badge.accentColor}
-            />
+              className={cn(
+                "flex items-center gap-3 px-4 py-2",
+                "text-sm"
+              )}
+            >
+              <badge.icon className="w-5 h-5 text-primary flex-shrink-0" />
+              <div className="min-w-0">
+                <span className="font-medium text-foreground">{badge.title}</span>
+                <span className="text-muted-foreground hidden sm:inline"> – {badge.description}</span>
+              </div>
+            </div>
           ))}
         </div>
       </div>
