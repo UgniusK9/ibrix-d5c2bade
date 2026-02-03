@@ -3,7 +3,7 @@ import { Footer } from "@/components/layout/Footer";
 import { HeroSection } from "@/components/home/HeroSection";
 import { PromoBanner } from "@/components/home/PromoBanner";
 import { TrustBadges } from "@/components/home/TrustBadges";
-import { CollectionsSection } from "@/components/home/CollectionsSection";
+import { TabbedProductCarousel } from "@/components/home/TabbedProductCarousel";
 import { ProductsSection } from "@/components/home/ProductsSection";
 import { BundlesSection } from "@/components/home/BundlesSection";
 import { EditorialSection } from "@/components/home/EditorialSection";
@@ -15,10 +15,12 @@ import { PreOrderSection } from "@/components/home/PreOrderSection";
 import { SEOHead } from "@/components/seo/SEOHead";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { useProducts } from "@/hooks/useProducts";
 
 const Index = () => {
   const [hasBanners, setHasBanners] = useState(false);
   const [checkingBanners, setCheckingBanners] = useState(true);
+  const { data: products = [] } = useProducts();
 
   // Check if there are active promo banners
   useEffect(() => {
@@ -54,7 +56,8 @@ const Index = () => {
           {/* Show PromoBanner if there are active banners, otherwise show HeroSection */}
           {!checkingBanners && (hasBanners ? <PromoBanner /> : <HeroSection />)}
           <TrustBadges />
-          <CollectionsSection />
+          {/* LEGO-style product carousel - replaces CollectionsSection */}
+          <TabbedProductCarousel products={products} />
           <ProductsSection />
           <BundlesSection />
           <EditorialSection />
