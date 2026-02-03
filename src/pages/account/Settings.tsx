@@ -1,6 +1,6 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
-import { User, Mail, MapPin, Save, Loader2, ArrowLeft, AlertCircle, CheckCircle2, Lock, Eye, EyeOff, Trash2, Download, Shield, AtSign, Globe, Camera, X } from 'lucide-react';
+import { User, Mail, MapPin, Save, Loader2, ArrowLeft, AlertCircle, CheckCircle2, Lock, Eye, EyeOff, Trash2, Download, Shield, AtSign, Globe, Camera, X, RefreshCw, Clock } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { PageLayout } from '@/components/layout/PageLayout';
 import { Button } from '@/components/ui/button';
@@ -51,8 +51,10 @@ export default function Settings() {
   const [savingEmail, setSavingEmail] = useState(false);
   const [emailCooldownUntil, setEmailCooldownUntil] = useState<number | null>(null);
   const [emailCooldownFor, setEmailCooldownFor] = useState<string | null>(null);
+  const [cooldownSeconds, setCooldownSeconds] = useState(0);
   const [savingPassword, setSavingPassword] = useState(false);
   const [emailSent, setEmailSent] = useState(false);
+  const [pendingEmail, setPendingEmail] = useState<string | null>(null);
   const [passwordChanged, setPasswordChanged] = useState(false);
   const [newEmail, setNewEmail] = useState('');
   const [currentPassword, setCurrentPassword] = useState('');
@@ -163,6 +165,27 @@ export default function Settings() {
     return () => clearTimeout(timer);
   }, [profile.username, originalUsername]);
 
+  // Countdown timer for email cooldown
+  useEffect(() => {
+    if (!emailCooldownUntil) {
+      setCooldownSeconds(0);
+      return;
+    }
+
+    const updateCountdown = () => {
+      const remaining = Math.max(0, Math.ceil((emailCooldownUntil - Date.now()) / 1000));
+      setCooldownSeconds(remaining);
+      if (remaining <= 0) {
+        setEmailCooldownUntil(null);
+        setEmailCooldownFor(null);
+      }
+    };
+
+    updateCountdown();
+    const interval = setInterval(updateCountdown, 1000);
+    return () => clearInterval(interval);
+  }, [emailCooldownUntil]);
+
   const handleSaveProfile = async () => {
     if (!user) return;
     
@@ -192,23 +215,22 @@ export default function Settings() {
     }
   };
 
-  const handleChangeEmail = async () => {
-    if (!user || !newEmail || newEmail === profile.email) return;
-
-    const normalizedEmail = newEmail.toLowerCase().trim();
+  const sendEmailChangeRequest = useCallback(async (targetEmail: string) => {
+    if (!user) return { success: false };
+    
+    const normalizedEmail = targetEmail.toLowerCase().trim();
     
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(normalizedEmail)) {
       toast.error(t('settings.invalidEmail'));
-      return;
+      return { success: false };
     }
 
-    // Prevent repeated sends (provider rate limit) - only check if cooldown is active
-    // Only enforce cooldown for the same target email (so changing the input doesn't instantly block)
+    // Prevent repeated sends (provider rate limit) - only check if cooldown is active for same email
     if (emailCooldownUntil && emailCooldownFor === normalizedEmail && Date.now() < emailCooldownUntil) {
       const secondsLeft = Math.max(1, Math.ceil((emailCooldownUntil - Date.now()) / 1000));
-      toast.error(t('settings.emailRateLimit', { seconds: secondsLeft }));
-      return;
+      toast.error(t('settings.resendTooOften', { seconds: secondsLeft }));
+      return { success: false };
     }
     
     setSavingEmail(true);
@@ -223,7 +245,7 @@ export default function Settings() {
       if (existingUser) {
         toast.error(t('settings.emailAlreadyUsed'));
         setSavingEmail(false);
-        return;
+        return { success: false };
       }
 
       // Update email with proper redirect URL for confirmation
@@ -234,11 +256,12 @@ export default function Settings() {
       
       if (error) throw error;
       
-      // Set cooldown AFTER successful send to prevent spam
+      // Set cooldown AFTER successful send to prevent spam (20 seconds)
       setEmailCooldownFor(normalizedEmail);
-      setEmailCooldownUntil(Date.now() + 30_000);
+      setEmailCooldownUntil(Date.now() + 20_000);
+      setPendingEmail(normalizedEmail);
       setEmailSent(true);
-      toast.success(t('settings.emailVerificationSent'));
+      return { success: true };
     } catch (error: any) {
       console.error('Error changing email:', error);
       const msg: string = error?.message || '';
@@ -256,9 +279,32 @@ export default function Settings() {
       } else {
         toast.error(msg || t('common.error'));
       }
+      return { success: false };
     } finally {
       setSavingEmail(false);
     }
+  }, [user, emailCooldownUntil, emailCooldownFor, t]);
+
+  const handleChangeEmail = async () => {
+    if (!user || !newEmail || newEmail === profile.email) return;
+    const result = await sendEmailChangeRequest(newEmail);
+    if (result.success) {
+      toast.success(t('settings.emailVerificationSent'));
+    }
+  };
+
+  const handleResendEmail = async () => {
+    if (!pendingEmail) return;
+    const result = await sendEmailChangeRequest(pendingEmail);
+    if (result.success) {
+      toast.success(t('settings.emailVerificationSent'));
+    }
+  };
+
+  const handleCancelEmailChange = () => {
+    setEmailSent(false);
+    setPendingEmail(null);
+    setNewEmail(profile.email);
   };
 
   const handleChangePassword = async () => {
@@ -578,13 +624,55 @@ export default function Settings() {
               <CardDescription>{t('settings.emailChangeDesc')}</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              {emailSent ? (
-                <Alert className="border-success/30 bg-success/10">
-                  <CheckCircle2 className="h-4 w-4 text-success" />
-                  <AlertDescription className="text-success">
-                    {t('settings.emailVerificationSentDesc')}
-                  </AlertDescription>
-                </Alert>
+              {emailSent && pendingEmail ? (
+                <>
+                  {/* Success banner with new email */}
+                  <Alert className="border-primary/30 bg-primary/5">
+                    <CheckCircle2 className="h-4 w-4 text-primary" />
+                    <AlertDescription>
+                      {t('settings.emailVerificationSentToNew', { email: pendingEmail })}
+                    </AlertDescription>
+                  </Alert>
+                  
+                  {/* Pending status indicator */}
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <Clock className="w-4 h-4" />
+                    <span>{t('settings.emailPendingVerification')}</span>
+                  </div>
+                  
+                  {/* Resend section */}
+                  <div className="flex items-center gap-3">
+                    {cooldownSeconds > 0 ? (
+                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                        <RefreshCw className="w-4 h-4" />
+                        <span>{t('settings.resendAvailableIn')} {cooldownSeconds}s</span>
+                      </div>
+                    ) : (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={handleResendEmail}
+                        disabled={savingEmail}
+                      >
+                        {savingEmail ? (
+                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        ) : (
+                          <RefreshCw className="w-4 h-4 mr-2" />
+                        )}
+                        {t('settings.resendEmail')}
+                      </Button>
+                    )}
+                    
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={handleCancelEmailChange}
+                      className="text-muted-foreground"
+                    >
+                      {t('common.cancel')}
+                    </Button>
+                  </div>
+                </>
               ) : (
                 <>
                   <div className="space-y-2">
@@ -607,7 +695,7 @@ export default function Settings() {
                       placeholder={t('settings.newEmailPlaceholder')}
                     />
                   </div>
-                  {newEmail && newEmail !== profile.email && (
+                  {newEmail && newEmail.toLowerCase().trim() !== profile.email.toLowerCase() && (
                     <Alert>
                       <AlertCircle className="h-4 w-4" />
                       <AlertDescription>
@@ -617,8 +705,8 @@ export default function Settings() {
                   )}
                   <Button 
                     onClick={handleChangeEmail}
-                    disabled={savingEmail || !newEmail || newEmail === profile.email}
-                    variant="outline"
+                    disabled={savingEmail || !newEmail || newEmail.toLowerCase().trim() === profile.email.toLowerCase()}
+                    variant="default"
                   >
                     {savingEmail ? (
                       <Loader2 className="w-4 h-4 mr-2 animate-spin" />
