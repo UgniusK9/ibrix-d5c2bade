@@ -7,6 +7,12 @@ const corsHeaders = {
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
 
+interface CartItem {
+  productId: string;
+  quantity: number;
+  variantId?: string;
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
@@ -40,9 +46,12 @@ serve(async (req) => {
 
     const body = await req.json();
     const { 
+      items,
+      // Legacy single-product support
       productId, 
       quantity = 1, 
       variantId,
+      // Shared fields
       shippingMethod,
       shippingAddress,
       notes,
@@ -53,8 +62,14 @@ serve(async (req) => {
       phone,
     } = body;
 
-    if (!productId) {
-      return new Response(JSON.stringify({ error: "productId is required" }), {
+    // Normalize to items array
+    let cartItems: CartItem[] = [];
+    if (items && Array.isArray(items) && items.length > 0) {
+      cartItems = items;
+    } else if (productId) {
+      cartItems = [{ productId, quantity, variantId }];
+    } else {
+      return new Response(JSON.stringify({ error: "items or productId is required" }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
@@ -82,37 +97,89 @@ serve(async (req) => {
       }
     }
 
-    // Get product details
-    const { data: product, error: productError } = await supabaseAdmin
+    // Get all product details
+    const productIds = cartItems.map(item => item.productId);
+    const { data: products, error: productsError } = await supabaseAdmin
       .from("products")
       .select("*")
-      .eq("id", productId)
-      .single();
+      .in("id", productIds);
 
-    if (productError || !product) {
-      return new Response(JSON.stringify({ error: "Product not found" }), {
+    if (productsError || !products || products.length === 0) {
+      return new Response(JSON.stringify({ error: "Products not found" }), {
         status: 404,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    // Check if product has credits_cost_eur
-    if (!product.credits_cost_eur || product.credits_cost_eur <= 0) {
-      return new Response(JSON.stringify({ error: "This product cannot be purchased with credits" }), {
+    // Validate all products can be purchased with credits
+    let totalCreditsRequired = 0;
+    let subtotalEur = 0;
+    const orderItems: any[] = [];
+    const ineligibleProducts: string[] = [];
+
+    for (const cartItem of cartItems) {
+      const product = products.find(p => p.id === cartItem.productId);
+      if (!product) {
+        return new Response(JSON.stringify({ error: `Product not found: ${cartItem.productId}` }), {
+          status: 404,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      // Check credits eligibility
+      if (!product.credits_cost_eur || product.credits_cost_eur <= 0) {
+        ineligibleProducts.push(product.title);
+        continue;
+      }
+
+      // Check stock status
+      if (product.stock_status === "out_of_stock") {
+        return new Response(JSON.stringify({ error: `Prekė "${product.title}" išparduota` }), {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      // Check inventory for in-stock items
+      if (product.stock_status === "in_stock" && product.inventory_qty !== null) {
+        if (product.inventory_qty < cartItem.quantity) {
+          return new Response(JSON.stringify({ 
+            error: `Prekės "${product.title}" likę tik ${product.inventory_qty} vnt.` 
+          }), {
+            status: 400,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+      }
+
+      const itemCredits = product.credits_cost_eur * cartItem.quantity;
+      totalCreditsRequired += itemCredits;
+      subtotalEur += product.price_eur * cartItem.quantity;
+
+      orderItems.push({
+        product,
+        quantity: cartItem.quantity,
+        variantId: cartItem.variantId,
+        creditsRequired: itemCredits,
+      });
+    }
+
+    // All items must be eligible for credits
+    if (ineligibleProducts.length > 0) {
+      return new Response(JSON.stringify({ 
+        error: `Šių prekių negalima įsigyti kreditais: ${ineligibleProducts.join(", ")}` 
+      }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    // Check stock status
-    if (product.stock_status === "out_of_stock") {
-      return new Response(JSON.stringify({ error: "Product is out of stock" }), {
+    if (orderItems.length === 0) {
+      return new Response(JSON.stringify({ error: "Nėra prekių, kurias galima apmokėti kreditais" }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
-
-    const creditsRequired = product.credits_cost_eur * quantity;
 
     // Get user wallet
     const { data: wallet, error: walletError } = await supabaseAdmin
@@ -130,12 +197,12 @@ serve(async (req) => {
 
     const userCredits = wallet?.balance_eur || 0;
 
-    if (userCredits < creditsRequired) {
+    if (userCredits < totalCreditsRequired) {
       return new Response(JSON.stringify({ 
-        error: "Insufficient credits",
-        required: creditsRequired,
+        error: "Nepakanka kreditų",
+        required: totalCreditsRequired,
         available: userCredits,
-        missing: creditsRequired - userCredits,
+        missing: totalCreditsRequired - userCredits,
       }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -146,9 +213,12 @@ serve(async (req) => {
     const now = new Date();
     const orderNumber = `IB${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}${String(now.getHours()).padStart(2, '0')}${String(now.getMinutes()).padStart(2, '0')}${String(now.getSeconds()).padStart(2, '0')}${Math.floor(Math.random() * 1000).toString().padStart(3, '0')}`;
 
+    // Check if any item is preorder
+    const hasPreorder = orderItems.some(item => item.product.stock_status === "preorder");
+
     // Start transaction: deduct credits and create order
     // 1. Deduct credits from wallet
-    const newBalance = userCredits - creditsRequired;
+    const newBalance = userCredits - totalCreditsRequired;
     const { error: updateWalletError } = await supabaseAdmin
       .from("wallets")
       .update({ balance_eur: newBalance })
@@ -165,9 +235,9 @@ serve(async (req) => {
     await supabaseAdmin.from("wallet_transactions").insert({
       wallet_id: wallet!.id,
       type: "redeem_captured",
-      amount_eur: creditsRequired,
+      amount_eur: totalCreditsRequired,
       status: "captured",
-      reason: `Credits purchase: ${product.title} x${quantity}`,
+      reason: `Credits purchase: ${orderItems.map(i => `${i.product.title} x${i.quantity}`).join(", ")}`,
     });
 
     // 3. Create order
@@ -186,19 +256,19 @@ serve(async (req) => {
         payment_method_code: idempotencyKey ? `credits_idem_${idempotencyKey}` : "credits",
         paid_at: new Date().toISOString(),
         paid_amount_cents: 0,
-        subtotal_eur: product.price_eur * quantity,
-        subtotal_cents: Math.round(product.price_eur * quantity * 100),
+        subtotal_eur: subtotalEur,
+        subtotal_cents: Math.round(subtotalEur * 100),
         shipping_eur: 0,
         shipping_cents: 0,
-        discount_eur: product.price_eur * quantity, // Full price discounted
-        discount_cents: Math.round(product.price_eur * quantity * 100),
+        discount_eur: subtotalEur, // Full price discounted (paid via credits)
+        discount_cents: Math.round(subtotalEur * 100),
         total_eur: 0,
         total_cents: 0,
         deposit_total_eur: 0,
         balance_total_eur: 0,
-        credits_redeemed_cents: Math.round(creditsRequired * 100),
+        credits_redeemed_cents: Math.round(totalCreditsRequired * 100),
         credits_status: "captured",
-        preorder_flag: product.stock_status === "preorder",
+        preorder_flag: hasPreorder,
         shipping_address_json: shippingAddress || {},
         notes: notes || null,
       })
@@ -219,24 +289,28 @@ serve(async (req) => {
       });
     }
 
-    // 4. Create order item
-    await supabaseAdmin.from("order_items").insert({
+    // 4. Create order items
+    const orderItemsToInsert = orderItems.map(item => ({
       order_id: order.id,
-      product_id: productId,
-      quantity,
-      title_snapshot: product.title,
-      sku_snapshot: product.sku,
-      category_snapshot: product.category,
-      unit_price_eur: product.price_eur,
-      unit_deposit_eur: product.deposit_eur,
-    });
+      product_id: item.product.id,
+      quantity: item.quantity,
+      title_snapshot: item.product.title,
+      sku_snapshot: item.product.sku,
+      category_snapshot: item.product.category,
+      unit_price_eur: item.product.price_eur,
+      unit_deposit_eur: item.product.deposit_eur,
+    }));
 
-    // 5. Update inventory if in_stock
-    if (product.stock_status === "in_stock" && product.inventory_qty !== null) {
-      await supabaseAdmin
-        .from("products")
-        .update({ inventory_qty: Math.max(0, product.inventory_qty - quantity) })
-        .eq("id", productId);
+    await supabaseAdmin.from("order_items").insert(orderItemsToInsert);
+
+    // 5. Update inventory for in_stock items
+    for (const item of orderItems) {
+      if (item.product.stock_status === "in_stock" && item.product.inventory_qty !== null) {
+        await supabaseAdmin
+          .from("products")
+          .update({ inventory_qty: Math.max(0, item.product.inventory_qty - item.quantity) })
+          .eq("id", item.product.id);
+      }
     }
 
     // 6. Create shipment record
@@ -251,8 +325,9 @@ serve(async (req) => {
       success: true,
       orderId: order.id,
       orderNumber: order.order_number,
-      creditsUsed: creditsRequired,
+      creditsUsed: totalCreditsRequired,
       remainingCredits: newBalance,
+      itemsCount: orderItems.length,
     }), {
       status: 200,
       headers: { ...corsHeaders, "Content-Type": "application/json" },

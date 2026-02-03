@@ -64,7 +64,10 @@ export function CartDrawer() {
                 title={t('cart.emptyTitle') || "Krepšelis tuščias"}
                 description={t('cart.emptyDescription') || "Pridėkite konstruktorių, kad pradėtumėte apsipirkimą"}
                 actionLabel={t('cart.startShopping') || "Pradėti apsipirkimą"}
-                actionHref="/produktai/visi"
+                onAction={() => {
+                  setOpen(false);
+                  navigate('/produktai/visi');
+                }}
               />
             </div>
           ) : (
