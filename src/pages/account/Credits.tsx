@@ -139,6 +139,8 @@ export default function Credits() {
       case 'redeem_captured':
       case 'debit':
         return t('credits.type.redeem');
+      case 'gift_card_redeem':
+        return t('credits.type.giftCardActivation');
       case 'earn_reversed':
         return t('credits.status.reversed');
       case 'manual_adjustment':
@@ -184,7 +186,7 @@ export default function Credits() {
     }
   };
 
-  const isEarnType = (type: string) => ['earn_pending', 'earn_available', 'credit'].includes(type);
+  const isEarnType = (type: string) => ['earn_pending', 'earn_available', 'credit', 'gift_card_redeem'].includes(type);
   const isRedeemType = (type: string) => ['redeem_hold', 'redeem_captured', 'debit'].includes(type);
 
   const filteredTransactions = transactions.filter(tx => {

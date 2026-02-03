@@ -194,7 +194,7 @@ export default function Wishlist() {
                       disabled={product.stock_status === 'out_of_stock'}
                     >
                       <ShoppingCart className="w-4 h-4 mr-2" />
-                      {t('product.addToCart')}
+                      {t('cart.add')}
                     </Button>
                     <Button 
                       variant="outline"

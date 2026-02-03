@@ -148,6 +148,7 @@ export const en = {
       earn: 'Earned',
       redeem: 'Redeemed',
       adjustment: 'Adjustment',
+      giftCardActivation: 'Credit activation',
     },
     status: {
       pending: 'Pending',
@@ -451,6 +452,8 @@ export const en = {
     itemAdded: 'Item added',
     itemRemoved: 'Item removed',
     recommendations: 'You might also like',
+    add: 'Add to cart',
+    added: 'Added to cart',
   },
   
   // Checkout
