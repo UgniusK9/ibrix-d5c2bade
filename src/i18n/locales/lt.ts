@@ -235,6 +235,7 @@ export const lt = {
     emailVerificationSentDesc: 'Patikrinkite savo naują el. pašto dėžutę ir paspauskite patvirtinimo nuorodą.',
     emailAlreadyUsed: 'Šis el. paštas jau užregistruotas',
     emailSameAsCurrent: 'Naujas el. paštas negali būti toks pat kaip dabartinis',
+    emailRateLimit: 'Palaukite {{seconds}} s. ir bandykite dar kartą',
     invalidEmail: 'Neteisingas el. pašto formatas',
     address: 'Pristatymo adresas',
     addressDesc: 'Išsaugokite adresą greitesniam apsipirkimui',
