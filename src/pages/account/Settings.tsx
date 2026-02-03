@@ -49,12 +49,14 @@ export default function Settings() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [savingEmail, setSavingEmail] = useState(false);
+  const emailSubmitGuardRef = useRef(false);
   const [emailCooldownUntil, setEmailCooldownUntil] = useState<number | null>(null);
   const [emailCooldownFor, setEmailCooldownFor] = useState<string | null>(null);
   const [cooldownSeconds, setCooldownSeconds] = useState(0);
   const [savingPassword, setSavingPassword] = useState(false);
   const [emailSent, setEmailSent] = useState(false);
   const [pendingEmail, setPendingEmail] = useState<string | null>(null);
+  const [emailError, setEmailError] = useState<string | null>(null);
   const [passwordChanged, setPasswordChanged] = useState(false);
   const [newEmail, setNewEmail] = useState('');
   const [currentPassword, setCurrentPassword] = useState('');
@@ -126,6 +128,39 @@ export default function Settings() {
 
     loadProfile();
   }, [user]);
+
+  // Sync public profile email after user confirms the email-change link.
+  useEffect(() => {
+    if (!user?.id || !user.email) return;
+    if (!profile.email) return;
+
+    const authEmail = user.email.toLowerCase().trim();
+    const profileEmail = profile.email.toLowerCase().trim();
+    if (authEmail === profileEmail) return;
+
+    setProfile((p) => ({ ...p, email: user.email || p.email }));
+    setNewEmail(user.email || '');
+
+    // Best-effort backend sync.
+    supabase.from('users').update({ email: user.email }).eq('id', user.id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.email, user?.id]);
+
+  // If user changes the input to a different email, reset the pending/cooldown state.
+  useEffect(() => {
+    const normalized = newEmail.toLowerCase().trim();
+    if (!pendingEmail) {
+      setEmailError(null);
+      return;
+    }
+    if (normalized && normalized !== pendingEmail) {
+      setEmailSent(false);
+      setPendingEmail(null);
+      setEmailCooldownUntil(null);
+      setEmailCooldownFor(null);
+      setEmailError(null);
+    }
+  }, [newEmail, pendingEmail]);
 
   // Debounced username availability check
   useEffect(() => {
@@ -215,7 +250,7 @@ export default function Settings() {
     }
   };
 
-  const sendEmailChangeRequest = useCallback(async (targetEmail: string) => {
+  const sendEmailChangeRequest = useCallback(async (targetEmail: string, mode: 'initial' | 'resend') => {
     if (!user) return { success: false };
     
     const normalizedEmail = targetEmail.toLowerCase().trim();
@@ -226,58 +261,64 @@ export default function Settings() {
       return { success: false };
     }
 
-    // Prevent repeated sends (provider rate limit) - only check if cooldown is active for same email
-    if (emailCooldownUntil && emailCooldownFor === normalizedEmail && Date.now() < emailCooldownUntil) {
+    // Cooldown applies ONLY to "resend" and ONLY after a successful send.
+    if (mode === 'resend' && emailCooldownUntil && emailCooldownFor === normalizedEmail && Date.now() < emailCooldownUntil) {
       const secondsLeft = Math.max(1, Math.ceil((emailCooldownUntil - Date.now()) / 1000));
-      toast.error(t('settings.resendTooOften', { seconds: secondsLeft }));
-      return { success: false };
+      return { success: false, rateLimited: true, retryAfter: secondsLeft };
     }
     
     setSavingEmail(true);
+    setEmailError(null);
     try {
-      // First check if email is already registered in users table
-      const { data: existingUser } = await supabase
-        .from('users')
-        .select('id')
-        .eq('email', normalizedEmail)
-        .maybeSingle();
-      
-      if (existingUser) {
-        toast.error(t('settings.emailAlreadyUsed'));
-        setSavingEmail(false);
-        return { success: false };
+      // Send through backend to enforce server-side rate limit.
+      const { data, error } = await supabase.functions.invoke('request-email-change', {
+        body: { email: normalizedEmail },
+      });
+
+      if (error) {
+        const status = (error as any)?.context?.status;
+        const body = (error as any)?.context?.body;
+        if (status === 429 && body?.retryAfter) {
+          const seconds = Number(body.retryAfter) || 20;
+          setEmailCooldownFor(normalizedEmail);
+          setEmailCooldownUntil(Date.now() + seconds * 1000);
+          setEmailError(`Per dažnai siunčiate. Bandykite po ${Math.max(1, seconds)}s.`);
+          return { success: false, rateLimited: true, retryAfter: seconds };
+        }
+        if (status === 409 || body?.error === 'email_in_use') {
+          setEmailError(t('settings.emailAlreadyUsed'));
+          return { success: false };
+        }
+        if (status === 400 || body?.error === 'invalid_email') {
+          setEmailError(t('settings.invalidEmail'));
+          return { success: false };
+        }
+        throw error;
       }
 
-      // Update email with proper redirect URL for confirmation
-      const { error } = await supabase.auth.updateUser(
-        { email: normalizedEmail },
-        { emailRedirectTo: `${window.location.origin}/account/settings` }
-      );
-      
-      if (error) throw error;
+      const cooldown = Number((data as any)?.cooldownSeconds) || 20;
       
       // Set cooldown AFTER successful send to prevent spam (20 seconds)
       setEmailCooldownFor(normalizedEmail);
-      setEmailCooldownUntil(Date.now() + 20_000);
+      setEmailCooldownUntil(Date.now() + cooldown * 1000);
       setPendingEmail(normalizedEmail);
       setEmailSent(true);
       return { success: true };
     } catch (error: any) {
       console.error('Error changing email:', error);
       const msg: string = error?.message || '';
-      // Example: "429: For security purposes, you can only request this after 11 seconds."
       const match = msg.match(/after\s+(\d+)\s+seconds/i);
-      if (msg.includes('429') || msg.toLowerCase().includes('rate limit') || match) {
+      if (msg.includes('429') || msg.toLowerCase().includes('rate') || match) {
         const seconds = match ? Number(match[1]) : 20;
         setEmailCooldownFor(normalizedEmail);
-        setEmailCooldownUntil(Date.now() + Math.max(5, seconds) * 1000);
-        toast.error(t('settings.emailRateLimit', { seconds: Math.max(1, seconds) }));
-      } else if (msg.includes('already registered') || msg.includes('already been registered')) {
-        toast.error(t('settings.emailAlreadyUsed'));
-      } else if (msg.includes('same as')) {
-        toast.error(t('settings.emailSameAsCurrent'));
+        setEmailCooldownUntil(Date.now() + Math.max(1, seconds) * 1000);
+        setEmailError(`Per dažnai siunčiate. Bandykite po ${Math.max(1, seconds)}s.`);
+      } else if (msg.toLowerCase().includes('already registered') || msg.toLowerCase().includes('already been registered')) {
+        setEmailError(t('settings.emailAlreadyUsed'));
+      } else if (msg.toLowerCase().includes('same as')) {
+        setEmailError(t('settings.emailSameAsCurrent'));
       } else {
-        toast.error(msg || t('common.error'));
+        setEmailError(msg || t('common.error'));
       }
       return { success: false };
     } finally {
@@ -287,18 +328,20 @@ export default function Settings() {
 
   const handleChangeEmail = async () => {
     if (!user || !newEmail || newEmail === profile.email) return;
-    const result = await sendEmailChangeRequest(newEmail);
-    if (result.success) {
-      toast.success(t('settings.emailVerificationSent'));
+    if (emailSubmitGuardRef.current) return;
+    emailSubmitGuardRef.current = true;
+    try {
+      const result = await sendEmailChangeRequest(newEmail, 'initial');
+      if (result.success) toast.success(t('settings.emailVerificationSent'));
+    } finally {
+      emailSubmitGuardRef.current = false;
     }
   };
 
   const handleResendEmail = async () => {
     if (!pendingEmail) return;
-    const result = await sendEmailChangeRequest(pendingEmail);
-    if (result.success) {
-      toast.success(t('settings.emailVerificationSent'));
-    }
+    const result = await sendEmailChangeRequest(pendingEmail, 'resend');
+    if (result.success) toast.success(t('settings.emailVerificationSent'));
   };
 
   const handleCancelEmailChange = () => {
@@ -624,45 +667,51 @@ export default function Settings() {
               <CardDescription>{t('settings.emailChangeDesc')}</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
+              {/* Inline error (never show generic cooldown on first click) */}
+              {emailError ? (
+                <Alert className="border-destructive/30 bg-destructive/5">
+                  <AlertCircle className="h-4 w-4 text-destructive" />
+                  <AlertDescription className="text-destructive">{emailError}</AlertDescription>
+                </Alert>
+              ) : null}
+
+              {/* Success/pending banner (only after successful send) */}
               {emailSent && pendingEmail ? (
                 <>
-                  {/* Success banner with new email */}
                   <Alert className="border-primary/30 bg-primary/5">
                     <CheckCircle2 className="h-4 w-4 text-primary" />
                     <AlertDescription>
                       {t('settings.emailVerificationSentToNew', { email: pendingEmail })}
                     </AlertDescription>
                   </Alert>
-                  
-                  {/* Pending status indicator */}
+
                   <div className="flex items-center gap-2 text-sm text-muted-foreground">
                     <Clock className="w-4 h-4" />
                     <span>{t('settings.emailPendingVerification')}</span>
                   </div>
-                  
-                  {/* Resend section */}
-                  <div className="flex items-center gap-3">
+
+                  <div className="flex items-center gap-3 flex-wrap">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={handleResendEmail}
+                      disabled={savingEmail || cooldownSeconds > 0}
+                    >
+                      {savingEmail ? (
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      ) : (
+                        <RefreshCw className="w-4 h-4 mr-2" />
+                      )}
+                      {t('settings.resendEmail')}
+                    </Button>
+
                     {cooldownSeconds > 0 ? (
                       <div className="flex items-center gap-2 text-sm text-muted-foreground">
                         <RefreshCw className="w-4 h-4" />
                         <span>{t('settings.resendAvailableIn')} {cooldownSeconds}s</span>
                       </div>
-                    ) : (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={handleResendEmail}
-                        disabled={savingEmail}
-                      >
-                        {savingEmail ? (
-                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                        ) : (
-                          <RefreshCw className="w-4 h-4 mr-2" />
-                        )}
-                        {t('settings.resendEmail')}
-                      </Button>
-                    )}
-                    
+                    ) : null}
+
                     <Button
                       variant="ghost"
                       size="sm"
@@ -673,50 +722,45 @@ export default function Settings() {
                     </Button>
                   </div>
                 </>
-              ) : (
-                <>
-                  <div className="space-y-2">
-                    <Label htmlFor="currentEmail">{t('settings.currentEmail')}</Label>
-                    <Input
-                      id="currentEmail"
-                      type="email"
-                      value={profile.email}
-                      disabled
-                      className="bg-muted"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="newEmail">{t('settings.newEmail')}</Label>
-                    <Input
-                      id="newEmail"
-                      type="email"
-                      value={newEmail}
-                      onChange={(e) => setNewEmail(e.target.value)}
-                      placeholder={t('settings.newEmailPlaceholder')}
-                    />
-                  </div>
-                  {newEmail && newEmail.toLowerCase().trim() !== profile.email.toLowerCase() && (
-                    <Alert>
-                      <AlertCircle className="h-4 w-4" />
-                      <AlertDescription>
-                        {t('settings.emailChangeNote')}
-                      </AlertDescription>
-                    </Alert>
+              ) : null}
+
+              {/* Inputs are always visible; changing newEmail resets pending/cooldown state via effect */}
+              <div className="space-y-2">
+                <Label htmlFor="currentEmail">{t('settings.currentEmail')}</Label>
+                <Input id="currentEmail" type="email" value={profile.email} disabled className="bg-muted" />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="newEmail">{t('settings.newEmail')}</Label>
+                <Input
+                  id="newEmail"
+                  type="email"
+                  value={newEmail}
+                  onChange={(e) => setNewEmail(e.target.value)}
+                  placeholder={t('settings.newEmailPlaceholder')}
+                />
+              </div>
+
+              {newEmail && newEmail.toLowerCase().trim() !== profile.email.toLowerCase() && !emailSent ? (
+                <Alert>
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertDescription>{t('settings.emailChangeNote')}</AlertDescription>
+                </Alert>
+              ) : null}
+
+              {!emailSent ? (
+                <Button
+                  onClick={handleChangeEmail}
+                  disabled={savingEmail || !newEmail || newEmail.toLowerCase().trim() === profile.email.toLowerCase()}
+                  variant="default"
+                >
+                  {savingEmail ? (
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  ) : (
+                    <Mail className="w-4 h-4 mr-2" />
                   )}
-                  <Button 
-                    onClick={handleChangeEmail}
-                    disabled={savingEmail || !newEmail || newEmail.toLowerCase().trim() === profile.email.toLowerCase()}
-                    variant="default"
-                  >
-                    {savingEmail ? (
-                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    ) : (
-                      <Mail className="w-4 h-4 mr-2" />
-                    )}
-                    {t('settings.changeEmail')}
-                  </Button>
-                </>
-              )}
+                  {t('settings.changeEmail')}
+                </Button>
+              ) : null}
             </CardContent>
           </Card>
 
