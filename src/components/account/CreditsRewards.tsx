@@ -131,10 +131,12 @@ export function CreditsRewards({ userBalance }: CreditsRewardsProps) {
                     <p className="text-xs text-muted-foreground line-through">{formatPrice(product.price_eur)}</p>
                     <div className="flex items-center gap-1">
                       <Tag className="w-4 h-4 text-primary" />
-                      <span className="font-bold text-primary">{formatPrice(product.credits_cost_eur)}</span>
+                      <span className="font-bold text-primary">{product.credits_cost_eur} kreditų</span>
                     </div>
                   </div>
-                  <p className="text-xs text-muted-foreground">kreditų</p>
+                  {!canAfford && (
+                    <p className="text-xs text-destructive">Trūksta {(product.credits_cost_eur - userBalance).toFixed(0)}</p>
+                  )}
                 </div>
               </div>
             </Link>
