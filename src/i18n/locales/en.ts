@@ -232,6 +232,7 @@ export const en = {
     emailVerificationSent: 'Verification email sent',
     emailVerificationSentDesc: 'Check your new email inbox and click the confirmation link.',
     emailAlreadyUsed: 'This email is already registered',
+    emailSameAsCurrent: 'New email cannot be the same as current',
     invalidEmail: 'Invalid email format',
     address: 'Delivery Address',
     addressDesc: 'Save your address for faster checkout',
@@ -441,6 +442,9 @@ export const en = {
   cart: {
     title: 'Shopping Cart',
     empty: 'Your cart is empty',
+    emptyTitle: 'Your cart is empty',
+    emptyDescription: 'Add a constructor to start shopping',
+    startShopping: 'Start shopping',
     continueShopping: 'Continue shopping',
     subtotal: 'Subtotal',
     shipping: 'Shipping',

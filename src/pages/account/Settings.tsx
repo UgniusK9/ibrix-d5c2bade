@@ -201,8 +201,24 @@ export default function Settings() {
     
     setSavingEmail(true);
     try {
+      // First check if email is already registered in users table
+      const { data: existingUser } = await supabase
+        .from('users')
+        .select('id')
+        .eq('email', newEmail.toLowerCase().trim())
+        .maybeSingle();
+      
+      if (existingUser) {
+        toast.error(t('settings.emailAlreadyUsed'));
+        setSavingEmail(false);
+        return;
+      }
+      
+      // Update email with proper redirect URL for confirmation
       const { error } = await supabase.auth.updateUser({
-        email: newEmail,
+        email: newEmail.toLowerCase().trim(),
+      }, {
+        emailRedirectTo: `${window.location.origin}/account/settings`,
       });
       
       if (error) throw error;
@@ -211,10 +227,12 @@ export default function Settings() {
       toast.success(t('settings.emailVerificationSent'));
     } catch (error: any) {
       console.error('Error changing email:', error);
-      if (error.message?.includes('already registered')) {
+      if (error.message?.includes('already registered') || error.message?.includes('already been registered')) {
         toast.error(t('settings.emailAlreadyUsed'));
+      } else if (error.message?.includes('same as')) {
+        toast.error(t('settings.emailSameAsCurrent'));
       } else {
-        toast.error(t('common.error'));
+        toast.error(error.message || t('common.error'));
       }
     } finally {
       setSavingEmail(false);
@@ -487,7 +505,7 @@ export default function Settings() {
                     <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 animate-spin text-muted-foreground" />
                   )}
                   {!checkingUsername && profile.username && profile.username !== originalUsername && profile.username.length >= 3 && usernameAvailable === true && (
-                    <CheckCircle2 className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-green-500" />
+                    <CheckCircle2 className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-success" />
                   )}
                   {!checkingUsername && profile.username && profile.username !== originalUsername && usernameAvailable === false && (
                     <AlertCircle className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-destructive" />
