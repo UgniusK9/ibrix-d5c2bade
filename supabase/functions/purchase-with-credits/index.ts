@@ -255,7 +255,7 @@ serve(async (req) => {
         first_name: firstName || "",
         last_name: lastName || "",
         phone: phone || null,
-        status: "paid",
+        status: "balance_paid",
         payment_plan: "full_payment",
         payment_provider: "credits",
         payment_method_code: idempotencyKey ? `credits_idem_${idempotencyKey}` : "credits",
