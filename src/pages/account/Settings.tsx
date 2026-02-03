@@ -50,6 +50,7 @@ export default function Settings() {
   const [saving, setSaving] = useState(false);
   const [savingEmail, setSavingEmail] = useState(false);
   const [emailCooldownUntil, setEmailCooldownUntil] = useState<number | null>(null);
+  const [emailCooldownFor, setEmailCooldownFor] = useState<string | null>(null);
   const [savingPassword, setSavingPassword] = useState(false);
   const [emailSent, setEmailSent] = useState(false);
   const [passwordChanged, setPasswordChanged] = useState(false);
@@ -193,15 +194,18 @@ export default function Settings() {
 
   const handleChangeEmail = async () => {
     if (!user || !newEmail || newEmail === profile.email) return;
+
+    const normalizedEmail = newEmail.toLowerCase().trim();
     
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(newEmail)) {
+    if (!emailRegex.test(normalizedEmail)) {
       toast.error(t('settings.invalidEmail'));
       return;
     }
 
     // Prevent repeated sends (provider rate limit) - only check if cooldown is active
-    if (emailCooldownUntil && Date.now() < emailCooldownUntil) {
+    // Only enforce cooldown for the same target email (so changing the input doesn't instantly block)
+    if (emailCooldownUntil && emailCooldownFor === normalizedEmail && Date.now() < emailCooldownUntil) {
       const secondsLeft = Math.max(1, Math.ceil((emailCooldownUntil - Date.now()) / 1000));
       toast.error(t('settings.emailRateLimit', { seconds: secondsLeft }));
       return;
@@ -213,7 +217,7 @@ export default function Settings() {
       const { data: existingUser } = await supabase
         .from('users')
         .select('id')
-        .eq('email', newEmail.toLowerCase().trim())
+        .eq('email', normalizedEmail)
         .maybeSingle();
       
       if (existingUser) {
@@ -224,13 +228,14 @@ export default function Settings() {
 
       // Update email with proper redirect URL for confirmation
       const { error } = await supabase.auth.updateUser(
-        { email: newEmail.toLowerCase().trim() },
+        { email: normalizedEmail },
         { emailRedirectTo: `${window.location.origin}/account/settings` }
       );
       
       if (error) throw error;
       
       // Set cooldown AFTER successful send to prevent spam
+      setEmailCooldownFor(normalizedEmail);
       setEmailCooldownUntil(Date.now() + 30_000);
       setEmailSent(true);
       toast.success(t('settings.emailVerificationSent'));
@@ -241,6 +246,7 @@ export default function Settings() {
       const match = msg.match(/after\s+(\d+)\s+seconds/i);
       if (msg.includes('429') || msg.toLowerCase().includes('rate limit') || match) {
         const seconds = match ? Number(match[1]) : 20;
+        setEmailCooldownFor(normalizedEmail);
         setEmailCooldownUntil(Date.now() + Math.max(5, seconds) * 1000);
         toast.error(t('settings.emailRateLimit', { seconds: Math.max(1, seconds) }));
       } else if (msg.includes('already registered') || msg.includes('already been registered')) {
