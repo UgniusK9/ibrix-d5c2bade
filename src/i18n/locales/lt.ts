@@ -150,6 +150,7 @@ export const lt = {
       earn: 'Sukaupta',
       redeem: 'Panaudota',
       adjustment: 'Koregavimas',
+      giftCardActivation: 'Kredito aktyvacija',
     },
     status: {
       pending: 'Laukiama',
@@ -453,6 +454,8 @@ export const lt = {
     itemAdded: 'Prekė pridėta',
     itemRemoved: 'Prekė pašalinta',
     recommendations: 'Rekomenduojame',
+    add: 'Į krepšelį',
+    added: 'Pridėta į krepšelį',
   },
   
   // Checkout

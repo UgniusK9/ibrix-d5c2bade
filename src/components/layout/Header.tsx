@@ -83,7 +83,7 @@ export function Header() {
           <div className="flex items-center justify-between h-16 lg:h-18 gap-2 md:gap-4 min-w-0">
             {/* Logo */}
             <Link to="/" className="flex-shrink-0">
-              <img src={logo} alt="IBRIX" className="h-10 md:h-12 w-auto max-w-[120px] md:max-w-none object-contain" />
+              <img src={logo} alt="IBRIX" className="h-10 md:h-12 w-auto max-w-[120px] md:max-w-none object-contain dark:bg-white dark:rounded-lg dark:px-2 dark:py-1" />
             </Link>
 
             {/* Desktop Navigation */}
