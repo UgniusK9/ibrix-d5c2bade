@@ -97,3 +97,6 @@ verify_jwt = false
 
 [functions.request-password-reset]
 verify_jwt = false
+
+[functions.purchase-with-credits]
+verify_jwt = true

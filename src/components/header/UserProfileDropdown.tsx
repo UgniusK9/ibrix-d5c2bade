@@ -137,13 +137,6 @@ export function UserProfileDropdown() {
               <span>{t('account.rewards')}</span>
             </Link>
           </DropdownMenuItem>
-
-          <DropdownMenuItem asChild>
-            <Link to="/account/settings" className="flex items-center gap-3 cursor-pointer">
-              <Settings className="h-4 w-4 text-muted-foreground" />
-              <span>{t('account.settings')}</span>
-            </Link>
-          </DropdownMenuItem>
         </div>
 
         <DropdownMenuSeparator />

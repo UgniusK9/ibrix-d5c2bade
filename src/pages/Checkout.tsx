@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -22,7 +22,7 @@ import { InvoiceFields } from "@/components/checkout/InvoiceFields";
 import { LockerSearch } from "@/components/checkout/LockerSearch";
 import { PhoneInput } from "@/components/checkout/PhoneInput";
 import { PaymentMethodSelector, PaymentMethod, PAYMENT_METHODS } from "@/components/checkout/PaymentMethodSelector";
-import { CreditsBlock } from "@/components/checkout/CreditsBlock";
+import { CreditsPaymentOption, CreditsInfo } from "@/components/checkout/CreditsPaymentOption";
 import { type LockerTerminal } from "@/data/lockerTerminals";
 
 const checkoutSchema = z.object({
@@ -62,11 +62,16 @@ export default function Checkout() {
   const [appliedDiscount, setAppliedDiscount] = useState<AppliedDiscount | null>(null);
   const [wantsInvoice, setWantsInvoice] = useState(false);
   const [selectedLocker, setSelectedLocker] = useState<LockerTerminal | null>(null);
-  const [creditsToUse, setCreditsToUse] = useState(0);
   const [phoneValue, setPhoneValue] = useState("");
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<PaymentMethod | null>(
     PAYMENT_METHODS.find(m => m.enabled) || null
   );
+  const [payWithCredits, setPayWithCredits] = useState(false);
+  const [creditsInfo, setCreditsInfo] = useState<CreditsInfo | null>(null);
+  
+  const handleCreditsInfoChange = useCallback((info: CreditsInfo | null) => {
+    setCreditsInfo(info);
+  }, []);
 
   const {
     register,
@@ -119,7 +124,10 @@ export default function Checkout() {
       : Math.min(appliedDiscount.value * 100, immediatePayment))
     : 0;
   
-  const finalImmediatePayment = Math.max(0, immediatePayment - discountAmount - creditsToUse) + shippingPrice;
+  // If paying with credits, the payment amount is 0
+  const finalImmediatePayment = payWithCredits 
+    ? 0 
+    : Math.max(0, immediatePayment - discountAmount) + shippingPrice;
 
   useEffect(() => {
     if (items.length === 0) {
@@ -156,7 +164,8 @@ export default function Checkout() {
       return;
     }
 
-    if (!selectedPaymentMethod) {
+    // Validate payment method selection
+    if (!payWithCredits && !selectedPaymentMethod) {
       toast.error("Pasirinkite mokėjimo būdą");
       return;
     }
@@ -180,6 +189,58 @@ export default function Checkout() {
         quantity: item.quantity,
         variantId: item.variantId || undefined,
       }));
+
+      // Handle credits payment
+      if (payWithCredits && creditsInfo?.canPayWithCredits) {
+        // Currently only support single-item credit purchases
+        if (items.length === 1) {
+          const item = items[0];
+          const idempotencyKey = `${item.productId}_${Date.now()}`;
+          
+          const { data: result, error } = await supabase.functions.invoke("purchase-with-credits", {
+            body: {
+              productId: item.productId,
+              quantity: item.quantity,
+              variantId: item.variantId || undefined,
+              shippingMethod: data.shippingMethod,
+              shippingAddress: selectedLocker ? {
+                lockerId: selectedLocker.id,
+                lockerName: selectedLocker.name,
+                lockerAddress: `${selectedLocker.address}, ${selectedLocker.city}`,
+                lockerCity: selectedLocker.city,
+                lockerPostalCode: selectedLocker.postalCode,
+                lat: selectedLocker.lat,
+                lng: selectedLocker.lng,
+              } : {
+                street: data.street,
+                city: data.city,
+                postalCode: data.postalCode,
+              },
+              notes: data.notes,
+              firstName: data.firstName,
+              lastName: data.lastName,
+              email: data.email,
+              phone: phoneValue || undefined,
+              idempotencyKey,
+            },
+          });
+
+          if (error) throw error;
+
+          if (result?.success) {
+            clearCart();
+            toast.success("Užsakymas sėkmingai apmokėtas kreditais!");
+            navigate(`/uzsakymas?order_id=${result.orderId}`);
+            return;
+          } else {
+            throw new Error(result?.error || "Nepavyko apmokėti kreditais");
+          }
+        } else {
+          toast.error("Kreditais galite apmokėti tik vieną prekę vienu metu");
+          setIsLoading(false);
+          return;
+        }
+      }
 
       // For Stripe payments, use the existing checkout flow
       if (selectedPaymentMethod.provider === 'stripe') {
@@ -211,8 +272,8 @@ export default function Checkout() {
             invoiceVatCode: data.invoiceVatCode,
             invoiceAddress: data.invoiceAddress,
             invoiceCountry: "Lietuva",
-            useCredits: creditsToUse > 0,
-            creditsCents: creditsToUse,
+            useCredits: false,
+            creditsCents: 0,
             paymentProvider: 'stripe',
             paymentMethodCode: selectedPaymentMethod.code,
           },
@@ -256,8 +317,8 @@ export default function Checkout() {
             invoiceVatCode: data.invoiceVatCode,
             invoiceAddress: data.invoiceAddress,
             invoiceCountry: "Lietuva",
-            useCredits: creditsToUse > 0,
-            creditsCents: creditsToUse,
+            useCredits: false,
+            creditsCents: 0,
             paymentProvider: 'paysera',
             paymentMethodCode: selectedPaymentMethod.code,
             skipStripe: true, // Flag to skip Stripe session creation
@@ -444,12 +505,6 @@ export default function Checkout() {
                   />
                 </div>
 
-                {/* Credits Block */}
-                <CreditsBlock
-                  subtotalCents={immediatePayment - discountAmount}
-                  onCreditsChange={setCreditsToUse}
-                />
-
                 {/* Invoice Fields */}
                 <div className="bg-card border border-border rounded-xl p-6">
                   <InvoiceFields
@@ -469,12 +524,44 @@ export default function Checkout() {
                   Pasirinkite mokėjimo būdą
                 </h2>
                 
-                <PaymentMethodSelector
-                  selectedMethod={selectedPaymentMethod?.id || null}
-                  onSelect={setSelectedPaymentMethod}
+                {/* Credits Payment Option - show first if eligible */}
+                <CreditsPaymentOption
+                  cartItems={items.map(item => ({
+                    productId: item.productId,
+                    quantity: item.quantity,
+                    price: item.price,
+                    title: item.title,
+                  }))}
+                  selected={payWithCredits}
+                  onSelect={() => {
+                    setPayWithCredits(true);
+                    setSelectedPaymentMethod(null);
+                  }}
+                  onCreditsInfo={handleCreditsInfoChange}
                 />
+                
+                {/* Money Payment Options */}
+                {!payWithCredits && (
+                  <PaymentMethodSelector
+                    selectedMethod={selectedPaymentMethod?.id || null}
+                    onSelect={(method) => {
+                      setSelectedPaymentMethod(method);
+                      setPayWithCredits(false);
+                    }}
+                  />
+                )}
+                
+                {payWithCredits && creditsInfo?.canPayWithCredits && (
+                  <button
+                    type="button"
+                    onClick={() => setPayWithCredits(false)}
+                    className="text-sm text-muted-foreground hover:text-foreground underline"
+                  >
+                    Arba mokėti pinigais →
+                  </button>
+                )}
 
-                {laterPayment > 0 && (
+                {laterPayment > 0 && !payWithCredits && (
                   <p className="text-sm text-muted-foreground mt-4">
                     Likusi suma ({formatCartPrice(laterPayment)}) bus apmokėta vėliau, prieš siunčiant užsakymą.
                   </p>
@@ -482,7 +569,12 @@ export default function Checkout() {
               </div>
             )}
 
-            <Button type="submit" size="lg" className="w-full" disabled={isLoading || (step === 2 && !selectedPaymentMethod)}>
+            <Button 
+              type="submit" 
+              size="lg" 
+              className="w-full" 
+              disabled={isLoading || (step === 2 && !payWithCredits && !selectedPaymentMethod)}
+            >
               {isLoading ? (
                 <>
                   <Loader2 className="w-4 h-4 mr-2 animate-spin" />
@@ -490,6 +582,8 @@ export default function Checkout() {
                 </>
               ) : step === 1 ? (
                 t('common.next')
+              ) : payWithCredits && creditsInfo?.canPayWithCredits ? (
+                `Apmokėti ${creditsInfo.totalCreditsRequired} kreditais`
               ) : (
                 `${t('cart.checkout')} ${formatCartPrice(finalImmediatePayment)}`
               )}
@@ -539,10 +633,10 @@ export default function Checkout() {
                     <span>-{formatCartPrice(discountAmount)}</span>
                   </div>
                 )}
-                {creditsToUse > 0 && (
-                  <div className="flex justify-between text-sm text-green-600">
-                    <span>{t('credits.title')}</span>
-                    <span>-{formatCartPrice(creditsToUse)}</span>
+                {payWithCredits && creditsInfo && (
+                  <div className="flex justify-between text-sm text-accent font-medium">
+                    <span>Apmokama kreditais</span>
+                    <span>{creditsInfo.totalCreditsRequired} kreditų</span>
                   </div>
                 )}
                 <div className="flex justify-between font-semibold text-primary pt-2 border-t border-dashed">
