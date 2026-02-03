@@ -192,53 +192,47 @@ export default function Checkout() {
 
       // Handle credits payment
       if (payWithCredits && creditsInfo?.canPayWithCredits) {
-        // Currently only support single-item credit purchases
-        if (items.length === 1) {
-          const item = items[0];
-          const idempotencyKey = `${item.productId}_${Date.now()}`;
-          
-          const { data: result, error } = await supabase.functions.invoke("purchase-with-credits", {
-            body: {
+        const idempotencyKey = `credits_${Date.now()}_${user?.id || 'anon'}`;
+        
+        const { data: result, error } = await supabase.functions.invoke("purchase-with-credits", {
+          body: {
+            items: items.map(item => ({
               productId: item.productId,
               quantity: item.quantity,
               variantId: item.variantId || undefined,
-              shippingMethod: data.shippingMethod,
-              shippingAddress: selectedLocker ? {
-                lockerId: selectedLocker.id,
-                lockerName: selectedLocker.name,
-                lockerAddress: `${selectedLocker.address}, ${selectedLocker.city}`,
-                lockerCity: selectedLocker.city,
-                lockerPostalCode: selectedLocker.postalCode,
-                lat: selectedLocker.lat,
-                lng: selectedLocker.lng,
-              } : {
-                street: data.street,
-                city: data.city,
-                postalCode: data.postalCode,
-              },
-              notes: data.notes,
-              firstName: data.firstName,
-              lastName: data.lastName,
-              email: data.email,
-              phone: phoneValue || undefined,
-              idempotencyKey,
+            })),
+            shippingMethod: data.shippingMethod,
+            shippingAddress: selectedLocker ? {
+              lockerId: selectedLocker.id,
+              lockerName: selectedLocker.name,
+              lockerAddress: `${selectedLocker.address}, ${selectedLocker.city}`,
+              lockerCity: selectedLocker.city,
+              lockerPostalCode: selectedLocker.postalCode,
+              lat: selectedLocker.lat,
+              lng: selectedLocker.lng,
+            } : {
+              street: data.street,
+              city: data.city,
+              postalCode: data.postalCode,
             },
-          });
+            notes: data.notes,
+            firstName: data.firstName,
+            lastName: data.lastName,
+            email: data.email,
+            phone: phoneValue || undefined,
+            idempotencyKey,
+          },
+        });
 
-          if (error) throw error;
+        if (error) throw error;
 
-          if (result?.success) {
-            clearCart();
-            toast.success("Užsakymas sėkmingai apmokėtas kreditais!");
-            navigate(`/uzsakymas?order_id=${result.orderId}`);
-            return;
-          } else {
-            throw new Error(result?.error || "Nepavyko apmokėti kreditais");
-          }
-        } else {
-          toast.error("Kreditais galite apmokėti tik vieną prekę vienu metu");
-          setIsLoading(false);
+        if (result?.success) {
+          clearCart();
+          toast.success("Užsakymas sėkmingai apmokėtas kreditais!");
+          navigate(`/uzsakymas?order_id=${result.orderId}`);
           return;
+        } else {
+          throw new Error(result?.error || "Nepavyko apmokėti kreditais");
         }
       }
 
