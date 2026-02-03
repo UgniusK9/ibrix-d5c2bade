@@ -63,6 +63,8 @@ interface Category {
   active: boolean;
 }
 
+type AgeCategory = '18+' | '10-17' | '4-9' | '';
+
 interface ProductFormData {
   sku: string;
   slug: string;
@@ -85,6 +87,8 @@ interface ProductFormData {
   preorder_eta_weeks_min: string;
   preorder_eta_weeks_max: string;
   inventory_qty: string;
+  age_category: AgeCategory;
+  details_count: string;
 }
 
 const emptyFormData: ProductFormData = {
@@ -109,7 +113,15 @@ const emptyFormData: ProductFormData = {
   preorder_eta_weeks_min: '',
   preorder_eta_weeks_max: '',
   inventory_qty: '0',
+  age_category: '',
+  details_count: '',
 };
+
+const AGE_CATEGORY_OPTIONS = [
+  { value: '18+', label: '18+', ageMin: 18 },
+  { value: '10-17', label: '10-17', ageMin: 10 },
+  { value: '4-9', label: '4-9', ageMin: 4 },
+];
 
 const BADGE_OPTIONS = [
   { value: 'new', label: 'Naujiena', color: 'bg-green-500' },
@@ -198,6 +210,17 @@ export function ProductsManager() {
 
   const openEditForm = (product: Product) => {
     setEditingProduct(product);
+    // Extract age category from details_json
+    const detailsJson = (product as any).details_json as Record<string, unknown> | null;
+    const ageMin = detailsJson?.ageMin as number | undefined;
+    let ageCategory: AgeCategory = '';
+    if (ageMin !== undefined) {
+      if (ageMin >= 18) ageCategory = '18+';
+      else if (ageMin >= 10) ageCategory = '10-17';
+      else if (ageMin >= 4) ageCategory = '4-9';
+    }
+    const detailsCount = (detailsJson?.detailsCount as number) || (detailsJson?.piecesCount as number) || undefined;
+    
     setFormData({
       sku: product.sku,
       slug: product.slug,
@@ -220,6 +243,8 @@ export function ProductsManager() {
       preorder_eta_weeks_min: product.preorder_eta_weeks_min?.toString() || '',
       preorder_eta_weeks_max: product.preorder_eta_weeks_max?.toString() || '',
       inventory_qty: product.inventory_qty?.toString() || '0',
+      age_category: ageCategory,
+      details_count: detailsCount?.toString() || '',
     });
     setFormOpen(true);
   };
@@ -294,6 +319,16 @@ export function ProductsManager() {
         .map(t => t.trim().toLowerCase())
         .filter(t => t.length > 0);
 
+      // Build details_json with age and piece count
+      const ageCategoryOption = AGE_CATEGORY_OPTIONS.find(o => o.value === formData.age_category);
+      const detailsJson: Record<string, unknown> = {};
+      if (ageCategoryOption) {
+        detailsJson.ageMin = ageCategoryOption.ageMin;
+      }
+      if (formData.details_count) {
+        detailsJson.detailsCount = parseInt(formData.details_count);
+      }
+
       const productData = {
         sku: formData.sku.trim(),
         slug: formData.slug.trim(),
@@ -315,6 +350,7 @@ export function ProductsManager() {
         preorder_eta_weeks_min: formData.preorder_eta_weeks_min ? parseInt(formData.preorder_eta_weeks_min) : null,
         preorder_eta_weeks_max: formData.preorder_eta_weeks_max ? parseInt(formData.preorder_eta_weeks_max) : null,
         inventory_qty: parseInt(formData.inventory_qty) || 0,
+        details_json: Object.keys(detailsJson).length > 0 ? detailsJson : null,
       };
 
       const { data, error } = await supabase.functions.invoke('admin', {
@@ -746,6 +782,44 @@ export function ProductsManager() {
                     <SelectItem value="other">Kita</SelectItem>
                   </SelectContent>
                 </Select>
+              </div>
+            </div>
+
+            {/* Age Category & Details Count */}
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label>Amžiaus kategorija</Label>
+                <Select 
+                  value={formData.age_category || "none"} 
+                  onValueChange={(v) => setFormData(prev => ({ ...prev, age_category: v === "none" ? "" : v as AgeCategory }))}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Pasirinkite amžių" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">Nepasirinkta</SelectItem>
+                    {AGE_CATEGORY_OPTIONS.map((opt) => (
+                      <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Rodoma produkto kortelėje
+                </p>
+              </div>
+              <div>
+                <Label htmlFor="details_count">Detalių skaičius</Label>
+                <Input
+                  id="details_count"
+                  type="number"
+                  min="0"
+                  value={formData.details_count}
+                  onChange={(e) => setFormData(prev => ({ ...prev, details_count: e.target.value }))}
+                  placeholder="0"
+                />
+                <p className="text-xs text-muted-foreground mt-1">
+                  Konstruktoriaus detalių kiekis
+                </p>
               </div>
             </div>
 
