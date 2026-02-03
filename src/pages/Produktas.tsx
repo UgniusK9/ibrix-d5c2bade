@@ -17,11 +17,15 @@ import { SEOHead } from "@/components/seo/SEOHead";
 import { ProductReviews } from "@/components/products/ProductReviews";
 import { RelatedProducts } from "@/components/home/RelatedProducts";
 import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@/components/ui/accordion";
+  PremiumAccordion,
+  PremiumAccordionItem,
+  PremiumAccordionTrigger,
+  PremiumAccordionContent,
+  AccordionList,
+  AccordionListItem,
+  AccordionSpecTable,
+  AccordionFaqItem,
+} from "@/components/products/PremiumAccordion";
 
 // Trust items and box contents are now translatable via t() function
 
@@ -386,112 +390,76 @@ export default function Produktas() {
 
         {/* Below the fold content */}
         <div className="max-w-4xl">
-          <Accordion type="single" collapsible className="space-y-4">
+          <PremiumAccordion type="single" collapsible className="space-y-3">
             {/* Specs */}
-            <AccordionItem value="specs" className="border border-border rounded-xl px-6 data-[state=open]:bg-card">
-              <AccordionTrigger className="hover:no-underline py-5">
-                <span className="flex items-center gap-3 font-heading font-semibold">
-                  <Package className="w-5 h-5 text-primary" />
-                  {t('products.specifications')}
-                </span>
-              </AccordionTrigger>
-              <AccordionContent className="pb-6">
-                <dl className="grid grid-cols-2 gap-4">
-                  {productSpecs.map((spec) => (
-                    <div key={spec.label}>
-                      <dt className="text-sm text-muted-foreground">{spec.label}</dt>
-                      <dd className="font-medium">{spec.value}</dd>
-                    </div>
-                  ))}
-                </dl>
-              </AccordionContent>
-            </AccordionItem>
+            <PremiumAccordionItem value="specs">
+              <PremiumAccordionTrigger icon={<Package className="w-4 h-4 text-primary" />}>
+                {t('products.specifications')}
+              </PremiumAccordionTrigger>
+              <PremiumAccordionContent>
+                <AccordionSpecTable specs={productSpecs} />
+              </PremiumAccordionContent>
+            </PremiumAccordionItem>
 
             {/* What's in the box */}
-            <AccordionItem value="box" className="border border-border rounded-xl px-6 data-[state=open]:bg-card">
-              <AccordionTrigger className="hover:no-underline py-5">
-                <span className="flex items-center gap-3 font-heading font-semibold">
-                  <Shield className="w-5 h-5 text-primary" />
-                  {t('products.boxContents')}
-                </span>
-              </AccordionTrigger>
-              <AccordionContent className="pb-6">
-                <ul className="space-y-2">
-                  <li className="flex items-center gap-2 text-muted-foreground">
-                    <span className="w-1.5 h-1.5 rounded-full bg-primary" />
-                    {t('products.boxContentsItems.allParts')}
-                  </li>
-                  <li className="flex items-center gap-2 text-muted-foreground">
-                    <span className="w-1.5 h-1.5 rounded-full bg-primary" />
-                    {t('products.boxContentsItems.instructions')}
-                  </li>
-                  <li className="flex items-center gap-2 text-muted-foreground">
-                    <span className="w-1.5 h-1.5 rounded-full bg-primary" />
-                    {t('products.boxContentsItems.spareParts')}
-                  </li>
-                  <li className="flex items-center gap-2 text-muted-foreground">
-                    <span className="w-1.5 h-1.5 rounded-full bg-primary" />
-                    {t('products.boxContentsItems.displayStand')}
-                  </li>
-                </ul>
-              </AccordionContent>
-            </AccordionItem>
+            <PremiumAccordionItem value="box">
+              <PremiumAccordionTrigger icon={<Shield className="w-4 h-4 text-primary" />}>
+                {t('products.boxContents')}
+              </PremiumAccordionTrigger>
+              <PremiumAccordionContent>
+                <AccordionList>
+                  <AccordionListItem>{t('products.boxContentsItems.allParts')}</AccordionListItem>
+                  <AccordionListItem>{t('products.boxContentsItems.instructions')}</AccordionListItem>
+                  <AccordionListItem>{t('products.boxContentsItems.spareParts')}</AccordionListItem>
+                  <AccordionListItem>{t('products.boxContentsItems.displayStand')}</AccordionListItem>
+                </AccordionList>
+              </PremiumAccordionContent>
+            </PremiumAccordionItem>
 
             {/* Missing parts */}
-            <AccordionItem value="missing" className="border border-border rounded-xl px-6 data-[state=open]:bg-card">
-              <AccordionTrigger className="hover:no-underline py-5">
-                <span className="flex items-center gap-3 font-heading font-semibold">
-                  <Puzzle className="w-5 h-5 text-primary" />
-                  {t('products.missingParts')}
-                </span>
-              </AccordionTrigger>
-              <AccordionContent className="pb-6">
-                <p className="text-muted-foreground mb-4">
+            <PremiumAccordionItem value="missing">
+              <PremiumAccordionTrigger icon={<Puzzle className="w-4 h-4 text-primary" />}>
+                {t('products.missingParts')}
+              </PremiumAccordionTrigger>
+              <PremiumAccordionContent>
+                <p className="mb-4">
                   {t('products.missingPartsDesc')}
                 </p>
-                <ol className="space-y-2 text-muted-foreground">
-                  <li>1. {t('products.missingPartsStep1')}</li>
-                  <li>2. {t('products.missingPartsStep2')}</li>
-                  <li>3. {t('products.missingPartsStep3')}</li>
+                <ol className="space-y-2 list-decimal list-inside">
+                  <li>{t('products.missingPartsStep1')}</li>
+                  <li>{t('products.missingPartsStep2')}</li>
+                  <li>{t('products.missingPartsStep3')}</li>
                 </ol>
-                <p className="text-sm text-muted-foreground mt-4">
-                  {t('misc.emailUs')}: <a href="mailto:support@ibrix.lt" className="text-primary hover:underline">support@ibrix.lt</a>
+                <p className="mt-4 pt-4 border-t border-border/40">
+                  {t('misc.emailUs')}: <a href="mailto:support@ibrix.lt" className="text-primary hover:underline font-medium">support@ibrix.lt</a>
                 </p>
-              </AccordionContent>
-            </AccordionItem>
+              </PremiumAccordionContent>
+            </PremiumAccordionItem>
 
             {/* FAQ */}
-            <AccordionItem value="faq" className="border border-border rounded-xl px-6 data-[state=open]:bg-card">
-              <AccordionTrigger className="hover:no-underline py-5">
-                <span className="flex items-center gap-3 font-heading font-semibold">
-                  <HelpCircle className="w-5 h-5 text-primary" />
-                  {t('misc.faqTitle')}
-                </span>
-              </AccordionTrigger>
-              <AccordionContent className="pb-6">
+            <PremiumAccordionItem value="faq">
+              <PremiumAccordionTrigger icon={<HelpCircle className="w-4 h-4 text-primary" />}>
+                {t('misc.faqTitle')}
+              </PremiumAccordionTrigger>
+              <PremiumAccordionContent>
                 <div className="space-y-4">
                   {productFAQ.map((item, idx) => (
-                    <div key={idx}>
-                      <h4 className="font-medium mb-1">{item.question}</h4>
-                      <p className="text-sm text-muted-foreground">{item.answer}</p>
-                    </div>
+                    <AccordionFaqItem key={idx} question={item.question} answer={item.answer} />
                   ))}
                 </div>
-              </AccordionContent>
-            </AccordionItem>
+              </PremiumAccordionContent>
+            </PremiumAccordionItem>
+
             {/* Reviews */}
-            <AccordionItem value="reviews" className="border border-border rounded-xl px-6 data-[state=open]:bg-card">
-              <AccordionTrigger className="hover:no-underline py-5">
-                <span className="flex items-center gap-3 font-heading font-semibold">
-                  <Star className="w-5 h-5 text-primary" />
-                  {t('nav.reviews')}
-                </span>
-              </AccordionTrigger>
-              <AccordionContent className="pb-6">
+            <PremiumAccordionItem value="reviews">
+              <PremiumAccordionTrigger icon={<Star className="w-4 h-4 text-primary" />}>
+                {t('nav.reviews')}
+              </PremiumAccordionTrigger>
+              <PremiumAccordionContent>
                 <ProductReviews productId={product.id} productTitle={product.title} />
-              </AccordionContent>
-            </AccordionItem>
-          </Accordion>
+              </PremiumAccordionContent>
+            </PremiumAccordionItem>
+          </PremiumAccordion>
         </div>
 
         {/* Related Products */}

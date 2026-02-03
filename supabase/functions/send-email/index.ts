@@ -1401,6 +1401,202 @@ function getWelcomeEmail(data: any): { subject: string; html: string } {
   };
 }
 
+// Email change confirmation - IBRIX branded design (sent to NEW email)
+function getEmailChangeEmail(data: any): { subject: string; html: string } {
+  const { firstName, confirmUrl, newEmail } = data;
+  const baseUrl = 'https://ibrix.lt';
+
+  const html = `
+    <!DOCTYPE html>
+    <html lang="lt">
+    <head>
+      <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>IBRIX – Patvirtinkite naują el. paštą</title>
+    </head>
+    <body style="margin:0;padding:0;background-color:#d4e8f7;font-family:Arial,Helvetica,sans-serif;">
+      <!-- Background pattern wrapper -->
+      <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#d4e8f7;background-image:url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZGVmcz48cGF0dGVybiBpZD0icGF0dGVybiIgd2lkdGg9IjEwMCIgaGVpZ2h0PSIxMDAiIHBhdHRlcm5Vbml0cz0idXNlclNwYWNlT25Vc2UiPjxyZWN0IHg9IjEwIiB5PSIxMCIgd2lkdGg9IjMwIiBoZWlnaHQ9IjE1IiByeD0iMyIgZmlsbD0iI2M0ZGNlYyIgb3BhY2l0eT0iMC40Ii8+PHJlY3QgeD0iNjAiIHk9IjUwIiB3aWR0aD0iMjUiIGhlaWdodD0iMjUiIHJ4PSI0IiBmaWxsPSIjYzRkY2VjIiBvcGFjaXR5PSIwLjMiIHRyYW5zZm9ybT0icm90YXRlKDE1IDcyLjUgNjIuNSkiLz48cmVjdCB4PSIyMCIgeT0iNjUiIHdpZHRoPSIyMCIgaGVpZ2h0PSIxMiIgcng9IjIiIGZpbGw9IiNjNGRjZWMiIG9wYWNpdHk9IjAuMzUiIHRyYW5zZm9ybT0icm90YXRlKC0xMCAzMCA3MSkiLz48L3BhdHRlcm4+PC9kZWZzPjxyZWN0IHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiIGZpbGw9InVybCgjcGF0dGVybikiLz48L3N2Zz4=');">
+        <tr>
+          <td align="center" style="padding:40px 16px;">
+            
+            <!-- Main container -->
+            <table width="100%" cellpadding="0" cellspacing="0" style="max-width:600px;">
+              
+              <!-- Logo -->
+              <tr>
+                <td align="center" style="padding-bottom:24px;">
+                  <table cellpadding="0" cellspacing="0">
+                    <tr>
+                      <td style="background:#1a1a2e;padding:14px 28px;border-radius:8px;">
+                        <span style="font-size:26px;font-weight:800;color:#ffffff;letter-spacing:2px;">IBRIX</span>
+                      </td>
+                    </tr>
+                  </table>
+                </td>
+              </tr>
+
+              <!-- Main Heading -->
+              <tr>
+                <td align="center" style="padding-bottom:32px;">
+                  <h1 style="margin:0;font-size:28px;font-weight:700;color:#006cb7;line-height:1.2;">Patvirtinkite naują el. paštą</h1>
+                </td>
+              </tr>
+
+              <!-- White Card -->
+              <tr>
+                <td>
+                  <table width="100%" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:16px;box-shadow:0 4px 20px rgba(0,0,0,0.08);">
+                    
+                    <!-- Main Content -->
+                    <tr>
+                      <td style="padding:40px 32px;">
+                        <table width="100%" cellpadding="0" cellspacing="0">
+                          
+                          <!-- Email Icon -->
+                          <tr>
+                            <td align="center" style="padding-bottom:24px;">
+                              <div style="width:80px;height:80px;background:#dcfce7;border-radius:50%;display:inline-block;line-height:80px;text-align:center;">
+                                <span style="font-size:40px;">✉️</span>
+                              </div>
+                            </td>
+                          </tr>
+
+                          <!-- Greeting -->
+                          <tr>
+                            <td align="center" style="padding-bottom:16px;">
+                              <p style="margin:0;font-size:18px;color:#1a1a2e;font-weight:600;">
+                                Sveiki${firstName ? `, ${firstName}` : ''}!
+                              </p>
+                            </td>
+                          </tr>
+
+                          <!-- Message -->
+                          <tr>
+                            <td align="center" style="padding-bottom:24px;">
+                              <p style="margin:0;font-size:16px;color:#555555;line-height:1.6;">
+                                Jūs paprašėte pakeisti savo IBRIX paskyros el. pašto adresą į:<br>
+                                <strong style="color:#006cb7;">${newEmail}</strong>
+                              </p>
+                            </td>
+                          </tr>
+
+                          <!-- CTA Button -->
+                          <tr>
+                            <td align="center" style="padding-bottom:32px;">
+                              <table cellpadding="0" cellspacing="0">
+                                <tr>
+                                  <td style="background:#22c55e;border-radius:8px;">
+                                    <a href="${confirmUrl}" style="display:inline-block;padding:16px 48px;font-size:18px;font-weight:700;color:#ffffff;text-decoration:none;letter-spacing:0.5px;">
+                                      Patvirtinti el. paštą
+                                    </a>
+                                  </td>
+                                </tr>
+                              </table>
+                            </td>
+                          </tr>
+
+                          <!-- Expiry Warning -->
+                          <tr>
+                            <td align="center" style="padding-bottom:24px;">
+                              <table cellpadding="0" cellspacing="0" style="background:#fef3c7;border-radius:8px;">
+                                <tr>
+                                  <td style="padding:12px 20px;">
+                                    <p style="margin:0;font-size:14px;color:#92400e;">
+                                      ⏱ Ši nuoroda galioja <strong>24 valandas</strong>
+                                    </p>
+                                  </td>
+                                </tr>
+                              </table>
+                            </td>
+                          </tr>
+
+                          <!-- Security Notice -->
+                          <tr>
+                            <td style="padding-bottom:24px;">
+                              <table width="100%" cellpadding="0" cellspacing="0" style="background:#fef2f2;border-radius:8px;border-left:4px solid #dc2626;">
+                                <tr>
+                                  <td style="padding:16px;">
+                                    <p style="margin:0;font-size:14px;color:#991b1b;line-height:1.5;">
+                                      🔒 <strong>Saugumo pastaba:</strong> Jei neprašėte keisti el. pašto, nieko daryti nereikia. 
+                                      Jūsų paskyra lieka saugi. Jei įtariate nesankcionuotą prieigą, 
+                                      rekomenduojame pakeisti slaptažodį.
+                                    </p>
+                                  </td>
+                                </tr>
+                              </table>
+                            </td>
+                          </tr>
+
+                          <!-- Alternative Link -->
+                          <tr>
+                            <td align="center" style="padding-bottom:24px;">
+                              <p style="margin:0;font-size:13px;color:#888888;line-height:1.6;">
+                                Jei mygtukas neveikia, nukopijuokite šią nuorodą į naršyklę:
+                              </p>
+                              <p style="margin:8px 0 0;font-size:12px;color:#006cb7;word-break:break-all;">
+                                <a href="${confirmUrl}" style="color:#006cb7;">${confirmUrl}</a>
+                              </p>
+                            </td>
+                          </tr>
+
+                          <!-- Support Line -->
+                          <tr>
+                            <td>
+                              <p style="margin:0;font-size:14px;color:#666666;text-align:center;line-height:1.5;padding-top:16px;border-top:1px solid #e5e5e5;">
+                                Turite klausimų? Kreipkitės į <a href="mailto:pagalba@ibrix.lt" style="color:#006cb7;text-decoration:underline;">klientų aptarnavimo centrą</a>.
+                              </p>
+                            </td>
+                          </tr>
+                          
+                        </table>
+                      </td>
+                    </tr>
+                  </table>
+                </td>
+              </tr>
+
+              <!-- Footer -->
+              <tr>
+                <td style="padding:40px 20px 20px;">
+                  <table width="100%" cellpadding="0" cellspacing="0">
+                    <tr>
+                      <td align="center" style="padding-bottom:16px;">
+                        <p style="margin:0;font-size:13px;color:#555555;line-height:1.6;">
+                          IBRIX, IBRIX logotipas ir kiti IBRIX žymenys yra IBRIX prekių ženklai.<br>
+                          © 2026 IBRIX. Visos teisės saugomos.
+                        </p>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td align="center">
+                        <p style="margin:0;font-size:13px;">
+                          <a href="${baseUrl}/privatumo-politika" style="color:#006cb7;text-decoration:underline;">Privatumo politika</a>
+                          <span style="color:#999999;padding:0 8px;">|</span>
+                          <a href="${baseUrl}/slapukai-politika" style="color:#006cb7;text-decoration:underline;">Slapukų informacija</a>
+                          <span style="color:#999999;padding:0 8px;">|</span>
+                          <a href="${baseUrl}/pagalba" style="color:#006cb7;text-decoration:underline;">IBRIX.lt/service</a>
+                        </p>
+                      </td>
+                    </tr>
+                  </table>
+                </td>
+              </tr>
+
+            </table>
+          </td>
+        </tr>
+      </table>
+    </body>
+    </html>
+  `;
+
+  return {
+    subject: 'IBRIX – Patvirtinkite naują el. pašto adresą',
+    html,
+  };
+}
+
 function getShippingMethodLabel(method: string): string {
   const labels: Record<string, string> = {
     'omniva_locker': 'Omniva paštomatas',
@@ -1495,6 +1691,10 @@ Deno.serve(async (req: Request) => {
       case 'password_reset':
         emailContent = getPasswordResetEmail(data);
         recipientEmail = data.email || email;
+        break;
+      case 'email_change':
+        emailContent = getEmailChangeEmail(data.data || data);
+        recipientEmail = data.data?.newEmail || data.newEmail || email;
         break;
       default:
         log(requestId, 'Unknown email type', { type });
