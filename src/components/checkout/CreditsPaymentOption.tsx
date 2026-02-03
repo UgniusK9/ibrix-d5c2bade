@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Wallet, Sparkles, AlertCircle, Check } from 'lucide-react';
-import { RadioGroupItem } from '@/components/ui/radio-group';
 import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -152,34 +151,31 @@ export function CreditsPaymentOption({
   const canSelect = creditsInfo.canPayWithCredits;
 
   return (
-    <label
-      className={`flex items-start gap-4 p-4 rounded-lg border cursor-pointer transition-colors ${
+    <button
+      type="button"
+      className={`flex items-start gap-4 p-4 rounded-lg border text-left w-full transition-colors ${
         selected
           ? 'border-primary bg-primary/5 ring-2 ring-primary/20'
           : canSelect
             ? 'border-border hover:bg-muted/50'
             : 'border-border bg-muted/30 cursor-not-allowed opacity-60'
       }`}
-      onClick={(e) => {
-        if (!canSelect) {
-          e.preventDefault();
-        }
-      }}
+      onClick={() => canSelect && onSelect()}
+      disabled={!canSelect}
     >
-      <RadioGroupItem 
-        value="credits" 
-        disabled={!canSelect}
-        checked={selected}
-        onClick={() => canSelect && onSelect()}
-      />
+      <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center mt-1 flex-shrink-0 ${
+        selected ? 'border-primary bg-primary' : 'border-muted-foreground'
+      }`}>
+        {selected && <div className="w-2 h-2 rounded-full bg-primary-foreground" />}
+      </div>
       <div className="flex-1">
         <div className="flex items-center gap-2 mb-1">
-          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-amber-500 to-amber-600 flex items-center justify-center">
-            <Sparkles className="w-4 h-4 text-white" />
+          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-accent to-accent/80 flex items-center justify-center">
+            <Sparkles className="w-4 h-4 text-accent-foreground" />
           </div>
           <span className="font-medium">Mokėti kreditais</span>
           {canSelect && (
-            <Badge variant="outline" className="text-green-600 border-green-300 bg-green-50 text-xs">
+            <Badge variant="outline" className="text-success border-success/30 bg-success/10 text-xs">
               <Check className="w-3 h-3 mr-1" />
               Galite apmokėti
             </Badge>
@@ -193,7 +189,7 @@ export function CreditsPaymentOption({
           </div>
           <div className="flex items-center justify-between text-sm">
             <span className="text-muted-foreground">Jūsų balansas:</span>
-            <span className={creditsInfo.userBalance >= creditsInfo.totalCreditsRequired ? 'text-green-600 font-semibold' : 'text-muted-foreground'}>
+            <span className={creditsInfo.userBalance >= creditsInfo.totalCreditsRequired ? 'text-success font-semibold' : 'text-muted-foreground'}>
               {creditsInfo.userBalance.toFixed(2)}
             </span>
           </div>
@@ -206,17 +202,17 @@ export function CreditsPaymentOption({
           )}
           
           {selected && canSelect && (
-            <div className="mt-3 p-3 bg-green-50 dark:bg-green-950/30 rounded-lg border border-green-200 dark:border-green-800">
-              <p className="text-sm text-green-700 dark:text-green-300 font-medium">
+            <div className="mt-3 p-3 bg-success/10 rounded-lg border border-success/20">
+              <p className="text-sm text-success font-medium">
                 ✓ Bus panaudota: {creditsInfo.totalCreditsRequired} kreditų
               </p>
-              <p className="text-xs text-green-600 dark:text-green-400 mt-1">
+              <p className="text-xs text-success/80 mt-1">
                 Liks: {(creditsInfo.userBalance - creditsInfo.totalCreditsRequired).toFixed(2)} kreditų
               </p>
             </div>
           )}
         </div>
       </div>
-    </label>
+    </button>
   );
 }
