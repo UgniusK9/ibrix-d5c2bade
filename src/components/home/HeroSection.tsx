@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { ArrowRight, Truck, RotateCcw, Shield, Wrench, ChevronDown, Loader2 } from "lucide-react";
+import { ArrowRight, Truck, RotateCcw, Shield, Wrench, ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useProducts, getProductImage, getEtaString, formatPrice } from "@/hooks/useProducts";
@@ -95,9 +95,7 @@ export function HeroSection() {
           {/* Right - Hero Product */}
           <div className="relative hidden lg:block">
             {isLoading ? (
-              <div className="flex items-center justify-center" style={{ minHeight: 500 }}>
-                <Loader2 className="w-10 h-10 animate-spin text-accent" />
-              </div>
+              <div className="aspect-[4/3] rounded-3xl bg-primary-foreground/5 animate-pulse" style={{ minHeight: 450 }} />
             ) : featuredProduct ? (
               <div className="relative">
                 {/* Glow */}

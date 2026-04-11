@@ -1,15 +1,15 @@
 import { Header } from "@/components/layout/Header";
-import { Footer } from "@/components/layout/Footer";
 import { HeroSection } from "@/components/home/HeroSection";
-import { PromoBanner } from "@/components/home/PromoBanner";
-import { TrustBadges } from "@/components/home/TrustBadges";
-import { TabbedProductCarousel } from "@/components/home/TabbedProductCarousel";
 import { SEOHead } from "@/components/seo/SEOHead";
-import { useState, useEffect, lazy, Suspense } from "react";
+import { lazy, Suspense, useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useProducts } from "@/hooks/useProducts";
 
-// Lazy-load below-the-fold sections
+// Lazy-load everything below the fold
+const Footer = lazy(() => import("@/components/layout/Footer").then(m => ({ default: m.Footer })));
+const PromoBanner = lazy(() => import("@/components/home/PromoBanner").then(m => ({ default: m.PromoBanner })));
+const TrustBadges = lazy(() => import("@/components/home/TrustBadges").then(m => ({ default: m.TrustBadges })));
+const TabbedProductCarousel = lazy(() => import("@/components/home/TabbedProductCarousel").then(m => ({ default: m.TabbedProductCarousel })));
 const ProductsSection = lazy(() => import("@/components/home/ProductsSection").then(m => ({ default: m.ProductsSection })));
 const BundlesSection = lazy(() => import("@/components/home/BundlesSection").then(m => ({ default: m.BundlesSection })));
 const EditorialSection = lazy(() => import("@/components/home/EditorialSection").then(m => ({ default: m.EditorialSection })));
@@ -22,28 +22,17 @@ const SectionFallback = () => <div style={{ minHeight: 200 }} />;
 
 const Index = () => {
   const [hasBanners, setHasBanners] = useState(false);
-  const [checkingBanners, setCheckingBanners] = useState(true);
   const { data: products = [] } = useProducts();
 
-  // Check if there are active promo banners
+  // Check banners asynchronously — does NOT block hero render
   useEffect(() => {
-    const checkBanners = async () => {
-      try {
-        const { count, error } = await supabase
-          .from('promo_banners')
-          .select('id', { count: 'exact', head: true })
-          .eq('active', true);
-        
-        if (!error && count && count > 0) {
-          setHasBanners(true);
-        }
-      } catch (e) {
-        console.error('Failed to check banners:', e);
-      } finally {
-        setCheckingBanners(false);
-      }
-    };
-    checkBanners();
+    supabase
+      .from('promo_banners')
+      .select('id', { count: 'exact', head: true })
+      .eq('active', true)
+      .then(({ count, error }) => {
+        if (!error && count && count > 0) setHasBanners(true);
+      });
   }, []);
 
   return (
@@ -56,14 +45,22 @@ const Index = () => {
       <div className="min-h-screen flex flex-col overflow-x-hidden w-full">
         <Header />
         <main className="flex-1">
-          {/* Reserve hero space during banner check to prevent CLS */}
-          {checkingBanners ? (
-            <div className="min-h-[80vh] gradient-hero" />
-          ) : (
-            hasBanners ? <PromoBanner /> : <HeroSection />
+          {/* Hero renders IMMEDIATELY — no blocking */}
+          <HeroSection />
+
+          {/* PromoBanner overlays on top only when data arrives */}
+          {hasBanners && (
+            <Suspense fallback={null}>
+              <PromoBanner />
+            </Suspense>
           )}
-          <TrustBadges />
-          <TabbedProductCarousel products={products} />
+
+          <Suspense fallback={<SectionFallback />}>
+            <TrustBadges />
+          </Suspense>
+          <Suspense fallback={<SectionFallback />}>
+            <TabbedProductCarousel products={products} />
+          </Suspense>
           <Suspense fallback={<SectionFallback />}>
             <ProductsSection />
             <BundlesSection />
@@ -74,7 +71,9 @@ const Index = () => {
             <PreOrderSection />
           </Suspense>
         </main>
-        <Footer />
+        <Suspense fallback={<div style={{ minHeight: 300 }} />}>
+          <Footer />
+        </Suspense>
       </div>
     </>
   );
