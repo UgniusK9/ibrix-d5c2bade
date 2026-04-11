@@ -9,8 +9,14 @@
     <meta name="keywords" content="LEGO variklis, V8 modelis, techninis konstruktorius, variklio modelis, mechanikos modeliai">
     <link rel="canonical" href="https://ibrix.lt" />
 
-    
-    
+    <!-- Preload critical fonts (subset woff2) -->
+    <link rel="preload" href="https://fonts.gstatic.com/s/inter/v18/UcCO3FwrK3iLTeHuS_nVMrMxCp50SjIw2boKoduKmMEVuLyfAZ9hiA.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href="https://fonts.gstatic.com/s/sora/v12/xMQOuFFYT72X5wkB_18qmnndmSdSnk-DKQJRBg.woff2" as="font" type="font/woff2" crossorigin />
+
+    <!-- Font stylesheet with display=swap -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+
     <meta property="og:type" content="website" />
     <meta property="og:locale" content="lt_LT" />
     <meta property="og:image" content="https://storage.googleapis.com/gpt-engineer-file-uploads/4J2n9vUjzYac0521Dg0U092acpH3/social-images/social-1767497666072-Logo.png">
@@ -18,14 +24,22 @@
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:site" content="@IbrixLT" />
     <meta name="twitter:image" content="https://storage.googleapis.com/gpt-engineer-file-uploads/4J2n9vUjzYac0521Dg0U092acpH3/social-images/social-1767497666072-Logo.png">
-    
-  
-  <meta property="og:title" content="Ibrix.lt – Konstruktoriai Jums">
-  <meta name="twitter:title" content="Ibrix.lt – Konstruktoriai Jums">
-  <meta property="og:description" content="Premium techninių konstruktorių variklio modeliai mechanikos fanams. Pre-order aiškus, nemokamas pristatymas į paštomatą Lietuvoje.">
-  <meta name="twitter:description" content="Premium techninių konstruktorių variklio modeliai mechanikos fanams. Pre-order aiškus, nemokamas pristatymas į paštomatą Lietuvoje.">
-  <link rel="icon" type="image/png" href="https://storage.googleapis.com/gpt-engineer-file-uploads/4J2n9vUjzYac0521Dg0U092acpH3/uploads/1767539522259-Logo.png">
-</head>
+
+    <meta property="og:title" content="Ibrix.lt – Konstruktoriai Jums">
+    <meta name="twitter:title" content="Ibrix.lt – Konstruktoriai Jums">
+    <meta property="og:description" content="Premium techninių konstruktorių variklio modeliai mechanikos fanams. Pre-order aiškus, nemokamas pristatymas į paštomatą Lietuvoje.">
+    <meta name="twitter:description" content="Premium techninių konstruktorių variklio modeliai mechanikos fanams. Pre-order aiškus, nemokamas pristatymas į paštomatą Lietuvoje.">
+    <link rel="icon" type="image/png" href="https://storage.googleapis.com/gpt-engineer-file-uploads/4J2n9vUjzYac0521Dg0U092acpH3/uploads/1767539522259-Logo.png">
+
+    <!-- Critical inline CSS to prevent FOUC / layout shift -->
+    <style>
+      /* Reserve header space to prevent CLS */
+      body { margin: 0; }
+      #root { min-height: 100vh; }
+      /* Font-face fallback sizing to reduce CLS from font swap */
+      html { font-family: Inter, system-ui, -apple-system, sans-serif; }
+    </style>
+  </head>
 
   <body>
     <div id="root"></div>
