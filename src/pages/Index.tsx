@@ -4,18 +4,21 @@ import { HeroSection } from "@/components/home/HeroSection";
 import { PromoBanner } from "@/components/home/PromoBanner";
 import { TrustBadges } from "@/components/home/TrustBadges";
 import { TabbedProductCarousel } from "@/components/home/TabbedProductCarousel";
-import { ProductsSection } from "@/components/home/ProductsSection";
-import { BundlesSection } from "@/components/home/BundlesSection";
-import { EditorialSection } from "@/components/home/EditorialSection";
-import { RecommendationsCarousel } from "@/components/home/RecommendationsCarousel";
-import { RecentlyViewedSection } from "@/components/home/RecentlyViewedSection";
-import { HowItWorks } from "@/components/home/HowItWorks";
-import { PreOrderSection } from "@/components/home/PreOrderSection";
-
 import { SEOHead } from "@/components/seo/SEOHead";
-import { useState, useEffect } from "react";
+import { useState, useEffect, lazy, Suspense } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useProducts } from "@/hooks/useProducts";
+
+// Lazy-load below-the-fold sections
+const ProductsSection = lazy(() => import("@/components/home/ProductsSection").then(m => ({ default: m.ProductsSection })));
+const BundlesSection = lazy(() => import("@/components/home/BundlesSection").then(m => ({ default: m.BundlesSection })));
+const EditorialSection = lazy(() => import("@/components/home/EditorialSection").then(m => ({ default: m.EditorialSection })));
+const RecommendationsCarousel = lazy(() => import("@/components/home/RecommendationsCarousel").then(m => ({ default: m.RecommendationsCarousel })));
+const RecentlyViewedSection = lazy(() => import("@/components/home/RecentlyViewedSection").then(m => ({ default: m.RecentlyViewedSection })));
+const HowItWorks = lazy(() => import("@/components/home/HowItWorks").then(m => ({ default: m.HowItWorks })));
+const PreOrderSection = lazy(() => import("@/components/home/PreOrderSection").then(m => ({ default: m.PreOrderSection })));
+
+const SectionFallback = () => <div style={{ minHeight: 200 }} />;
 
 const Index = () => {
   const [hasBanners, setHasBanners] = useState(false);
@@ -53,18 +56,23 @@ const Index = () => {
       <div className="min-h-screen flex flex-col overflow-x-hidden w-full">
         <Header />
         <main className="flex-1">
-          {/* Show PromoBanner if there are active banners, otherwise show HeroSection */}
-          {!checkingBanners && (hasBanners ? <PromoBanner /> : <HeroSection />)}
+          {/* Reserve hero space during banner check to prevent CLS */}
+          {checkingBanners ? (
+            <div className="min-h-[80vh] gradient-hero" />
+          ) : (
+            hasBanners ? <PromoBanner /> : <HeroSection />
+          )}
           <TrustBadges />
-          {/* LEGO-style product carousel - replaces CollectionsSection */}
           <TabbedProductCarousel products={products} />
-          <ProductsSection />
-          <BundlesSection />
-          <EditorialSection />
-          <RecommendationsCarousel />
-          <RecentlyViewedSection />
-          <HowItWorks />
-          <PreOrderSection />
+          <Suspense fallback={<SectionFallback />}>
+            <ProductsSection />
+            <BundlesSection />
+            <EditorialSection />
+            <RecommendationsCarousel />
+            <RecentlyViewedSection />
+            <HowItWorks />
+            <PreOrderSection />
+          </Suspense>
         </main>
         <Footer />
       </div>

@@ -3,7 +3,6 @@ import { ArrowRight, Truck, RotateCcw, Shield, Wrench, ChevronDown, Loader2 } fr
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useProducts, getProductImage, getEtaString, formatPrice } from "@/hooks/useProducts";
-import { motion } from "framer-motion";
 
 export function HeroSection() {
   const { data: products, isLoading } = useProducts();
@@ -13,19 +12,14 @@ export function HeroSection() {
 
   return (
     <section className="relative min-h-[80vh] lg:min-h-[85vh] flex items-center overflow-hidden gradient-hero">
-      {/* Blueprint grid + soft vignette (like previous version) */}
+      {/* Blueprint grid + soft vignette */}
       <div className="absolute inset-0 pattern-hero-grid opacity-[0.12]" />
       <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-[hsl(220_40%_10%/0.45)]" />
 
       <div className="container relative z-10">
         <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
-          {/* Left Content */}
-          <motion.div 
-            className="text-primary-foreground"
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
-          >
+          {/* Left Content — this is the LCP element (text) */}
+          <div className="text-primary-foreground">
             {/* Badges */}
             <div className="flex flex-wrap gap-2 mb-6">
               <Badge className="bg-accent/20 text-accent border-accent/30 font-semibold px-3 py-1">
@@ -96,17 +90,12 @@ export function HeroSection() {
                 Trūkstamos detalės – nemokamai
               </span>
             </div>
-          </motion.div>
+          </div>
 
           {/* Right - Hero Product */}
-          <motion.div 
-            className="relative hidden lg:block"
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.6, delay: 0.2 }}
-          >
+          <div className="relative hidden lg:block">
             {isLoading ? (
-              <div className="flex items-center justify-center h-[500px]">
+              <div className="flex items-center justify-center" style={{ minHeight: 500 }}>
                 <Loader2 className="w-10 h-10 animate-spin text-accent" />
               </div>
             ) : featuredProduct ? (
@@ -133,14 +122,16 @@ export function HeroSection() {
                     </Badge>
                   </div>
 
-                  {/* Image */}
+                  {/* Image — explicit dimensions + eager for LCP */}
                   <div className="aspect-[4/3] bg-gradient-to-br from-secondary/50 to-muted/30 overflow-hidden">
                     <img 
                       src={getProductImage(featuredProduct)} 
                       alt={featuredProduct.title}
                       width={600}
                       height={450}
+                      loading="eager"
                       fetchPriority="high"
+                      decoding="async"
                       className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
                     />
                   </div>
@@ -169,7 +160,7 @@ export function HeroSection() {
                 </Link>
               </div>
             ) : null}
-          </motion.div>
+          </div>
         </div>
       </div>
 

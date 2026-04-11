@@ -92,6 +92,10 @@ export function LegoStyleProductCard({ product }: LegoStyleProductCardProps) {
         <img
           src={image}
           alt={product.title}
+          width={300}
+          height={300}
+          loading="lazy"
+          decoding="async"
           className="w-full h-full object-contain transition-transform duration-300 group-hover:scale-105"
         />
       </div>

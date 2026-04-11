@@ -96,6 +96,11 @@ export function PromoBanner() {
               <img 
                 src={currentBanner.image_url} 
                 alt={currentBanner.title}
+                width={1920}
+                height={800}
+                loading="eager"
+                fetchPriority="high"
+                decoding="async"
                 className="w-full h-full object-cover"
               />
             )}

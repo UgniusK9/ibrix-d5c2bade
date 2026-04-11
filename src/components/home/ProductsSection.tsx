@@ -103,6 +103,10 @@ export function ProductsSection() {
                   <img
                     src={image}
                     alt={product.title}
+                    width={400}
+                    height={300}
+                    loading="lazy"
+                    decoding="async"
                     className="w-full h-full object-contain transition-transform duration-300 group-hover:scale-105"
                   />
                   
