@@ -9,54 +9,51 @@
     <meta name="keywords" content="LEGO variklis, V8 modelis, techninis konstruktorius, variklio modelis, mechanikos modeliai">
     <link rel="canonical" href="https://ibrix.lt" />
 
-    <!-- Preconnect to font origin FIRST -->
+    <!-- Preconnect to critical origins -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="preconnect" href="https://huawtqggkzujiptndmns.supabase.co" />
 
-    <!-- Preload critical fonts (subset woff2) -->
+    <!-- Preload critical fonts (woff2 subsets) -->
     <link rel="preload" href="https://fonts.gstatic.com/s/inter/v18/UcCO3FwrK3iLTeHuS_nVMrMxCp50SjIw2boKoduKmMEVuLyfAZ9hiA.woff2" as="font" type="font/woff2" crossorigin />
     <link rel="preload" href="https://fonts.gstatic.com/s/sora/v12/xMQOuFFYT72X5wkB_18qmnndmSdSnk-DKQJRBg.woff2" as="font" type="font/woff2" crossorigin />
 
-    <!-- Font stylesheet — loaded async to avoid render-blocking -->
+    <!-- Font stylesheet — non-render-blocking -->
     <link rel="preload" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Sora:wght@400;500;600;700&display=swap" as="style" onload="this.onload=null;this.rel='stylesheet'" />
     <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Sora:wght@400;500;600;700&display=swap" /></noscript>
 
     <meta property="og:type" content="website" />
     <meta property="og:locale" content="lt_LT" />
     <meta property="og:image" content="https://storage.googleapis.com/gpt-engineer-file-uploads/4J2n9vUjzYac0521Dg0U092acpH3/social-images/social-1767497666072-Logo.png">
-
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:site" content="@IbrixLT" />
     <meta name="twitter:image" content="https://storage.googleapis.com/gpt-engineer-file-uploads/4J2n9vUjzYac0521Dg0U092acpH3/social-images/social-1767497666072-Logo.png">
-
     <meta property="og:title" content="Ibrix.lt – Konstruktoriai Jums">
     <meta name="twitter:title" content="Ibrix.lt – Konstruktoriai Jums">
     <meta property="og:description" content="Premium techninių konstruktorių variklio modeliai mechanikos fanams. Pre-order aiškus, nemokamas pristatymas į paštomatą Lietuvoje.">
     <meta name="twitter:description" content="Premium techninių konstruktorių variklio modeliai mechanikos fanams. Pre-order aiškus, nemokamas pristatymas į paštomatą Lietuvoje.">
     <link rel="icon" type="image/png" href="https://storage.googleapis.com/gpt-engineer-file-uploads/4J2n9vUjzYac0521Dg0U092acpH3/uploads/1767539522259-Logo.png">
 
-    <!-- Critical inline CSS — prevents FOUC and reserves layout space -->
+    <!-- Critical inline CSS — prevents FOUC, reserves layout space, eliminates CLS -->
     <style>
-      /* System font fallback matching Inter metrics to prevent CLS */
-      body { margin: 0; font-family: Inter, system-ui, -apple-system, sans-serif; }
+      /* System font stack matching Inter metrics */
+      body { margin: 0; font-family: Inter, system-ui, -apple-system, sans-serif; -webkit-font-smoothing: antialiased; }
       #root { min-height: 100vh; }
 
-      /* Reserve header height to prevent CLS */
-      .header-placeholder { min-height: 96px; } /* top-bar 36px + main 60px */
+      /* Reserve header height — prevents CLS when header mounts */
+      .header-placeholder { min-height: 96px; }
 
-      /* Reserve hero height to prevent CLS */
+      /* Reserve hero height — matches HeroSection min-h-[80vh] */
       .hero-placeholder { min-height: 80vh; }
 
-      /* Font-face with swap to avoid invisible text */
-      @font-face {
-        font-family: 'Inter';
-        font-display: swap;
-        src: local('Inter');
-      }
-      @font-face {
-        font-family: 'Sora';
-        font-display: swap;
-        src: local('Sora');
+      /* Font-face with swap for invisible text prevention */
+      @font-face { font-family: 'Inter'; font-display: swap; src: local('Inter'); }
+      @font-face { font-family: 'Sora'; font-display: swap; src: local('Sora'); }
+
+      /* Gradient hero background — inlined so hero paints with correct bg immediately */
+      .gradient-hero {
+        background: radial-gradient(ellipse 80% 60% at 50% 40%, hsl(210 100% 45% / 0.3), transparent),
+                    linear-gradient(180deg, hsl(220 55% 16%) 0%, hsl(215 60% 20%) 25%, hsl(210 80% 30%) 50%, hsl(210 100% 45%) 100%);
       }
     </style>
   </head>
