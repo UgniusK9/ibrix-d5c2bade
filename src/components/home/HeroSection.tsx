@@ -138,6 +138,9 @@ export function HeroSection() {
                     <img 
                       src={getProductImage(featuredProduct)} 
                       alt={featuredProduct.title}
+                      width={600}
+                      height={450}
+                      fetchPriority="high"
                       className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
                     />
                   </div>

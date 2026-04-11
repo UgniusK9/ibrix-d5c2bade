@@ -13,46 +13,49 @@ import { CartDrawer } from "@/components/cart/CartDrawer";
 import { AddToCartModal } from "@/components/cart/AddToCartModal";
 import { ComparisonDrawer } from "@/components/products/ComparisonDrawer";
 import { useCartStore } from "@/stores/cartStore";
+import { lazy, Suspense } from "react";
 import Index from "./pages/Index";
-import NotFound from "./pages/NotFound";
-import Varikliai from "./pages/Varikliai";
-import Produktai from "./pages/Produktai";
-import PreOrder from "./pages/PreOrder";
-import Pagalba from "./pages/Pagalba";
-import Apie from "./pages/Apie";
-import Kontaktai from "./pages/Kontaktai";
-import Produktas from "./pages/Produktas";
-import Pristatymas from "./pages/Pristatymas";
-import Grazinimai from "./pages/Grazinimai";
-import Garantija from "./pages/Garantija";
-import TrukstamosDetales from "./pages/TrukstamosDetales";
-import PrivatumoPolitika from "./pages/PrivatumoPolitika";
-import SlapukaiPolitika from "./pages/SlapukaiPolitika";
-import Taisykles from "./pages/Taisykles";
-import Checkout from "./pages/Checkout";
-import OrderConfirmation from "./pages/OrderConfirmation";
-import Admin from "./pages/Admin";
-import SiuntosSekimas from "./pages/SiuntosSekimas";
-import Auth from "./pages/Auth";
-import ResetPassword from "./pages/ResetPassword";
-import Account from "./pages/Account";
-import AdminVerification from "./pages/AdminVerification";
-import GiftCards from "./pages/GiftCards";
-import Palyginti from "./pages/Palyginti";
-import Atsiliepimai from "./pages/Atsiliepimai";
-import AuthLanding from "./pages/auth/AuthLanding";
-import AuthLogin from "./pages/auth/AuthLogin";
-import SignupStep1 from "./pages/auth/SignupStep1";
-import SignupStep2 from "./pages/auth/SignupStep2";
-import VerifyEmail from "./pages/auth/VerifyEmail";
-import AuthSuccess from "./pages/auth/AuthSuccess";
-import Credits from "./pages/account/Credits";
-import Settings from "./pages/account/Settings";
-import MyBuilders from "./pages/account/MyBuilders";
-import CollectionSearch from "./pages/account/CollectionSearch";
-import Orders from "./pages/Orders";
-import Wishlist from "./pages/Wishlist";
-import Pokalbis from "./pages/Pokalbis";
+
+// Lazy load all non-critical routes
+const NotFound = lazy(() => import("./pages/NotFound"));
+const Produktai = lazy(() => import("./pages/Produktai"));
+const PreOrder = lazy(() => import("./pages/PreOrder"));
+const Pagalba = lazy(() => import("./pages/Pagalba"));
+const Apie = lazy(() => import("./pages/Apie"));
+const Kontaktai = lazy(() => import("./pages/Kontaktai"));
+const Produktas = lazy(() => import("./pages/Produktas"));
+const Pristatymas = lazy(() => import("./pages/Pristatymas"));
+const Grazinimai = lazy(() => import("./pages/Grazinimai"));
+const Garantija = lazy(() => import("./pages/Garantija"));
+const TrukstamosDetales = lazy(() => import("./pages/TrukstamosDetales"));
+const PrivatumoPolitika = lazy(() => import("./pages/PrivatumoPolitika"));
+const SlapukaiPolitika = lazy(() => import("./pages/SlapukaiPolitika"));
+const Taisykles = lazy(() => import("./pages/Taisykles"));
+const Checkout = lazy(() => import("./pages/Checkout"));
+const OrderConfirmation = lazy(() => import("./pages/OrderConfirmation"));
+const Admin = lazy(() => import("./pages/Admin"));
+const SiuntosSekimas = lazy(() => import("./pages/SiuntosSekimas"));
+const Auth = lazy(() => import("./pages/Auth"));
+const ResetPassword = lazy(() => import("./pages/ResetPassword"));
+const Account = lazy(() => import("./pages/Account"));
+const AdminVerification = lazy(() => import("./pages/AdminVerification"));
+const GiftCards = lazy(() => import("./pages/GiftCards"));
+const Palyginti = lazy(() => import("./pages/Palyginti"));
+const Atsiliepimai = lazy(() => import("./pages/Atsiliepimai"));
+const AuthLanding = lazy(() => import("./pages/auth/AuthLanding"));
+const AuthLogin = lazy(() => import("./pages/auth/AuthLogin"));
+const SignupStep1 = lazy(() => import("./pages/auth/SignupStep1"));
+const SignupStep2 = lazy(() => import("./pages/auth/SignupStep2"));
+const VerifyEmail = lazy(() => import("./pages/auth/VerifyEmail"));
+const AuthSuccess = lazy(() => import("./pages/auth/AuthSuccess"));
+const Credits = lazy(() => import("./pages/account/Credits"));
+const Settings = lazy(() => import("./pages/account/Settings"));
+const MyBuilders = lazy(() => import("./pages/account/MyBuilders"));
+const CollectionSearch = lazy(() => import("./pages/account/CollectionSearch"));
+const Orders = lazy(() => import("./pages/Orders"));
+const Wishlist = lazy(() => import("./pages/Wishlist"));
+const Pokalbis = lazy(() => import("./pages/Pokalbis"));
+const Varikliai = lazy(() => import("./pages/Varikliai"));
 
 // Global cart components wrapper
 function CartComponents() {
@@ -73,6 +76,13 @@ function CartComponents() {
 
 const queryClient = new QueryClient();
 
+// Minimal loading fallback
+const PageFallback = () => (
+  <div className="min-h-screen flex items-center justify-center">
+    <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+  </div>
+);
+
 const App = () => (
   <HelmetProvider>
     <ThemeProvider>
@@ -85,10 +95,10 @@ const App = () => (
               <CookieConsentProvider>
                 <PageViewTracker />
                 <CartComponents />
+              <Suspense fallback={<PageFallback />}>
               <Routes>
                 {/* Public routes */}
                 <Route path="/" element={<Index />} />
-                {/* Redirect legacy /varikliai to new unified URL structure */}
                 <Route path="/varikliai" element={<Navigate to="/produktai/varikliai" replace />} />
                 <Route path="/produktai/:category" element={<Produktai />} />
                 <Route path="/produktai" element={<Navigate to="/produktai/visi" replace />} />
@@ -178,6 +188,7 @@ const App = () => (
 
                 <Route path="*" element={<NotFound />} />
               </Routes>
+              </Suspense>
             </CookieConsentProvider>
           </AuthProvider>
         </BrowserRouter>

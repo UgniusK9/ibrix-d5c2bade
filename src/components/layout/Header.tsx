@@ -19,7 +19,8 @@ import { CategoriesMegaMenu } from "@/components/header/CategoriesMegaMenu";
 import { LanguageSelector } from "@/components/header/LanguageSelector";
 import { UserProfileDropdown } from "@/components/header/UserProfileDropdown";
 import { ThemeToggle } from "@/components/theme/ThemeToggle";
-import logo from "@/assets/logo.png";
+import logo from "@/assets/logo.webp";
+import logoPng from "@/assets/logo.png";
 
 const navigation = [
   { name: "Kaip veikia pre-order", href: "/pre-order" },
@@ -83,7 +84,10 @@ export function Header() {
           <div className="flex items-center justify-between h-16 lg:h-18 gap-2 md:gap-4 min-w-0">
             {/* Logo */}
             <Link to="/" className="flex-shrink-0">
-              <img src={logo} alt="IBRIX" className="h-10 md:h-12 w-auto max-w-[120px] md:max-w-none object-contain dark:bg-white dark:rounded-lg dark:px-2 dark:py-1" />
+              <picture>
+                <source srcSet={logo} type="image/webp" />
+                <img src={logoPng} alt="IBRIX" width={120} height={80} className="h-10 md:h-12 w-auto max-w-[120px] md:max-w-none object-contain dark:bg-white dark:rounded-lg dark:px-2 dark:py-1" fetchPriority="high" />
+              </picture>
             </Link>
 
             {/* Desktop Navigation */}
