@@ -12,7 +12,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useCartStore } from "@/stores/cartStore";
-import { CartDrawer } from "@/components/cart/CartDrawer";
+
 import { useAuth } from "@/contexts/AuthContext";
 import { ProductSearch } from "@/components/header/ProductSearch";
 import { CategoriesMegaMenu } from "@/components/header/CategoriesMegaMenu";

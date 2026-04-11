@@ -14,7 +14,7 @@ import { AddToCartModal } from "@/components/cart/AddToCartModal";
 import { ComparisonDrawer } from "@/components/products/ComparisonDrawer";
 import { useCartStore } from "@/stores/cartStore";
 import { lazy, Suspense } from "react";
-import Index from "./pages/Index";
+const Index = lazy(() => import("./pages/Index"));
 
 // Lazy load all non-critical routes
 const NotFound = lazy(() => import("./pages/NotFound"));
