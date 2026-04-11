@@ -1,19 +1,22 @@
-import { Toaster } from "@/components/ui/toaster";
-import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { HelmetProvider } from "react-helmet-async";
-import { CookieConsentProvider } from "@/components/cookies/CookieConsentProvider";
-import { PageViewTracker } from "@/components/analytics/PageViewTracker";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { ThemeProvider } from "@/components/theme/ThemeProvider";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
-import { CartDrawer } from "@/components/cart/CartDrawer";
-import { AddToCartModal } from "@/components/cart/AddToCartModal";
-import { ComparisonDrawer } from "@/components/products/ComparisonDrawer";
 import { useCartStore } from "@/stores/cartStore";
 import { lazy, Suspense } from "react";
+
+// Lazy-load non-critical shell components
+const Toaster = lazy(() => import("@/components/ui/toaster").then(m => ({ default: m.Toaster })));
+const Sonner = lazy(() => import("@/components/ui/sonner").then(m => ({ default: m.Toaster })));
+const CookieConsentProvider = lazy(() => import("@/components/cookies/CookieConsentProvider").then(m => ({ default: m.CookieConsentProvider })));
+const PageViewTracker = lazy(() => import("@/components/analytics/PageViewTracker").then(m => ({ default: m.PageViewTracker })));
+const CartDrawer = lazy(() => import("@/components/cart/CartDrawer").then(m => ({ default: m.CartDrawer })));
+const AddToCartModal = lazy(() => import("@/components/cart/AddToCartModal").then(m => ({ default: m.AddToCartModal })));
+const ComparisonDrawer = lazy(() => import("@/components/products/ComparisonDrawer").then(m => ({ default: m.ComparisonDrawer })));
+
 const Index = lazy(() => import("./pages/Index"));
 
 // Lazy load all non-critical routes
@@ -88,13 +91,18 @@ const App = () => (
     <ThemeProvider>
       <QueryClientProvider client={queryClient}>
         <TooltipProvider>
-          <Toaster />
-          <Sonner position="top-center" />
+          <Suspense fallback={null}>
+            <Toaster />
+            <Sonner position="top-center" />
+          </Suspense>
           <BrowserRouter>
             <AuthProvider>
-              <CookieConsentProvider>
-                <PageViewTracker />
-                <CartComponents />
+              <Suspense fallback={null}>
+                <CookieConsentProvider>
+                  <PageViewTracker />
+                  <CartComponents />
+                </CookieConsentProvider>
+              </Suspense>
               <Suspense fallback={<PageFallback />}>
               <Routes>
                 {/* Public routes */}
