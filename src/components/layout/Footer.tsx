@@ -5,7 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import logo from "@/assets/logo.png";
+import logo from "@/assets/logo.webp";
+import logoPng from "@/assets/logo.png";
 import { useCookieConsentStore } from "@/stores/cookieConsentStore";
 import { useTranslation } from "react-i18next";
 
@@ -150,7 +151,10 @@ export function Footer() {
           {/* Brand */}
           <div>
             <Link to="/" className="inline-block mb-4">
-              <img src={logo} alt="IBRIX" className="h-8 w-auto brightness-0 invert" />
+              <picture>
+                <source srcSet={logo} type="image/webp" />
+                <img src={logoPng} alt="IBRIX" width={96} height={32} loading="lazy" className="h-8 w-auto brightness-0 invert" />
+              </picture>
             </Link>
             <p className="text-footer-foreground/70 text-sm leading-relaxed mb-6">
               IBRIX – judantys mechaniniai konstruktoriai mechanikos fanams. Aiškus pre-order, 
