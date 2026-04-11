@@ -323,8 +323,7 @@ export function Header() {
         </div>
       )}
 
-      {/* Cart Drawer */}
-      <CartDrawer />
+      {/* CartDrawer is rendered globally in App.tsx */}
     </header>
   );
 }
