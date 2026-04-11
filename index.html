@@ -9,13 +9,17 @@
     <meta name="keywords" content="LEGO variklis, V8 modelis, techninis konstruktorius, variklio modelis, mechanikos modeliai">
     <link rel="canonical" href="https://ibrix.lt" />
 
+    <!-- Preconnect to font origin FIRST -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+
     <!-- Preload critical fonts (subset woff2) -->
     <link rel="preload" href="https://fonts.gstatic.com/s/inter/v18/UcCO3FwrK3iLTeHuS_nVMrMxCp50SjIw2boKoduKmMEVuLyfAZ9hiA.woff2" as="font" type="font/woff2" crossorigin />
     <link rel="preload" href="https://fonts.gstatic.com/s/sora/v12/xMQOuFFYT72X5wkB_18qmnndmSdSnk-DKQJRBg.woff2" as="font" type="font/woff2" crossorigin />
 
-    <!-- Font stylesheet with display=swap -->
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <!-- Font stylesheet — loaded async to avoid render-blocking -->
+    <link rel="preload" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Sora:wght@400;500;600;700&display=swap" as="style" onload="this.onload=null;this.rel='stylesheet'" />
+    <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Sora:wght@400;500;600;700&display=swap" /></noscript>
 
     <meta property="og:type" content="website" />
     <meta property="og:locale" content="lt_LT" />
@@ -31,13 +35,29 @@
     <meta name="twitter:description" content="Premium techninių konstruktorių variklio modeliai mechanikos fanams. Pre-order aiškus, nemokamas pristatymas į paštomatą Lietuvoje.">
     <link rel="icon" type="image/png" href="https://storage.googleapis.com/gpt-engineer-file-uploads/4J2n9vUjzYac0521Dg0U092acpH3/uploads/1767539522259-Logo.png">
 
-    <!-- Critical inline CSS to prevent FOUC / layout shift -->
+    <!-- Critical inline CSS — prevents FOUC and reserves layout space -->
     <style>
-      /* Reserve header space to prevent CLS */
-      body { margin: 0; }
+      /* System font fallback matching Inter metrics to prevent CLS */
+      body { margin: 0; font-family: Inter, system-ui, -apple-system, sans-serif; }
       #root { min-height: 100vh; }
-      /* Font-face fallback sizing to reduce CLS from font swap */
-      html { font-family: Inter, system-ui, -apple-system, sans-serif; }
+
+      /* Reserve header height to prevent CLS */
+      .header-placeholder { min-height: 96px; } /* top-bar 36px + main 60px */
+
+      /* Reserve hero height to prevent CLS */
+      .hero-placeholder { min-height: 80vh; }
+
+      /* Font-face with swap to avoid invisible text */
+      @font-face {
+        font-family: 'Inter';
+        font-display: swap;
+        src: local('Inter');
+      }
+      @font-face {
+        font-family: 'Sora';
+        font-display: swap;
+        src: local('Sora');
+      }
     </style>
   </head>
 
