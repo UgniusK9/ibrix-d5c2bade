@@ -87,6 +87,13 @@ function getDepositConfirmedEmail(data: any): { subject: string; html: string } 
     shippingMethod,
     shippingAddress,
     paymentMethod,
+    invoiceNumber,
+    wantsInvoice,
+    invoiceCompanyName,
+    invoiceVatCode,
+    invoiceAddress,
+    shippingEur,
+    discountEur,
   } = data;
   
   const baseUrl = 'https://ibrix.lt';
@@ -1708,6 +1715,21 @@ Deno.serve(async (req: Request) => {
       log(requestId, 'Missing recipient email', { type });
       return new Response(JSON.stringify({ error: 'Missing recipient email' }), {
         status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    // DRY RUN: return HTML without sending
+    if (dryRun) {
+      log(requestId, 'Dry run - returning HTML preview');
+      return new Response(JSON.stringify({
+        success: true,
+        dryRun: true,
+        html: emailContent.html,
+        subject: emailContent.subject,
+        to: recipientEmail,
+      }), {
+        status: 200,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
