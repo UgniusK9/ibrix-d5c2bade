@@ -208,7 +208,33 @@ export default function Checkout() {
     });
 
     try {
-      const checkoutItems = items.map(item => ({
+      // Build shipping address payload from manual locker input or courier fields
+      const carrierLabelMap: Record<string, string> = {
+        dpd: "DPD",
+        omniva: "Omniva",
+        lp_express: "LP EXPRESS",
+        venipak: "Venipak",
+      };
+      const shippingAddressPayload = isLockerMethod
+        ? {
+            lockerId: `manual_${manualLocker.carrier}`,
+            lockerName: `${carrierLabelMap[manualLocker.carrier] || manualLocker.carrier} paštomatas`,
+            lockerAddress: manualLocker.address,
+            lockerCity: "",
+            lockerPostalCode: manualLocker.postalCode,
+            carrier: manualLocker.carrier,
+            recipientPhone: manualLocker.phone,
+          }
+        : {
+            street: data.street,
+            city: data.city,
+            postalCode: data.postalCode,
+          };
+      const effectivePhone = isLockerMethod
+        ? manualLocker.phone || phoneValue
+        : phoneValue;
+
+
         productId: item.productId,
         quantity: item.quantity,
         variantId: item.variantId || undefined,
