@@ -19,7 +19,8 @@ import { toast } from "sonner";
 import { trackBeginCheckoutEvent, trackAddPaymentInfoEvent } from "@/hooks/useAnalytics";
 import { DiscountCodeInput, AppliedDiscount } from "@/components/checkout/DiscountCodeInput";
 import { InvoiceFields } from "@/components/checkout/InvoiceFields";
-import { LockerSearch } from "@/components/checkout/LockerSearch";
+import { LockerSearch } from "@/components/checkout/LockerSearch"; // legacy — kept for future use
+import { ManualLockerInput, ManualLockerData } from "@/components/checkout/ManualLockerInput";
 import { PhoneInput } from "@/components/checkout/PhoneInput";
 import { PaymentMethodSelector, PaymentMethod, PAYMENT_METHODS } from "@/components/checkout/PaymentMethodSelector";
 import { CreditsPaymentOption, CreditsInfo } from "@/components/checkout/CreditsPaymentOption";
