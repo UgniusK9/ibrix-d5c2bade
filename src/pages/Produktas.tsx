@@ -11,6 +11,7 @@ import { VariantSelector } from "@/components/products/VariantSelector";
 import { useCartStore } from "@/stores/cartStore";
 import { useComparisonStore } from "@/stores/comparisonStore";
 import { useRecentlyViewed } from "@/hooks/useRecentlyViewed";
+import { useTrackProductView } from "@/hooks/useTrackProductView";
 import { toast } from "sonner";
 import { trackViewContentEvent } from "@/hooks/useAnalytics";
 import { SEOHead } from "@/components/seo/SEOHead";
