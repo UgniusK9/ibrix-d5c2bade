@@ -1,59 +1,58 @@
 
 
-# Planas: 4 pakeitimai svetainėje
+# Planas: El. pašto pranešimų pilnas redizainas
+
+## Tikslas
+Visi el. paštai turi atrodyti profesionaliai, vieningu stiliumi (kaip FOTO 1), su dinamiškais metais footer'yje.
 
 ## Kas bus padaryta
 
-### 1. Hero mygtuko „Peržiūrėti konstruktorius" taisymas
-**Problema:** Oranžinis CTA mygtukas Hero sekcijoje vizualiai „išlenda" arba turi overflow problemą (matoma 1-oje nuotraukoje).
-**Sprendimas:** Pridėti `whitespace-nowrap`, `overflow-hidden`, ir patikslinti `rounded` stilių ant mygtuko, kad tekstas ir rodyklė tilptų be overflow. Taip pat patikrinti, ar `h-14 px-8` neprieštarauja mobiliame view — galimai sumažinti padding arba pridėti `truncate`.
+### 1. Bendras dizaino sistema visiems el. paštams
+Sukurti vieningą **email design system** `send-email/index.ts` viduje su shared helpers:
+- `getEmailWrapper(content, options)` — bendras HTML skeleton (head, body, container, footer)
+- `getEmailHeader()` — IBRIX logo header (juodas/baltas, minimalistinis)
+- `getEmailFooter()` — footer su **dinamiškais metais** (`new Date().getFullYear()`) ir kontaktais
+- `getInfoTable(rows)` — universali šviesiai pilka info lentelė (kaip FOTO 1: "UŽSAKYMO NUMERIS", "DATA", "EL.PAŠTAS", "VISO", "MOKĖJIMO BŪDAS")
+- `getProductsTable(items)` — produktų lentelė su talpa/SKU
+- `getAddressBlock(buyer, shipping)` — dviejų stulpelių adresų blokas
+- Bendri CSS stiliai: Inter/system font, white bg (#ffffff), light gray accent (#f5f5f5), juodas header (#000000)
 
-**Failas:** `src/components/home/HeroSection.tsx` (42-52 eil.)
+### 2. Užsakymo patvirtinimo (deposit_confirmed) šablonas — pagal FOTO 1
+Struktūra:
+1. **Header**: "UŽSAKYMAS GAUTAS" / "Dėkojame. Jūsų užsakymas priimtas."
+2. **Info lentelė** (šviesiai pilka, su žymomis viršuje): UŽSAKYMO NUMERIS, DATA, EL.PAŠTAS, VISO, MOKĖJIMO BŪDAS
+3. **"Užsakymo informacija"** sekcija su:
+   - Produktų lentelė (Produktas | Viso) su talpa/specifikacijomis po pavadinimu
+   - Suma, Pristatymas (su lokerio info), Mokėjimo būdas, Viso (su PVM įskaičiavimu)
+4. **Pirkėjo / Pristatymo adresų blokai** (du stulpeliai)
+5. PVM sąskaita-faktūra (jau pridėta praeitame žingsnyje, bet pertvarkyta į tą patį stilių)
+6. **Footer**: dinamiški metai `© ${new Date().getFullYear()} IBRIX. Visos teisės saugomos.`
 
----
+### 3. Kiti el. paštai — perdaryti tuo pačiu stiliumi
+Naudoti tuos pačius helpers, keisti tik turinį:
+- `balance_request` — likučio apmokėjimas (info lentelė + CTA mygtukas)
+- `balance_paid` — apmokėjimo patvirtinimas
+- `shipped` — siuntos info su tracking (info lentelė + CTA "Sekti siuntą")
+- `gift_card` — dovanų kupono info (kodas, suma, žinutė)
+- `verification_code` — OTP kodas dideliais skaitmenimis
+- `welcome` — sveikinimo žinutė
+- `password_reset` — slaptažodžio atkūrimas su CTA mygtuku
 
-### 2. Admin sekcija: el. pašto šablonų peržiūra
-**Problema:** Norite admin panelėje matyti, kaip atrodo siunčiami el. laiškai (pvz., užsakymo patvirtinimas).
-**Sprendimas:** Sukurti naują admin tab „El. paštas" (`EmailPreviewManager.tsx`), kuriame bus galima pasirinkti šablono tipą (deposit_confirmed, balance_request, shipped ir kt.) ir matyti live HTML preview su mockup duomenimis iframe'e.
+### 4. Dinamiški metai visur
+Globaliai pakeisti visus hardcoded "2024" / "2025" į `new Date().getFullYear()` — tiek footer'yje, tiek bet kur kitur. Patikrinti visus 8 šablonus.
 
-**Naujas failas:** `src/components/admin/EmailPreviewManager.tsx`
-**Keičiamas failas:** `src/pages/Admin.tsx` — pridėti naują tab
+### 5. Atnaujinti EmailPreviewManager mock duomenis
+Pridėti realistiškus mock duomenis, atitinkančius FOTO 1 pavyzdį (Autobrite produktai, VENIPAK paštomatas, Pagubės Sodų adresas), kad admin matytų tikrovišką preview.
 
----
-
-### 3. Sąskaitos faktūros pridėjimas prie užsakymo patvirtinimo el. laiško
-**Problema:** Norite, kad užsakymo patvirtinimo el. laiške apačioje būtų prisegta PVM sąskaita-faktūra (panašiai kaip 2-oje nuotraukoje — DetailerPlace stiliaus, bet IBRIX tematika).
-**Sprendimas:** Atnaujinti `getDepositConfirmedEmail` funkciją `send-email/index.ts`, kad po pagrindinio turinio būtų generuojama inline sąskaita su:
-- Pardavėjo info (IBRIX)
-- Pirkėjo info
-- Prekių lentelė (produktas, SKU, kiekis, kaina be PVM, kaina su PVM)
-- Pristatymo kaina
-- Viso su PVM, PVM suma
-- Sąskaitos numeris ir data
-
-**Failas:** `supabase/functions/send-email/index.ts` — papildyti `getDepositConfirmedEmail` funkciją
-
----
-
-### 4. Po apmokėjimo — nukreipimas į užsakymo patvirtinimo puslapį
-**Problema:** Po apmokėjimo vartotojas nukreipiamas į pradinį puslapį, o ne į užsakymo patvirtinimo puslapį.
-**Analizė:** Stripe checkout jau nukreipia į `/uzsakymas?order_id=...&session_id=...`. Paysera naudoja `PAYSERA_ACCEPT_URL` env kintamąjį. Tikėtina, kad Paysera `PAYSERA_ACCEPT_URL` nustatytas į `https://ibrix.lt/` vietoj `https://ibrix.lt/uzsakymas?order_id={orderid}`.
-**Sprendimas:** Atnaujinti `create-paysera-payment/index.ts`, kad `accepturl` būtų dinamiškai generuojamas su `order_id` parametru (pvz., `https://ibrix.lt/uzsakymas?order_id=${order.id}`), o ne naudotų statinį env kintamąjį. Analogiškai patikrinti wallet/credits flow.
-
-**Failas:** `supabase/functions/create-paysera-payment/index.ts`
-
----
+## Failai
+- **Keičiamas:** `supabase/functions/send-email/index.ts` — visiškai perrašyti template generavimą su shared helpers
+- **Keičiamas:** `src/components/admin/EmailPreviewManager.tsx` — atnaujinti mock data realistiškesni
 
 ## Techniniai detaliai
-
-### Admin email preview komponentas
-- Dropdown su visais email tipais
-- Mock duomenys kiekvienam tipui
-- `supabase.functions.invoke('send-email', { body: { type, ...mockData, dryRun: true } })` arba tiesiog generuoti HTML client-side
-- Kadangi šablonai yra edge function viduje, paprasčiausias būdas — pridėti `preview` režimą send-email funkcijoje, kuris grąžina HTML be siuntimo
-
-### Sąskaita el. laiške
-- Naudosime inline HTML lentelę (ne PDF), nes el. pašto klientai nepalaiko priedų be specialių API
-- Stilius pagal 2-ą nuotrauką: profesionali PVM sąskaita su IBRIX branding
-- PVM 21% skaičiavimas iš subtotal
+- Šriftas: `-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Inter, Arial, sans-serif` (universalus, palaiko visus el. pašto klientus)
+- Spalvos: bg `#ffffff`, accent `#f5f5f5`, text `#1a1a1a`, muted `#666`, brand juoda `#000000`, link/CTA mėlyna `#2563eb`
+- Plotis: max 600px (standartinis email width)
+- Inline CSS visur (Outlook compat)
+- Lentelės su `cellpadding`/`cellspacing` (legacy email klientai)
+- Footer metai: `${new Date().getFullYear()}` — JS expression edge function viduje
 
