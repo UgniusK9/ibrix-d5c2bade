@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Package, Settings, List, BarChart3, Tag, RefreshCw, ShoppingBag, Users, RotateCcw, Layers, Gift, FolderTree, Mail, Image, MessageSquare, Bell, TrendingUp, Wallet, HelpCircle, Eye } from "lucide-react";
+import { Package, Settings, List, BarChart3, Tag, RefreshCw, ShoppingBag, Users, RotateCcw, Layers, Gift, FolderTree, Mail, Image, MessageSquare, Bell, TrendingUp, Wallet, HelpCircle, Eye, Activity } from "lucide-react";
 import { PageLayout } from "@/components/layout/PageLayout";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -21,6 +21,8 @@ import { StockNotificationsManager } from "@/components/admin/StockNotifications
 import { CreditsManager } from "@/components/admin/CreditsManager";
 import { InquiriesManager } from "@/components/admin/InquiriesManager";
 import { EmailPreviewManager } from "@/components/admin/EmailPreviewManager";
+import { ProductStatsManager } from "@/components/admin/ProductStatsManager";
+import { ActiveCartsManager } from "@/components/admin/ActiveCartsManager";
 import { supabase } from "@/integrations/supabase/client";
 import { Link } from "react-router-dom";
 
@@ -134,6 +136,10 @@ export default function Admin() {
               <Eye className="w-4 h-4" />
               El. paštas
             </TabsTrigger>
+            <TabsTrigger value="product-stats" className="gap-2">
+              <Activity className="w-4 h-4" />
+              Produktų statistika
+            </TabsTrigger>
             <TabsTrigger value="setup" className="gap-2">
               <Settings className="w-4 h-4" />
               Nustatymai
@@ -212,6 +218,13 @@ export default function Admin() {
 
           <TabsContent value="emails">
             <EmailPreviewManager />
+          </TabsContent>
+
+          <TabsContent value="product-stats">
+            <div className="space-y-8">
+              <ProductStatsManager />
+              <ActiveCartsManager />
+            </div>
           </TabsContent>
 
           <TabsContent value="setup">
