@@ -465,11 +465,17 @@ export default function Checkout() {
 
                   {isLockerMethod && (
                     <div className="mt-4 p-4 bg-muted/30 rounded-lg border border-border">
+                      <ManualLockerInput
+                        value={manualLocker}
+                        onChange={setManualLocker}
+                      />
+                      {/* Legacy locker search — kept for future use:
                       <LockerSearch
                         shippingMethod={shippingMethod}
                         selectedLocker={selectedLocker}
                         onSelect={setSelectedLocker}
                       />
+                      */}
                     </div>
                   )}
 
