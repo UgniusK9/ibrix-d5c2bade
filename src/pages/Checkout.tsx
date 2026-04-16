@@ -162,9 +162,23 @@ export default function Checkout() {
 
   const onSubmit = async (data: CheckoutFormData) => {
     if (step === 1) {
-      if (isLockerMethod && !selectedLocker) {
-        toast.error("Pasirinkite paštomatą");
-        return;
+      if (isLockerMethod) {
+        if (!manualLocker.carrier) {
+          toast.error("Pasirinkite pristatymo tiekėją");
+          return;
+        }
+        if (!manualLocker.address.trim()) {
+          toast.error("Įveskite paštomato adresą");
+          return;
+        }
+        if (!manualLocker.postalCode.trim()) {
+          toast.error("Įveskite pašto kodą");
+          return;
+        }
+        if (!manualLocker.phone.trim()) {
+          toast.error("Įveskite telefono numerį");
+          return;
+        }
       }
       if (data.shippingMethod === 'courier' && (!data.street || !data.city || !data.postalCode)) {
         toast.error("Užpildykite visą pristatymo adresą");
