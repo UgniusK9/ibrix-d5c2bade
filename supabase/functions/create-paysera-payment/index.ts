@@ -106,7 +106,7 @@ Deno.serve(async (req) => {
     const params: Record<string, string> = {
       projectid: projectId,
       orderid: order.id,
-      accepturl: acceptUrl || `https://ibrix.lt/uzsakymas?order_id=${order.id}&payment=paysera`,
+      accepturl: `https://ibrix.lt/uzsakymas?order_id=${order.id}&payment=paysera`,
       cancelurl: cancelUrl || `https://ibrix.lt/checkout?cancelled=true`,
       callbackurl: callbackUrl || `https://huawtqggkzujiptndmns.supabase.co/functions/v1/paysera-callback`,
       amount: amountCents.toString(),

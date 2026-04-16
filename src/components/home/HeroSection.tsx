@@ -43,11 +43,11 @@ export function HeroSection() {
               <Button 
                 asChild 
                 size="lg" 
-                className="bg-accent hover:bg-accent/90 text-accent-foreground font-semibold h-14 px-8 text-base"
+                className="bg-accent hover:bg-accent/90 text-accent-foreground font-semibold h-14 px-6 sm:px-8 text-base whitespace-nowrap overflow-hidden"
               >
                 <Link to="/produktai/visi">
                   Peržiūrėti konstruktorius
-                  <ArrowRight className="ml-2 h-5 w-5" />
+                  <ArrowRight className="ml-2 h-5 w-5 shrink-0" />
                 </Link>
               </Button>
               
