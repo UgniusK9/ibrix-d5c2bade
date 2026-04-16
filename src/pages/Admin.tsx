@@ -20,6 +20,7 @@ import { ReviewsManager } from "@/components/admin/ReviewsManager";
 import { StockNotificationsManager } from "@/components/admin/StockNotificationsManager";
 import { CreditsManager } from "@/components/admin/CreditsManager";
 import { InquiriesManager } from "@/components/admin/InquiriesManager";
+import { EmailPreviewManager } from "@/components/admin/EmailPreviewManager";
 import { supabase } from "@/integrations/supabase/client";
 import { Link } from "react-router-dom";
 
@@ -129,6 +130,10 @@ export default function Admin() {
               <Wallet className="w-4 h-4" />
               Kreditai
             </TabsTrigger>
+            <TabsTrigger value="emails" className="gap-2">
+              <Eye className="w-4 h-4" />
+              El. paštas
+            </TabsTrigger>
             <TabsTrigger value="setup" className="gap-2">
               <Settings className="w-4 h-4" />
               Nustatymai
@@ -203,6 +208,10 @@ export default function Admin() {
 
           <TabsContent value="credits">
             <CreditsManager />
+          </TabsContent>
+
+          <TabsContent value="emails">
+            <EmailPreviewManager />
           </TabsContent>
 
           <TabsContent value="setup">
