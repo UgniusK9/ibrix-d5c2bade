@@ -19,7 +19,8 @@ import { toast } from "sonner";
 import { trackBeginCheckoutEvent, trackAddPaymentInfoEvent } from "@/hooks/useAnalytics";
 import { DiscountCodeInput, AppliedDiscount } from "@/components/checkout/DiscountCodeInput";
 import { InvoiceFields } from "@/components/checkout/InvoiceFields";
-import { LockerSearch } from "@/components/checkout/LockerSearch";
+import { LockerSearch } from "@/components/checkout/LockerSearch"; // legacy — kept for future use
+import { ManualLockerInput, ManualLockerData } from "@/components/checkout/ManualLockerInput";
 import { PhoneInput } from "@/components/checkout/PhoneInput";
 import { PaymentMethodSelector, PaymentMethod, PAYMENT_METHODS } from "@/components/checkout/PaymentMethodSelector";
 import { CreditsPaymentOption, CreditsInfo } from "@/components/checkout/CreditsPaymentOption";
@@ -61,7 +62,13 @@ export default function Checkout() {
   const [step, setStep] = useState<1 | 2>(1);
   const [appliedDiscount, setAppliedDiscount] = useState<AppliedDiscount | null>(null);
   const [wantsInvoice, setWantsInvoice] = useState(false);
-  const [selectedLocker, setSelectedLocker] = useState<LockerTerminal | null>(null);
+  const [selectedLocker, setSelectedLocker] = useState<LockerTerminal | null>(null); // legacy
+  const [manualLocker, setManualLocker] = useState<ManualLockerData>({
+    carrier: "",
+    address: "",
+    postalCode: "",
+    phone: "",
+  });
   const [phoneValue, setPhoneValue] = useState("");
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<PaymentMethod | null>(
     PAYMENT_METHODS.find(m => m.enabled) || null
@@ -155,9 +162,23 @@ export default function Checkout() {
 
   const onSubmit = async (data: CheckoutFormData) => {
     if (step === 1) {
-      if (isLockerMethod && !selectedLocker) {
-        toast.error("Pasirinkite paštomatą");
-        return;
+      if (isLockerMethod) {
+        if (!manualLocker.carrier) {
+          toast.error("Pasirinkite pristatymo tiekėją");
+          return;
+        }
+        if (!manualLocker.address.trim()) {
+          toast.error("Įveskite paštomato adresą");
+          return;
+        }
+        if (!manualLocker.postalCode.trim()) {
+          toast.error("Įveskite pašto kodą");
+          return;
+        }
+        if (!manualLocker.phone.trim()) {
+          toast.error("Įveskite telefono numerį");
+          return;
+        }
       }
       if (data.shippingMethod === 'courier' && (!data.street || !data.city || !data.postalCode)) {
         toast.error("Užpildykite visą pristatymo adresą");
@@ -187,6 +208,32 @@ export default function Checkout() {
     });
 
     try {
+      // Build shipping address payload from manual locker input or courier fields
+      const carrierLabelMap: Record<string, string> = {
+        dpd: "DPD",
+        omniva: "Omniva",
+        lp_express: "LP EXPRESS",
+        venipak: "Venipak",
+      };
+      const shippingAddressPayload = isLockerMethod
+        ? {
+            lockerId: `manual_${manualLocker.carrier}`,
+            lockerName: `${carrierLabelMap[manualLocker.carrier] || manualLocker.carrier} paštomatas`,
+            lockerAddress: manualLocker.address,
+            lockerCity: "",
+            lockerPostalCode: manualLocker.postalCode,
+            carrier: manualLocker.carrier,
+            recipientPhone: manualLocker.phone,
+          }
+        : {
+            street: data.street,
+            city: data.city,
+            postalCode: data.postalCode,
+          };
+      const effectivePhone = isLockerMethod
+        ? manualLocker.phone || phoneValue
+        : phoneValue;
+
       const checkoutItems = items.map(item => ({
         productId: item.productId,
         quantity: item.quantity,
@@ -205,24 +252,12 @@ export default function Checkout() {
               variantId: item.variantId || undefined,
             })),
             shippingMethod: data.shippingMethod,
-            shippingAddress: selectedLocker ? {
-              lockerId: selectedLocker.id,
-              lockerName: selectedLocker.name,
-              lockerAddress: `${selectedLocker.address}, ${selectedLocker.city}`,
-              lockerCity: selectedLocker.city,
-              lockerPostalCode: selectedLocker.postalCode,
-              lat: selectedLocker.lat,
-              lng: selectedLocker.lng,
-            } : {
-              street: data.street,
-              city: data.city,
-              postalCode: data.postalCode,
-            },
+            shippingAddress: shippingAddressPayload,
             notes: data.notes,
             firstName: data.firstName,
             lastName: data.lastName,
             email: data.email,
-            phone: phoneValue || undefined,
+            phone: effectivePhone || undefined,
             idempotencyKey,
           },
         });
@@ -246,21 +281,9 @@ export default function Checkout() {
             firstName: data.firstName,
             lastName: data.lastName,
             email: data.email,
-            phone: phoneValue || undefined,
+            phone: effectivePhone || undefined,
             shippingMethod: data.shippingMethod,
-            shippingAddress: selectedLocker ? {
-              lockerId: selectedLocker.id,
-              lockerName: selectedLocker.name,
-              lockerAddress: `${selectedLocker.address}, ${selectedLocker.city}`,
-              lockerCity: selectedLocker.city,
-              lockerPostalCode: selectedLocker.postalCode,
-              lat: selectedLocker.lat,
-              lng: selectedLocker.lng,
-            } : {
-              street: data.street,
-              city: data.city,
-              postalCode: data.postalCode,
-            },
+            shippingAddress: shippingAddressPayload,
             notes: data.notes,
             items: checkoutItems,
             discountCode: appliedDiscount?.code,
@@ -291,21 +314,9 @@ export default function Checkout() {
             firstName: data.firstName,
             lastName: data.lastName,
             email: data.email,
-            phone: phoneValue || undefined,
+            phone: effectivePhone || undefined,
             shippingMethod: data.shippingMethod,
-            shippingAddress: selectedLocker ? {
-              lockerId: selectedLocker.id,
-              lockerName: selectedLocker.name,
-              lockerAddress: `${selectedLocker.address}, ${selectedLocker.city}`,
-              lockerCity: selectedLocker.city,
-              lockerPostalCode: selectedLocker.postalCode,
-              lat: selectedLocker.lat,
-              lng: selectedLocker.lng,
-            } : {
-              street: data.street,
-              city: data.city,
-              postalCode: data.postalCode,
-            },
+            shippingAddress: shippingAddressPayload,
             notes: data.notes,
             items: checkoutItems,
             discountCode: appliedDiscount?.code,
@@ -454,11 +465,17 @@ export default function Checkout() {
 
                   {isLockerMethod && (
                     <div className="mt-4 p-4 bg-muted/30 rounded-lg border border-border">
+                      <ManualLockerInput
+                        value={manualLocker}
+                        onChange={setManualLocker}
+                      />
+                      {/* Legacy locker search — kept for future use:
                       <LockerSearch
                         shippingMethod={shippingMethod}
                         selectedLocker={selectedLocker}
                         onSelect={setSelectedLocker}
                       />
+                      */}
                     </div>
                   )}
 
