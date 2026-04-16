@@ -217,11 +217,127 @@ function getDepositConfirmedEmail(data: any): { subject: string; html: string } 
     </div>
   `;
 
+  // Generate PVM invoice section
+  const invoiceDate = new Date().toISOString().split('T')[0];
+  const subtotalEur = items?.reduce((sum: number, item: any) => sum + ((item.unit_price_eur || item.unitPriceEur) * item.quantity), 0) || parseFloat(totalEur) || 0;
+  const shipping = parseFloat(shippingEur) || 0;
+  const discount = parseFloat(discountEur) || 0;
+  const grandTotal = subtotalEur + shipping - discount;
+  const vatRate = 0.21;
+  const netTotal = grandTotal / (1 + vatRate);
+  const vatAmount = grandTotal - netTotal;
+
+  const invoiceItemsHtml = items?.map((item: any) => {
+    const qty = item.quantity;
+    const unitPrice = item.unit_price_eur || item.unitPriceEur;
+    const lineTotal = unitPrice * qty;
+    const lineNet = lineTotal / (1 + vatRate);
+    return `<tr>
+      <td style="padding:8px 12px;border-bottom:1px solid #e5e7eb;font-size:13px;color:#374151;">${item.title_snapshot || item.title}</td>
+      <td style="padding:8px 12px;border-bottom:1px solid #e5e7eb;font-size:13px;color:#6b7280;text-align:center;">${item.sku_snapshot || '-'}</td>
+      <td style="padding:8px 12px;border-bottom:1px solid #e5e7eb;font-size:13px;text-align:center;">${qty}</td>
+      <td style="padding:8px 12px;border-bottom:1px solid #e5e7eb;font-size:13px;text-align:right;">${lineNet.toFixed(2)}€</td>
+      <td style="padding:8px 12px;border-bottom:1px solid #e5e7eb;font-size:13px;text-align:right;font-weight:500;">${lineTotal.toFixed(2)}€</td>
+    </tr>`;
+  }).join('') || '';
+
+  const invoiceHtml = `
+    <!-- PVM Sąskaita-faktūra -->
+    <div style="margin-top:40px;border-top:3px solid #1a1a2e;padding-top:32px;">
+      <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:24px;">
+        <tr>
+          <td>
+            <h2 style="margin:0;font-size:22px;font-weight:700;color:#1a1a2e;">PVM SĄSKAITA FAKTŪRA</h2>
+            <p style="margin:4px 0 0;font-size:13px;color:#6b7280;">Nr. ${invoiceNumber || 'Generuojama'}</p>
+            <p style="margin:2px 0 0;font-size:13px;color:#6b7280;">Data: ${invoiceDate}</p>
+          </td>
+          <td style="text-align:right;vertical-align:top;">
+            <p style="margin:0;font-size:20px;font-weight:700;color:#1a1a2e;">IBRIX</p>
+            <p style="margin:4px 0 0;font-size:12px;color:#6b7280;">ibrix.lt</p>
+          </td>
+        </tr>
+      </table>
+
+      <!-- Seller / Buyer -->
+      <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:24px;">
+        <tr>
+          <td style="width:50%;vertical-align:top;padding-right:16px;">
+            <div style="background:#f9fafb;padding:16px;border-radius:8px;">
+              <p style="margin:0 0 8px;font-size:11px;color:#9ca3af;text-transform:uppercase;letter-spacing:0.5px;font-weight:600;">Pardavėjas</p>
+              <p style="margin:0;font-size:14px;font-weight:600;color:#1f2937;">IBRIX</p>
+              <p style="margin:4px 0 0;font-size:12px;color:#6b7280;">info@ibrix.lt</p>
+              <p style="margin:2px 0 0;font-size:12px;color:#6b7280;">ibrix.lt</p>
+            </div>
+          </td>
+          <td style="width:50%;vertical-align:top;padding-left:16px;">
+            <div style="background:#f9fafb;padding:16px;border-radius:8px;">
+              <p style="margin:0 0 8px;font-size:11px;color:#9ca3af;text-transform:uppercase;letter-spacing:0.5px;font-weight:600;">Pirkėjas</p>
+              <p style="margin:0;font-size:14px;font-weight:600;color:#1f2937;">${wantsInvoice && invoiceCompanyName ? invoiceCompanyName : firstName}</p>
+              ${wantsInvoice && invoiceVatCode ? `<p style="margin:4px 0 0;font-size:12px;color:#6b7280;">PVM kodas: ${invoiceVatCode}</p>` : ''}
+              ${wantsInvoice && invoiceAddress ? `<p style="margin:2px 0 0;font-size:12px;color:#6b7280;">${invoiceAddress}</p>` : ''}
+            </div>
+          </td>
+        </tr>
+      </table>
+
+      <!-- Items Table -->
+      <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:20px;border:1px solid #e5e7eb;border-radius:8px;overflow:hidden;">
+        <thead>
+          <tr style="background:#f3f4f6;">
+            <th style="padding:10px 12px;text-align:left;font-size:11px;color:#6b7280;font-weight:600;text-transform:uppercase;">Prekė</th>
+            <th style="padding:10px 12px;text-align:center;font-size:11px;color:#6b7280;font-weight:600;text-transform:uppercase;">SKU</th>
+            <th style="padding:10px 12px;text-align:center;font-size:11px;color:#6b7280;font-weight:600;text-transform:uppercase;">Kiekis</th>
+            <th style="padding:10px 12px;text-align:right;font-size:11px;color:#6b7280;font-weight:600;text-transform:uppercase;">Be PVM</th>
+            <th style="padding:10px 12px;text-align:right;font-size:11px;color:#6b7280;font-weight:600;text-transform:uppercase;">Su PVM</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${invoiceItemsHtml}
+        </tbody>
+      </table>
+
+      <!-- Totals -->
+      <table width="100%" cellpadding="0" cellspacing="0" style="max-width:300px;margin-left:auto;">
+        <tr>
+          <td style="padding:6px 0;font-size:13px;color:#6b7280;">Tarpinė suma:</td>
+          <td style="padding:6px 0;font-size:13px;text-align:right;color:#374151;">${subtotalEur.toFixed(2)}€</td>
+        </tr>
+        ${shipping > 0 ? `<tr>
+          <td style="padding:6px 0;font-size:13px;color:#6b7280;">Pristatymas:</td>
+          <td style="padding:6px 0;font-size:13px;text-align:right;color:#374151;">${shipping.toFixed(2)}€</td>
+        </tr>` : `<tr>
+          <td style="padding:6px 0;font-size:13px;color:#6b7280;">Pristatymas:</td>
+          <td style="padding:6px 0;font-size:13px;text-align:right;color:#22c55e;">Nemokamas</td>
+        </tr>`}
+        ${discount > 0 ? `<tr>
+          <td style="padding:6px 0;font-size:13px;color:#6b7280;">Nuolaida:</td>
+          <td style="padding:6px 0;font-size:13px;text-align:right;color:#dc2626;">-${discount.toFixed(2)}€</td>
+        </tr>` : ''}
+        <tr style="border-top:1px solid #e5e7eb;">
+          <td style="padding:8px 0;font-size:13px;color:#6b7280;">Suma be PVM:</td>
+          <td style="padding:8px 0;font-size:13px;text-align:right;color:#374151;">${netTotal.toFixed(2)}€</td>
+        </tr>
+        <tr>
+          <td style="padding:6px 0;font-size:13px;color:#6b7280;">PVM (21%):</td>
+          <td style="padding:6px 0;font-size:13px;text-align:right;color:#374151;">${vatAmount.toFixed(2)}€</td>
+        </tr>
+        <tr style="border-top:2px solid #1a1a2e;">
+          <td style="padding:10px 0;font-size:16px;font-weight:700;color:#1a1a2e;">Viso:</td>
+          <td style="padding:10px 0;font-size:16px;font-weight:700;text-align:right;color:#1a1a2e;">${grandTotal.toFixed(2)}€</td>
+        </tr>
+      </table>
+
+      <p style="margin:20px 0 0;font-size:11px;color:#9ca3af;text-align:center;">
+        Ši sąskaita faktūra yra automatiškai sugeneruota ir galioja be parašo.
+      </p>
+    </div>
+  `;
+
   return {
     subject: isFullPayment 
       ? `Užsakymas ${orderNumber} - mokėjimas gautas ✓`
       : `Užsakymas ${orderNumber} - depozitas gautas ✓`,
-    html: wrapEmail(content),
+    html: wrapEmail(content + invoiceHtml),
   };
 }
 
