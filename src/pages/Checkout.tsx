@@ -62,7 +62,13 @@ export default function Checkout() {
   const [step, setStep] = useState<1 | 2>(1);
   const [appliedDiscount, setAppliedDiscount] = useState<AppliedDiscount | null>(null);
   const [wantsInvoice, setWantsInvoice] = useState(false);
-  const [selectedLocker, setSelectedLocker] = useState<LockerTerminal | null>(null);
+  const [selectedLocker, setSelectedLocker] = useState<LockerTerminal | null>(null); // legacy
+  const [manualLocker, setManualLocker] = useState<ManualLockerData>({
+    carrier: "",
+    address: "",
+    postalCode: "",
+    phone: "",
+  });
   const [phoneValue, setPhoneValue] = useState("");
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<PaymentMethod | null>(
     PAYMENT_METHODS.find(m => m.enabled) || null
