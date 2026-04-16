@@ -234,7 +234,7 @@ export default function Checkout() {
         ? manualLocker.phone || phoneValue
         : phoneValue;
 
-
+      const checkoutItems = items.map(item => ({
         productId: item.productId,
         quantity: item.quantity,
         variantId: item.variantId || undefined,
