@@ -145,6 +145,45 @@ export default function Checkout() {
     }
   }, [items, navigate]);
 
+  // Auto-apply cart recovery discount from email link (?recovery=TOKEN)
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const token = params.get("recovery");
+    if (!token || appliedDiscount) return;
+
+    (async () => {
+      try {
+        const { data, error } = await supabase.functions.invoke("claim-cart-recovery", {
+          body: { token },
+        });
+        if (error || !data?.ok) {
+          toast.error(data?.error || "Nuolaidos linkas negalioja");
+          return;
+        }
+        // Validate via existing offer system to fetch the canonical offer record
+        const { data: validation } = await supabase.functions.invoke("validate-discount", {
+          body: { code: data.offer_code, cartTotal: fullTotal },
+        });
+        if (validation?.valid && validation.offer) {
+          setAppliedDiscount({
+            offerId: validation.offer.id,
+            code: validation.offer.code,
+            type: validation.offer.type,
+            value: validation.offer.value,
+            title: validation.offer.title,
+          });
+          toast.success(`🎁 Asmeninė nuolaida pritaikyta: ${data.offer_code}`);
+        } else {
+          toast.error("Nepavyko pritaikyti nuolaidos. Bandykite dar kartą.");
+        }
+      } catch (e: any) {
+        console.error("[recovery]", e);
+        toast.error("Klaida tikrinant nuolaidos linką");
+      }
+    })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   useEffect(() => {
     if (items.length > 0) {
       trackBeginCheckoutEvent({

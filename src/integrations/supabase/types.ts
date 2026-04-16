@@ -197,6 +197,108 @@ export type Database = {
           },
         ]
       }
+      cart_recovery_links: {
+        Row: {
+          cart_id: string | null
+          claimed_at: string | null
+          created_at: string
+          created_by_admin_id: string | null
+          discount_type: string
+          discount_value: number
+          email_error: string | null
+          email_sent_at: string | null
+          email_status: string | null
+          expires_at: string
+          id: string
+          offer_code: string
+          offer_id: string
+          recipient_email: string
+          token: string
+          updated_at: string
+          used_at: string | null
+          used_in_order_id: string | null
+          user_id: string | null
+        }
+        Insert: {
+          cart_id?: string | null
+          claimed_at?: string | null
+          created_at?: string
+          created_by_admin_id?: string | null
+          discount_type: string
+          discount_value: number
+          email_error?: string | null
+          email_sent_at?: string | null
+          email_status?: string | null
+          expires_at?: string
+          id?: string
+          offer_code: string
+          offer_id: string
+          recipient_email: string
+          token?: string
+          updated_at?: string
+          used_at?: string | null
+          used_in_order_id?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          cart_id?: string | null
+          claimed_at?: string | null
+          created_at?: string
+          created_by_admin_id?: string | null
+          discount_type?: string
+          discount_value?: number
+          email_error?: string | null
+          email_sent_at?: string | null
+          email_status?: string | null
+          expires_at?: string
+          id?: string
+          offer_code?: string
+          offer_id?: string
+          recipient_email?: string
+          token?: string
+          updated_at?: string
+          used_at?: string | null
+          used_in_order_id?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cart_recovery_links_cart_id_fkey"
+            columns: ["cart_id"]
+            isOneToOne: false
+            referencedRelation: "carts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cart_recovery_links_created_by_admin_id_fkey"
+            columns: ["created_by_admin_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cart_recovery_links_offer_id_fkey"
+            columns: ["offer_id"]
+            isOneToOne: false
+            referencedRelation: "offers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cart_recovery_links_used_in_order_id_fkey"
+            columns: ["used_in_order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cart_recovery_links_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       carts: {
         Row: {
           anonymous_id: string | null
@@ -1149,6 +1251,54 @@ export type Database = {
             columns: ["product_id"]
             isOneToOne: false
             referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      product_views: {
+        Row: {
+          created_at: string
+          id: string
+          product_id: string
+          referrer: string | null
+          session_id: string | null
+          user_agent: string | null
+          user_id: string | null
+          viewer_type: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          product_id: string
+          referrer?: string | null
+          session_id?: string | null
+          user_agent?: string | null
+          user_id?: string | null
+          viewer_type?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          product_id?: string
+          referrer?: string | null
+          session_id?: string | null
+          user_agent?: string | null
+          user_id?: string | null
+          viewer_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_views_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "product_views_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
             referencedColumns: ["id"]
           },
         ]

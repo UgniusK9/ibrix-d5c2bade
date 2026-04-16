@@ -11,6 +11,7 @@ import { VariantSelector } from "@/components/products/VariantSelector";
 import { useCartStore } from "@/stores/cartStore";
 import { useComparisonStore } from "@/stores/comparisonStore";
 import { useRecentlyViewed } from "@/hooks/useRecentlyViewed";
+import { useTrackProductView } from "@/hooks/useTrackProductView";
 import { toast } from "sonner";
 import { trackViewContentEvent } from "@/hooks/useAnalytics";
 import { SEOHead } from "@/components/seo/SEOHead";
@@ -91,6 +92,9 @@ export default function Produktas() {
       mainVariant,
     };
   }, [variants, selectedVariants]);
+
+  // Log product view to product_views table for admin analytics
+  useTrackProductView(product?.id);
 
   // Track ViewContent and add to recently viewed when product loads
   useEffect(() => {
