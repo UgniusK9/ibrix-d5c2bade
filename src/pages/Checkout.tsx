@@ -352,6 +352,89 @@ export default function Checkout() {
         } else {
           throw new Error("Nepavyko sukurti Paysera mokėjimo");
         }
+      } else if (selectedPaymentMethod.provider === 'opay') {
+        // OPAY: create order, then initiate OPAY payment
+        const { data: result, error } = await supabase.functions.invoke("checkout", {
+          body: {
+            firstName: data.firstName,
+            lastName: data.lastName,
+            email: data.email,
+            phone: effectivePhone || undefined,
+            shippingMethod: data.shippingMethod,
+            shippingAddress: shippingAddressPayload,
+            notes: data.notes,
+            items: checkoutItems,
+            discountCode: appliedDiscount?.code,
+            wantsInvoice: wantsInvoice,
+            invoiceCompanyName: data.invoiceCompanyName,
+            invoiceVatCode: data.invoiceVatCode,
+            invoiceAddress: data.invoiceAddress,
+            invoiceCountry: "Lietuva",
+            useCredits: false,
+            creditsCents: 0,
+            paymentProvider: 'opay',
+            paymentMethodCode: selectedPaymentMethod.code,
+            skipStripe: true,
+          },
+        });
+        if (error) throw error;
+
+        const { data: opayResult, error: opayError } = await supabase.functions.invoke("create-opay-payment", {
+          body: {
+            orderId: result.order.id,
+            paymentType: hasPreorderItems ? 'deposit' : 'full',
+            bankCode: selectedPaymentMethod.bankCode,
+          },
+        });
+        if (opayError) throw opayError;
+
+        if (opayResult?.redirectUrl) {
+          clearCart();
+          window.location.href = opayResult.redirectUrl;
+        } else {
+          throw new Error(opayResult?.error || "Nepavyko sukurti OPAY mokėjimo");
+        }
+      } else if (selectedPaymentMethod.provider === 'inbank') {
+        // Inbank: create order, then redirect to Inbank application
+        const { data: result, error } = await supabase.functions.invoke("checkout", {
+          body: {
+            firstName: data.firstName,
+            lastName: data.lastName,
+            email: data.email,
+            phone: effectivePhone || undefined,
+            shippingMethod: data.shippingMethod,
+            shippingAddress: shippingAddressPayload,
+            notes: data.notes,
+            items: checkoutItems,
+            discountCode: appliedDiscount?.code,
+            wantsInvoice: wantsInvoice,
+            invoiceCompanyName: data.invoiceCompanyName,
+            invoiceVatCode: data.invoiceVatCode,
+            invoiceAddress: data.invoiceAddress,
+            invoiceCountry: "Lietuva",
+            useCredits: false,
+            creditsCents: 0,
+            paymentProvider: 'inbank',
+            paymentMethodCode: selectedPaymentMethod.code,
+            skipStripe: true,
+          },
+        });
+        if (error) throw error;
+
+        const { data: inbankResult, error: inbankError } = await supabase.functions.invoke("create-inbank-payment", {
+          body: {
+            orderId: result.order.id,
+            periodMonths: selectedPaymentMethod.periodMonths ?? 12,
+          },
+        });
+        if (inbankError) throw inbankError;
+
+        if (inbankResult?.redirectUrl) {
+          clearCart();
+          window.location.href = inbankResult.redirectUrl;
+        } else {
+          throw new Error(inbankResult?.error || "Nepavyko sukurti Inbank paraiškos");
+        }
       } else if (selectedPaymentMethod.provider === 'paypal') {
         toast.error("PayPal mokėjimai bus prieinami greitai");
       }
