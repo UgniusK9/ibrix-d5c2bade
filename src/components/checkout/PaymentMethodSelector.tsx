@@ -5,41 +5,77 @@ import { Check, Lock } from "lucide-react";
 export type PaymentMethod = {
   id: string;
   code: string;
-  provider: 'stripe' | 'paypal' | 'paysera';
+  provider: 'stripe' | 'paypal' | 'paysera' | 'opay' | 'inbank';
   title: string;
   subtitle: string;
   logo: string;
   enabled: boolean;
-  bankCode?: string; // For Paysera banklink
+  bankCode?: string; // For Paysera/OPAY banklink
+  periodMonths?: number; // For Inbank installments
 };
 
 const PAYMENT_METHODS: PaymentMethod[] = [
+  // ─── OPAY (primary — Lithuanian payment gateway) ──────────────────
   {
-    id: 'stripe-card',
-    code: 'card',
-    provider: 'stripe',
-    title: 'Kortelė',
-    subtitle: 'Atsiskaityk debeto ar kredito kortele',
+    id: 'opay-card',
+    code: 'opay_card',
+    provider: 'opay',
+    title: 'Banko kortelė',
+    subtitle: 'Visa, Mastercard per OPAY',
     logo: '/payment-logos/card.svg',
     enabled: true,
   },
   {
-    id: 'stripe-googlepay',
-    code: 'googlepay',
-    provider: 'stripe',
-    title: 'Google Pay',
-    subtitle: 'Greitas mokėjimas su Google Pay',
-    logo: '/payment-logos/googlepay.svg',
+    id: 'opay-banklink',
+    code: 'opay_banklink',
+    provider: 'opay',
+    title: 'Banko pavedimas',
+    subtitle: 'Swedbank, SEB, Luminor, Revolut ir kt. per OPAY',
+    logo: '/payment-logos/swedbank.svg',
     enabled: true,
   },
+
+  // ─── Inbank (BNPL — installment financing) ────────────────────────
   {
-    id: 'stripe-applepay',
-    code: 'applepay',
-    provider: 'stripe',
-    title: 'Apple Pay',
-    subtitle: 'Greitas mokėjimas su Apple Pay',
-    logo: '/payment-logos/applepay.svg',
+    id: 'inbank-12',
+    code: 'inbank_12m',
+    provider: 'inbank',
+    title: 'Inbank išsimokėjimas (12 mėn.)',
+    subtitle: 'Mokėk dalimis per 12 mėnesių',
+    logo: '/payment-logos/card.svg',
     enabled: true,
+    periodMonths: 12,
+  },
+  {
+    id: 'inbank-24',
+    code: 'inbank_24m',
+    provider: 'inbank',
+    title: 'Inbank išsimokėjimas (24 mėn.)',
+    subtitle: 'Mokėk dalimis per 24 mėnesius',
+    logo: '/payment-logos/card.svg',
+    enabled: true,
+    periodMonths: 24,
+  },
+  {
+    id: 'inbank-36',
+    code: 'inbank_36m',
+    provider: 'inbank',
+    title: 'Inbank išsimokėjimas (36 mėn.)',
+    subtitle: 'Mokėk dalimis per 36 mėnesius',
+    logo: '/payment-logos/card.svg',
+    enabled: true,
+    periodMonths: 36,
+  },
+
+  // ─── Legacy (palikti atjungti – galima vėl įjungti vėliau) ─────────
+  {
+    id: 'stripe-card',
+    code: 'card',
+    provider: 'stripe',
+    title: 'Kortelė (Stripe)',
+    subtitle: 'Senas mokėjimo būdas — neaktyvus',
+    logo: '/payment-logos/card.svg',
+    enabled: false,
   },
   {
     id: 'paypal',
@@ -48,7 +84,7 @@ const PAYMENT_METHODS: PaymentMethod[] = [
     title: 'PayPal',
     subtitle: 'Atsiskaityk per PayPal paskyrą',
     logo: '/payment-logos/paypal.svg',
-    enabled: false, // Mark as "Soon"
+    enabled: false,
   },
   {
     id: 'paysera-swedbank',
