@@ -1011,7 +1011,7 @@ Deno.serve(async (req: Request) => {
         recipientEmail = data.data?.email || data.email || email;
         break;
       case 'password_reset':
-        emailContent = getPasswordResetEmail(data);
+        emailContent = getPasswordResetEmail({ ...data, email: data.email || email });
         recipientEmail = data.email || email;
         break;
       case 'email_change':
