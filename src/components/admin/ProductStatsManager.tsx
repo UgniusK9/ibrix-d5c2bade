@@ -96,18 +96,22 @@ export function ProductStatsManager() {
   };
 
   const loadChart = async () => {
-    const since = new Date(Date.now() - rangeDays * 24 * 60 * 60 * 1000);
+    // Start from local midnight (rangeDays-1) days ago, so today's bucket is included
+    const start = new Date();
+    start.setHours(0, 0, 0, 0);
+    start.setDate(start.getDate() - (rangeDays - 1));
+
     const { data } = await supabase
       .from("product_views")
       .select("created_at")
       .eq("product_id", selectedProductId)
-      .gte("created_at", since.toISOString())
+      .gte("created_at", start.toISOString())
       .order("created_at", { ascending: true });
 
-    // Bucket by day
+    // Bucket by day (inclusive of today)
     const buckets = new Map<string, number>();
     for (let i = 0; i < rangeDays; i++) {
-      const d = new Date(since);
+      const d = new Date(start);
       d.setDate(d.getDate() + i);
       const key = d.toISOString().slice(0, 10);
       buckets.set(key, 0);
