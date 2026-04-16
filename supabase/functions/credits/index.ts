@@ -481,6 +481,19 @@ Deno.serve(async (req) => {
 
   const requestId = crypto.randomUUID().slice(0, 8);
 
+  // SECURITY: Require service-role bearer token. This function manipulates
+  // wallet balances and must only be callable by trusted internal functions
+  // (stripe-webhook, checkout, purchase-with-credits, etc.).
+  const authHeader = req.headers.get('authorization') || '';
+  const expected = `Bearer ${Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''}`;
+  if (!authHeader || authHeader !== expected) {
+    console.warn(`[CREDITS][${requestId}] Unauthorized call rejected`);
+    return new Response(JSON.stringify({ success: false, error: 'Unauthorized' }), {
+      status: 401,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
+  }
+
   try {
     const { action, orderId, userId, amountCents } = await req.json();
 
