@@ -1629,8 +1629,8 @@ Deno.serve(async (req: Request) => {
   }
 
   try {
-    const { type, email, ...data } = await req.json();
-    log(requestId, 'Email request received', { type, email, orderNumber: data.orderNumber });
+    const { type, email, dryRun, ...data } = await req.json();
+    log(requestId, 'Email request received', { type, email, dryRun, orderNumber: data.orderNumber });
 
     // Get email content based on type
     let emailContent: { subject: string; html: string };
