@@ -93,6 +93,9 @@ export default function Produktas() {
     };
   }, [variants, selectedVariants]);
 
+  // Log product view to product_views table for admin analytics
+  useTrackProductView(product?.id);
+
   // Track ViewContent and add to recently viewed when product loads
   useEffect(() => {
     if (product) {
