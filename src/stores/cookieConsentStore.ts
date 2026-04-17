@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
+import { getLocalStateStorage } from '@/lib/browser-storage';
 
 export interface CookieConsent {
   necessary: boolean;
@@ -121,7 +122,7 @@ export const useCookieConsentStore = create<CookieConsentStore>()(
     }),
     {
       name: 'ibrix_cookie_consent',
-      storage: createJSONStorage(() => localStorage),
+      storage: createJSONStorage(getLocalStateStorage),
       partialize: (state) => ({
         consent: state.consent,
         hasInteracted: state.hasInteracted,

@@ -45,9 +45,7 @@ if (!i18n.isInitialized) {
       return;
     }
 
-    if (typeof window !== 'undefined') {
-      window.setTimeout(run, 1);
-    }
+    globalThis.setTimeout(run, 1);
   };
 
   preloadLocale(lang === 'lt' ? 'en' : 'lt');

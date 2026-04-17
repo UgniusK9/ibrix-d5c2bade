@@ -1,6 +1,6 @@
-import type { StateStorage } from "zustand/middleware";
+type SyncStorage = Pick<Storage, "getItem" | "setItem" | "removeItem">;
 
-const createMemoryStorage = (): StateStorage => {
+const createMemoryStorage = (): SyncStorage => {
   const store = new Map<string, string>();
 
   return {
@@ -17,7 +17,7 @@ const createMemoryStorage = (): StateStorage => {
 const memoryLocalStorage = createMemoryStorage();
 const memorySessionStorage = createMemoryStorage();
 
-const getValidatedStorage = (type: "local" | "session"): Storage | null => {
+const getValidatedStorage = (type: "local" | "session"): SyncStorage | null => {
   if (typeof window === "undefined") {
     return null;
   }
@@ -33,9 +33,9 @@ const getValidatedStorage = (type: "local" | "session"): Storage | null => {
   }
 };
 
-export const getLocalStateStorage = (): StateStorage => getValidatedStorage("local") ?? memoryLocalStorage;
+export const getLocalStateStorage = (): SyncStorage => getValidatedStorage("local") ?? memoryLocalStorage;
 
-export const getSessionStateStorage = (): StateStorage => getValidatedStorage("session") ?? memorySessionStorage;
+export const getSessionStateStorage = (): SyncStorage => getValidatedStorage("session") ?? memorySessionStorage;
 
 export const safeLocalStorageGetItem = (key: string): string | null => getLocalStateStorage().getItem(key);
 

@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { Product } from '@/hooks/useProducts';
+import { getLocalStateStorage } from '@/lib/browser-storage';
 
 interface ComparisonStore {
   products: Product[];
@@ -43,6 +44,7 @@ export const useComparisonStore = create<ComparisonStore>()(
     }),
     {
       name: 'product-comparison',
+      storage: getLocalStateStorage(),
     }
   )
 );
