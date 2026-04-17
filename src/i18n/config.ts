@@ -1,12 +1,10 @@
 import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
+import { safeLocalStorageGetItem } from '@/lib/browser-storage';
 
 // Get saved language or default to 'lt'
 const getSavedLanguage = () => {
-  if (typeof window !== 'undefined') {
-    return localStorage.getItem('language') || 'lt';
-  }
-  return 'lt';
+  return safeLocalStorageGetItem('language') || 'lt';
 };
 
 const lang = getSavedLanguage();
@@ -36,12 +34,23 @@ if (!i18n.isInitialized) {
   };
 
   loadLocale(lang);
-  // Preload the other locale in background
-  if (lang === 'lt') {
-    requestIdleCallback?.(() => loadLocale('en'));
-  } else {
-    requestIdleCallback?.(() => loadLocale('lt'));
-  }
+
+  const preloadLocale = (locale: string) => {
+    const run = () => {
+      void loadLocale(locale);
+    };
+
+    if (typeof window !== 'undefined' && 'requestIdleCallback' in window) {
+      window.requestIdleCallback(run);
+      return;
+    }
+
+    if (typeof window !== 'undefined') {
+      window.setTimeout(run, 1);
+    }
+  };
+
+  preloadLocale(lang === 'lt' ? 'en' : 'lt');
 }
 
 export default i18n;
