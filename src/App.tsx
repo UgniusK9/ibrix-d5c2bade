@@ -7,6 +7,7 @@ import { ThemeProvider } from "@/components/theme/ThemeProvider";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { useCartStore } from "@/stores/cartStore";
 import { lazy, Suspense } from "react";
+import { ChunkErrorBoundary } from "@/components/ChunkErrorBoundary";
 
 // Lazy-load non-critical shell components
 const Toaster = lazy(() => import("@/components/ui/toaster").then(m => ({ default: m.Toaster })));
@@ -87,6 +88,7 @@ const PageFallback = () => (
 );
 
 const App = () => (
+  <ChunkErrorBoundary>
   <HelmetProvider>
     <ThemeProvider>
       <QueryClientProvider client={queryClient}>
@@ -203,6 +205,7 @@ const App = () => (
       </QueryClientProvider>
     </ThemeProvider>
   </HelmetProvider>
+  </ChunkErrorBoundary>
 );
 
 export default App;
