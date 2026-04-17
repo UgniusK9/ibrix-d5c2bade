@@ -109,18 +109,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     );
 
     // THEN check for existing session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      
-      if (session?.user) {
-        ensureUserExists(session.user).then(() => {
-          fetchUserRole(session.user.id).then(r => setRole(r || 'customer'));
-        });
-      }
-      
-      setIsLoading(false);
-    });
+    supabase.auth.getSession()
+      .then(({ data: { session } }) => {
+        setSession(session);
+        setUser(session?.user ?? null);
+
+        if (session?.user) {
+          ensureUserExists(session.user).then(() => {
+            fetchUserRole(session.user.id).then(r => setRole(r || 'customer'));
+          }).catch((e) => console.error('ensureUserExists failed:', e));
+        }
+      })
+      .catch(async (e) => {
+        // Invalid/expired refresh token — clear stale session so app can render
+        console.warn('getSession failed, clearing stale auth:', e);
+        try { await supabase.auth.signOut(); } catch {}
+        setSession(null);
+        setUser(null);
+        setRole(null);
+      })
+      .finally(() => {
+        setIsLoading(false);
+      });
 
     return () => subscription.unsubscribe();
   }, []);
