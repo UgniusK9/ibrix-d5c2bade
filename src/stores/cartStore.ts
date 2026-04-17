@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import { trackAddToCartEvent } from '@/hooks/useAnalytics';
 import type { Product } from '@/hooks/useProducts';
+import { getLocalStateStorage } from '@/lib/browser-storage';
 
 export interface CartItem {
   productId: string; // UUID from Supabase
@@ -186,7 +187,7 @@ export const useCartStore = create<CartStore>()(
     }),
     {
       name: 'ibrix-cart',
-      storage: createJSONStorage(() => localStorage),
+      storage: createJSONStorage(getLocalStateStorage),
       partialize: (state) => ({ items: state.items }),
     }
   )
