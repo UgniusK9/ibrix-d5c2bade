@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
+import { persist, createJSONStorage } from 'zustand/middleware';
 import { Product } from '@/hooks/useProducts';
 import { getLocalStateStorage } from '@/lib/browser-storage';
 
@@ -44,7 +44,7 @@ export const useComparisonStore = create<ComparisonStore>()(
     }),
     {
       name: 'product-comparison',
-      storage: getLocalStateStorage(),
+      storage: createJSONStorage(getLocalStateStorage),
     }
   )
 );
