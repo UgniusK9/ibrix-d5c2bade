@@ -19,8 +19,8 @@ Disallow: /account
 Disallow: /auth
 Disallow: /auth/reset-password
 
-# Dynamic Sitemap (includes all products from database)
-Sitemap: https://huawtqggkzujiptndmns.supabase.co/functions/v1/sitemap
+# Sitemap (regenerated at build time, served from the site origin)
+Sitemap: https://ibrix.lt/sitemap.xml
 
 # Crawl-delay for respectful crawling
 Crawl-delay: 1
