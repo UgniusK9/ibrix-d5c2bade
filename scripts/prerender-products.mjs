@@ -133,7 +133,7 @@ function buildHead(p) {
 /**
  * Rewrite the SPA shell's <head>:
  *  - strip the generic <title> and <meta name="description">
- *  - strip any generic og:*/twitter:*/canonical the shell ships with
+ *  - strip any generic og / twitter / canonical the shell ships with
  *  - inject the product-specific block just before </head>
  *
  * We deliberately DO NOT touch <script>, <link rel="stylesheet">, or
