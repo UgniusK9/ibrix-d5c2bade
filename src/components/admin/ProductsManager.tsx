@@ -1035,6 +1035,50 @@ export function ProductsManager() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Delete ALL confirmation */}
+      <Dialog open={deleteAllOpen} onOpenChange={(o) => !deletingAll && setDeleteAllOpen(o)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-destructive">
+              <AlertTriangle className="w-5 h-5" />
+              Ištrinti VISUS produktus?
+            </DialogTitle>
+            <DialogDescription>
+              Bus bandoma ištrinti {products.length} produkt{products.length === 1 ? 'ą' : 'us'}.
+              Produktai, kurie turi užsakymų, bus deaktyvuoti (ne pašalinti), kad išsaugotų istoriją.
+              Šis veiksmas negrįžtamas. Įrašykite <strong>IŠTRINTI</strong>, kad patvirtintumėte.
+            </DialogDescription>
+          </DialogHeader>
+          <Input
+            value={deleteAllConfirm}
+            onChange={(e) => setDeleteAllConfirm(e.target.value)}
+            placeholder="IŠTRINTI"
+            disabled={deletingAll}
+            autoFocus
+          />
+          {deleteAllProgress && (
+            <p className="text-sm text-muted-foreground">{deleteAllProgress}</p>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDeleteAllOpen(false)} disabled={deletingAll}>
+              Atšaukti
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleDeleteAll}
+              disabled={deletingAll || deleteAllConfirm.trim() !== 'IŠTRINTI'}
+            >
+              {deletingAll ? (
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+              ) : (
+                <Trash2 className="w-4 h-4 mr-2" />
+              )}
+              Ištrinti visus
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
