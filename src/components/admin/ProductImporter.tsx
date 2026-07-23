@@ -79,10 +79,17 @@ export function ProductImporter() {
 
     setScraping(true);
     const collected: ImportDraft[] = [...drafts];
+    const seen = new Set<string>(
+      collected.map((d) => d.source_url || d.slug || d.sku).filter(Boolean),
+    );
     let ok = 0;
 
     const appendProducts = (products: ScrapedProduct[]) => {
+      let added = 0;
       for (const p of products) {
+        const key = p.source_url || p.handle || p.sku;
+        if (key && seen.has(key)) continue;
+        if (key) seen.add(key);
         const priceEur = Math.round(p.source_price * multiplier * 100) / 100;
         collected.push({
           sku: p.sku,
@@ -101,8 +108,10 @@ export function ProductImporter() {
           source_currency: p.source_currency,
         });
         ok++;
+        added++;
       }
       setDrafts([...collected]);
+      return added;
     };
 
     for (const url of urlList) {
@@ -131,10 +140,12 @@ export function ProductImporter() {
             : data.product
               ? [data.product]
               : [];
-          appendProducts(list);
+          const added = appendProducts(list);
 
-          remaining -= list.length;
+          remaining -= added;
           if (!isCollection || !data.hasMore || list.length === 0) break;
+          // If an entire page was duplicates, we've looped back — stop.
+          if (isCollection && added === 0) break;
           page = Number(data.nextPage) || page + 1;
         }
       } catch (e: any) {
