@@ -122,7 +122,7 @@ async function translateToLithuanian(fields: { title: string; short: string; lon
 
 async function fetchProductByHandle(origin: string, handle: string) {
   const jsonUrl = `${origin}/products/${handle}.json`;
-  const res = await fetch(jsonUrl, { headers: { 'User-Agent': UA, Accept: 'application/json' } });
+  const res = await fetchWithRetry(jsonUrl);
   if (!res.ok) throw new Error(`HTTP ${res.status} @ ${jsonUrl}`);
   const payload = await res.json();
   return payload?.product;
@@ -211,10 +211,13 @@ Deno.serve(async (req) => {
     const perRequestCap = translate ? 6 : 30;
     const perPage = Math.min(requestedLimit, perRequestCap);
     const cUrl = `${parsed.origin}/collections/${parsed.handle}/products.json?limit=${perPage}&page=${page}`;
-    const r = await fetch(cUrl, { headers: { 'User-Agent': UA, Accept: 'application/json' } });
+    const r = await fetchWithRetry(cUrl);
     if (!r.ok) {
       console.error(`[SCRAPE COLLECTION] ${cUrl} → ${r.status}`);
-      return new Response(JSON.stringify({ success: false, error: `Kolekcijos nuskaitymas nepavyko (HTTP ${r.status})` }), {
+      const msg = r.status === 503 || r.status === 429
+        ? 'Šaltinio serveris laikinai neatsako (per daug užklausų). Pabandykite dar kartą po 30 s.'
+        : `Kolekcijos nuskaitymas nepavyko (HTTP ${r.status})`;
+      return new Response(JSON.stringify({ success: false, error: msg }), {
         status: 502,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
