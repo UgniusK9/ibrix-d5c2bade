@@ -212,7 +212,21 @@ Deno.serve(async (req) => {
 
       case 'delete_product': {
         const { error } = await supabase.from('products').delete().eq('id', body.productId);
-        if (error) throw error;
+        if (error) {
+          // FK violation: product referenced by orders — soft-delete (archive) instead.
+          if ((error as any).code === '23503') {
+            const { error: archiveError } = await supabase
+              .from('products')
+              .update({ status: 'archived' })
+              .eq('id', body.productId);
+            if (archiveError) throw archiveError;
+            return new Response(
+              JSON.stringify({ success: true, archived: true, message: 'Konstruktorius turi užsakymų, todėl buvo archyvuotas vietoje ištrynimo.' }),
+              { headers: { 'Content-Type': 'application/json', ...corsHeaders } }
+            );
+          }
+          throw error;
+        }
         return new Response(JSON.stringify({ success: true }), { headers: { 'Content-Type': 'application/json', ...corsHeaders } });
       }
 
