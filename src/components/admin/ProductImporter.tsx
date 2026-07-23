@@ -376,7 +376,13 @@ export function ProductImporter() {
 
       {drafts.length > 0 && (
         <div className="space-y-4">
-          <h3 className="text-lg font-semibold">Peržiūra ({drafts.length})</h3>
+          <div className="flex items-center justify-between">
+            <h3 className="text-lg font-semibold">Peržiūra ({drafts.length})</h3>
+            <Button onClick={() => setBulkOpen(true)} disabled={bulkUploading}>
+              <Save className="w-4 h-4 mr-2" />
+              Įkelti visus ({drafts.length})
+            </Button>
+          </div>
           {drafts.map((d, idx) => (
             <Card key={`${d.source_url}-${idx}`}>
               <CardHeader className="flex flex-row items-center justify-between space-y-0">
