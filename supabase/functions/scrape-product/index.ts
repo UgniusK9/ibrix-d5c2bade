@@ -72,7 +72,18 @@ async function translateToLithuanian(fields: { title: string; short: string; lon
     const data = await res.json();
     const content = data?.choices?.[0]?.message?.content;
     if (!content) return null;
-    const parsed = JSON.parse(content);
+    let parsed: any;
+    try {
+      parsed = JSON.parse(content);
+    } catch {
+      // Model occasionally emits invalid escape sequences; strip lone backslashes and retry.
+      try {
+        parsed = JSON.parse(content.replace(/\\(?!["\\/bfnrtu])/g, ''));
+      } catch (e) {
+        console.error('[TRANSLATE] JSON parse failed', e);
+        return null;
+      }
+    }
     return {
       title: typeof parsed.title === 'string' ? parsed.title : fields.title,
       short: typeof parsed.short === 'string' ? parsed.short : fields.short,
@@ -189,14 +200,23 @@ Deno.serve(async (req) => {
     }
 
     const sliced = items.slice(0, maxItems);
+    // Process in parallel batches to avoid the 150s edge function idle timeout.
     const products: any[] = [];
-    for (const p of sliced) {
-      const srcUrl = `${parsed.origin}/products/${p.handle}`;
-      try {
-        products.push(await normalizeProduct(p, srcUrl, !!translate));
-      } catch (e) {
-        console.error('normalize failed for', p?.handle, e);
-      }
+    const BATCH = translate ? 5 : 15;
+    for (let i = 0; i < sliced.length; i += BATCH) {
+      const chunk = sliced.slice(i, i + BATCH);
+      const results = await Promise.all(
+        chunk.map(async (p) => {
+          const srcUrl = `${parsed.origin}/products/${p.handle}`;
+          try {
+            return await normalizeProduct(p, srcUrl, !!translate);
+          } catch (e) {
+            console.error('normalize failed for', p?.handle, e);
+            return null;
+          }
+        }),
+      );
+      for (const r of results) if (r) products.push(r);
     }
 
     return new Response(
