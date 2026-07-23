@@ -217,11 +217,11 @@ Deno.serve(async (req) => {
           if ((error as any).code === '23503') {
             const { error: archiveError } = await supabase
               .from('products')
-              .update({ status: 'archived' })
+              .update({ status: 'inactive' })
               .eq('id', body.productId);
             if (archiveError) throw archiveError;
             return new Response(
-              JSON.stringify({ success: true, archived: true, message: 'Konstruktorius turi užsakymų, todėl buvo archyvuotas vietoje ištrynimo.' }),
+              JSON.stringify({ success: true, archived: true, message: 'Konstruktorius turi užsakymų, todėl buvo deaktyvuotas vietoje ištrynimo.' }),
               { headers: { 'Content-Type': 'application/json', ...corsHeaders } }
             );
           }
