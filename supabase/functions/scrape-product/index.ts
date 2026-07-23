@@ -51,7 +51,11 @@ async function translateToLithuanian(fields: { title: string; short: string; lon
   try {
     const res = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${key}` },
+      headers: {
+        'Content-Type': 'application/json',
+        'Lovable-API-Key': key,
+        'X-Lovable-AIG-SDK': 'edge-function-fetch',
+      },
       body: JSON.stringify({
         model: 'google/gemini-2.5-flash',
         messages: [
@@ -145,7 +149,10 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const { url, translate = false, limit = 50 } = await req.json();
+    const body = await req.json();
+    const { url, translate = false } = body;
+    const requestedLimit = Math.max(1, Number.parseInt(String(body.limit ?? '50'), 10) || 50);
+    const page = Math.max(1, Number.parseInt(String(body.page ?? '1'), 10) || 1);
     if (!url || typeof url !== 'string') {
       return new Response(JSON.stringify({ success: false, error: 'URL yra būtinas' }), {
         status: 400,
@@ -173,38 +180,32 @@ Deno.serve(async (req) => {
         });
       }
       const product = await normalizeProduct(p, url, !!translate);
-      return new Response(JSON.stringify({ success: true, products: [product] }), {
+      return new Response(JSON.stringify({ success: true, products: [product], hasMore: false }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
 
-    // COLLECTION: paginate Shopify /collections/<handle>/products.json (max 250/page)
-    const maxItems = Math.min(Math.max(1, Number(limit) || 50), 250);
-    const perPage = Math.min(maxItems, 250);
-    const items: any[] = [];
-    let page = 1;
-    while (items.length < maxItems) {
-      const cUrl = `${parsed.origin}/collections/${parsed.handle}/products.json?limit=${perPage}&page=${page}`;
-      const r = await fetch(cUrl, { headers: { 'User-Agent': UA, Accept: 'application/json' } });
-      if (!r.ok) {
-        console.error(`[SCRAPE COLLECTION] ${cUrl} → ${r.status}`);
-        break;
-      }
-      const pl = await r.json();
-      const arr: any[] = Array.isArray(pl?.products) ? pl.products : [];
-      if (arr.length === 0) break;
-      items.push(...arr);
-      if (arr.length < perPage) break;
-      page++;
-      if (page > 20) break;
+    // COLLECTION: one small page per request. The admin UI loops pages so large
+    // catalogs never keep a single edge invocation open long enough to timeout.
+    const perRequestCap = translate ? 6 : 30;
+    const perPage = Math.min(requestedLimit, perRequestCap);
+    const cUrl = `${parsed.origin}/collections/${parsed.handle}/products.json?limit=${perPage}&page=${page}`;
+    const r = await fetch(cUrl, { headers: { 'User-Agent': UA, Accept: 'application/json' } });
+    if (!r.ok) {
+      console.error(`[SCRAPE COLLECTION] ${cUrl} → ${r.status}`);
+      return new Response(JSON.stringify({ success: false, error: `Kolekcijos nuskaitymas nepavyko (HTTP ${r.status})` }), {
+        status: 502,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
     }
 
-    const sliced = items.slice(0, maxItems);
-    // Process in parallel batches to avoid the 150s edge function idle timeout.
+    const pl = await r.json();
+    const items: any[] = Array.isArray(pl?.products) ? pl.products : [];
+
     const products: any[] = [];
     const BATCH = translate ? 5 : 15;
-    for (let i = 0; i < sliced.length; i += BATCH) {
-      const chunk = sliced.slice(i, i + BATCH);
+    for (let i = 0; i < items.length; i += BATCH) {
+      const chunk = items.slice(i, i + BATCH);
       const results = await Promise.all(
         chunk.map(async (p) => {
           const srcUrl = `${parsed.origin}/products/${p.handle}`;
@@ -220,7 +221,16 @@ Deno.serve(async (req) => {
     }
 
     return new Response(
-      JSON.stringify({ success: true, products, collection: parsed.handle, total: products.length }),
+      JSON.stringify({
+        success: true,
+        products,
+        collection: parsed.handle,
+        total: products.length,
+        page,
+        nextPage: page + 1,
+        hasMore: items.length === perPage,
+        perPage,
+      }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
     );
   } catch (e: any) {

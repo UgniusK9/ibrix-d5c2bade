@@ -62,6 +62,7 @@ export function ProductImporter() {
   const [limit, setLimit] = useState('50');
   const [drafts, setDrafts] = useState<ImportDraft[]>([]);
   const [savingIdx, setSavingIdx] = useState<number | null>(null);
+  const [scrapeStatus, setScrapeStatus] = useState('');
 
   const handleScrape = async () => {
     const urlList = urls
@@ -80,38 +81,61 @@ export function ProductImporter() {
     const collected: ImportDraft[] = [...drafts];
     let ok = 0;
 
+    const appendProducts = (products: ScrapedProduct[]) => {
+      for (const p of products) {
+        const priceEur = Math.round(p.source_price * multiplier * 100) / 100;
+        collected.push({
+          sku: p.sku,
+          slug: slugify(p.handle || p.title),
+          title: p.title,
+          short_desc: p.short_desc,
+          description: p.description,
+          price_eur: priceEur.toFixed(2),
+          deposit_eur: (Math.round(priceEur * 0.2 * 100) / 100).toFixed(2),
+          stock_status: 'preorder',
+          category: 'engines',
+          images: p.images,
+          tags: p.tags,
+          source_url: p.source_url,
+          source_price: p.source_price,
+          source_currency: p.source_currency,
+        });
+        ok++;
+      }
+      setDrafts([...collected]);
+    };
+
     for (const url of urlList) {
       try {
-        const { data, error } = await supabase.functions.invoke('scrape-product', {
-          body: { url, translate, limit: Number.parseInt(limit) || 50 },
-        });
-        if (error) throw error;
-        if (!data?.success) throw new Error(data?.error || 'Nepavyko nuskaityti');
+        const targetLimit = Math.min(Math.max(1, Number.parseInt(limit, 10) || 50), 250);
+        const isCollection = /\/collections\//.test(url);
+        const batchLimit = isCollection ? (translate ? 6 : 30) : 1;
+        let page = 1;
+        let remaining = isCollection ? targetLimit : 1;
 
-        const list: ScrapedProduct[] = Array.isArray(data.products)
-          ? data.products
-          : data.product
-            ? [data.product]
-            : [];
-        for (const p of list) {
-          const priceEur = Math.round(p.source_price * multiplier * 100) / 100;
-          collected.push({
-            sku: p.sku,
-            slug: slugify(p.handle || p.title),
-            title: p.title,
-            short_desc: p.short_desc,
-            description: p.description,
-            price_eur: priceEur.toFixed(2),
-            deposit_eur: (Math.round(priceEur * 0.2 * 100) / 100).toFixed(2),
-            stock_status: 'preorder',
-            category: 'engines',
-            images: p.images,
-            tags: p.tags,
-            source_url: p.source_url,
-            source_price: p.source_price,
-            source_currency: p.source_currency,
+        while (remaining > 0) {
+          setScrapeStatus(
+            isCollection
+              ? `Nuskaitoma kolekcija: ${ok} / ${targetLimit}`
+              : 'Nuskaitomas produktas...',
+          );
+
+          const { data, error } = await supabase.functions.invoke('scrape-product', {
+            body: { url, translate, limit: Math.min(batchLimit, remaining), page },
           });
-          ok++;
+          if (error) throw error;
+          if (!data?.success) throw new Error(data?.error || 'Nepavyko nuskaityti');
+
+          const list: ScrapedProduct[] = Array.isArray(data.products)
+            ? data.products
+            : data.product
+              ? [data.product]
+              : [];
+          appendProducts(list);
+
+          remaining -= list.length;
+          if (!isCollection || !data.hasMore || list.length === 0) break;
+          page = Number(data.nextPage) || page + 1;
         }
       } catch (e: any) {
         console.error('Scrape failed for', url, e);
@@ -121,6 +145,7 @@ export function ProductImporter() {
 
     setDrafts(collected);
     setScraping(false);
+    setScrapeStatus('');
     if (ok > 0) {
       toast.success(`Nuskaityta ${ok} produkt${ok === 1 ? 'as' : 'ai'}`);
       setUrls('');
@@ -251,9 +276,12 @@ export function ProductImporter() {
               Nuskaityti
             </Button>
           </div>
+          {scrapeStatus && (
+            <p className="text-sm text-muted-foreground">{scrapeStatus}</p>
+          )}
           {translate && (
             <p className="text-xs text-muted-foreground">
-              Vertimas atliekamas per Lovable AI (Gemini). Didelėms kolekcijoms tai gali užtrukti kelias minutes.
+              Vertimas atliekamas mažais paketais, todėl didelės kolekcijos importuojamos stabiliai be užklausos laiko limito.
             </p>
           )}
         </CardContent>
