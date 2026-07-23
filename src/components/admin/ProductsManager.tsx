@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Plus, Search, Edit, Trash2, Package, RefreshCw, ChevronDown, X, Save } from 'lucide-react';
+import { Plus, Search, Edit, Trash2, Package, RefreshCw, ChevronDown, X, Save, AlertTriangle, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -153,6 +153,10 @@ export function ProductsManager() {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [productToDelete, setProductToDelete] = useState<Product | null>(null);
   const [newImageUrl, setNewImageUrl] = useState('');
+  const [deleteAllOpen, setDeleteAllOpen] = useState(false);
+  const [deleteAllConfirm, setDeleteAllConfirm] = useState('');
+  const [deletingAll, setDeletingAll] = useState(false);
+  const [deleteAllProgress, setDeleteAllProgress] = useState('');
 
   const loadProducts = async () => {
     setLoading(true);
@@ -398,6 +402,35 @@ export function ProductsManager() {
     }
   };
 
+  const handleDeleteAll = async () => {
+    setDeletingAll(true);
+    let deleted = 0;
+    let archived = 0;
+    let failed = 0;
+    const total = products.length;
+    for (let i = 0; i < products.length; i++) {
+      const p = products[i];
+      setDeleteAllProgress(`Trinama ${i + 1} / ${total}: ${p.title}`);
+      try {
+        const { data, error } = await supabase.functions.invoke('admin', {
+          body: { action: 'delete_product', productId: p.id },
+        });
+        if (error) throw error;
+        if (data?.archived) archived++;
+        else deleted++;
+      } catch (e) {
+        console.error('Delete failed for', p.title, e);
+        failed++;
+      }
+    }
+    setDeletingAll(false);
+    setDeleteAllOpen(false);
+    setDeleteAllConfirm('');
+    setDeleteAllProgress('');
+    toast.success(`Ištrinta: ${deleted}, deaktyvuota: ${archived}${failed ? `, nepavyko: ${failed}` : ''}`);
+    loadProducts();
+  };
+
   const filteredProducts = products.filter(p => {
     if (statusFilter !== 'all' && p.status !== statusFilter) return false;
     if (stockFilter !== 'all' && p.stock_status !== stockFilter) return false;
@@ -472,6 +505,15 @@ export function ProductsManager() {
           <Button onClick={loadProducts} variant="outline" size="sm" disabled={loading}>
             <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
             Atnaujinti
+          </Button>
+          <Button
+            onClick={() => { setDeleteAllConfirm(''); setDeleteAllOpen(true); }}
+            variant="destructive"
+            size="sm"
+            disabled={loading || products.length === 0}
+          >
+            <Trash2 className="w-4 h-4 mr-2" />
+            Ištrinti visus produktus
           </Button>
           <Button onClick={openCreateForm}>
             <Plus className="w-4 h-4 mr-2" />
@@ -993,6 +1035,50 @@ export function ProductsManager() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Delete ALL confirmation */}
+      <Dialog open={deleteAllOpen} onOpenChange={(o) => !deletingAll && setDeleteAllOpen(o)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-destructive">
+              <AlertTriangle className="w-5 h-5" />
+              Ištrinti VISUS produktus?
+            </DialogTitle>
+            <DialogDescription>
+              Bus bandoma ištrinti {products.length} produkt{products.length === 1 ? 'ą' : 'us'}.
+              Produktai, kurie turi užsakymų, bus deaktyvuoti (ne pašalinti), kad išsaugotų istoriją.
+              Šis veiksmas negrįžtamas. Įrašykite <strong>IŠTRINTI</strong>, kad patvirtintumėte.
+            </DialogDescription>
+          </DialogHeader>
+          <Input
+            value={deleteAllConfirm}
+            onChange={(e) => setDeleteAllConfirm(e.target.value)}
+            placeholder="IŠTRINTI"
+            disabled={deletingAll}
+            autoFocus
+          />
+          {deleteAllProgress && (
+            <p className="text-sm text-muted-foreground">{deleteAllProgress}</p>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDeleteAllOpen(false)} disabled={deletingAll}>
+              Atšaukti
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleDeleteAll}
+              disabled={deletingAll || deleteAllConfirm.trim() !== 'IŠTRINTI'}
+            >
+              {deletingAll ? (
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+              ) : (
+                <Trash2 className="w-4 h-4 mr-2" />
+              )}
+              Ištrinti visus
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
