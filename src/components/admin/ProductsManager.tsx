@@ -506,6 +506,15 @@ export function ProductsManager() {
             <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
             Atnaujinti
           </Button>
+          <Button
+            onClick={() => { setDeleteAllConfirm(''); setDeleteAllOpen(true); }}
+            variant="destructive"
+            size="sm"
+            disabled={loading || products.length === 0}
+          >
+            <Trash2 className="w-4 h-4 mr-2" />
+            Ištrinti visus produktus
+          </Button>
           <Button onClick={openCreateForm}>
             <Plus className="w-4 h-4 mr-2" />
             Naujas produktas
