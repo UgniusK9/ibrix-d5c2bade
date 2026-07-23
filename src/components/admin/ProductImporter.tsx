@@ -9,6 +9,9 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
+import {
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription,
+} from '@/components/ui/dialog';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
@@ -63,6 +66,10 @@ export function ProductImporter() {
   const [drafts, setDrafts] = useState<ImportDraft[]>([]);
   const [savingIdx, setSavingIdx] = useState<number | null>(null);
   const [scrapeStatus, setScrapeStatus] = useState('');
+  const [bulkOpen, setBulkOpen] = useState(false);
+  const [inStockUrls, setInStockUrls] = useState('');
+  const [bulkUploading, setBulkUploading] = useState(false);
+  const [bulkStatus, setBulkStatus] = useState('');
 
   const handleScrape = async () => {
     const urlList = urls
@@ -224,6 +231,75 @@ export function ProductImporter() {
     }
   };
 
+  const normalizeUrl = (u: string) => u.trim().split('?')[0].replace(/\/$/, '').toLowerCase();
+
+  const handleBulkUpload = async () => {
+    const inStockSet = new Set(
+      inStockUrls
+        .split(/\r?\n/)
+        .map(normalizeUrl)
+        .filter(Boolean),
+    );
+
+    setBulkUploading(true);
+    let success = 0;
+    let failed = 0;
+    const remaining: ImportDraft[] = [];
+
+    for (let i = 0; i < drafts.length; i++) {
+      const d = drafts[i];
+      const isInStock = inStockSet.has(normalizeUrl(d.source_url));
+      const stock_status: StockStatus = isInStock ? 'in_stock' : 'preorder';
+      const price = Number.parseFloat(d.price_eur);
+      const deposit = Number.parseFloat(d.deposit_eur);
+
+      setBulkStatus(`Įkeliama ${i + 1} / ${drafts.length}: ${d.title}`);
+
+      if (!d.title.trim() || !d.sku.trim() || !d.slug.trim() || !Number.isFinite(price) || price <= 0) {
+        failed++;
+        remaining.push(d);
+        continue;
+      }
+
+      try {
+        const { data, error } = await supabase.functions.invoke('admin', {
+          body: {
+            action: 'create_product',
+            sku: d.sku.trim(),
+            slug: d.slug.trim(),
+            title: d.title.trim(),
+            short_desc: d.short_desc || null,
+            description: d.description || null,
+            price_eur: price,
+            deposit_eur: Number.isFinite(deposit) ? deposit : 0,
+            stock_status,
+            status: 'active',
+            category: d.category,
+            images: d.images,
+            badges: [],
+            tags: d.tags,
+            inventory_qty: stock_status === 'in_stock' ? 1 : 0,
+          },
+        });
+        if (error) throw error;
+        if (!data?.success) throw new Error(data?.error || 'Klaida');
+        success++;
+      } catch (e: any) {
+        console.error('Bulk save failed for', d.title, e);
+        failed++;
+        remaining.push(d);
+      }
+    }
+
+    setDrafts(remaining);
+    setBulkUploading(false);
+    setBulkStatus('');
+    setBulkOpen(false);
+    setInStockUrls('');
+    if (success > 0) toast.success(`Įkelta ${success} produkt${success === 1 ? 'as' : 'ai'}`);
+    if (failed > 0) toast.error(`Nepavyko įkelti: ${failed}`);
+  };
+
   return (
     <div className="space-y-6">
       <Card>
@@ -300,7 +376,13 @@ export function ProductImporter() {
 
       {drafts.length > 0 && (
         <div className="space-y-4">
-          <h3 className="text-lg font-semibold">Peržiūra ({drafts.length})</h3>
+          <div className="flex items-center justify-between">
+            <h3 className="text-lg font-semibold">Peržiūra ({drafts.length})</h3>
+            <Button onClick={() => setBulkOpen(true)} disabled={bulkUploading}>
+              <Save className="w-4 h-4 mr-2" />
+              Įkelti visus ({drafts.length})
+            </Button>
+          </div>
           {drafts.map((d, idx) => (
             <Card key={`${d.source_url}-${idx}`}>
               <CardHeader className="flex flex-row items-center justify-between space-y-0">
@@ -437,6 +519,47 @@ export function ProductImporter() {
           ))}
         </div>
       )}
+
+      <Dialog open={bulkOpen} onOpenChange={(o) => !bulkUploading && setBulkOpen(o)}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Turimi produktai</DialogTitle>
+            <DialogDescription>
+              Įklijuokite nuorodas (po vieną eilutėje) tų produktų, kuriuos turite sandėlyje.
+              Jų būsena bus „Sandėlyje", visų kitų — „Pre-order".
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-2">
+            <Label htmlFor="in-stock-urls">Turimų produktų nuorodos</Label>
+            <Textarea
+              id="in-stock-urls"
+              value={inStockUrls}
+              onChange={(e) => setInStockUrls(e.target.value)}
+              placeholder={'https://mouldkingcorp.com/products/...\nhttps://mouldkingcorp.com/products/...'}
+              rows={8}
+              className="font-mono text-sm"
+              disabled={bulkUploading}
+            />
+            <p className="text-xs text-muted-foreground">
+              Palikite tuščią, jei visi produktai yra pre-order.
+            </p>
+          </div>
+          {bulkStatus && <p className="text-sm text-muted-foreground">{bulkStatus}</p>}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setBulkOpen(false)} disabled={bulkUploading}>
+              Atšaukti
+            </Button>
+            <Button onClick={handleBulkUpload} disabled={bulkUploading}>
+              {bulkUploading ? (
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+              ) : (
+                <Save className="w-4 h-4 mr-2" />
+              )}
+              Įkelti {drafts.length} produkt{drafts.length === 1 ? 'ą' : 'us'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
