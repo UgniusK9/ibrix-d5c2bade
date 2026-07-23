@@ -57,6 +57,47 @@ const slugify = (s: string) =>
     .replace(/^-+|-+$/g, '')
     .slice(0, 80);
 
+// Heuristic category detection based on scraped title, tags, description and source URL.
+// Matches Lithuanian and English keywords so it works before/after translation.
+const detectCategory = (p: {
+  title?: string;
+  description?: string;
+  short_desc?: string;
+  tags?: string[];
+  source_url?: string;
+}): Category => {
+  const hay = [
+    p.title,
+    p.short_desc,
+    p.description,
+    p.source_url,
+    ...(p.tags || []),
+  ]
+    .filter(Boolean)
+    .join(' ')
+    .toLowerCase();
+
+  const has = (re: RegExp) => re.test(hay);
+
+  // Engines: check first because engine models often mention car brands too.
+  if (has(/\b(engine|variklis|varikli|motor|v\d{1,2}|w\d{1,2}|inline|boxer|rotary)\b/))
+    return 'engines';
+
+  // Flowers / bouquets / botanical sets.
+  if (has(/\b(flower|floral|bouquet|rose|orchid|bonsai|plant|gėlė|gele|geliu|puokšt|puokst|botanic)\b/))
+    return 'flowers';
+
+  // Cars & road vehicles.
+  if (
+    has(
+      /\b(car|cars|automobil|automobiliai|vehicle|vehicles|supercar|hypercar|hyper-car|roadster|coupe|sedan|suv|truck|pickup|rc|technic-vehicles|racing|race-car|sport-car|sports-car)\b/,
+    )
+  )
+    return 'cars';
+
+  return 'other';
+};
+
 export function ProductImporter() {
   const [urls, setUrls] = useState('');
   const [scraping, setScraping] = useState(false);
@@ -107,7 +148,7 @@ export function ProductImporter() {
           price_eur: priceEur.toFixed(2),
           deposit_eur: (Math.round(priceEur * 0.2 * 100) / 100).toFixed(2),
           stock_status: 'preorder',
-          category: 'engines',
+          category: detectCategory(p),
           images: p.images,
           tags: p.tags,
           source_url: p.source_url,
