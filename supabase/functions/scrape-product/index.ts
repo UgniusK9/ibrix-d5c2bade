@@ -6,6 +6,27 @@ import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors';
 const UA =
   'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Safari/537.36';
 
+async function fetchWithRetry(url: string, attempts = 4): Promise<Response> {
+  let last: Response | null = null;
+  for (let i = 0; i < attempts; i++) {
+    const res = await fetch(url, {
+      headers: {
+        'User-Agent': UA,
+        Accept: 'application/json,text/html;q=0.9,*/*;q=0.8',
+        'Accept-Language': 'en-US,en;q=0.9',
+      },
+    });
+    if (res.ok) return res;
+    last = res;
+    // Retry only on transient upstream errors (Cloudflare/Shopify throttling).
+    if (![429, 500, 502, 503, 504, 522, 524].includes(res.status)) return res;
+    try { await res.body?.cancel(); } catch { /* ignore */ }
+    const backoff = 800 * Math.pow(2, i) + Math.floor(Math.random() * 400);
+    await new Promise((r) => setTimeout(r, backoff));
+  }
+  return last!;
+}
+
 function parseShopifyUrl(url: string):
   | { kind: 'product'; origin: string; handle: string }
   | { kind: 'collection'; origin: string; handle: string }
@@ -101,7 +122,7 @@ async function translateToLithuanian(fields: { title: string; short: string; lon
 
 async function fetchProductByHandle(origin: string, handle: string) {
   const jsonUrl = `${origin}/products/${handle}.json`;
-  const res = await fetch(jsonUrl, { headers: { 'User-Agent': UA, Accept: 'application/json' } });
+  const res = await fetchWithRetry(jsonUrl);
   if (!res.ok) throw new Error(`HTTP ${res.status} @ ${jsonUrl}`);
   const payload = await res.json();
   return payload?.product;
@@ -190,10 +211,13 @@ Deno.serve(async (req) => {
     const perRequestCap = translate ? 6 : 30;
     const perPage = Math.min(requestedLimit, perRequestCap);
     const cUrl = `${parsed.origin}/collections/${parsed.handle}/products.json?limit=${perPage}&page=${page}`;
-    const r = await fetch(cUrl, { headers: { 'User-Agent': UA, Accept: 'application/json' } });
+    const r = await fetchWithRetry(cUrl);
     if (!r.ok) {
       console.error(`[SCRAPE COLLECTION] ${cUrl} → ${r.status}`);
-      return new Response(JSON.stringify({ success: false, error: `Kolekcijos nuskaitymas nepavyko (HTTP ${r.status})` }), {
+      const msg = r.status === 503 || r.status === 429
+        ? 'Šaltinio serveris laikinai neatsako (per daug užklausų). Pabandykite dar kartą po 30 s.'
+        : `Kolekcijos nuskaitymas nepavyko (HTTP ${r.status})`;
+      return new Response(JSON.stringify({ success: false, error: msg }), {
         status: 502,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
