@@ -153,6 +153,10 @@ export function ProductsManager() {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [productToDelete, setProductToDelete] = useState<Product | null>(null);
   const [newImageUrl, setNewImageUrl] = useState('');
+  const [deleteAllOpen, setDeleteAllOpen] = useState(false);
+  const [deleteAllConfirm, setDeleteAllConfirm] = useState('');
+  const [deletingAll, setDeletingAll] = useState(false);
+  const [deleteAllProgress, setDeleteAllProgress] = useState('');
 
   const loadProducts = async () => {
     setLoading(true);
