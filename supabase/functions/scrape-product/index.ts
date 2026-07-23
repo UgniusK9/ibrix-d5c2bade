@@ -6,6 +6,27 @@ import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors';
 const UA =
   'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Safari/537.36';
 
+async function fetchWithRetry(url: string, attempts = 4): Promise<Response> {
+  let last: Response | null = null;
+  for (let i = 0; i < attempts; i++) {
+    const res = await fetch(url, {
+      headers: {
+        'User-Agent': UA,
+        Accept: 'application/json,text/html;q=0.9,*/*;q=0.8',
+        'Accept-Language': 'en-US,en;q=0.9',
+      },
+    });
+    if (res.ok) return res;
+    last = res;
+    // Retry only on transient upstream errors (Cloudflare/Shopify throttling).
+    if (![429, 500, 502, 503, 504, 522, 524].includes(res.status)) return res;
+    try { await res.body?.cancel(); } catch { /* ignore */ }
+    const backoff = 800 * Math.pow(2, i) + Math.floor(Math.random() * 400);
+    await new Promise((r) => setTimeout(r, backoff));
+  }
+  return last!;
+}
+
 function parseShopifyUrl(url: string):
   | { kind: 'product'; origin: string; handle: string }
   | { kind: 'collection'; origin: string; handle: string }
