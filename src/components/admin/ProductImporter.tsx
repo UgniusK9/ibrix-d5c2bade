@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select';
+import { Switch } from '@/components/ui/switch';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
@@ -57,6 +58,8 @@ export function ProductImporter() {
   const [urls, setUrls] = useState('');
   const [scraping, setScraping] = useState(false);
   const [rate, setRate] = useState('1'); // USD → EUR multiplier applied when scraping
+  const [translate, setTranslate] = useState(true);
+  const [limit, setLimit] = useState('50');
   const [drafts, setDrafts] = useState<ImportDraft[]>([]);
   const [savingIdx, setSavingIdx] = useState<number | null>(null);
 
@@ -80,30 +83,36 @@ export function ProductImporter() {
     for (const url of urlList) {
       try {
         const { data, error } = await supabase.functions.invoke('scrape-product', {
-          body: { url },
+          body: { url, translate, limit: Number.parseInt(limit) || 50 },
         });
         if (error) throw error;
         if (!data?.success) throw new Error(data?.error || 'Nepavyko nuskaityti');
 
-        const p: ScrapedProduct = data.product;
-        const priceEur = Math.round(p.source_price * multiplier * 100) / 100;
-        collected.push({
-          sku: p.sku,
-          slug: slugify(p.handle || p.title),
-          title: p.title,
-          short_desc: p.short_desc,
-          description: p.description,
-          price_eur: priceEur.toFixed(2),
-          deposit_eur: (Math.round(priceEur * 0.2 * 100) / 100).toFixed(2),
-          stock_status: 'preorder',
-          category: 'engines',
-          images: p.images,
-          tags: p.tags,
-          source_url: p.source_url,
-          source_price: p.source_price,
-          source_currency: p.source_currency,
-        });
-        ok++;
+        const list: ScrapedProduct[] = Array.isArray(data.products)
+          ? data.products
+          : data.product
+            ? [data.product]
+            : [];
+        for (const p of list) {
+          const priceEur = Math.round(p.source_price * multiplier * 100) / 100;
+          collected.push({
+            sku: p.sku,
+            slug: slugify(p.handle || p.title),
+            title: p.title,
+            short_desc: p.short_desc,
+            description: p.description,
+            price_eur: priceEur.toFixed(2),
+            deposit_eur: (Math.round(priceEur * 0.2 * 100) / 100).toFixed(2),
+            stock_status: 'preorder',
+            category: 'engines',
+            images: p.images,
+            tags: p.tags,
+            source_url: p.source_url,
+            source_price: p.source_price,
+            source_currency: p.source_currency,
+          });
+          ok++;
+        }
       } catch (e: any) {
         console.error('Scrape failed for', url, e);
         toast.error(`Nepavyko: ${url} – ${e.message}`);
@@ -190,21 +199,21 @@ export function ProductImporter() {
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="urls">Produktų nuorodos (po vieną eilutėje)</Label>
+            <Label htmlFor="urls">Nuorodos (po vieną eilutėje)</Label>
             <Textarea
               id="urls"
-              placeholder={'https://mouldkingcorp.com/products/10250-lfa-v10-engine-model-building-set\nhttps://mouldkingcorp.com/products/...'}
+              placeholder={'https://mouldkingcorp.com/collections/technic-vehicles\nhttps://mouldkingcorp.com/products/10250-lfa-v10-engine-model-building-set'}
               value={urls}
               onChange={(e) => setUrls(e.target.value)}
               rows={4}
               className="font-mono text-sm"
             />
             <p className="text-xs text-muted-foreground">
-              Palaikomos „Shopify" tipo parduotuvių nuorodos (pvz., mouldkingcorp.com).
+              Palaikomos „Shopify" tipo parduotuvių nuorodos: atskiro produkto (/products/...) arba visos kolekcijos (/collections/...).
             </p>
           </div>
 
-          <div className="flex flex-wrap items-end gap-3">
+          <div className="flex flex-wrap items-end gap-4">
             <div className="space-y-2">
               <Label htmlFor="rate">USD → EUR kursas</Label>
               <Input
@@ -217,6 +226,22 @@ export function ProductImporter() {
                 className="w-32"
               />
             </div>
+            <div className="space-y-2">
+              <Label htmlFor="limit">Maks. iš kolekcijos</Label>
+              <Input
+                id="limit"
+                type="number"
+                min="1"
+                max="250"
+                value={limit}
+                onChange={(e) => setLimit(e.target.value)}
+                className="w-24"
+              />
+            </div>
+            <div className="flex items-center gap-2 h-10">
+              <Switch id="translate" checked={translate} onCheckedChange={setTranslate} />
+              <Label htmlFor="translate" className="cursor-pointer">Versti į lietuvių k.</Label>
+            </div>
             <Button onClick={handleScrape} disabled={scraping}>
               {scraping ? (
                 <Loader2 className="w-4 h-4 mr-2 animate-spin" />
@@ -226,6 +251,11 @@ export function ProductImporter() {
               Nuskaityti
             </Button>
           </div>
+          {translate && (
+            <p className="text-xs text-muted-foreground">
+              Vertimas atliekamas per Lovable AI (Gemini). Didelėms kolekcijoms tai gali užtrukti kelias minutes.
+            </p>
+          )}
         </CardContent>
       </Card>
 
