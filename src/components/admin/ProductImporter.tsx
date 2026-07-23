@@ -288,19 +288,24 @@ export function ProductImporter() {
     }
   };
 
+  const cleanUrl = (raw: string) =>
+    raw.trim().replace(/[),.;\]]+$/, '').split('?')[0].split('#')[0].replace(/\/$/, '').toLowerCase();
+
   const normalizeUrl = (u: string) => {
     const match = u.match(/https?:\/\/\S+/i);
-    const raw = (match ? match[0] : u).trim();
-    return raw.split('?')[0].split('#')[0].replace(/\/$/, '').toLowerCase();
+    return cleanUrl(match ? match[0] : u);
+  };
+
+  // Extract ALL urls from a blob of text — supports lists like
+  // "1. https://... 2. https://... 3. https://..." on one line,
+  // or numbered "11. https://..." lines, or plain newline-separated urls.
+  const extractAllUrls = (text: string): string[] => {
+    const matches = text.match(/https?:\/\/\S+/gi) || [];
+    return matches.map(cleanUrl).filter(Boolean);
   };
 
   const handleBulkUpload = async () => {
-    const inStockSet = new Set(
-      inStockUrls
-        .split(/\r?\n/)
-        .map(normalizeUrl)
-        .filter(Boolean),
-    );
+    const inStockSet = new Set(extractAllUrls(inStockUrls));
 
     setBulkUploading(true);
     let success = 0;
