@@ -199,7 +199,22 @@ Deno.serve(async (req) => {
       case 'create_product': {
         const { action, ...productData } = body;
         const { data: product, error } = await supabase.from('products').insert(productData).select().single();
-        if (error) throw error;
+        if (error) {
+          // Duplicate SKU or slug — update existing row instead so bulk re-imports are idempotent.
+          if ((error as any).code === '23505') {
+            const conflictCol = String((error as any).details || '').includes('(slug)') ? 'slug' : 'sku';
+            const conflictVal = conflictCol === 'slug' ? productData.slug : productData.sku;
+            const { data: updated, error: updErr } = await supabase
+              .from('products')
+              .update(productData)
+              .eq(conflictCol, conflictVal)
+              .select()
+              .single();
+            if (updErr) throw updErr;
+            return new Response(JSON.stringify({ success: true, product: updated, updated: true }), { headers: { 'Content-Type': 'application/json', ...corsHeaders } });
+          }
+          throw error;
+        }
         return new Response(JSON.stringify({ success: true, product }), { headers: { 'Content-Type': 'application/json', ...corsHeaders } });
       }
 
