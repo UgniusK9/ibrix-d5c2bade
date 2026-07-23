@@ -136,11 +136,27 @@ export function ProductImporter() {
               : 'Nuskaitomas produktas...',
           );
 
-          const { data, error } = await supabase.functions.invoke('scrape-product', {
-            body: { url, translate, limit: Math.min(batchLimit, remaining), page },
-          });
-          if (error) throw error;
-          if (!data?.success) throw new Error(data?.error || 'Nepavyko nuskaityti');
+          // Retry the same page a few times on transient upstream throttles (503/429).
+          let data: any = null;
+          let lastErr: any = null;
+          for (let attempt = 0; attempt < 4; attempt++) {
+            const res = await supabase.functions.invoke('scrape-product', {
+              body: { url, translate, limit: Math.min(batchLimit, remaining), page },
+            });
+            if (!res.error && res.data?.success) { data = res.data; break; }
+            lastErr = res.error || new Error(res.data?.error || 'Nepavyko nuskaityti');
+            const msg = String(lastErr?.message || '');
+            const transient = /503|429|laikinai|per daug/i.test(msg);
+            if (!transient) break;
+            setScrapeStatus(`Šaltinis užimtas, bandome dar kartą (${attempt + 1}/4)...`);
+            await new Promise((r) => setTimeout(r, 3000 * (attempt + 1)));
+          }
+          if (!data) {
+            console.warn('Skipping page', page, 'for', url, lastErr);
+            toast.error(`Praleista puslapis ${page}: ${lastErr?.message || 'klaida'}`);
+            page += 1;
+            continue;
+          }
 
           const list: ScrapedProduct[] = Array.isArray(data.products)
             ? data.products
