@@ -142,7 +142,7 @@ export function ProductsManager() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
-  const [statusFilter, setStatusFilter] = useState<ProductStatus | 'all'>('all');
+  const [statusFilter, setStatusFilter] = useState<ProductStatus | 'all'>('active');
   const [stockFilter, setStockFilter] = useState<StockStatus | 'all'>('all');
   
   // Dialog states
@@ -378,13 +378,17 @@ export function ProductsManager() {
     if (!productToDelete) return;
     
     try {
-      const { error } = await supabase.functions.invoke('admin', {
+      const { data, error } = await supabase.functions.invoke('admin', {
         body: { action: 'delete_product', productId: productToDelete.id }
       });
 
       if (error) throw error;
-      
-      toast.success('Produktas ištrintas');
+
+      if (data?.archived) {
+        toast.success(data.message || 'Produktas turi užsakymų — deaktyvuotas vietoje ištrynimo');
+      } else {
+        toast.success('Produktas ištrintas');
+      }
       setDeleteDialogOpen(false);
       setProductToDelete(null);
       loadProducts();
