@@ -304,6 +304,38 @@ export function ProductImporter() {
     return matches.map(cleanUrl).filter(Boolean);
   };
 
+  const parsedInStock = (() => {
+    const raw = inStockUrls.trim();
+    if (!raw) {
+      return { valid: [] as string[], invalid: [] as string[], matched: [] as string[], unmatched: [] as string[] };
+    }
+    // Split into "tokens" by whitespace/commas/semicolons so we can flag garbage entries.
+    const tokens = raw
+      .split(/[\s,;]+/)
+      .map((t) => t.replace(/^\d+[\.\)]?$/, '')) // drop bare numbering like "1." or "11)"
+      .map((t) => t.trim())
+      .filter(Boolean);
+
+    const valid: string[] = [];
+    const invalid: string[] = [];
+    for (const t of tokens) {
+      if (/^https?:\/\//i.test(t)) {
+        valid.push(cleanUrl(t));
+      } else {
+        invalid.push(t);
+      }
+    }
+
+    const draftSet = new Set(drafts.map((d) => normalizeUrl(d.source_url)));
+    const matched: string[] = [];
+    const unmatched: string[] = [];
+    for (const u of valid) {
+      if (draftSet.has(u)) matched.push(u);
+      else unmatched.push(u);
+    }
+    return { valid, invalid, matched, unmatched };
+  })();
+
   const handleBulkUpload = async () => {
     const inStockSet = new Set(extractAllUrls(inStockUrls));
 
@@ -610,12 +642,71 @@ export function ProductImporter() {
               Palikite tuščią, jei visi produktai yra pre-order.
             </p>
           </div>
+          {inStockUrls.trim() && (
+            <div className="rounded-md border p-3 space-y-1 text-sm">
+              <div className="flex flex-wrap gap-x-4 gap-y-1">
+                <span>
+                  Aptikta nuorodų: <strong>{parsedInStock.valid.length}</strong>
+                </span>
+                <span className="text-green-600">
+                  Sutampa su importuotais: <strong>{parsedInStock.matched.length}</strong>
+                </span>
+                {parsedInStock.unmatched.length > 0 && (
+                  <span className="text-amber-600">
+                    Nerasta importuotų tarpe: <strong>{parsedInStock.unmatched.length}</strong>
+                  </span>
+                )}
+                {parsedInStock.invalid.length > 0 && (
+                  <span className="text-destructive">
+                    Neteisingas formatas: <strong>{parsedInStock.invalid.length}</strong>
+                  </span>
+                )}
+              </div>
+              {parsedInStock.unmatched.length > 0 && (
+                <details className="text-xs text-muted-foreground">
+                  <summary className="cursor-pointer">Rodyti nesutampančias ({parsedInStock.unmatched.length})</summary>
+                  <ul className="mt-1 list-disc pl-5 break-all">
+                    {parsedInStock.unmatched.slice(0, 20).map((u) => (
+                      <li key={u}>{u}</li>
+                    ))}
+                    {parsedInStock.unmatched.length > 20 && <li>…</li>}
+                  </ul>
+                </details>
+              )}
+              {parsedInStock.invalid.length > 0 && (
+                <details className="text-xs text-muted-foreground">
+                  <summary className="cursor-pointer">Rodyti neteisingas ({parsedInStock.invalid.length})</summary>
+                  <ul className="mt-1 list-disc pl-5 break-all">
+                    {parsedInStock.invalid.slice(0, 20).map((u, i) => (
+                      <li key={`${u}-${i}`}>{u}</li>
+                    ))}
+                    {parsedInStock.invalid.length > 20 && <li>…</li>}
+                  </ul>
+                </details>
+              )}
+            </div>
+          )}
           {bulkStatus && <p className="text-sm text-muted-foreground">{bulkStatus}</p>}
           <DialogFooter>
             <Button variant="outline" onClick={() => setBulkOpen(false)} disabled={bulkUploading}>
               Atšaukti
             </Button>
-            <Button onClick={handleBulkUpload} disabled={bulkUploading}>
+            <Button
+              onClick={() => {
+                if (parsedInStock.invalid.length > 0) {
+                  toast.error(`Yra ${parsedInStock.invalid.length} neteisingo formato įrašų. Patikrinkite nuorodas.`);
+                  return;
+                }
+                if (parsedInStock.unmatched.length > 0) {
+                  const ok = window.confirm(
+                    `${parsedInStock.unmatched.length} nuoroda(-os) nesutampa su importuotais produktais ir bus ignoruota(-os). Tęsti?`,
+                  );
+                  if (!ok) return;
+                }
+                handleBulkUpload();
+              }}
+              disabled={bulkUploading}
+            >
               {bulkUploading ? (
                 <Loader2 className="w-4 h-4 mr-2 animate-spin" />
               ) : (
