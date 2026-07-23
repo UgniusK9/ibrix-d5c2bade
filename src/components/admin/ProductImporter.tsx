@@ -9,6 +9,9 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
+import {
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription,
+} from '@/components/ui/dialog';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
@@ -63,6 +66,10 @@ export function ProductImporter() {
   const [drafts, setDrafts] = useState<ImportDraft[]>([]);
   const [savingIdx, setSavingIdx] = useState<number | null>(null);
   const [scrapeStatus, setScrapeStatus] = useState('');
+  const [bulkOpen, setBulkOpen] = useState(false);
+  const [inStockUrls, setInStockUrls] = useState('');
+  const [bulkUploading, setBulkUploading] = useState(false);
+  const [bulkStatus, setBulkStatus] = useState('');
 
   const handleScrape = async () => {
     const urlList = urls
@@ -222,6 +229,75 @@ export function ProductImporter() {
     } finally {
       setSavingIdx(null);
     }
+  };
+
+  const normalizeUrl = (u: string) => u.trim().split('?')[0].replace(/\/$/, '').toLowerCase();
+
+  const handleBulkUpload = async () => {
+    const inStockSet = new Set(
+      inStockUrls
+        .split(/\r?\n/)
+        .map(normalizeUrl)
+        .filter(Boolean),
+    );
+
+    setBulkUploading(true);
+    let success = 0;
+    let failed = 0;
+    const remaining: ImportDraft[] = [];
+
+    for (let i = 0; i < drafts.length; i++) {
+      const d = drafts[i];
+      const isInStock = inStockSet.has(normalizeUrl(d.source_url));
+      const stock_status: StockStatus = isInStock ? 'in_stock' : 'preorder';
+      const price = Number.parseFloat(d.price_eur);
+      const deposit = Number.parseFloat(d.deposit_eur);
+
+      setBulkStatus(`Įkeliama ${i + 1} / ${drafts.length}: ${d.title}`);
+
+      if (!d.title.trim() || !d.sku.trim() || !d.slug.trim() || !Number.isFinite(price) || price <= 0) {
+        failed++;
+        remaining.push(d);
+        continue;
+      }
+
+      try {
+        const { data, error } = await supabase.functions.invoke('admin', {
+          body: {
+            action: 'create_product',
+            sku: d.sku.trim(),
+            slug: d.slug.trim(),
+            title: d.title.trim(),
+            short_desc: d.short_desc || null,
+            description: d.description || null,
+            price_eur: price,
+            deposit_eur: Number.isFinite(deposit) ? deposit : 0,
+            stock_status,
+            status: 'active',
+            category: d.category,
+            images: d.images,
+            badges: [],
+            tags: d.tags,
+            inventory_qty: stock_status === 'in_stock' ? 1 : 0,
+          },
+        });
+        if (error) throw error;
+        if (!data?.success) throw new Error(data?.error || 'Klaida');
+        success++;
+      } catch (e: any) {
+        console.error('Bulk save failed for', d.title, e);
+        failed++;
+        remaining.push(d);
+      }
+    }
+
+    setDrafts(remaining);
+    setBulkUploading(false);
+    setBulkStatus('');
+    setBulkOpen(false);
+    setInStockUrls('');
+    if (success > 0) toast.success(`Įkelta ${success} produkt${success === 1 ? 'as' : 'ai'}`);
+    if (failed > 0) toast.error(`Nepavyko įkelti: ${failed}`);
   };
 
   return (
