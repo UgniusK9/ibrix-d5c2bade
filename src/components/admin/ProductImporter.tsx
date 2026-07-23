@@ -247,7 +247,11 @@ export function ProductImporter() {
     }
   };
 
-  const normalizeUrl = (u: string) => u.trim().split('?')[0].replace(/\/$/, '').toLowerCase();
+  const normalizeUrl = (u: string) => {
+    const match = u.match(/https?:\/\/\S+/i);
+    const raw = (match ? match[0] : u).trim();
+    return raw.split('?')[0].split('#')[0].replace(/\/$/, '').toLowerCase();
+  };
 
   const handleBulkUpload = async () => {
     const inStockSet = new Set(
