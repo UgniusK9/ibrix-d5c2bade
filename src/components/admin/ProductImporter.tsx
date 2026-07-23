@@ -621,30 +621,30 @@ export function ProductImporter() {
           <DialogHeader>
             <DialogTitle>Turimi produktai</DialogTitle>
             <DialogDescription>
-              Įklijuokite nuorodas (po vieną eilutėje) tų produktų, kuriuos turite sandėlyje.
-              Jų būsena bus „Sandėlyje", visų kitų — „Pre-order".
+              Įrašykite SKU numerius (pvz. 10224) tų produktų, kuriuos turite sandėlyje.
+              Atskirkite tarpais, kableliais arba naujomis eilutėmis. Jų būsena bus „Sandėlyje", visų kitų — „Pre-order".
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-2">
-            <Label htmlFor="in-stock-urls">Turimų produktų nuorodos</Label>
+            <Label htmlFor="in-stock-skus">Turimų produktų SKU</Label>
             <Textarea
-              id="in-stock-urls"
-              value={inStockUrls}
-              onChange={(e) => setInStockUrls(e.target.value)}
-              placeholder={'https://mouldkingcorp.com/products/...\nhttps://mouldkingcorp.com/products/...'}
+              id="in-stock-skus"
+              value={inStockSkus}
+              onChange={(e) => setInStockSkus(e.target.value)}
+              placeholder={'10224\n10250\n13163S'}
               rows={8}
               className="font-mono text-sm"
               disabled={bulkUploading}
             />
             <p className="text-xs text-muted-foreground">
-              Palikite tuščią, jei visi produktai yra pre-order.
+              Palikite tuščią, jei visi produktai yra pre-order. SKU turi turėti bent 3 skaitmenis.
             </p>
           </div>
-          {inStockUrls.trim() && (
+          {inStockSkus.trim() && (
             <div className="rounded-md border p-3 space-y-1 text-sm">
               <div className="flex flex-wrap gap-x-4 gap-y-1">
                 <span>
-                  Aptikta nuorodų: <strong>{parsedInStock.valid.length}</strong>
+                  Aptikta SKU: <strong>{parsedInStock.valid.length}</strong>
                 </span>
                 <span className="text-green-600">
                   Sutampa su importuotais: <strong>{parsedInStock.matched.length}</strong>
@@ -692,12 +692,12 @@ export function ProductImporter() {
             <Button
               onClick={() => {
                 if (parsedInStock.invalid.length > 0) {
-                  toast.error(`Yra ${parsedInStock.invalid.length} neteisingo formato įrašų. Patikrinkite nuorodas.`);
+                  toast.error(`Yra ${parsedInStock.invalid.length} neteisingo formato įrašų. Patikrinkite SKU.`);
                   return;
                 }
                 if (parsedInStock.unmatched.length > 0) {
                   const ok = window.confirm(
-                    `${parsedInStock.unmatched.length} nuoroda(-os) nesutampa su importuotais produktais ir bus ignoruota(-os). Tęsti?`,
+                    `${parsedInStock.unmatched.length} SKU nesutampa su importuotais produktais ir bus ignoruota(-i). Tęsti?`,
                   );
                   if (!ok) return;
                 }
