@@ -519,6 +519,47 @@ export function ProductImporter() {
           ))}
         </div>
       )}
+
+      <Dialog open={bulkOpen} onOpenChange={(o) => !bulkUploading && setBulkOpen(o)}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Turimi produktai</DialogTitle>
+            <DialogDescription>
+              Įklijuokite nuorodas (po vieną eilutėje) tų produktų, kuriuos turite sandėlyje.
+              Jų būsena bus „Sandėlyje", visų kitų — „Pre-order".
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-2">
+            <Label htmlFor="in-stock-urls">Turimų produktų nuorodos</Label>
+            <Textarea
+              id="in-stock-urls"
+              value={inStockUrls}
+              onChange={(e) => setInStockUrls(e.target.value)}
+              placeholder={'https://mouldkingcorp.com/products/...\nhttps://mouldkingcorp.com/products/...'}
+              rows={8}
+              className="font-mono text-sm"
+              disabled={bulkUploading}
+            />
+            <p className="text-xs text-muted-foreground">
+              Palikite tuščią, jei visi produktai yra pre-order.
+            </p>
+          </div>
+          {bulkStatus && <p className="text-sm text-muted-foreground">{bulkStatus}</p>}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setBulkOpen(false)} disabled={bulkUploading}>
+              Atšaukti
+            </Button>
+            <Button onClick={handleBulkUpload} disabled={bulkUploading}>
+              {bulkUploading ? (
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+              ) : (
+                <Save className="w-4 h-4 mr-2" />
+              )}
+              Įkelti {drafts.length} produkt{drafts.length === 1 ? 'ą' : 'us'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
