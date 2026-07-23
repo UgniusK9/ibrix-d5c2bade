@@ -402,6 +402,35 @@ export function ProductsManager() {
     }
   };
 
+  const handleDeleteAll = async () => {
+    setDeletingAll(true);
+    let deleted = 0;
+    let archived = 0;
+    let failed = 0;
+    const total = products.length;
+    for (let i = 0; i < products.length; i++) {
+      const p = products[i];
+      setDeleteAllProgress(`Trinama ${i + 1} / ${total}: ${p.title}`);
+      try {
+        const { data, error } = await supabase.functions.invoke('admin', {
+          body: { action: 'delete_product', productId: p.id },
+        });
+        if (error) throw error;
+        if (data?.archived) archived++;
+        else deleted++;
+      } catch (e) {
+        console.error('Delete failed for', p.title, e);
+        failed++;
+      }
+    }
+    setDeletingAll(false);
+    setDeleteAllOpen(false);
+    setDeleteAllConfirm('');
+    setDeleteAllProgress('');
+    toast.success(`Ištrinta: ${deleted}, deaktyvuota: ${archived}${failed ? `, nepavyko: ${failed}` : ''}`);
+    loadProducts();
+  };
+
   const filteredProducts = products.filter(p => {
     if (statusFilter !== 'all' && p.status !== statusFilter) return false;
     if (stockFilter !== 'all' && p.stock_status !== stockFilter) return false;
