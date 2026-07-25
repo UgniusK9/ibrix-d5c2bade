@@ -20,62 +20,58 @@ const PreOrderSection = lazy(() => import("@/components/home/PreOrderSection").t
 const SectionFallback = () => <div style={{ minHeight: 200 }} />;
 
 const Index = () => {
-    const [hasBanners, setHasBanners] = useState(false);
-    const { data: products = [] } = useProducts();
+  const [hasBanners, setHasBanners] = useState(false);
+  const { data: products = [] } = useProducts();
 
-    // Check banners asynchronously — does NOT block hero render
-    useEffect(() => {
-          supabase
-            .from('promo_banners')
-            .select('id', { count: 'exact', head: true })
-            .eq('active', true)
-            .then(({ count, error }) => {
-                      if (!error && count && count > 0) setHasBanners(true);
-            });
-    }, []);
+  useEffect(() => {
+    supabase
+      .from('promo_banners')
+      .select('id', { count: 'exact', head: true })
+      .eq('active', true)
+      .then(({ count, error }) => {
+        if (!error && count && count > 0) setHasBanners(true);
+      });
+  }, []);
 
-    return (
-          <>
-                <SEOHead 
-                          title="IBRIX" 
-                  description="IBRIX - Aukštos kokybės variklių ir mechaninių modelių parduotuvė Lietuvoje. Pre-order sistema, nemokamas pristatymas, 14 dienų grąžinimas."
-                          canonical="/"
-                        />
-                <div className="min-h-screen flex flex-col overflow-x-hidden w-full">
-                        <Header />
-                        <main className="flex-1">
-                          {/* Hero renders IMMEDIATELY — no blocking */}
-                                  <HeroSection />
-                        
-                          {/* PromoBanner overlays on top only when data arrives */}
-                          {hasBanners && (
-                        <Suspense fallback={null}>
-                                      <PromoBanner />
-                        </Suspense>Suspense>
-                                  )}
-                        
-                                  <Suspense fallback={<SectionFallback />}>
-                                              <TrustBadges />
-                                  </Suspense>Suspense>
-                                  <Suspense fallback={<SectionFallback />}>
-                                              <TabbedProductCarousel products={products} />
-                                  </Suspense>Suspense>
-                                  <Suspense fallback={<SectionFallback />}>
-                                              <ProductsSection />
-                                              <BundlesSection />
-                                              <EditorialSection />
-                                              <RecentlyViewedSection />
-                                              <HowItWorks />
-                                              <PreOrderSection />
-                                  </Suspense>Suspense>
-                        </main>main>
-                        <Suspense fallback={<div style={{ minHeight: 300 }} />}>
-                                  <Footer />
-                        </Suspense>Suspense>
-                </div>div>
-          </>>
-        );
+  return (
+    <>
+      <SEOHead 
+        title="IBRIX" 
+        description="IBRIX - Aukstos kokybes varikliu ir mechaniniu modeliu parduotuve Lietuvoje. Pre-order sistema, nemokamas pristatymas, 14 dienu grazinimas."
+        canonical="/"
+      />
+      <div className="min-h-screen flex flex-col overflow-x-hidden w-full">
+        <Header />
+        <main className="flex-1">
+          <HeroSection />
+
+          {hasBanners ? (
+            <Suspense fallback={null}>
+              <PromoBanner />
+            </Suspense>
+          ) : null}
+
+          <Suspense fallback={<SectionFallback />}>
+            <TrustBadges />
+          </Suspense>
+          <Suspense fallback={<SectionFallback />}>
+            <TabbedProductCarousel products={products} />
+          </Suspense>
+          <Suspense fallback={<SectionFallback />}>
+            <ProductsSection />
+            <BundlesSection />
+            <EditorialSection />
+            <RecentlyViewedSection />
+            <HowItWorks />
+            <PreOrderSection />
+          </Suspense>
+        </main>
+        <Suspense fallback={<div style={{ minHeight: 300 }} />}>
+          <Footer />
+        </Suspense>
+      </div>
+    </>
+  );
 };
 
 export default Index;
-</>
