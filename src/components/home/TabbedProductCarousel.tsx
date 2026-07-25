@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from "react";
+ūąįimport { useState, useCallback, useEffect } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { 
   Carousel, 
