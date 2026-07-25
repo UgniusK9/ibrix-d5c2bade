@@ -1,8 +1,9 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { Link } from "react-router-dom";
 import { ChevronDown, ArrowRight, Grid3X3, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
+import { buildCategoryTree, topLevelCategories, type CategoryNode as TreeNode } from "@/lib/categoryTree";
 
 interface Category {
   id: string;
@@ -10,7 +11,10 @@ interface Category {
   slug: string;
   description: string | null;
   image_url: string | null;
+  parent_id: string | null;
 }
+
+type CategoryNode = TreeNode<Category>;
 
 const quickLinks = [
   { name: "Visi konstruktoriai", href: "/produktai/visi", highlight: true },
@@ -36,10 +40,10 @@ export function CategoriesMegaMenu({ onNavigate }: CategoriesMegaMenuProps) {
       try {
         const { data, error } = await supabase
           .from('categories')
-          .select('id, name, slug, description, image_url')
+          .select('id, name, slug, description, image_url, parent_id')
           .eq('active', true)
           .order('sort_order');
-        
+
         if (error) throw error;
         setCategories(data || []);
       } catch (e) {
@@ -50,6 +54,10 @@ export function CategoriesMegaMenu({ onNavigate }: CategoriesMegaMenuProps) {
     };
     loadCategories();
   }, []);
+
+  // Top-level menu entries: children of the single root category (e.g. "Konstruktoriai"),
+  // so the root itself never shows up as a tile alongside its own children.
+  const topLevel = useMemo(() => topLevelCategories(buildCategoryTree(categories)), [categories]);
 
   const handleMouseEnter = () => {
     if (timeoutRef.current) clearTimeout(timeoutRef.current);
@@ -66,7 +74,7 @@ export function CategoriesMegaMenu({ onNavigate }: CategoriesMegaMenuProps) {
   };
 
   return (
-    <div 
+    <div
       ref={menuRef}
       className="relative"
       onMouseEnter={handleMouseEnter}
@@ -90,8 +98,8 @@ export function CategoriesMegaMenu({ onNavigate }: CategoriesMegaMenuProps) {
 
       {/* Mega Menu */}
       {isOpen && (
-        <div className="absolute top-full left-0 mt-2 w-[600px] bg-card border border-border rounded-xl shadow-xl overflow-hidden z-50">
-          <div className="grid grid-cols-[180px_1fr] divide-x divide-border">
+        <div className="absolute top-full left-0 mt-2 w-[1080px] max-w-[95vw] bg-card border border-border rounded-xl shadow-xl overflow-hidden z-50">
+          <div className="grid grid-cols-[200px_1fr] divide-x divide-border">
             {/* Left column - Quick links */}
             <div className="p-4 bg-muted/30">
               <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">
@@ -105,8 +113,8 @@ export function CategoriesMegaMenu({ onNavigate }: CategoriesMegaMenuProps) {
                     onClick={handleLinkClick}
                     className={cn(
                       "flex items-center justify-between px-3 py-2 rounded-lg text-sm transition-colors",
-                      link.highlight 
-                        ? "bg-primary text-primary-foreground font-medium hover:bg-primary/90" 
+                      link.highlight
+                        ? "bg-primary text-primary-foreground font-medium hover:bg-primary/90"
                         : "text-muted-foreground hover:text-foreground hover:bg-muted"
                     )}
                   >
@@ -117,53 +125,20 @@ export function CategoriesMegaMenu({ onNavigate }: CategoriesMegaMenuProps) {
               </nav>
             </div>
 
-            {/* Right column - Categories */}
-            <div className="p-4">
-              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">
-                Kategorijos
-              </p>
+            {/* Right column - every category, fully expanded */}
+            <div className="p-5 max-h-[70vh] overflow-y-auto">
               {loading ? (
-                <div className="flex items-center justify-center py-8">
+                <div className="flex items-center justify-center py-12">
                   <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
                 </div>
-              ) : categories.length === 0 ? (
+              ) : topLevel.length === 0 ? (
                 <div className="text-sm text-muted-foreground py-4">
                   Nėra kategorijų
                 </div>
               ) : (
-                <div className="grid grid-cols-2 gap-2">
-                  {categories.map((category) => (
-                    <Link
-                      key={category.id}
-                      to={`/produktai/${category.slug}`}
-                      onClick={handleLinkClick}
-                      className="group flex items-center gap-3 p-2.5 rounded-lg hover:bg-muted transition-colors"
-                    >
-                      {/* Category image */}
-                      <div className="w-10 h-10 rounded-lg overflow-hidden bg-secondary/30 flex-shrink-0">
-                        {category.image_url ? (
-                          <img 
-                            src={category.image_url}
-                            alt={category.name}
-                            className="w-full h-full object-cover"
-                          />
-                        ) : (
-                          <div className="w-full h-full flex items-center justify-center">
-                            <Grid3X3 className="w-4 h-4 text-muted-foreground" />
-                          </div>
-                        )}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium group-hover:text-primary transition-colors truncate">
-                          {category.name}
-                        </p>
-                        {category.description && (
-                          <p className="text-xs text-muted-foreground truncate">
-                            {category.description}
-                          </p>
-                        )}
-                      </div>
-                    </Link>
+                <div className="grid grid-cols-3 gap-x-6 gap-y-6">
+                  {topLevel.map((category) => (
+                    <CategoryColumn key={category.id} node={category} onNavigate={handleLinkClick} />
                   ))}
                 </div>
               )}
@@ -185,5 +160,55 @@ export function CategoriesMegaMenu({ onNavigate }: CategoriesMegaMenuProps) {
         </div>
       )}
     </div>
+  );
+}
+
+// A mega-menu column: a linked top-level category header plus its full,
+// recursively nested subtree — always expanded, no hover/click needed.
+function CategoryColumn({ node, onNavigate }: { node: CategoryNode; onNavigate: () => void }) {
+  return (
+    <div className="min-w-0">
+      <Link
+        to={`/produktai/${node.slug}`}
+        onClick={onNavigate}
+        className="text-sm font-semibold text-foreground hover:text-primary transition-colors block mb-2 truncate"
+      >
+        {node.name}
+      </Link>
+      <CategoryLeafList nodes={node.children} onNavigate={onNavigate} />
+    </div>
+  );
+}
+
+// Renders a category's children as a list, recursing into grandchildren (and beyond)
+// with progressively lighter styling, so the menu scales to any depth of nesting.
+function CategoryLeafList({
+  nodes,
+  onNavigate,
+  depth = 0,
+}: {
+  nodes: CategoryNode[];
+  onNavigate: () => void;
+  depth?: number;
+}) {
+  if (nodes.length === 0) return null;
+  return (
+    <ul className={cn("space-y-1.5", depth > 0 && "ml-3 mt-1 space-y-1 border-l border-border pl-2")}>
+      {nodes.map((node) => (
+        <li key={node.id}>
+          <Link
+            to={`/produktai/${node.slug}`}
+            onClick={onNavigate}
+            className={cn(
+              "text-muted-foreground hover:text-primary transition-colors block truncate",
+              depth === 0 ? "text-sm" : "text-xs"
+            )}
+          >
+            {node.name}
+          </Link>
+          <CategoryLeafList nodes={node.children} onNavigate={onNavigate} depth={depth + 1} />
+        </li>
+      ))}
+    </ul>
   );
 }

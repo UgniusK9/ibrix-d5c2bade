@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Plus, Edit2, Trash2, RefreshCw, FolderTree, GripVertical } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -12,6 +12,7 @@ import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { ImageUpload } from './ImageUpload';
+import { buildCategoryTree, topLevelCategories, flattenWithDepth } from '@/lib/categoryTree';
 
 interface Category {
   id: string;
@@ -61,6 +62,12 @@ export function CategoriesManager() {
   useEffect(() => {
     loadCategories();
   }, []);
+
+  // Depth-indented, hierarchy-ordered view of all categories (root included, for admin management)
+  const flatCategoryTree = useMemo(
+    () => flattenWithDepth(buildCategoryTree(categories)),
+    [categories]
+  );
 
   const generateSlug = (name: string) => {
     return name
@@ -204,9 +211,10 @@ export function CategoriesManager() {
           </div>
         ) : (
           <div className="space-y-2">
-            {categories.map((category) => (
+            {flatCategoryTree.map(({ node: category, depth }) => (
               <div
                 key={category.id}
+                style={{ marginLeft: depth * 28 }}
                 className="flex items-center justify-between p-3 bg-muted/30 rounded-lg hover:bg-muted/50 transition-colors"
               >
                 <div className="flex items-center gap-3">
@@ -321,10 +329,12 @@ export function CategoriesManager() {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="none">Nėra (pagrindinė)</SelectItem>
-                      {categories
-                        .filter(c => c.id !== editingCategory?.id)
-                        .map(c => (
-                          <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                      {flatCategoryTree
+                        .filter(({ node }) => node.id !== editingCategory?.id)
+                        .map(({ node, depth }) => (
+                          <SelectItem key={node.id} value={node.id} style={{ paddingLeft: 8 + depth * 16 }}>
+                            {depth > 0 ? '↳ ' : ''}{node.name}
+                          </SelectItem>
                         ))}
                     </SelectContent>
                   </Select>

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Plus, Search, Edit, Trash2, Package, RefreshCw, ChevronDown, X, Save, AlertTriangle, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -26,6 +26,7 @@ import {
 import type { Database } from '@/integrations/supabase/types';
 import { ProductVariantsManager } from './ProductVariantsManager';
 import { MultiImageUpload } from './MultiImageUpload';
+import { buildCategoryTree, topLevelCategories, flattenWithDepth } from '@/lib/categoryTree';
 
 type ProductStatus = Database['public']['Enums']['product_status'];
 type StockStatus = Database['public']['Enums']['stock_status'];
@@ -60,6 +61,7 @@ interface Category {
   id: string;
   name: string;
   slug: string;
+  parent_id: string | null;
   active: boolean;
 }
 
@@ -144,7 +146,13 @@ export function ProductsManager() {
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<ProductStatus | 'all'>('active');
   const [stockFilter, setStockFilter] = useState<StockStatus | 'all'>('all');
-  
+
+  // Flattened, depth-indented category tree shared by the Kategorija and Skiltis selects
+  const flatCategoryTree = useMemo(
+    () => flattenWithDepth(topLevelCategories(buildCategoryTree(categories))),
+    [categories]
+  );
+
   // Dialog states
   const [formOpen, setFormOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
@@ -190,10 +198,10 @@ export function ProductsManager() {
     try {
       const { data, error } = await supabase
         .from('categories')
-        .select('id, name, slug, active')
+        .select('id, name, slug, parent_id, active')
         .eq('active', true)
         .order('sort_order');
-      
+
       if (error) throw error;
       setCategories(data || []);
     } catch (e: any) {
@@ -797,8 +805,8 @@ export function ProductsManager() {
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <Label>Kategorija</Label>
-                <Select 
-                  value={formData.category_id || "none"} 
+                <Select
+                  value={formData.category_id || "none"}
                   onValueChange={(v) => setFormData(prev => ({ ...prev, category_id: v === "none" ? "" : v }))}
                 >
                   <SelectTrigger>
@@ -806,26 +814,33 @@ export function ProductsManager() {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="none">Nepasirinkta</SelectItem>
-                    {categories.map((cat) => (
-                      <SelectItem key={cat.id} value={cat.id}>{cat.name}</SelectItem>
+                    {flatCategoryTree.map(({ node, depth }) => (
+                      <SelectItem key={node.id} value={node.id} style={{ paddingLeft: 8 + depth * 16 }}>
+                        {depth > 0 ? '↳ ' : ''}{node.name}
+                      </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
               </div>
               <div>
                 <Label>Skiltis</Label>
-                <Select 
-                  value={formData.category} 
+                <Select
+                  value={formData.category}
                   onValueChange={(v) => setFormData(prev => ({ ...prev, category: v as ProductCategory }))}
                 >
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="engines">Varikliai</SelectItem>
-                    <SelectItem value="cars">Automobiliai</SelectItem>
-                    <SelectItem value="flowers">Gėlės</SelectItem>
-                    <SelectItem value="other">Kita</SelectItem>
+                    {flatCategoryTree.map(({ node, depth }) => (
+                      <SelectItem key={node.slug} value={node.slug} style={{ paddingLeft: 8 + depth * 16 }}>
+                        {depth > 0 ? '↳ ' : ''}{node.name}
+                      </SelectItem>
+                    ))}
+                    <SelectItem value="engines">Varikliai (senas)</SelectItem>
+                    <SelectItem value="cars">Automobiliai (senas)</SelectItem>
+                    <SelectItem value="flowers">Gėlės (senas)</SelectItem>
+                    <SelectItem value="other">Kita (senas)</SelectItem>
                   </SelectContent>
                 </Select>
               </div>

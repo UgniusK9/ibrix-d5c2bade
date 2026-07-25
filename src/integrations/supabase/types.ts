@@ -10,7 +10,7 @@ export type Database = {
   // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
-    PostgrestVersion: "14.1"
+    PostgrestVersion: "14.5"
   }
   public: {
     Tables: {
@@ -338,6 +338,8 @@ export type Database = {
           description: string | null
           id: string
           image_url: string | null
+          meta_description: string | null
+          meta_title: string | null
           name: string
           parent_id: string | null
           slug: string
@@ -350,6 +352,8 @@ export type Database = {
           description?: string | null
           id?: string
           image_url?: string | null
+          meta_description?: string | null
+          meta_title?: string | null
           name: string
           parent_id?: string | null
           slug: string
@@ -362,6 +366,8 @@ export type Database = {
           description?: string | null
           id?: string
           image_url?: string | null
+          meta_description?: string | null
+          meta_title?: string | null
           name?: string
           parent_id?: string | null
           slug?: string
@@ -1306,6 +1312,7 @@ export type Database = {
       products: {
         Row: {
           badges: Json | null
+          canonical_slug: string | null
           category: Database["public"]["Enums"]["product_category"]
           category_id: string | null
           cost_price_eur: number | null
@@ -1317,6 +1324,9 @@ export type Database = {
           id: string
           images: Json
           inventory_qty: number | null
+          meta_description: string | null
+          meta_title: string | null
+          og_image_url: string | null
           preorder_eta_weeks_max: number | null
           preorder_eta_weeks_min: number | null
           price_eur: number
@@ -1332,6 +1342,7 @@ export type Database = {
         }
         Insert: {
           badges?: Json | null
+          canonical_slug?: string | null
           category?: Database["public"]["Enums"]["product_category"]
           category_id?: string | null
           cost_price_eur?: number | null
@@ -1343,6 +1354,9 @@ export type Database = {
           id?: string
           images?: Json
           inventory_qty?: number | null
+          meta_description?: string | null
+          meta_title?: string | null
+          og_image_url?: string | null
           preorder_eta_weeks_max?: number | null
           preorder_eta_weeks_min?: number | null
           price_eur: number
@@ -1358,6 +1372,7 @@ export type Database = {
         }
         Update: {
           badges?: Json | null
+          canonical_slug?: string | null
           category?: Database["public"]["Enums"]["product_category"]
           category_id?: string | null
           cost_price_eur?: number | null
@@ -1369,6 +1384,9 @@ export type Database = {
           id?: string
           images?: Json
           inventory_qty?: number | null
+          meta_description?: string | null
+          meta_title?: string | null
+          og_image_url?: string | null
           preorder_eta_weeks_max?: number | null
           preorder_eta_weeks_min?: number | null
           price_eur?: number
@@ -2105,6 +2123,9 @@ export type Database = {
         Args: { check_username: string }
         Returns: boolean
       }
+      dearmor: { Args: { "": string }; Returns: string }
+      gen_random_uuid: { Args: never; Returns: string }
+      gen_salt: { Args: { "": string }; Returns: string }
       generate_gift_card_code: { Args: never; Returns: string }
       generate_invoice_number: { Args: never; Returns: string }
       generate_order_number: { Args: never; Returns: string }
@@ -2128,6 +2149,10 @@ export type Database = {
         }
         Returns: boolean
       }
+      pgp_armor_headers: {
+        Args: { "": string }
+        Returns: Record<string, unknown>[]
+      }
     }
     Enums: {
       app_role: "admin" | "customer"
@@ -2147,7 +2172,86 @@ export type Database = {
       payment_plan: "deposit_only" | "full_payment"
       payment_status: "pending" | "succeeded" | "failed"
       payment_type: "deposit" | "balance" | "refund"
-      product_category: "engines" | "cars" | "flowers" | "other"
+      product_category:
+        | "engines"
+        | "cars"
+        | "flowers"
+        | "other"
+        | "architektura-ir-gelezinkeliai"
+        | "ateities-automobiliai"
+        | "automobiliai"
+        | "aviacijos-varikliai"
+        | "botanika"
+        | "botanika-ir-namu-dekoras"
+        | "buldozeriai-ir-krautuvai"
+        | "dinozauru-pasaulis"
+        | "doko-scenos"
+        | "dyzeliniai-varikliai"
+        | "ekskavatoriai"
+        | "gamtos-kuriniai"
+        | "garveziai"
+        | "gbc-serija"
+        | "izymus-pastatai"
+        | "jachtos-ir-buriavimas"
+        | "karine-technika"
+        | "karyba"
+        | "klasikiniai-ir-retro"
+        | "kosmosas-ir-inzinerija"
+        | "kosmoso-tyrinejimai"
+        | "kranai"
+        | "kurybines-muzikines-dezutes"
+        | "laivai-butelyje"
+        | "laivai-ir-piratai"
+        | "mechaniniai-laikrodziai"
+        | "mechos-kariai"
+        | "miesto-gelbejimo-ir-policijos-technika"
+        | "mini-124-automobiliai"
+        | "mini-botanika"
+        | "mini-dinozaurai"
+        | "mini-garsus-automobiliai"
+        | "mini-gatviu-vaizdai"
+        | "mini-karine-aviacijos-technika"
+        | "mini-miesto-dekoras"
+        | "mini-pakeles-automobiliai"
+        | "mini-pasaulis"
+        | "mini-statybine-technika"
+        | "mini-sunkioji-technika"
+        | "mini-sunkvezimiai"
+        | "mini-visureigiai-modeliai"
+        | "mini-zemes-ukio-technika"
+        | "miskininkystes-technika"
+        | "modernus-ir-greitieji-traukiniai"
+        | "modernus-laivynas"
+        | "moduliniai-pastatai"
+        | "modulinis-gatves-vaizdas"
+        | "motociklai"
+        | "muge-ir-parkas"
+        | "pagal-kebulo-tipa"
+        | "piratu-ir-kariniai-laivai"
+        | "piratu-laivai"
+        | "rc-ir-di-robotai"
+        | "robotai-ir-mechos"
+        | "sakiniai-krautuvai"
+        | "senoves-kariniai-laivai"
+        | "sportiniu-automobiliu-varikliai"
+        | "statyba"
+        | "statyba-ir-sunkioji-technika"
+        | "sunkiasvoriai-sunkvezimiai"
+        | "superautomobiliai-lenktyniniai"
+        | "tankai-ir-sarvuociai"
+        | "technikos-prietaisai"
+        | "technikos-transportas"
+        | "traktoriai-ir-kombainai"
+        | "transportas-ir-logistika"
+        | "traukiniai-ir-gelezinkeliai"
+        | "uostas-ir-pajuris"
+        | "varikliai"
+        | "varikliai-ir-transmisijos"
+        | "viduramziu-ir-retro-pastatai"
+        | "vilkikai-ir-pagalbos-technika"
+        | "visureigiai-ir-suv"
+        | "zaislai-ginklai"
+        | "zemes-ukis-ir-miskininkyste"
       product_status: "active" | "inactive"
       segment_key: "CART_ABANDONER" | "HIGH_INTENT" | "RETURNING" | "NEW_USER"
       shipment_status:
@@ -2302,7 +2406,87 @@ export const Constants = {
       payment_plan: ["deposit_only", "full_payment"],
       payment_status: ["pending", "succeeded", "failed"],
       payment_type: ["deposit", "balance", "refund"],
-      product_category: ["engines", "cars", "flowers", "other"],
+      product_category: [
+        "engines",
+        "cars",
+        "flowers",
+        "other",
+        "architektura-ir-gelezinkeliai",
+        "ateities-automobiliai",
+        "automobiliai",
+        "aviacijos-varikliai",
+        "botanika",
+        "botanika-ir-namu-dekoras",
+        "buldozeriai-ir-krautuvai",
+        "dinozauru-pasaulis",
+        "doko-scenos",
+        "dyzeliniai-varikliai",
+        "ekskavatoriai",
+        "gamtos-kuriniai",
+        "garveziai",
+        "gbc-serija",
+        "izymus-pastatai",
+        "jachtos-ir-buriavimas",
+        "karine-technika",
+        "karyba",
+        "klasikiniai-ir-retro",
+        "kosmosas-ir-inzinerija",
+        "kosmoso-tyrinejimai",
+        "kranai",
+        "kurybines-muzikines-dezutes",
+        "laivai-butelyje",
+        "laivai-ir-piratai",
+        "mechaniniai-laikrodziai",
+        "mechos-kariai",
+        "miesto-gelbejimo-ir-policijos-technika",
+        "mini-124-automobiliai",
+        "mini-botanika",
+        "mini-dinozaurai",
+        "mini-garsus-automobiliai",
+        "mini-gatviu-vaizdai",
+        "mini-karine-aviacijos-technika",
+        "mini-miesto-dekoras",
+        "mini-pakeles-automobiliai",
+        "mini-pasaulis",
+        "mini-statybine-technika",
+        "mini-sunkioji-technika",
+        "mini-sunkvezimiai",
+        "mini-visureigiai-modeliai",
+        "mini-zemes-ukio-technika",
+        "miskininkystes-technika",
+        "modernus-ir-greitieji-traukiniai",
+        "modernus-laivynas",
+        "moduliniai-pastatai",
+        "modulinis-gatves-vaizdas",
+        "motociklai",
+        "muge-ir-parkas",
+        "pagal-kebulo-tipa",
+        "piratu-ir-kariniai-laivai",
+        "piratu-laivai",
+        "rc-ir-di-robotai",
+        "robotai-ir-mechos",
+        "sakiniai-krautuvai",
+        "senoves-kariniai-laivai",
+        "sportiniu-automobiliu-varikliai",
+        "statyba",
+        "statyba-ir-sunkioji-technika",
+        "sunkiasvoriai-sunkvezimiai",
+        "superautomobiliai-lenktyniniai",
+        "tankai-ir-sarvuociai",
+        "technikos-prietaisai",
+        "technikos-transportas",
+        "traktoriai-ir-kombainai",
+        "transportas-ir-logistika",
+        "traukiniai-ir-gelezinkeliai",
+        "uostas-ir-pajuris",
+        "varikliai",
+        "varikliai-ir-transmisijos",
+        "viduramziu-ir-retro-pastatai",
+        "vilkikai-ir-pagalbos-technika",
+        "visureigiai-ir-suv",
+        "zaislai-ginklai",
+        "zemes-ukis-ir-miskininkyste",
+      ],
       product_status: ["active", "inactive"],
       segment_key: ["CART_ABANDONER", "HIGH_INTENT", "RETURNING", "NEW_USER"],
       shipment_status: [

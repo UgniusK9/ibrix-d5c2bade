@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect } from "react";
 import { Link, useParams, useSearchParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { Package, Clock, ShoppingCart, Filter, Loader2, Grid3X3, LayoutGrid, ChevronRight, Eye, ArrowUpDown } from "lucide-react";
+import { Package, Clock, ShoppingCart, Filter, Loader2, Grid3X3, LayoutGrid, ChevronRight, ChevronDown, Eye, ArrowUpDown } from "lucide-react";
 import { PageLayout } from "@/components/layout/PageLayout";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -18,6 +18,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
+import { buildCategoryTree, topLevelCategories, findAncestorIds, type CategoryNode } from "@/lib/categoryTree";
 
 type StatusFilter = "all" | "preorder" | "in_stock";
 type SortOption = "recommended" | "newest" | "price_asc" | "price_desc" | "parts" | "name_asc";
@@ -27,6 +28,7 @@ interface Category {
   name: string;
   slug: string;
   description: string | null;
+  parent_id: string | null;
   active: boolean;
 }
 
@@ -48,6 +50,7 @@ export default function Produktai() {
   const [viewMode, setViewMode] = useState<'grid' | 'compact'>('grid');
   const [categories, setCategories] = useState<Category[]>([]);
   const [loadingCategories, setLoadingCategories] = useState(true);
+  const [expandedCategoryIds, setExpandedCategoryIds] = useState<Set<string>>(new Set());
   const [localSearch, setLocalSearch] = useState(searchQuery);
   const [quickViewProduct, setQuickViewProduct] = useState<Product | null>(null);
   const addItem = useCartStore((state) => state.addItem);
@@ -59,10 +62,10 @@ export default function Produktai() {
       try {
         const { data, error } = await supabase
           .from('categories')
-          .select('id, name, slug, description, active')
+          .select('id, name, slug, description, parent_id, active')
           .eq('active', true)
           .order('sort_order');
-        
+
         if (error) throw error;
         setCategories(data || []);
       } catch (e) {
@@ -120,6 +123,28 @@ export default function Produktai() {
     }
     return { id: 'all', name: 'Visi konstruktoriai', slug: 'visi', description: 'Peržiūrėkite visą mūsų konstruktorių katalogą.' };
   }, [categorySlug, categories]);
+
+  // Auto-expand the sidebar tree down to (and including) the active category
+  useEffect(() => {
+    if (currentCategory.id === 'all' || categories.length === 0) return;
+    const idsToExpand = findAncestorIds(categories, currentCategory.id);
+    idsToExpand.add(currentCategory.id);
+    setExpandedCategoryIds((prev) => new Set([...prev, ...idsToExpand]));
+  }, [currentCategory.id, categories]);
+
+  const categoryTree = useMemo(
+    () => topLevelCategories(buildCategoryTree(categories)),
+    [categories]
+  );
+
+  const toggleCategoryExpanded = (id: string) => {
+    setExpandedCategoryIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
 
   // Filter products by category and search
   const filteredProducts = useMemo(() => {
@@ -250,29 +275,12 @@ export default function Produktai() {
     return counts;
   }, [products, categories]);
 
-  // Build navigation items - combine DB categories with special ones
-  const navCategories = useMemo(() => {
-    const items: { id: string; name: string; slug: string; count: number }[] = [
-      { id: 'all', name: 'Visi konstruktoriai', slug: 'visi', count: categoryCounts['all'] || 0 }
-    ];
-    
-    // Add DB categories
-    categories.forEach(cat => {
-      items.push({
-        id: cat.id,
-        name: cat.name,
-        slug: cat.slug,
-        count: categoryCounts[cat.id] || 0
-      });
-    });
-    
-    // Add special categories
-    items.push({ id: 'dovanu-kuponai', name: 'Dovanų kuponai', slug: 'dovanu-kuponai', count: categoryCounts['dovanu-kuponai'] || 0 });
-    items.push({ id: 'pasiulymai', name: 'Pasiūlymai ir išpardavimai', slug: 'pasiulymai', count: categoryCounts['pasiulymai'] || 0 });
-    items.push({ id: 'naujienos', name: 'Naujienos', slug: 'naujienos', count: categoryCounts['naujienos'] || 0 });
-    
-    return items;
-  }, [categories, categoryCounts]);
+  // Special virtual categories shown below the DB category tree
+  const specialNavItems = useMemo(() => ([
+    { id: 'dovanu-kuponai', name: 'Dovanų kuponai', slug: 'dovanu-kuponai', count: categoryCounts['dovanu-kuponai'] || 0 },
+    { id: 'pasiulymai', name: 'Pasiūlymai ir išpardavimai', slug: 'pasiulymai', count: categoryCounts['pasiulymai'] || 0 },
+    { id: 'naujienos', name: 'Naujienos', slug: 'naujienos', count: categoryCounts['naujienos'] || 0 },
+  ]), [categoryCounts]);
 
   return (
     <PageLayout>
@@ -318,14 +326,39 @@ export default function Produktai() {
                   </div>
                 ) : (
                   <nav className="space-y-1">
-                    {navCategories.map((cat) => (
+                    <Link
+                      to="/produktai/visi"
+                      className={cn(
+                        "flex items-center justify-between px-3 py-2.5 rounded-lg text-sm transition-colors",
+                        currentCategory.id === 'all'
+                          ? "bg-primary/10 text-primary font-medium"
+                          : "hover:bg-muted text-muted-foreground hover:text-foreground"
+                      )}
+                    >
+                      <span>Visi konstruktoriai</span>
+                      {(categoryCounts['all'] || 0) > 0 && (
+                        <Badge variant="secondary" className="text-xs">
+                          {categoryCounts['all']}
+                        </Badge>
+                      )}
+                    </Link>
+
+                    <CategorySidebarTree
+                      nodes={categoryTree}
+                      activeSlug={currentCategory.slug}
+                      expandedIds={expandedCategoryIds}
+                      onToggle={toggleCategoryExpanded}
+                      counts={categoryCounts}
+                    />
+
+                    {specialNavItems.map((cat) => (
                       <Link
                         key={cat.id}
                         to={`/produktai/${cat.slug}`}
                         className={cn(
                           "flex items-center justify-between px-3 py-2.5 rounded-lg text-sm transition-colors",
-                          (currentCategory.slug === cat.slug || (currentCategory.id === 'all' && cat.id === 'all'))
-                            ? "bg-primary/10 text-primary font-medium" 
+                          currentCategory.slug === cat.slug
+                            ? "bg-primary/10 text-primary font-medium"
                             : "hover:bg-muted text-muted-foreground hover:text-foreground"
                         )}
                       >
@@ -587,5 +620,77 @@ export default function Produktai() {
         onOpenChange={(open) => !open && setQuickViewProduct(null)}
       />
     </PageLayout>
+  );
+}
+
+// Recursive, expandable category tree for the sidebar filter — mirrors the
+// mega-menu's tree, but as a collapsible vertical list with per-node counts.
+function CategorySidebarTree({
+  nodes,
+  activeSlug,
+  expandedIds,
+  onToggle,
+  counts,
+  depth = 0,
+}: {
+  nodes: CategoryNode<Category>[];
+  activeSlug: string;
+  expandedIds: Set<string>;
+  onToggle: (id: string) => void;
+  counts: Record<string, number>;
+  depth?: number;
+}) {
+  if (nodes.length === 0) return null;
+  return (
+    <ul className={cn(depth > 0 && "ml-3 mt-0.5 space-y-1 border-l border-border pl-3")}>
+      {nodes.map((node) => {
+        const hasChildren = node.children.length > 0;
+        const isExpanded = expandedIds.has(node.id);
+        const isActive = activeSlug === node.slug;
+        const count = counts[node.id] || 0;
+        return (
+          <li key={node.id}>
+            <div
+              className={cn(
+                "flex items-center rounded-lg text-sm transition-colors",
+                isActive ? "bg-primary/10 text-primary font-medium" : "text-muted-foreground hover:text-foreground hover:bg-muted"
+              )}
+            >
+              <Link
+                to={`/produktai/${node.slug}`}
+                className="flex-1 flex items-center justify-between gap-2 px-3 py-2 min-w-0"
+              >
+                <span className="truncate">{node.name}</span>
+                {count > 0 && (
+                  <Badge variant="secondary" className="text-xs flex-shrink-0">
+                    {count}
+                  </Badge>
+                )}
+              </Link>
+              {hasChildren && (
+                <button
+                  type="button"
+                  onClick={() => onToggle(node.id)}
+                  className="px-2 py-2 flex-shrink-0 text-muted-foreground hover:text-foreground"
+                  aria-label={isExpanded ? "Suskleisti kategoriją" : "Išskleisti kategoriją"}
+                >
+                  <ChevronDown className={cn("w-3.5 h-3.5 transition-transform", isExpanded && "rotate-180")} />
+                </button>
+              )}
+            </div>
+            {hasChildren && isExpanded && (
+              <CategorySidebarTree
+                nodes={node.children}
+                activeSlug={activeSlug}
+                expandedIds={expandedIds}
+                onToggle={onToggle}
+                counts={counts}
+                depth={depth + 1}
+              />
+            )}
+          </li>
+        );
+      })}
+    </ul>
   );
 }
