@@ -92,32 +92,34 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       (event, session) => {
         setSession(session);
         setUser(session?.user ?? null);
-        
-        // Defer role fetching and user creation with setTimeout to avoid deadlock
+
+        // Defer role fetching and user creation with setTimeout to avoid deadlock.
+        // isLoading must stay true until the deferred role fetch actually resolves,
+        // otherwise consumers (e.g. ProtectedRoute) can read isAdmin: false too early.
         if (session?.user) {
           setTimeout(async () => {
             await ensureUserExists(session.user);
             const userRole = await fetchUserRole(session.user.id);
             setRole(userRole || 'customer');
+            setIsLoading(false);
           }, 0);
         } else {
           setRole(null);
+          setIsLoading(false);
         }
-        
-        setIsLoading(false);
       }
     );
 
     // THEN check for existing session
     supabase.auth.getSession()
-      .then(({ data: { session } }) => {
+      .then(async ({ data: { session } }) => {
         setSession(session);
         setUser(session?.user ?? null);
 
         if (session?.user) {
-          ensureUserExists(session.user).then(() => {
-            fetchUserRole(session.user.id).then(r => setRole(r || 'customer'));
-          }).catch((e) => console.error('ensureUserExists failed:', e));
+          await ensureUserExists(session.user);
+          const userRole = await fetchUserRole(session.user.id);
+          setRole(userRole || 'customer');
         }
       })
       .catch(async (e) => {
