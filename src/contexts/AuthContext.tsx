@@ -86,6 +86,37 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  // getSession()/onAuthStateChange only reflect the locally cached token — they don't
+  // confirm the underlying session still exists server-side. A cached token can look
+  // valid (unexpired, correctly signed) while its session was invalidated server-side,
+  // which Supabase surfaces as a "session_not_found" error on any authenticated request.
+  // getUser() makes a real round-trip and catches that immediately instead of leaving
+  // every subsequent authenticated call (e.g. admin edge function invocations) failing
+  // with silent 401s until the token's natural expiry finally forces a refresh attempt.
+  const validateAndLoadUser = async (session: Session | null) => {
+    if (!session?.user) {
+      setRole(null);
+      setIsLoading(false);
+      return;
+    }
+
+    const { data: { user: verifiedUser }, error: verifyError } = await supabase.auth.getUser();
+    if (verifyError || !verifiedUser) {
+      console.warn('Session failed server-side validation, signing out:', verifyError);
+      try { await supabase.auth.signOut(); } catch { /* ignore */ }
+      setSession(null);
+      setUser(null);
+      setRole(null);
+      setIsLoading(false);
+      return;
+    }
+
+    await ensureUserExists(session.user);
+    const userRole = await fetchUserRole(session.user.id);
+    setRole(userRole || 'customer');
+    setIsLoading(false);
+  };
+
   useEffect(() => {
     // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
@@ -93,20 +124,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setSession(session);
         setUser(session?.user ?? null);
 
-        // Defer role fetching and user creation with setTimeout to avoid deadlock.
-        // isLoading must stay true until the deferred role fetch actually resolves,
-        // otherwise consumers (e.g. ProtectedRoute) can read isAdmin: false too early.
-        if (session?.user) {
-          setTimeout(async () => {
-            await ensureUserExists(session.user);
-            const userRole = await fetchUserRole(session.user.id);
-            setRole(userRole || 'customer');
-            setIsLoading(false);
-          }, 0);
-        } else {
-          setRole(null);
-          setIsLoading(false);
-        }
+        // Defer with setTimeout to avoid a Supabase auth deadlock from calling other
+        // auth/db methods synchronously inside this callback. isLoading must stay true
+        // until validation + role fetch actually resolve, otherwise consumers (e.g.
+        // ProtectedRoute) can read isAdmin: false too early.
+        setTimeout(() => {
+          validateAndLoadUser(session);
+        }, 0);
       }
     );
 
@@ -115,22 +139,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       .then(async ({ data: { session } }) => {
         setSession(session);
         setUser(session?.user ?? null);
-
-        if (session?.user) {
-          await ensureUserExists(session.user);
-          const userRole = await fetchUserRole(session.user.id);
-          setRole(userRole || 'customer');
-        }
+        await validateAndLoadUser(session);
       })
       .catch(async (e) => {
         // Invalid/expired refresh token — clear stale session so app can render
         console.warn('getSession failed, clearing stale auth:', e);
-        try { await supabase.auth.signOut(); } catch {}
+        try { await supabase.auth.signOut(); } catch { /* ignore */ }
         setSession(null);
         setUser(null);
         setRole(null);
-      })
-      .finally(() => {
         setIsLoading(false);
       });
 
