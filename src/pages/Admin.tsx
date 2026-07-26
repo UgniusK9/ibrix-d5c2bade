@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Package, Settings, List, BarChart3, Tag, RefreshCw, ShoppingBag, Users, RotateCcw, Layers, Gift, FolderTree, Mail, Image, MessageSquare, Bell, TrendingUp, Wallet, HelpCircle, Eye, Activity, Download, Images } from "lucide-react";
 import { PageLayout } from "@/components/layout/PageLayout";
 import { Button } from "@/components/ui/button";
@@ -28,37 +28,9 @@ import { PhotoImporter } from "@/components/admin/PhotoImporter";
 import { supabase } from "@/integrations/supabase/client";
 import { Link } from "react-router-dom";
 
-interface WebhookHealth {
-  status: string;
-  config: {
-    stripe_secret_configured: boolean;
-    webhook_secret_configured: boolean;
-    supabase_url_configured: boolean;
-    service_role_configured: boolean;
-    resend_configured: boolean;
-  };
-}
 
 export default function Admin() {
   const [activeTab, setActiveTab] = useState('orders');
-  const [webhookHealth, setWebhookHealth] = useState<WebhookHealth | null>(null);
-
-  const loadWebhookHealth = async () => {
-    try {
-      const response = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/stripe-webhook?health=true`,
-        { method: 'GET' }
-      );
-      const data = await response.json();
-      setWebhookHealth(data);
-    } catch (e) {
-      console.error('Failed to load webhook health:', e);
-    }
-  };
-
-  useEffect(() => {
-    loadWebhookHealth();
-  }, []);
 
   return (
     <PageLayout>
@@ -246,7 +218,7 @@ export default function Admin() {
           </TabsContent>
 
           <TabsContent value="setup">
-            <AdminSetup webhookHealth={webhookHealth} />
+            <AdminSetup />
           </TabsContent>
         </Tabs>
       </div>
