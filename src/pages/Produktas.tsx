@@ -1,5 +1,6 @@
 import { useEffect, useState, useMemo } from "react";
 import { useParams, Link } from "react-router-dom";
+import { cn } from "@/lib/utils";
 import { useTranslation } from "react-i18next";
 import { ArrowLeft, Package, Clock, Truck, RotateCcw, Shield, ShoppingCart, Puzzle, HelpCircle, Loader2, Star, Scale, Check } from "lucide-react";
 import { PageLayout } from "@/components/layout/PageLayout";
@@ -54,6 +55,9 @@ export default function Produktas() {
   const { data: product, isLoading, error } = useProduct(handle || '');
   const { data: variants = [] } = useProductVariants(product?.id);
   
+  // Image carousel state
+  const [activeImg, setActiveImg] = useState(0);
+
   // Variant selection state
   const [selectedVariants, setSelectedVariants] = useState<Record<string, string>>({});
   
@@ -196,6 +200,7 @@ export default function Produktas() {
   const isPreOrder = product.stock_status === 'preorder';
   const eta = getEtaString(product);
   const image = getProductImage(product);
+  const images: string[] = product.images?.length ? product.images : [image];
   const detailsCount = (product.details_json as Record<string, unknown>)?.detailsCount as number || 0;
   const badges = (product as any).badges as string[] || [];
   
@@ -249,14 +254,50 @@ export default function Produktas() {
         {/* Product Grid */}
         <div className="grid lg:grid-cols-2 gap-12 mb-16">
           {/* Images */}
-          <div className="space-y-4">
-            <div className="aspect-square rounded-2xl overflow-hidden bg-gradient-to-br from-secondary/30 to-muted/20 border border-border">
+          <div className="space-y-3">
+            {/* Main image */}
+            <div className="relative aspect-square rounded-2xl overflow-hidden bg-gradient-to-br from-secondary/30 to-muted/20 border border-border">
               <img
-                src={image}
+                src={images[activeImg]}
                 alt={product.title}
                 className="w-full h-full object-cover"
               />
+              {images.length > 1 && (
+                <>
+                  <button
+                    onClick={() => setActiveImg((i) => (i - 1 + images.length) % images.length)}
+                    className="absolute left-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-background/80 border border-border flex items-center justify-center hover:bg-background transition-colors"
+                    aria-label="Ankstesnė nuotrauka"
+                  >
+                    <ArrowLeft className="w-4 h-4" />
+                  </button>
+                  <button
+                    onClick={() => setActiveImg((i) => (i + 1) % images.length)}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-background/80 border border-border flex items-center justify-center hover:bg-background transition-colors"
+                    aria-label="Kita nuotrauka"
+                  >
+                    <ArrowLeft className="w-4 h-4 rotate-180" />
+                  </button>
+                </>
+              )}
             </div>
+            {/* Thumbnails */}
+            {images.length > 1 && (
+              <div className="flex gap-2 overflow-x-auto pb-1">
+                {images.map((src, i) => (
+                  <button
+                    key={i}
+                    onClick={() => setActiveImg(i)}
+                    className={cn(
+                      "flex-shrink-0 w-16 h-16 rounded-lg overflow-hidden border-2 transition-colors",
+                      i === activeImg ? "border-primary" : "border-border hover:border-primary/50"
+                    )}
+                  >
+                    <img src={src} alt={`${product.title} ${i + 1}`} className="w-full h-full object-cover" />
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* Product Info */}
