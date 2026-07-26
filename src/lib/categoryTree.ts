@@ -38,6 +38,22 @@ export function flattenWithDepth<T>(nodes: CategoryNode<T>[], depth = 0): { node
   ]);
 }
 
+// Returns the set of all descendant ids (children, grandchildren, …) for a given parentId.
+export function getAllDescendantIds(categories: CategoryTreeInput[], parentId: string): Set<string> {
+  const result = new Set<string>();
+  const queue = [parentId];
+  while (queue.length > 0) {
+    const current = queue.shift()!;
+    for (const c of categories) {
+      if (c.parent_id === current) {
+        result.add(c.id);
+        queue.push(c.id);
+      }
+    }
+  }
+  return result;
+}
+
 // Returns the set of ancestor ids (root -> parent) for the category matching targetId.
 export function findAncestorIds(categories: CategoryTreeInput[], targetId: string): Set<string> {
   const byId = new Map(categories.map((c) => [c.id, c]));

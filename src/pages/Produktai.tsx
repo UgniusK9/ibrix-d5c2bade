@@ -18,7 +18,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
-import { buildCategoryTree, topLevelCategories, findAncestorIds, type CategoryNode } from "@/lib/categoryTree";
+import { buildCategoryTree, topLevelCategories, findAncestorIds, getAllDescendantIds, type CategoryNode } from "@/lib/categoryTree";
 
 type StatusFilter = "all" | "preorder" | "in_stock";
 type SortOption = "recommended" | "newest" | "price_asc" | "price_desc" | "parts" | "name_asc";
@@ -191,8 +191,12 @@ export default function Produktai() {
       
       // Category filter (skip for special categories)
       if (currentCategory.id !== 'all' && !['preorder', 'sandelyje', 'naujienos', 'populiariausi', 'pasiulymai', 'dovanu-kuponai'].includes(currentCategory.id)) {
-        // Check category_id first (DB category)
-        const matchesCategoryId = categories.find(c => c.slug === categorySlug)?.id === p.category_id;
+        // Check category_id first (DB category) — include the selected category AND all its descendants
+        const selectedCat = categories.find(c => c.slug === categorySlug);
+        const descendantIds = selectedCat ? getAllDescendantIds(categories, selectedCat.id) : new Set<string>();
+        const matchesCategoryId = selectedCat
+          ? (p.category_id === selectedCat.id || descendantIds.has(p.category_id ?? ''))
+          : false;
         // Fallback to legacy enum category
         const legacySlugToEnum: Record<string, string> = {
           varikliai: 'engines',
@@ -201,7 +205,7 @@ export default function Produktai() {
           kita: 'other',
         };
         const matchesLegacy = legacySlugToEnum[categorySlug || ''] === p.category;
-        
+
         if (!matchesCategoryId && !matchesLegacy) return false;
       }
       
