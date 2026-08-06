@@ -68,6 +68,26 @@ function getConsentStatus() {
   return { analytics: false, marketing: false };
 }
 
+// TikTok Pixel helper. TikTok uses its own event names (notably
+// CompletePayment rather than Purchase) and a flat contents[] shape.
+// Gated on marketing consent, same as Meta.
+function trackTikTok(event: string, params: Record<string, unknown>) {
+  const w = window as unknown as { ttq?: { track: (e: string, p: unknown) => void } };
+  if (!w.ttq) return;
+  w.ttq.track(event, params);
+  console.log('[Analytics] TikTok', event, params);
+}
+
+function ttContents(items: ProductData[]) {
+  return items.map((item) => ({
+    content_id: item.id,
+    content_type: 'product',
+    content_name: item.name,
+    quantity: item.quantity || 1,
+    price: item.price / 100,
+  }));
+}
+
 // Store event for potential server-side sending
 function storeEventForServer(eventName: string, eventId: string, data: any) {
   try {
@@ -125,6 +145,14 @@ export function trackViewContentEvent(product: ProductData): string {
     console.log('[Analytics] Meta ViewContent:', product.name, 'eventId:', eventId);
   }
 
+  if (marketing) {
+    trackTikTok('ViewContent', {
+      contents: ttContents([product]),
+      value: priceValue,
+      currency: product.currency || 'EUR',
+    });
+  }
+
   storeEventForServer('ViewContent', eventId, { product, priceValue });
   return eventId;
 }
@@ -161,6 +189,14 @@ export function trackAddToCartEvent(product: ProductData): string {
       currency: product.currency || 'EUR',
     }, { eventID: eventId });
     console.log('[Analytics] Meta AddToCart:', product.name, 'eventId:', eventId);
+  }
+
+  if (marketing) {
+    trackTikTok('AddToCart', {
+      contents: ttContents([product]),
+      value: priceValue * (product.quantity || 1),
+      currency: product.currency || 'EUR',
+    });
   }
 
   storeEventForServer('AddToCart', eventId, { product, priceValue });
@@ -201,6 +237,14 @@ export function trackBeginCheckoutEvent(data: CheckoutData): string {
     console.log('[Analytics] Meta InitiateCheckout:', totalValue, 'eventId:', eventId);
   }
 
+  if (marketing) {
+    trackTikTok('InitiateCheckout', {
+      contents: ttContents(data.items),
+      value: totalValue,
+      currency,
+    });
+  }
+
   storeEventForServer('InitiateCheckout', eventId, { ...data, totalValue });
   return eventId;
 }
@@ -235,6 +279,14 @@ export function trackAddPaymentInfoEvent(data: CheckoutData): string {
       currency,
     }, { eventID: eventId });
     console.log('[Analytics] Meta AddPaymentInfo:', totalValue, 'eventId:', eventId);
+  }
+
+  if (marketing) {
+    trackTikTok('AddPaymentInfo', {
+      contents: ttContents(data.items),
+      value: totalValue,
+      currency,
+    });
   }
 
   storeEventForServer('AddPaymentInfo', eventId, { ...data, totalValue });
@@ -273,6 +325,15 @@ export function trackPurchaseEvent(data: PurchaseData): string {
       num_items: data.items.reduce((sum, item) => sum + (item.quantity || 1), 0),
     }, { eventID: eventId });
     console.log('[Analytics] Meta Purchase:', data.orderNumber, totalValue, 'eventId:', eventId);
+  }
+
+  // TikTok's purchase event is CompletePayment, not Purchase.
+  if (marketing) {
+    trackTikTok('CompletePayment', {
+      contents: ttContents(data.items),
+      value: totalValue,
+      currency,
+    });
   }
 
   // Store for server-side sending (will be picked up by webhook)
@@ -320,6 +381,13 @@ export function useAnalytics() {
     if (hasMarketingConsent && window.fbq) {
       window.fbq('track', 'PageView', {}, { eventID: eventId });
       console.log('[Analytics] Meta PageView, eventId:', eventId);
+    }
+
+    // SPA route change — ttq.page() only fires once on initial load.
+    const w = window as unknown as { ttq?: { page: () => void } };
+    if (hasMarketingConsent && w.ttq) {
+      w.ttq.page();
+      console.log('[Analytics] TikTok PageView:', path);
     }
 
     return eventId;

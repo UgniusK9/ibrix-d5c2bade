@@ -21,7 +21,13 @@ interface SEOHeadProps {
 
 const SITE_NAME = 'IBRIX';
 const SITE_URL = 'https://ibrix.lt';
-const DEFAULT_IMAGE = `${SITE_URL}/og-image.jpg`;
+// Manufacturer brand — keep in sync with product-feed, kaina24-feed and
+// scripts/prerender-products.mjs, which all declare MOULD KING.
+const BRAND = 'MOULD KING';
+// Must match the og:image in index.html so crawler-visible and app-rendered
+// tags agree. TODO: self-host this instead of the leftover Lovable CDN URL.
+const DEFAULT_IMAGE =
+  'https://storage.googleapis.com/gpt-engineer-file-uploads/4J2n9vUjzYac0521Dg0U092acpH3/social-images/social-1767497666072-Logo.png';
 const DEFAULT_DESCRIPTION = 'IBRIX - Aukštos kokybės variklių ir mechaninių modelių parduotuvė Lietuvoje. Pre-order sistema, nemokamas pristatymas, 14 dienų grąžinimas.';
 
 export function SEOHead({
@@ -47,7 +53,7 @@ export function SEOHead({
     sku: product.sku,
     brand: {
       '@type': 'Brand',
-      name: SITE_NAME,
+      name: BRAND,
     },
     offers: {
       '@type': 'Offer',
@@ -85,10 +91,10 @@ export function SEOHead({
     '@type': 'Organization',
     name: SITE_NAME,
     url: SITE_URL,
-    logo: `${SITE_URL}/logo.png`,
+    logo: DEFAULT_IMAGE,
     sameAs: [
-      'https://www.facebook.com/ibrixlt',
-      'https://www.instagram.com/ibrix.lt',
+      'https://www.facebook.com/profile.php?id=61591339562016',
+      'https://www.tiktok.com/@ibrix.lt',
     ],
     contactPoint: {
       '@type': 'ContactPoint',

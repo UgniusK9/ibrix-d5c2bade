@@ -23,6 +23,9 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = resolve(__dirname, "..");
 const DIST = resolve(ROOT, "dist");
 const SITE_URL = (process.env.SITE_URL || "https://ibrix.lt").replace(/\/$/, "");
+// Manufacturer brand — keep in sync with supabase/functions/product-feed and
+// kaina24-feed, which both declare MOULD KING as the brand/vendor.
+const BRAND = "MOULD KING";
 
 function loadDotEnv() {
   const path = resolve(ROOT, ".env");
@@ -69,6 +72,7 @@ async function fetchProducts() {
     "slug", "title", "short_desc", "description",
     "price_eur", "sale_price_eur", "sku",
     "stock_status", "inventory_qty", "images", "updated_at",
+    "meta_title", "meta_description", "og_image_url", "canonical_slug",
   ].join(",");
   const url = `${SUPABASE_URL}/rest/v1/products?select=${fields}&status=eq.active`;
   const res = await fetch(url, {
@@ -88,10 +92,16 @@ function availability(p) {
 }
 
 function buildHead(p) {
-  const url = `${SITE_URL}/produktas/${p.slug}`;
-  const title = `${p.title} | IBRIX`;
-  const desc = truncate(p.short_desc || p.description || `${p.title} — IBRIX konstruktorius.`);
-  const image = firstImage(p.images);
+  // canonical_slug lets a product point at another slug as the indexable URL
+  // (duplicate/variant listings); falls back to its own slug.
+  const canonical = `${SITE_URL}/produktas/${p.canonical_slug || p.slug}`;
+  // meta_title / meta_description are the hand-written Lithuanian SEO copy and
+  // take priority over the raw catalogue title and short_desc.
+  const title = `${p.meta_title || p.title} | IBRIX`;
+  const desc = truncate(
+    p.meta_description || p.short_desc || p.description || `${p.title} — IBRIX konstruktorius.`
+  );
+  const image = p.og_image_url || firstImage(p.images);
   const price = Number(p.sale_price_eur ?? p.price_eur ?? 0);
   const jsonLd = {
     "@context": "https://schema.org",
@@ -100,10 +110,11 @@ function buildHead(p) {
     description: desc,
     ...(image ? { image } : {}),
     ...(p.sku ? { sku: p.sku } : {}),
-    brand: { "@type": "Brand", name: "IBRIX" },
+    // Manufacturer, not retailer — matches BRAND in product-feed/kaina24-feed.
+    brand: { "@type": "Brand", name: BRAND },
     offers: {
       "@type": "Offer",
-      url,
+      url: canonical,
       priceCurrency: "EUR",
       price: price.toFixed(2),
       availability: availability(p),
@@ -114,11 +125,13 @@ function buildHead(p) {
   return [
     `<title>${htmlEscape(title)}</title>`,
     `<meta name="description" content="${htmlEscape(desc)}" />`,
-    `<link rel="canonical" href="${htmlEscape(url)}" />`,
+    `<link rel="canonical" href="${htmlEscape(canonical)}" />`,
     `<meta property="og:type" content="product" />`,
     `<meta property="og:title" content="${htmlEscape(title)}" />`,
     `<meta property="og:description" content="${htmlEscape(desc)}" />`,
-    `<meta property="og:url" content="${htmlEscape(url)}" />`,
+    `<meta property="og:url" content="${htmlEscape(canonical)}" />`,
+    `<meta property="og:site_name" content="IBRIX" />`,
+    `<meta property="og:locale" content="lt_LT" />`,
     image ? `<meta property="og:image" content="${htmlEscape(image)}" />` : "",
     `<meta property="product:price:amount" content="${price.toFixed(2)}" />`,
     `<meta property="product:price:currency" content="EUR" />`,
