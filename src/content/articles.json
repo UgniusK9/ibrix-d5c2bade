@@ -1,0 +1,121 @@
+{
+  "_comment": "Guide articles for /patarimai. Consumed at runtime by src/pages/Patarimai.tsx and src/pages/Straipsnis.tsx, and at build time by scripts/prerender-static.mjs and scripts/generate-sitemap.mjs. Adding an entry here is enough — routes, sitemap and prerendering all pick it up automatically.",
+  "articles": [
+    {
+      "slug": "kaip-issirinkti-pirma-konstruktoriu",
+      "title": "Kaip išsirinkti pirmą MOULD KING konstruktorių",
+      "description": "Renkantis pirmą techninį konstruktorių svarbiausia ne detalių skaičius, o surinkimo sudėtingumas. Praktinis gidas pradedantiesiems.",
+      "published": "2026-08-07",
+      "readMinutes": 4,
+      "intro": "Techninių konstruktorių pasirinkimas gali atrodyti painus: vienur 500 detalių, kitur 3 000, o kainos skiriasi kelis kartus. Šiame gide paaiškiname, į ką iš tikrųjų verta žiūrėti renkantis pirmą rinkinį.",
+      "sections": [
+        {
+          "heading": "Nuo kiek detalių pradėti",
+          "body": [
+            "Pradedantiesiems dažniausiai tinka 500–1 200 detalių rinkiniai. Tokį modelį galima surinkti per vieną ar du vakarus, o instrukcijos dar nereikalauja patirties su sudėtingesniais mechanizmais.",
+            "Didesni, 2 000+ detalių rinkiniai nėra sunkesni patys savaime, bet jie ilgesni. Jei surinkimas užtrunka kelias savaites, nebaigtas modelis dažnai lieka gulėti stalčiuje."
+          ]
+        },
+        {
+          "heading": "Ar verta rinktis modelį su varikliu",
+          "body": [
+            "Varikliniai modeliai įspūdingesni – juda stūmokliai, sukasi pavaros, veikia vairo mechanizmas. Bet jie reikalauja tikslesnio surinkimo: viena netiksliai įstatyta pavara ir mechanizmas strigs.",
+            "Pirmam kartui saugesnis pasirinkimas yra mechaninis modelis be elektronikos. Judesį jame sukuria rankinis sukimas, tad net ir suklydus lengviau rasti klaidą."
+          ]
+        },
+        {
+          "heading": "Į ką žiūrėti be detalių skaičiaus",
+          "body": [
+            "Amžiaus rekomendacija ant dėžutės rodo ne tiek amžių, kiek surinkimo sudėtingumą. Modelio dydis surinkus svarbus, jei planuojate jį eksponuoti – kai kurie modeliai surinkti užima daugiau nei pusę metro.",
+            "Taip pat verta pasidomėti, ar rinkinys turi vitriną arba stovą. Kolekciniams modeliams tai dažnai svarbiau nei pati konstrukcija."
+          ]
+        },
+        {
+          "heading": "Ką daryti, jei trūksta detalės",
+          "body": [
+            "Tai nutinka retai, bet nutinka. Perkant iš IBRIX trūkstamas detales atsiunčiame nemokamai – tereikia nurodyti rinkinio numerį ir detalės numerį iš instrukcijos."
+          ]
+        }
+      ],
+      "cta": {
+        "title": "Konstruktoriai pradedantiesiems",
+        "note": "Modeliai iki 1 200 detalių",
+        "label": "Peržiūrėti",
+        "href": "/produktai/visi"
+      }
+    },
+    {
+      "slug": "ar-mould-king-detales-tinka-lego",
+      "title": "Ar MOULD KING detalės suderinamos su kitais konstruktoriais",
+      "description": "Dažniausiai užduodamas klausimas prieš perkant pirmą MOULD KING rinkinį. Paaiškiname, kaip veikia standartinė kaiščių sistema.",
+      "published": "2026-08-07",
+      "readMinutes": 3,
+      "intro": "Prieš perkant pirmą MOULD KING rinkinį dažniausiai klausiama, ar detalės tiks prie jau turimos kolekcijos. Trumpas atsakymas – taip, fiziškai jos jungiasi.",
+      "sections": [
+        {
+          "heading": "Kaip veikia standartinė sistema",
+          "body": [
+            "MOULD KING konstruktoriai naudoja tą pačią standartinę kaiščių ir angų sistemą, kaip ir dauguma rinkoje esančių plastikinių konstruktorių. Kaiščių žingsnis ir skersmuo yra standartiniai, todėl detalės tarpusavyje jungiasi.",
+            "Tai reiškia, kad ašys, jungtys, pavaros ir sijos yra keičiamos tarpusavyje su kitų gamintojų technine linija."
+          ]
+        },
+        {
+          "heading": "Ko tikėtis praktiškai",
+          "body": [
+            "Atskirų gamintojų plastiko atspalviai gali šiek tiek skirtis, ypač pilkos ir baltos spalvos. Jei modelį renkate eksponavimui, detales iš skirtingų rinkinių verta maišyti atsargiai.",
+            "Sujungimo standumas taip pat gali skirtis. Naujos detalės iš pradžių būna kietesnės ir prasimina po kelių surinkimų."
+          ]
+        },
+        {
+          "heading": "Dėl elektronikos",
+          "body": [
+            "Varikliai, valdikliai ir baterijų dėžutės tarp gamintojų dažnai nesuderinami – skiriasi jungtys ir įtampa. Elektroninius komponentus rinkitės iš to paties gamintojo kaip ir rinkinys."
+          ]
+        }
+      ],
+      "cta": {
+        "title": "Techniniai MOULD KING modeliai",
+        "note": "Varikliai, pavaros ir mechanizmai",
+        "label": "Peržiūrėti",
+        "href": "/produktai/varikliai"
+      },
+      "disclaimer": "LEGO® yra registruotas LEGO Group prekės ženklas. IBRIX nėra susijęs su LEGO Group, o MOULD KING yra atskiras gamintojas."
+    },
+    {
+      "slug": "kas-yra-pre-order",
+      "title": "Kas yra pre-order ir kodėl verta laukti",
+      "description": "Pre-order leidžia rezervuoti konstruktorių dar prieš jam atkeliaujant į sandėlį. Paaiškiname, kaip tai veikia IBRIX ir ko tikėtis.",
+      "published": "2026-08-07",
+      "readMinutes": 3,
+      "intro": "Dalis MOULD KING modelių ibrix.lt pažymėti kaip pre-order. Tai reiškia, kad rinkinį galite rezervuoti dar prieš jam atkeliaujant į mūsų sandėlį.",
+      "sections": [
+        {
+          "heading": "Kaip tai veikia",
+          "body": [
+            "Rezervuodami sumokate avansą, o likutį – prieš išsiuntimą. Prie kiekvieno pre-order modelio nurodome numatomą laukimo terminą savaitėmis, kad iš anksto žinotumėte, ko tikėtis.",
+            "Kai prekė atkeliauja, susisiekiame ir patvirtiname siuntimą."
+          ]
+        },
+        {
+          "heading": "Kodėl kai kurie modeliai tik pre-order",
+          "body": [
+            "Populiaresni ir naujesni modeliai išparduodami greitai, o gamybos partijos būna ribotos. Pre-order leidžia užsitikrinti rinkinį iš artimiausios partijos, užuot laukus, kol jis vėl atsiras sandėlyje.",
+            "Retesniems kolekciniams modeliams tai dažnai vienintelis būdas juos gauti."
+          ]
+        },
+        {
+          "heading": "Jei persigalvojote",
+          "body": [
+            "Pre-order užsakymą galima atšaukti, kol prekė dar neišsiųsta – avansą grąžiname. Gavus siuntą galioja įprasta 14 dienų grąžinimo teisė."
+          ]
+        }
+      ],
+      "cta": {
+        "title": "Kaip veikia pre-order",
+        "note": "Išsamios sąlygos ir terminai",
+        "label": "Skaityti daugiau",
+        "href": "/pre-order"
+      }
+    }
+  ]
+}

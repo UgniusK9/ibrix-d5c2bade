@@ -31,6 +31,7 @@ export function Footer() {
     narsyti: [
       { name: t('nav.constructors'), href: "/produktai/visi" },
       { name: t('nav.preOrder'), href: "/pre-order" },
+      { name: t('nav.guides'), href: "/patarimai" },
       { name: t('nav.about'), href: "/apie" },
       { name: t('nav.contact'), href: "/kontaktai" },
     ],

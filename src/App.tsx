@@ -26,6 +26,8 @@ const Produktai = lazy(() => import("./pages/Produktai"));
 const PreOrder = lazy(() => import("./pages/PreOrder"));
 const Pagalba = lazy(() => import("./pages/Pagalba"));
 const Apie = lazy(() => import("./pages/Apie"));
+const Patarimai = lazy(() => import("./pages/Patarimai"));
+const Straipsnis = lazy(() => import("./pages/Straipsnis"));
 const Kontaktai = lazy(() => import("./pages/Kontaktai"));
 const Produktas = lazy(() => import("./pages/Produktas"));
 const Pristatymas = lazy(() => import("./pages/Pristatymas"));
@@ -115,6 +117,8 @@ const App = () => (
                 <Route path="/pre-order" element={<PreOrder />} />
                 <Route path="/pagalba" element={<Pagalba />} />
                 <Route path="/apie" element={<Apie />} />
+                <Route path="/patarimai" element={<Patarimai />} />
+                <Route path="/patarimai/:slug" element={<Straipsnis />} />
                 <Route path="/kontaktai" element={<Kontaktai />} />
                 <Route path="/produktas/:handle" element={<Produktas />} />
                 <Route path="/pristatymas" element={<Pristatymas />} />

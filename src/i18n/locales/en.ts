@@ -182,6 +182,7 @@ export const en = {
     viewConstructors: 'View constructors',
     preOrder: 'How pre-order works',
     help: 'Help',
+    guides: 'Guides',
     about: 'About us',
     contact: 'Contact',
     information: 'Information',

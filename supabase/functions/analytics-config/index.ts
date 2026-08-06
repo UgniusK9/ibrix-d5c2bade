@@ -16,6 +16,7 @@ serve(async (req: Request) => {
     const config = {
       gaId: Deno.env.get('GA_MEASUREMENT_ID') || null,
       metaPixelId: Deno.env.get('META_PIXEL_ID') || null,
+      tiktokPixelId: Deno.env.get('TIKTOK_PIXEL_ID') || null,
     };
 
     return new Response(

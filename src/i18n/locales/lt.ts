@@ -184,6 +184,7 @@ export const lt = {
     viewConstructors: 'Peržiūrėti konstruktorius',
     preOrder: 'Kaip veikia pre-order',
     help: 'Pagalba',
+    guides: 'Patarimai',
     about: 'Apie mus',
     contact: 'Kontaktai',
     information: 'Informacija',

@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Mail, MapPin, Clock, Send, CheckCircle2 } from "lucide-react";
 import { PageLayout } from "@/components/layout/PageLayout";
+import { RouteSEO } from "@/components/seo/RouteSEO";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -118,6 +119,7 @@ export default function Kontaktai() {
 
   return (
     <PageLayout>
+      <RouteSEO />
       <section className="py-16 md:py-24">
         <div className="container">
           <div className="max-w-5xl mx-auto">

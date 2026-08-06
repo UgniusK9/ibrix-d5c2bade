@@ -1,0 +1,90 @@
+{
+  "_comment": "Single source of truth for static-route SEO copy. Consumed at build time by scripts/prerender-static.mjs (for social crawlers, which do not run JS) and at runtime by src/components/seo/RouteSEO.tsx (for client-side navigation). Keep paths in sync with staticPages in scripts/generate-sitemap.mjs. Titles get ' | IBRIX' appended automatically, so keep them short.",
+  "pages": [
+    {
+      "loc": "/produktai/visi",
+      "title": "Visi MOULD KING konstruktoriai",
+      "desc": "Visas MOULD KING konstruktorių asortimentas Lietuvoje — automobiliai, varikliai, gėlių puokštės ir techniniai modeliai. Oficialus atstovas, nemokamas pristatymas."
+    },
+    {
+      "loc": "/produktai/varikliai",
+      "title": "Variklių modeliai ir konstruktoriai",
+      "desc": "Judantys variklių modeliai — V8, V12, boxer ir rotaciniai. Techniniai konstruktoriai su veikiančiais stūmokliais mechanikos entuziastams."
+    },
+    {
+      "loc": "/pre-order",
+      "title": "Kaip veikia pre-order",
+      "desc": "Pre-order paaiškintas paprastai: rezervuojate konstruktorių su avansu, matote aiškų pristatymo terminą ir sumokate likutį prieš išsiuntimą."
+    },
+    {
+      "loc": "/dovanu-kuponai",
+      "title": "Dovanų kuponai",
+      "desc": "IBRIX dovanų kuponas — tinkama dovana konstruktorių mėgėjui. Pasirinktos vertės kuponas atkeliauja el. paštu ir galioja visam asortimentui."
+    },
+    {
+      "loc": "/patarimai",
+      "title": "Patarimai ir gidai",
+      "desc": "Praktiniai gidai apie techninius konstruktorius — kaip išsirinkti pirmą rinkinį, ar detalės suderinamos ir kaip veikia pre-order."
+    },
+    {
+      "loc": "/apie",
+      "title": "Apie mus",
+      "desc": "IBRIX — oficialus MOULD KING konstruktorių atstovas Lietuvoje. Kas mes esame, kodėl renkamės MOULD KING ir kaip padedame lietuviškai."
+    },
+    {
+      "loc": "/kontaktai",
+      "title": "Kontaktai",
+      "desc": "Susisiekite su IBRIX — el. paštas, telefonas ir atsakymai į klausimus apie užsakymus, pristatymą bei konstruktorius. Padedame lietuviškai."
+    },
+    {
+      "loc": "/pristatymas",
+      "title": "Pristatymas",
+      "desc": "Nemokamas pristatymas į paštomatus visoje Lietuvoje. Sužinokite pristatymo terminus, būdus ir kaip sekti savo siuntą."
+    },
+    {
+      "loc": "/garantija",
+      "title": "Garantija",
+      "desc": "Garantija IBRIX konstruktoriams — ką dengia, kiek galioja ir kaip pateikti prašymą, jei su gaminiu kažkas negerai."
+    },
+    {
+      "loc": "/grazinimai",
+      "title": "Grąžinimai",
+      "desc": "14 dienų grąžinimo teisė be papildomų klausimų. Kaip grąžinti konstruktorių, per kiek grąžiname pinigus ir kas apmoka siuntimą."
+    },
+    {
+      "loc": "/pagalba",
+      "title": "Pagalba ir DUK",
+      "desc": "Atsakymai į dažniausiai užduodamus klausimus apie užsakymus, pre-order, apmokėjimą, pristatymą ir grąžinimus."
+    },
+    {
+      "loc": "/trukstamos-detales",
+      "title": "Trūkstamos detalės — nemokamai",
+      "desc": "Trūksta detalės iš rinkinio? Atsiųsime trūkstamas detales nemokamai. Užpildykite formą ir nurodykite rinkinio numerį."
+    },
+    {
+      "loc": "/palyginti",
+      "title": "Palyginti konstruktorius",
+      "desc": "Palyginkite MOULD KING konstruktorius greta — detalių skaičius, kaina, matmenys ir savybės vienoje lentelėje."
+    },
+    {
+      "loc": "/atsiliepimai",
+      "title": "Klientų atsiliepimai",
+      "desc": "Ką apie IBRIX sako klientai Lietuvoje — atsiliepimai apie konstruktorių kokybę, pristatymo greitį ir aptarnavimą."
+    },
+    {
+      "loc": "/privatumo-politika",
+      "title": "Privatumo politika",
+      "desc": "Kaip IBRIX renka, naudoja ir saugo jūsų asmens duomenis pagal BDAR."
+    },
+    {
+      "loc": "/slapukai",
+      "title": "Slapukų politika",
+      "desc": "Kokius slapukus naudoja ibrix.lt, kam jie reikalingi ir kaip pakeisti savo sutikimo nustatymus."
+    },
+    {
+      "loc": "/taisykles",
+      "title": "Pirkimo taisyklės",
+      "desc": "IBRIX pirkimo–pardavimo taisyklės: užsakymo sudarymas, apmokėjimas, pristatymas, grąžinimai ir šalių atsakomybė."
+    }
+  ]
+}

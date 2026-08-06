@@ -1,9 +1,11 @@
 import { PageLayout } from "@/components/layout/PageLayout";
+import { RouteSEO } from "@/components/seo/RouteSEO";
 import { RotateCcw } from "lucide-react";
 
 export default function Grazinimai() {
   return (
     <PageLayout>
+      <RouteSEO />
       <section className="py-16 md:py-24">
         <div className="container max-w-3xl">
           <h1 className="font-heading text-4xl font-bold mb-8">Grąžinimai</h1>

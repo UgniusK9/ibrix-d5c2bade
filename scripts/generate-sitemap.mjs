@@ -29,8 +29,19 @@ loadDotEnv();
 const SUPABASE_URL = process.env.VITE_SUPABASE_URL;
 const SUPABASE_KEY = process.env.VITE_SUPABASE_PUBLISHABLE_KEY;
 
+/** Guide articles — same source the app and prerenderer read. */
+const articles = JSON.parse(
+  readFileSync(resolve(ROOT, "src", "content", "articles.json"), "utf8")
+).articles;
+
 const staticPages = [
   { loc: "", priority: "1.0", changefreq: "daily" },
+  { loc: "/patarimai", priority: "0.7", changefreq: "weekly" },
+  ...articles.map((a) => ({
+    loc: `/patarimai/${a.slug}`,
+    priority: "0.6",
+    changefreq: "monthly",
+  })),
   { loc: "/produktai/visi", priority: "0.9", changefreq: "daily" },
   { loc: "/produktai/varikliai", priority: "0.9", changefreq: "daily" },
   { loc: "/pre-order", priority: "0.8", changefreq: "weekly" },
