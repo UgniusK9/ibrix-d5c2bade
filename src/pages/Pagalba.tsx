@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { Truck, RotateCcw, Shield, Puzzle, Clock, Phone, ArrowRight } from "lucide-react";
 import { PageLayout } from "@/components/layout/PageLayout";
+import { RouteSEO } from "@/components/seo/RouteSEO";
 import { Button } from "@/components/ui/button";
 import { FAQSection } from "@/components/home/FAQSection";
 
@@ -52,6 +53,7 @@ const helpCards = [
 export default function Pagalba() {
   return (
     <PageLayout>
+      <RouteSEO />
       <section className="py-16 md:py-24">
         <div className="container">
           {/* Header */}

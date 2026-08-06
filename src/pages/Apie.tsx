@@ -1,6 +1,7 @@
 import { Clock, Truck, Headphones, Puzzle, ArrowRight } from "lucide-react";
 import { Link } from "react-router-dom";
 import { PageLayout } from "@/components/layout/PageLayout";
+import { RouteSEO } from "@/components/seo/RouteSEO";
 import { Button } from "@/components/ui/button";
 
 const expectations = [
@@ -29,6 +30,7 @@ const expectations = [
 export default function Apie() {
   return (
     <PageLayout>
+      <RouteSEO />
       <section className="py-16 md:py-24">
         <div className="container">
           <div className="max-w-3xl mx-auto">

@@ -29,91 +29,12 @@ const DIST = resolve(ROOT, "dist");
 const SITE_URL = (process.env.SITE_URL || "https://ibrix.lt").replace(/\/$/, "");
 
 /**
- * Per-route SEO copy. `loc` matches the paths in generate-sitemap.mjs.
- * Titles get " | IBRIX" appended automatically, so keep them short.
+ * Per-route SEO copy, shared with the runtime RouteSEO component so the tags
+ * crawlers see and the tags client-side navigation sets cannot drift apart.
  */
-const pages = [
-  {
-    loc: "/produktai/visi",
-    title: "Visi MOULD KING konstruktoriai",
-    desc: "Visas MOULD KING konstruktorių asortimentas Lietuvoje — automobiliai, varikliai, gėlių puokštės ir techniniai modeliai. Oficialus atstovas, nemokamas pristatymas.",
-  },
-  {
-    loc: "/produktai/varikliai",
-    title: "Variklių modeliai ir konstruktoriai",
-    desc: "Judantys variklių modeliai — V8, V12, boxer ir rotaciniai. Techniniai konstruktoriai su veikiančiais stūmokliais mechanikos entuziastams.",
-  },
-  {
-    loc: "/pre-order",
-    title: "Kaip veikia pre-order",
-    desc: "Pre-order paaiškintas paprastai: rezervuojate konstruktorių su avansu, matote aiškų pristatymo terminą ir sumokate likutį prieš išsiuntimą.",
-  },
-  {
-    loc: "/dovanu-kuponai",
-    title: "Dovanų kuponai",
-    desc: "IBRIX dovanų kuponas — tinkama dovana konstruktorių mėgėjui. Pasirinktos vertės kuponas atkeliauja el. paštu ir galioja visam asortimentui.",
-  },
-  {
-    loc: "/apie",
-    title: "Apie mus",
-    desc: "IBRIX — oficialus MOULD KING konstruktorių atstovas Lietuvoje. Kas mes esame, kodėl renkamės MOULD KING ir kaip padedame lietuviškai.",
-  },
-  {
-    loc: "/kontaktai",
-    title: "Kontaktai",
-    desc: "Susisiekite su IBRIX — el. paštas, telefonas ir atsakymai į klausimus apie užsakymus, pristatymą bei konstruktorius. Padedame lietuviškai.",
-  },
-  {
-    loc: "/pristatymas",
-    title: "Pristatymas",
-    desc: "Nemokamas pristatymas į paštomatus visoje Lietuvoje. Sužinokite pristatymo terminus, būdus ir kaip sekti savo siuntą.",
-  },
-  {
-    loc: "/garantija",
-    title: "Garantija",
-    desc: "Garantija IBRIX konstruktoriams — ką dengia, kiek galioja ir kaip pateikti prašymą, jei su gaminiu kažkas negerai.",
-  },
-  {
-    loc: "/grazinimai",
-    title: "Grąžinimai",
-    desc: "14 dienų grąžinimo teisė be papildomų klausimų. Kaip grąžinti konstruktorių, per kiek grąžiname pinigus ir kas apmoka siuntimą.",
-  },
-  {
-    loc: "/pagalba",
-    title: "Pagalba ir DUK",
-    desc: "Atsakymai į dažniausiai užduodamus klausimus apie užsakymus, pre-order, apmokėjimą, pristatymą ir grąžinimus.",
-  },
-  {
-    loc: "/trukstamos-detales",
-    title: "Trūkstamos detalės — nemokamai",
-    desc: "Trūksta detalės iš rinkinio? Atsiųsime trūkstamas detales nemokamai. Užpildykite formą ir nurodykite rinkinio numerį.",
-  },
-  {
-    loc: "/palyginti",
-    title: "Palyginti konstruktorius",
-    desc: "Palyginkite MOULD KING konstruktorius greta — detalių skaičius, kaina, matmenys ir savybės vienoje lentelėje.",
-  },
-  {
-    loc: "/atsiliepimai",
-    title: "Klientų atsiliepimai",
-    desc: "Ką apie IBRIX sako klientai Lietuvoje — atsiliepimai apie konstruktorių kokybę, pristatymo greitį ir aptarnavimą.",
-  },
-  {
-    loc: "/privatumo-politika",
-    title: "Privatumo politika",
-    desc: "Kaip IBRIX renka, naudoja ir saugo jūsų asmens duomenis pagal BDAR.",
-  },
-  {
-    loc: "/slapukai",
-    title: "Slapukų politika",
-    desc: "Kokius slapukus naudoja ibrix.lt, kam jie reikalingi ir kaip pakeisti savo sutikimo nustatymus.",
-  },
-  {
-    loc: "/taisykles",
-    title: "Pirkimo taisyklės",
-    desc: "IBRIX pirkimo–pardavimo taisyklės: užsakymo sudarymas, apmokėjimas, pristatymas, grąžinimai ir šalių atsakomybė.",
-  },
-];
+const pages = JSON.parse(
+  readFileSync(resolve(ROOT, "src", "config", "seoPages.json"), "utf8")
+).pages;
 
 function htmlEscape(s) {
   return String(s ?? "").replace(/[&<>"']/g, (c) => ({
@@ -135,22 +56,26 @@ function shellOgImage(shell) {
 function buildHead(page, ogImage) {
   const url = `${SITE_URL}${page.loc}`;
   const title = `${page.title} | IBRIX`;
+  // react-helmet-async only manages tags carrying data-rh. Marking the
+  // prerendered tags means Helmet REPLACES them once React mounts instead of
+  // appending a second description/canonical alongside them.
+  const rh = 'data-rh="true"';
 
   return [
     `<title>${htmlEscape(title)}</title>`,
-    `<meta name="description" content="${htmlEscape(page.desc)}" />`,
-    `<link rel="canonical" href="${htmlEscape(url)}" />`,
-    `<meta property="og:type" content="website" />`,
-    `<meta property="og:title" content="${htmlEscape(title)}" />`,
-    `<meta property="og:description" content="${htmlEscape(page.desc)}" />`,
-    `<meta property="og:url" content="${htmlEscape(url)}" />`,
-    `<meta property="og:site_name" content="IBRIX" />`,
-    `<meta property="og:locale" content="lt_LT" />`,
-    ogImage ? `<meta property="og:image" content="${htmlEscape(ogImage)}" />` : "",
-    `<meta name="twitter:card" content="summary_large_image" />`,
-    `<meta name="twitter:title" content="${htmlEscape(title)}" />`,
-    `<meta name="twitter:description" content="${htmlEscape(page.desc)}" />`,
-    ogImage ? `<meta name="twitter:image" content="${htmlEscape(ogImage)}" />` : "",
+    `<meta ${rh} name="description" content="${htmlEscape(page.desc)}" />`,
+    `<link ${rh} rel="canonical" href="${htmlEscape(url)}" />`,
+    `<meta ${rh} property="og:type" content="website" />`,
+    `<meta ${rh} property="og:title" content="${htmlEscape(title)}" />`,
+    `<meta ${rh} property="og:description" content="${htmlEscape(page.desc)}" />`,
+    `<meta ${rh} property="og:url" content="${htmlEscape(url)}" />`,
+    `<meta ${rh} property="og:site_name" content="IBRIX" />`,
+    `<meta ${rh} property="og:locale" content="lt_LT" />`,
+    ogImage ? `<meta ${rh} property="og:image" content="${htmlEscape(ogImage)}" />` : "",
+    `<meta ${rh} name="twitter:card" content="summary_large_image" />`,
+    `<meta ${rh} name="twitter:title" content="${htmlEscape(title)}" />`,
+    `<meta ${rh} name="twitter:description" content="${htmlEscape(page.desc)}" />`,
+    ogImage ? `<meta ${rh} name="twitter:image" content="${htmlEscape(ogImage)}" />` : "",
   ].filter(Boolean).join("\n    ");
 }
 

@@ -122,23 +122,28 @@ function buildHead(p) {
     },
   };
 
+  // react-helmet-async only manages tags carrying data-rh. Marking the
+  // prerendered tags means Helmet REPLACES them once React mounts instead of
+  // appending a second description/canonical alongside them.
+  const rh = 'data-rh="true"';
+
   return [
     `<title>${htmlEscape(title)}</title>`,
-    `<meta name="description" content="${htmlEscape(desc)}" />`,
-    `<link rel="canonical" href="${htmlEscape(canonical)}" />`,
-    `<meta property="og:type" content="product" />`,
-    `<meta property="og:title" content="${htmlEscape(title)}" />`,
-    `<meta property="og:description" content="${htmlEscape(desc)}" />`,
-    `<meta property="og:url" content="${htmlEscape(canonical)}" />`,
-    `<meta property="og:site_name" content="IBRIX" />`,
-    `<meta property="og:locale" content="lt_LT" />`,
-    image ? `<meta property="og:image" content="${htmlEscape(image)}" />` : "",
-    `<meta property="product:price:amount" content="${price.toFixed(2)}" />`,
-    `<meta property="product:price:currency" content="EUR" />`,
-    `<meta name="twitter:card" content="summary_large_image" />`,
-    `<meta name="twitter:title" content="${htmlEscape(title)}" />`,
-    `<meta name="twitter:description" content="${htmlEscape(desc)}" />`,
-    image ? `<meta name="twitter:image" content="${htmlEscape(image)}" />` : "",
+    `<meta ${rh} name="description" content="${htmlEscape(desc)}" />`,
+    `<link ${rh} rel="canonical" href="${htmlEscape(canonical)}" />`,
+    `<meta ${rh} property="og:type" content="product" />`,
+    `<meta ${rh} property="og:title" content="${htmlEscape(title)}" />`,
+    `<meta ${rh} property="og:description" content="${htmlEscape(desc)}" />`,
+    `<meta ${rh} property="og:url" content="${htmlEscape(canonical)}" />`,
+    `<meta ${rh} property="og:site_name" content="IBRIX" />`,
+    `<meta ${rh} property="og:locale" content="lt_LT" />`,
+    image ? `<meta ${rh} property="og:image" content="${htmlEscape(image)}" />` : "",
+    `<meta ${rh} property="product:price:amount" content="${price.toFixed(2)}" />`,
+    `<meta ${rh} property="product:price:currency" content="EUR" />`,
+    `<meta ${rh} name="twitter:card" content="summary_large_image" />`,
+    `<meta ${rh} name="twitter:title" content="${htmlEscape(title)}" />`,
+    `<meta ${rh} name="twitter:description" content="${htmlEscape(desc)}" />`,
+    image ? `<meta ${rh} name="twitter:image" content="${htmlEscape(image)}" />` : "",
     `<script type="application/ld+json">${JSON.stringify(jsonLd)}</script>`,
   ].filter(Boolean).join("\n    ");
 }

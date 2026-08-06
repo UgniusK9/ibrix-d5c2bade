@@ -1,4 +1,5 @@
 import { PageLayout } from "@/components/layout/PageLayout";
+import { RouteSEO } from "@/components/seo/RouteSEO";
 import { Puzzle } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -6,6 +7,7 @@ import { Button } from "@/components/ui/button";
 export default function TrukstamosDetales() {
   return (
     <PageLayout>
+      <RouteSEO />
       <section className="py-16 md:py-24">
         <div className="container max-w-3xl">
           <h1 className="font-heading text-4xl font-bold mb-8">Trūkstamos detalės</h1>
