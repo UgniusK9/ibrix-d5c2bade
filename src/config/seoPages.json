@@ -22,6 +22,11 @@
       "desc": "IBRIX dovanų kuponas — tinkama dovana konstruktorių mėgėjui. Pasirinktos vertės kuponas atkeliauja el. paštu ir galioja visam asortimentui."
     },
     {
+      "loc": "/patarimai",
+      "title": "Patarimai ir gidai",
+      "desc": "Praktiniai gidai apie techninius konstruktorius — kaip išsirinkti pirmą rinkinį, ar detalės suderinamos ir kaip veikia pre-order."
+    },
+    {
       "loc": "/apie",
       "title": "Apie mus",
       "desc": "IBRIX — oficialus MOULD KING konstruktorių atstovas Lietuvoje. Kas mes esame, kodėl renkamės MOULD KING ir kaip padedame lietuviškai."

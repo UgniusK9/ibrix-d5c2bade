@@ -36,6 +36,17 @@ const pages = JSON.parse(
   readFileSync(resolve(ROOT, "src", "config", "seoPages.json"), "utf8")
 ).pages;
 
+// Guide articles are prerendered too — they are the pages most likely to be
+// found through search and shared, so their head tags must be crawler-visible.
+const articles = JSON.parse(
+  readFileSync(resolve(ROOT, "src", "content", "articles.json"), "utf8")
+).articles.map((a) => ({
+  loc: `/patarimai/${a.slug}`,
+  title: a.title,
+  desc: a.description,
+  type: "article",
+}));
+
 function htmlEscape(s) {
   return String(s ?? "").replace(/[&<>"']/g, (c) => ({
     "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;",
@@ -65,7 +76,7 @@ function buildHead(page, ogImage) {
     `<title>${htmlEscape(title)}</title>`,
     `<meta ${rh} name="description" content="${htmlEscape(page.desc)}" />`,
     `<link ${rh} rel="canonical" href="${htmlEscape(url)}" />`,
-    `<meta ${rh} property="og:type" content="website" />`,
+    `<meta ${rh} property="og:type" content="${page.type === "article" ? "article" : "website"}" />`,
     `<meta ${rh} property="og:title" content="${htmlEscape(title)}" />`,
     `<meta ${rh} property="og:description" content="${htmlEscape(page.desc)}" />`,
     `<meta ${rh} property="og:url" content="${htmlEscape(url)}" />`,
@@ -104,14 +115,16 @@ async function main() {
   const ogImage = shellOgImage(shell);
 
   let written = 0;
-  for (const page of pages) {
+  for (const page of [...pages, ...articles]) {
     const html = injectHead(shell, buildHead(page, ogImage));
     const outDir = resolve(DIST, page.loc.replace(/^\//, ""));
     mkdirSync(outDir, { recursive: true });
     writeFileSync(resolve(outDir, "index.html"), html, "utf8");
     written++;
   }
-  console.log(`[prerender-static] Wrote ${written} static page(s) under dist/.`);
+  console.log(
+    `[prerender-static] Wrote ${written} page(s) under dist/ (${pages.length} static + ${articles.length} article).`
+  );
 }
 
 main().catch((err) => {

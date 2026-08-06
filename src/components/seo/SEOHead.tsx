@@ -25,9 +25,8 @@ const SITE_URL = 'https://ibrix.lt';
 // scripts/prerender-products.mjs, which all declare MOULD KING.
 const BRAND = 'MOULD KING';
 // Must match the og:image in index.html so crawler-visible and app-rendered
-// tags agree. TODO: self-host this instead of the leftover Lovable CDN URL.
-const DEFAULT_IMAGE =
-  'https://storage.googleapis.com/gpt-engineer-file-uploads/4J2n9vUjzYac0521Dg0U092acpH3/social-images/social-1767497666072-Logo.png';
+// tags agree. Self-hosted; regenerate with scripts/generate-og-image.mjs.
+const DEFAULT_IMAGE = `${SITE_URL}/og-image.jpg`;
 const DEFAULT_DESCRIPTION = 'IBRIX - Aukštos kokybės variklių ir mechaninių modelių parduotuvė Lietuvoje. Pre-order sistema, nemokamas pristatymas, 14 dienų grąžinimas.';
 
 export function SEOHead({
@@ -129,7 +128,7 @@ export function SEOHead({
       <meta property="og:locale" content="lt_LT" />
       
       {/* Open Graph */}
-      <meta property="og:type" content={type === 'product' ? 'product' : 'website'} />
+      <meta property="og:type" content={type} />
       <meta property="og:title" content={fullTitle} />
       <meta property="og:description" content={description} />
       <meta property="og:image" content={image} />
