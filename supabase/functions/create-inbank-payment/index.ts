@@ -64,7 +64,7 @@ Deno.serve(async (req) => {
     const returnUrl = Deno.env.get('INBANK_RETURN_URL') ?? 'https://ibrix.lt/uzsakymas';
     const callbackUrl =
       Deno.env.get('INBANK_CALLBACK_URL') ??
-      'https://huawtqggkzujiptndmns.supabase.co/functions/v1/inbank-callback';
+      `${Deno.env.get('SUPABASE_URL')}/functions/v1/inbank-callback`;
     const testMode = Deno.env.get('INBANK_TEST_MODE') ?? '1';
 
     if (!partnerId || !apiKey || !apiSecret) {

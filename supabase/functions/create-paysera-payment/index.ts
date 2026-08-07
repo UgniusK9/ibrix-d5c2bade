@@ -108,7 +108,11 @@ Deno.serve(async (req) => {
       orderid: order.id,
       accepturl: `https://ibrix.lt/uzsakymas?order_id=${order.id}&payment=paysera`,
       cancelurl: cancelUrl || `https://ibrix.lt/checkout?cancelled=true`,
-      callbackurl: callbackUrl || `https://huawtqggkzujiptndmns.supabase.co/functions/v1/paysera-callback`,
+      // Derive from SUPABASE_URL rather than hardcoding a project ref. The
+      // previous default pointed at a different project entirely, so without
+      // PAYSERA_CALLBACK_URL set, payment confirmations went somewhere we do
+      // not own and orders stayed unpaid forever after a successful payment.
+      callbackurl: callbackUrl || `${Deno.env.get('SUPABASE_URL')}/functions/v1/paysera-callback`,
       amount: amountCents.toString(),
       currency: 'EUR',
       country: 'LT',

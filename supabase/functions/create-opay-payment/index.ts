@@ -62,7 +62,7 @@ Deno.serve(async (req) => {
     const apiUrl = Deno.env.get('OPAY_API_URL') ?? 'https://api.opay.lt/v1';
     const callbackUrl =
       Deno.env.get('OPAY_CALLBACK_URL') ??
-      `https://huawtqggkzujiptndmns.supabase.co/functions/v1/opay-callback`;
+      `${Deno.env.get('SUPABASE_URL')}/functions/v1/opay-callback`;
     const acceptUrl = Deno.env.get('OPAY_ACCEPT_URL') ?? 'https://ibrix.lt/uzsakymas';
     const cancelUrl =
       Deno.env.get('OPAY_CANCEL_URL') ?? 'https://ibrix.lt/checkout?cancelled=true';

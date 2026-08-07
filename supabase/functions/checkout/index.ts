@@ -65,7 +65,10 @@ const checkoutSchema = z.object({
   useWalletBalance: z.boolean().optional(),
   walletDeductionCents: z.number().min(0).optional(),
   // Payment provider
-  paymentProvider: z.enum(['stripe', 'paypal', 'paysera']).optional(),
+  // Must list every provider PaymentMethodSelector can send. Previously this
+  // omitted opay and inbank while the UI offered them, so those checkouts
+  // failed validation with a 400 before an order row was ever created.
+  paymentProvider: z.enum(['stripe', 'paypal', 'paysera', 'opay', 'inbank']).optional(),
   paymentMethodCode: z.string().max(50).optional(),
   skipStripe: z.boolean().optional(),
 });

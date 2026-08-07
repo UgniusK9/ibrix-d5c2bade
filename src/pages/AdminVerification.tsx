@@ -57,7 +57,7 @@ export default function AdminVerification() {
   const [whoami, setWhoami] = useState<WhoamiResponse | null>(null);
   const [webhookHealth, setWebhookHealth] = useState<WebhookHealthResponse | null>(null);
 
-  const projectId = import.meta.env.VITE_SUPABASE_PROJECT_ID || 'huawtqggkzujiptndmns';
+  const projectId = import.meta.env.VITE_SUPABASE_PROJECT_ID || 'xutfxycojeydcgrpsrsy';
   const webhookUrl = `https://${projectId}.supabase.co/functions/v1/stripe-webhook`;
 
   const runVerification = async () => {

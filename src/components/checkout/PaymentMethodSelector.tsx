@@ -23,7 +23,7 @@ const PAYMENT_METHODS: PaymentMethod[] = [
     title: 'Banko kortelė',
     subtitle: 'Visa, Mastercard per OPAY',
     logo: '/payment-logos/card.svg',
-    enabled: true,
+    enabled: false,
   },
   {
     id: 'opay-banklink',
@@ -32,7 +32,7 @@ const PAYMENT_METHODS: PaymentMethod[] = [
     title: 'Banko pavedimas',
     subtitle: 'Swedbank, SEB, Luminor, Revolut ir kt. per OPAY',
     logo: '/payment-logos/swedbank.svg',
-    enabled: true,
+    enabled: false,
   },
 
   // ─── Inbank (BNPL — installment financing) ────────────────────────
@@ -43,7 +43,7 @@ const PAYMENT_METHODS: PaymentMethod[] = [
     title: 'Inbank išsimokėjimas (12 mėn.)',
     subtitle: 'Mokėk dalimis per 12 mėnesių',
     logo: '/payment-logos/card.svg',
-    enabled: true,
+    enabled: false,
     periodMonths: 12,
   },
   {
@@ -53,7 +53,7 @@ const PAYMENT_METHODS: PaymentMethod[] = [
     title: 'Inbank išsimokėjimas (24 mėn.)',
     subtitle: 'Mokėk dalimis per 24 mėnesius',
     logo: '/payment-logos/card.svg',
-    enabled: true,
+    enabled: false,
     periodMonths: 24,
   },
   {
@@ -63,7 +63,7 @@ const PAYMENT_METHODS: PaymentMethod[] = [
     title: 'Inbank išsimokėjimas (36 mėn.)',
     subtitle: 'Mokėk dalimis per 36 mėnesius',
     logo: '/payment-logos/card.svg',
-    enabled: true,
+    enabled: false,
     periodMonths: 36,
   },
 
@@ -93,7 +93,7 @@ const PAYMENT_METHODS: PaymentMethod[] = [
     title: 'Swedbank',
     subtitle: 'Tiesioginis mokėjimas per Swedbank',
     logo: '/payment-logos/swedbank.svg',
-    enabled: false, // Will be enabled when Paysera is configured
+    enabled: true, // Will be enabled when Paysera is configured
     bankCode: 'hanzalt',
   },
   {
@@ -103,7 +103,7 @@ const PAYMENT_METHODS: PaymentMethod[] = [
     title: 'SEB',
     subtitle: 'Tiesioginis mokėjimas per SEB',
     logo: '/payment-logos/seb.svg',
-    enabled: false,
+    enabled: true,
     bankCode: 'seblt',
   },
   {
@@ -113,7 +113,7 @@ const PAYMENT_METHODS: PaymentMethod[] = [
     title: 'Luminor',
     subtitle: 'Tiesioginis mokėjimas per Luminor',
     logo: '/payment-logos/luminor.svg',
-    enabled: false,
+    enabled: true,
     bankCode: 'lku',
   },
   {
@@ -123,7 +123,7 @@ const PAYMENT_METHODS: PaymentMethod[] = [
     title: 'Revolut',
     subtitle: 'Atsiskaityk per Revolut',
     logo: '/payment-logos/revolut.svg',
-    enabled: false,
+    enabled: true,
     bankCode: 'revolut',
   },
   {
@@ -133,7 +133,7 @@ const PAYMENT_METHODS: PaymentMethod[] = [
     title: 'Artea',
     subtitle: 'Tiesioginis mokėjimas per Artea',
     logo: '/payment-logos/artea.svg',
-    enabled: false,
+    enabled: true,
     bankCode: 'artea',
   },
   {
@@ -143,7 +143,7 @@ const PAYMENT_METHODS: PaymentMethod[] = [
     title: 'Šiaulių bankas',
     subtitle: 'Tiesioginis mokėjimas per Šiaulių banką',
     logo: '/payment-logos/siauliu.svg',
-    enabled: false,
+    enabled: true,
     bankCode: 'sb',
   },
   {
@@ -153,7 +153,7 @@ const PAYMENT_METHODS: PaymentMethod[] = [
     title: 'LKU',
     subtitle: 'Tiesioginis mokėjimas per LKU',
     logo: '/payment-logos/lku.svg',
-    enabled: false,
+    enabled: true,
     bankCode: 'lku',
   },
   {
@@ -163,7 +163,7 @@ const PAYMENT_METHODS: PaymentMethod[] = [
     title: 'Citadele',
     subtitle: 'Tiesioginis mokėjimas per Citadele',
     logo: '/payment-logos/citadele.svg',
-    enabled: false,
+    enabled: true,
     bankCode: 'citadele',
   },
   {
@@ -173,7 +173,7 @@ const PAYMENT_METHODS: PaymentMethod[] = [
     title: 'Paysera',
     subtitle: 'Kiti Paysera mokėjimo būdai',
     logo: '/payment-logos/paysera.svg',
-    enabled: false,
+    enabled: true,
     bankCode: 'paysera',
   },
 ];

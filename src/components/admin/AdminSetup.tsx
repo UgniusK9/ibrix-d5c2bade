@@ -30,7 +30,7 @@ export function AdminSetup({ webhookHealth }: AdminSetupProps) {
   const { user } = useAuth();
   const [expandedSection, setExpandedSection] = useState<string | null>('stripe');
 
-  const projectId = import.meta.env.VITE_SUPABASE_PROJECT_ID || 'huawtqggkzujiptndmns';
+  const projectId = import.meta.env.VITE_SUPABASE_PROJECT_ID || 'xutfxycojeydcgrpsrsy';
   const webhookUrl = `https://${projectId}.supabase.co/functions/v1/stripe-webhook`;
   
   const stripeConfigured = webhookHealth?.config?.stripe_secret_configured && 
