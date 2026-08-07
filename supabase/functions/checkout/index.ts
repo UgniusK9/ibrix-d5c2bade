@@ -68,6 +68,18 @@ const checkoutSchema = z.object({
   paymentProvider: z.enum(['stripe', 'paypal', 'paysera']).optional(),
   paymentMethodCode: z.string().max(50).optional(),
   skipStripe: z.boolean().optional(),
+  // Campaign attribution — best-effort, never required. Bounded lengths
+  // because these values come straight from a URL the visitor controls.
+  attribution: z.object({
+    utm_source: z.string().max(100).optional(),
+    utm_medium: z.string().max(100).optional(),
+    utm_campaign: z.string().max(150).optional(),
+    utm_content: z.string().max(150).optional(),
+    utm_term: z.string().max(150).optional(),
+    gclid: z.string().max(255).optional(),
+    fbclid: z.string().max(255).optional(),
+    landing_page: z.string().max(255).optional(),
+  }).optional(),
 });
 
 const log = (requestId: string, step: string, details?: any) => {
@@ -371,6 +383,14 @@ Deno.serve(async (req) => {
         invoice_country: body.invoiceCountry?.trim() || null,
         payment_provider: body.paymentProvider || 'stripe',
         payment_method_code: body.paymentMethodCode || 'card',
+        utm_source: body.attribution?.utm_source || null,
+        utm_medium: body.attribution?.utm_medium || null,
+        utm_campaign: body.attribution?.utm_campaign || null,
+        utm_content: body.attribution?.utm_content || null,
+        utm_term: body.attribution?.utm_term || null,
+        gclid: body.attribution?.gclid || null,
+        fbclid: body.attribution?.fbclid || null,
+        landing_page: body.attribution?.landing_page || null,
       })
       .select()
       .single();

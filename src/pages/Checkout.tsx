@@ -17,6 +17,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { trackBeginCheckoutEvent, trackAddPaymentInfoEvent } from "@/hooks/useAnalytics";
+import { getStoredUtmParams } from "@/hooks/useUtmTracking";
 import { DiscountCodeInput, AppliedDiscount } from "@/components/checkout/DiscountCodeInput";
 import { InvoiceFields } from "@/components/checkout/InvoiceFields";
 import { LockerSearch } from "@/components/checkout/LockerSearch"; // legacy — kept for future use
@@ -200,6 +201,12 @@ export default function Checkout() {
   }, []);
 
   const onSubmit = async (data: CheckoutFormData) => {
+    // Campaign attribution captured on landing, stamped onto the order so
+    // "where did this sale come from" is answerable from the orders table
+    // alone — no dependency on GA4 or a pixel surviving an ad blocker.
+    // Null when the visitor arrived untagged or declined analytics consent.
+    const attribution = getStoredUtmParams() ?? undefined;
+
     if (step === 1) {
       if (isLockerMethod) {
         if (!manualLocker.carrier) {
@@ -335,6 +342,7 @@ export default function Checkout() {
             creditsCents: 0,
             paymentProvider: 'stripe',
             paymentMethodCode: selectedPaymentMethod.code,
+            attribution,
           },
         });
 

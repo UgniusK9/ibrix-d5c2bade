@@ -370,6 +370,61 @@ Deno.serve(async (req) => {
         return new Response(JSON.stringify({ success: true, kpi, funnel, topProducts, integrationStatus }), { headers: { 'Content-Type': 'application/json', ...corsHeaders } });
       }
 
+      case 'get_attribution': {
+        // Where sales come from, straight off the orders table. Independent of
+        // GA4 and the pixels — an ad blocker cannot hide a completed order.
+        const periodDays = { '24h': 1, '7d': 7, '30d': 30, '90d': 90 }[body.period] || 30;
+        const startDate = new Date();
+        startDate.setDate(startDate.getDate() - periodDays);
+
+        const { data: orders, error } = await supabase
+          .from('orders')
+          .select('total_eur, status, utm_source, utm_medium, utm_campaign, utm_content, fbclid, gclid, created_at')
+          .gte('created_at', startDate.toISOString());
+        if (error) throw error;
+
+        // An order with no utm_source may still be attributable via a click id
+        // (fbclid survives when someone taps an ad without a tagged link).
+        const sourceOf = (o: any) => {
+          if (o.utm_source) return o.utm_source.toLowerCase();
+          if (o.fbclid) return 'facebook';
+          if (o.gclid) return 'google';
+          return 'direct / nežinoma';
+        };
+
+        const bucket = (rows: any[], keyFn: (o: any) => string | null) => {
+          const map = new Map<string, { key: string; orders: number; revenue: number }>();
+          for (const o of rows) {
+            const key = keyFn(o);
+            if (!key) continue;
+            const cur = map.get(key) || { key, orders: 0, revenue: 0 };
+            cur.orders += 1;
+            cur.revenue += Number(o.total_eur) || 0;
+            map.set(key, cur);
+          }
+          return [...map.values()].sort((a, b) => b.revenue - a.revenue);
+        };
+
+        const paid = (orders || []).filter((o: any) => o.status !== 'created' && o.status !== 'cancelled');
+
+        const totalRevenue = paid.reduce((s: number, o: any) => s + (Number(o.total_eur) || 0), 0);
+        const attributed = paid.filter((o: any) => o.utm_source || o.fbclid || o.gclid).length;
+
+        return new Response(JSON.stringify({
+          success: true,
+          period: body.period || '30d',
+          summary: {
+            orders: paid.length,
+            revenue: totalRevenue,
+            attributed,
+            attributedShare: paid.length ? attributed / paid.length : 0,
+          },
+          bySource: bucket(paid, sourceOf),
+          byCampaign: bucket(paid, (o) => o.utm_campaign || null),
+          byContent: bucket(paid, (o) => o.utm_content || null),
+        }), { headers: { 'Content-Type': 'application/json', ...corsHeaders } });
+      }
+
       case 'update_order_status': {
         const { error } = await supabase.from('orders').update({ status: body.status }).eq('id', body.orderId);
         if (error) throw error;
