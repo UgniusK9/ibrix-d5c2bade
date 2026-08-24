@@ -8,6 +8,7 @@ import { ProductsManager } from "@/components/admin/ProductsManager";
 import { OrdersManager } from "@/components/admin/OrdersManager";
 import { OffersManager } from "@/components/admin/OffersManager";
 import { AnalyticsDashboard } from "@/components/admin/AnalyticsDashboard";
+import { SalesAttribution } from "@/components/admin/SalesAttribution";
 import { AnalyticsCharts } from "@/components/admin/AnalyticsCharts";
 import { ProfitMarginReport } from "@/components/admin/ProfitMarginReport";
 import { RefundsManager } from "@/components/admin/RefundsManager";
@@ -77,6 +78,10 @@ export default function Admin() {
             <TabsTrigger value="analytics" className="gap-2">
               <BarChart3 className="w-4 h-4" />
               Analitika
+            </TabsTrigger>
+            <TabsTrigger value="attribution" className="gap-2">
+              <TrendingUp className="w-4 h-4" />
+              Šaltiniai
             </TabsTrigger>
             <TabsTrigger value="profit" className="gap-2">
               <TrendingUp className="w-4 h-4" />
@@ -153,6 +158,10 @@ export default function Admin() {
             <div className="mt-8">
               <BundlesManager />
             </div>
+          </TabsContent>
+
+          <TabsContent value="attribution">
+            <SalesAttribution />
           </TabsContent>
 
           <TabsContent value="analytics">
