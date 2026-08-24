@@ -1,8 +1,8 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { X, ArrowLeft, Eye, EyeOff, Loader2 } from 'lucide-react';
-import { Turnstile } from '@marsidev/react-turnstile';
+import { Turnstile, type TurnstileInstance } from '@marsidev/react-turnstile';
 import { TURNSTILE_SITE_KEY } from '@/config/turnstile';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -22,6 +22,16 @@ export default function AuthLogin() {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [captchaToken, setCaptchaToken] = useState<string | null>(null);
+  const turnstileRef = useRef<TurnstileInstance | null>(null);
+
+  // A Turnstile token is single-use: verifying it spends it at Cloudflare.
+  // After any failed attempt the widget still shows "Success!" while holding a
+  // token the server will now reject, so the next submit fails with a
+  // misleading "fill in the CAPTCHA". Reset the widget to issue a fresh one.
+  const resetCaptcha = () => {
+    setCaptchaToken(null);
+    turnstileRef.current?.reset();
+  };
   const [mode, setMode] = useState<'password' | 'magic'>('password');
   const [magicLinkSent, setMagicLinkSent] = useState(false);
   const [captchaError, setCaptchaError] = useState(false);
@@ -68,6 +78,7 @@ export default function AuthLogin() {
         const isValid = await verifyCaptcha(captchaToken);
         if (!isValid) {
           toast.error(t('auth.captchaRequired'));
+          resetCaptcha();
           setIsLoading(false);
           return;
         }
@@ -78,6 +89,7 @@ export default function AuthLogin() {
 
       if (error) {
         toast.error(t('auth.invalidCredentials'));
+        resetCaptcha();
       } else {
         navigate('/account');
       }
@@ -234,6 +246,7 @@ export default function AuthLogin() {
                 {!captchaError && (
                   <div className="flex justify-center">
                     <Turnstile
+                      ref={turnstileRef}
                       siteKey={TURNSTILE_SITE_KEY}
                       onSuccess={(token) => {
                         setCaptchaToken(token);

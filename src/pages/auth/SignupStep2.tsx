@@ -1,8 +1,8 @@
-import { useState, useEffect, type FormEvent } from 'react';
+import { useState, useEffect, type FormEvent, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { X, ArrowLeft, Eye, EyeOff, Loader2 } from 'lucide-react';
-import { Turnstile } from '@marsidev/react-turnstile';
+import { Turnstile, type TurnstileInstance } from '@marsidev/react-turnstile';
 import { TURNSTILE_SITE_KEY } from '@/config/turnstile';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -30,6 +30,14 @@ export default function SignupStep2() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [captchaToken, setCaptchaToken] = useState<string | null>(null);
+  const turnstileRef = useRef<TurnstileInstance | null>(null);
+
+  // Turnstile tokens are single-use. Clearing state alone leaves the widget
+  // showing "Success!" with a spent token, so reset the widget itself.
+  const resetCaptcha = () => {
+    setCaptchaToken(null);
+    turnstileRef.current?.reset();
+  };
   const [captchaError, setCaptchaError] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -165,7 +173,7 @@ export default function SignupStep2() {
       const isValid = await verifyCaptcha(captchaToken);
       if (!isValid) {
         toast.error(t('auth.captchaRequired'));
-        setCaptchaToken(null);
+        resetCaptcha();
         setIsLoading(false);
         return;
       }
@@ -196,6 +204,7 @@ export default function SignupStep2() {
 
       if (error || !data?.success) {
         setIsLoading(false);
+        resetCaptcha();
         toast.error(data?.error || error?.message || 'Registracijos klaida');
         return;
       }
@@ -412,6 +421,7 @@ export default function SignupStep2() {
 
             <div className="flex justify-center">
               <Turnstile
+                ref={turnstileRef}
                 siteKey={TURNSTILE_SITE_KEY}
                 onSuccess={(token) => {
                   setCaptchaToken(token);
