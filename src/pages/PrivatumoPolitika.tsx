@@ -2,6 +2,7 @@ import { PageLayout } from "@/components/layout/PageLayout";
 import { RouteSEO } from "@/components/seo/RouteSEO";
 import { Link } from "react-router-dom";
 import { useCookieConsentStore } from "@/stores/cookieConsentStore";
+import { COMPANY } from "@/config/company";
 
 export default function PrivatumoPolitika() {
   const { openModal } = useCookieConsentStore();
@@ -23,13 +24,21 @@ export default function PrivatumoPolitika() {
                 Duomenų valdytojas
               </h2>
               <p>
-                Už jūsų duomenų tvarkymą atsakinga IBRIX (įmonės duomenys bus nurodyti 
-                po oficialios registracijos).
+                Už jūsų asmens duomenų tvarkymą atsakingas duomenų valdytojas:
+              </p>
+              <p>
+                {COMPANY.legalName}
+                <br />
+                Juridinio asmens kodas: {COMPANY.regCode}
+                <br />
+                Buveinės adresas: {COMPANY.address}, {COMPANY.country}
+                <br />
+                Elektroninė parduotuvė: {COMPANY.site}
               </p>
               <p>
                 Kontaktinis el. paštas privatumo klausimais: {" "}
-                <a href="mailto:support@ibrix.lt" className="text-accent hover:underline">
-                  support@ibrix.lt
+                <a href={`mailto:${COMPANY.email}`} className="text-accent hover:underline">
+                  {COMPANY.email}
                 </a>
               </p>
             </section>
@@ -43,7 +52,7 @@ export default function PrivatumoPolitika() {
                 <li><strong>El. pašto adresas</strong> – komunikacijai ir užsakymų patvirtinimui</li>
                 <li><strong>Telefono numeris</strong> – pristatymo klausimais (neprivaloma)</li>
                 <li><strong>Pristatymo adresas</strong> – prekių pristatymui</li>
-                <li><strong>Mokėjimo informacija</strong> – apdorojama saugiai per Stripe</li>
+                <li><strong>Mokėjimo informacija</strong> – apdorojama saugiai per {COMPANY.paymentProcessor}</li>
               </ul>
             </section>
 
@@ -81,8 +90,8 @@ export default function PrivatumoPolitika() {
               </p>
               <ul className="list-disc list-inside space-y-2 mt-4">
                 <li>
-                  <strong>Stripe</strong> – mokėjimų apdorojimas 
-                  (ES/JAV, atitinka GDPR reikalavimus)
+                  <strong>{COMPANY.paymentProcessor}</strong> – mokėjimų apdorojimas
+                  (ES, atitinka BDAR reikalavimus)
                 </li>
                 <li>
                   <strong>Omniva, LP EXPRESS, DPD</strong> – siuntų pristatymas
@@ -108,9 +117,23 @@ export default function PrivatumoPolitika() {
               </ul>
               <p className="mt-4">
                 Norėdami pasinaudoti šiomis teisėmis, rašykite: {" "}
-                <a href="mailto:support@ibrix.lt" className="text-accent hover:underline">
-                  support@ibrix.lt
+                <a href={`mailto:${COMPANY.email}`} className="text-accent hover:underline">
+                  {COMPANY.email}
                 </a>
+                . Atsakymą pateikiame ne vėliau kaip per 30 kalendorinių dienų.
+              </p>
+              <p className="mt-4">
+                Jeigu manote, kad jūsų duomenys tvarkomi netinkamai, turite teisę pateikti skundą
+                priežiūros institucijai – Valstybinei duomenų apsaugos inspekcijai (
+                <a
+                  href="https://vdai.lrv.lt"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-accent hover:underline"
+                >
+                  vdai.lrv.lt
+                </a>
+                ).
               </p>
             </section>
 
