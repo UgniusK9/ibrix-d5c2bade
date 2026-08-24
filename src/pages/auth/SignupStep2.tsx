@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { X, ArrowLeft, Eye, EyeOff, Loader2 } from 'lucide-react';
 import { Turnstile } from '@marsidev/react-turnstile';
+import { TURNSTILE_SITE_KEY } from '@/config/turnstile';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -11,8 +12,6 @@ import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import logo from '@/assets/logo.png';
-
-const TURNSTILE_SITE_KEY = import.meta.env.VITE_TURNSTILE_SITE_KEY || '0x4AAAAAABfsvMBdRlqOLeDv';
 
 export default function SignupStep2() {
   const { t } = useTranslation();

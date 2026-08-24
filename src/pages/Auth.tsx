@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams, Link } from 'react-router-dom';
 import { Mail, Loader2, CheckCircle2, Lock, Eye, EyeOff, ArrowLeft, User, KeyRound } from 'lucide-react';
 import { Turnstile } from '@marsidev/react-turnstile';
+import { TURNSTILE_SITE_KEY } from '@/config/turnstile';
 import { PageLayout } from '@/components/layout/PageLayout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -15,9 +16,6 @@ import { useTranslation } from 'react-i18next';
 
 const emailSchema = z.string().email('Neteisingas el. pašto formatas');
 const passwordSchema = z.string().min(6, 'Slaptažodis turi būti bent 6 simbolių');
-
-// Turnstile site key - this is a publishable key, safe to include in frontend
-const TURNSTILE_SITE_KEY = '0x4AAAAAABfMVCkCKkJJhz3a';
 
 type AuthMode = 'login' | 'register' | 'forgot' | 'magic-link';
 
