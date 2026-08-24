@@ -1,6 +1,6 @@
 import { PageLayout } from "@/components/layout/PageLayout";
 import { RouteSEO } from "@/components/seo/RouteSEO";
-import { RotateCcw, PackageCheck, Ban, Wrench, Wallet, ShieldCheck } from "lucide-react";
+import { RotateCcw, PackageCheck, Ban, Wrench, Wallet, ShieldCheck, BadgeCheck } from "lucide-react";
 import { COMPANY } from "@/config/company";
 
 export default function Grazinimai() {
@@ -114,6 +114,34 @@ export default function Grazinimai() {
                   Atšaukus išankstinį užsakymą iki išsiuntimo, sumokėtas avansas grąžinamas visas.
                 </li>
               </ul>
+            </div>
+
+            <div className="bg-card border border-border rounded-xl p-6">
+              <div className="flex items-center gap-3 mb-4">
+                <BadgeCheck className="w-6 h-6 text-primary" />
+                <h2 className="font-heading text-xl font-semibold m-0">Garantija</h2>
+              </div>
+              <p className="text-muted-foreground mb-3">
+                Visoms prekėms taikoma 24 mėnesių garantija, jeigu gamintojas nenurodo ilgesnio
+                termino. Garantija apima gamybos defektus – pavyzdžiui, netinkamai pagamintas
+                detales ar neveikiantį variklio mechanizmą.
+              </p>
+              <p className="text-muted-foreground mb-3">
+                Garantija <strong className="text-foreground">netaikoma</strong> natūraliam
+                nusidėvėjimui, pažeidimams dėl netinkamo surinkimo ar naudojimo, taip pat
+                sąmoningai modifikuotoms detalėms.
+              </p>
+              <p className="text-muted-foreground m-0">
+                Dėl garantinio aptarnavimo rašykite{" "}
+                <a href={mailto} className="text-primary underline">
+                  {COMPANY.email}
+                </a>{" "}
+                ir pridėkite užsakymo numerį bei problemos nuotraukas. Plačiau –{" "}
+                <a href="/garantija" className="text-primary underline">
+                  Garantija
+                </a>
+                .
+              </p>
             </div>
           </div>
 
