@@ -299,12 +299,20 @@ Deno.serve(async (req) => {
         
         if (isValid) {
           if (offer.type === 'percent') {
-            discountEur = immediatePaymentEur * (Number(offer.value) / 100);
+            // Percent applies to the goods value, not to the deposit. Taking it
+            // from immediatePaymentEur meant "20% off" on a 100 EUR preorder
+            // with a 30 EUR deposit gave 6 EUR — silently a fifth of what the
+            // code advertised.
+            discountEur = subtotalEur * (Number(offer.value) / 100);
           } else {
             discountEur = Number(offer.value);
           }
-          // Don't let discount exceed immediate payment
-          discountEur = Math.min(discountEur, immediatePaymentEur);
+          // Cap at the order value so the total can never go negative. It may
+          // exceed the first payment: the totals below absorb what they can up
+          // front and carry the rest over to the balance. Capping at the
+          // deposit instead, as before, silently shrank every fixed-amount code
+          // on a preorder — 50 EUR off became 30 EUR off.
+          discountEur = Math.min(discountEur, subtotalEur + shippingEur);
           offerId = offer.id;
           offerCode = offer.code;
           log(requestId, 'Discount applied', { code: offer.code, discountEur });
