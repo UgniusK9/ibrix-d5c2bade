@@ -1164,6 +1164,7 @@ export const en = {
     emailPlaceholder: 'Your email',
     subscribed: 'Successfully subscribed!',
     paymentMethods: 'Payment Methods',
+    followUs: 'Follow us',
     quickLinks: 'Quick Links',
     support: 'Support',
     legal: 'Legal',

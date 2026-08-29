@@ -27,6 +27,16 @@ export const COMPANY = {
   site: 'ibrix.lt',
   siteUrl: 'https://ibrix.lt',
 
+  /**
+   * Public social profiles. Used by the footer links and by the Organization
+   * `sameAs` in structured data — the two must agree, because Google uses
+   * sameAs to tie the site to these accounts and a mismatch weakens that.
+   */
+  social: {
+    facebook: 'https://www.facebook.com/profile.php?id=61591339562016',
+    tiktok: 'https://www.tiktok.com/@ibrix.lt',
+  },
+
   /** Consumer protection references required for EU online sellers. */
   vvtat: 'Valstybinė vartotojų teisių apsaugos tarnyba',
   vvtatUrl: 'https://www.vvtat.lt',

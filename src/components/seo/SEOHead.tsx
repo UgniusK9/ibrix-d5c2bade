@@ -1,4 +1,5 @@
 import { Helmet } from 'react-helmet-async';
+import { COMPANY } from '@/config/company';
 
 interface SEOHeadProps {
   title: string;
@@ -91,10 +92,7 @@ export function SEOHead({
     name: SITE_NAME,
     url: SITE_URL,
     logo: DEFAULT_IMAGE,
-    sameAs: [
-      'https://www.facebook.com/profile.php?id=61591339562016',
-      'https://www.tiktok.com/@ibrix.lt',
-    ],
+    sameAs: [COMPANY.social.facebook, COMPANY.social.tiktok],
     contactPoint: {
       '@type': 'ContactPoint',
       email: 'info@ibrix.lt',

@@ -1166,6 +1166,7 @@ export const lt = {
     emailPlaceholder: 'Jūsų el. paštas',
     subscribed: 'Sėkmingai užsiprenumeruota!',
     paymentMethods: 'Mokėjimo būdai',
+    followUs: 'Sekite mus',
     quickLinks: 'Greitos nuorodos',
     support: 'Pagalba',
     legal: 'Teisinė informacija',

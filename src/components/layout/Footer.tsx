@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
+import { SocialLinks } from "./SocialLinks";
 import { Mail, MapPin, Clock, Truck, RotateCcw, Shield, CreditCard, Cookie, ArrowRight, Loader2, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -257,6 +258,11 @@ export function Footer() {
                   <p className="text-footer-foreground/50 text-xs">{t('misc.workingHours')}</p>
                   <span className="text-footer-foreground/90">I-V 10:00-18:00</span>
                 </div>
+              </div>
+
+              <div className="pt-2">
+                <p className="text-footer-foreground/50 text-xs mb-2">{t('footer.followUs')}</p>
+                <SocialLinks />
               </div>
             </div>
           </div>
