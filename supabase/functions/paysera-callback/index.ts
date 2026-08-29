@@ -190,6 +190,23 @@ Deno.serve(async (req) => {
 
     log('Order updated', { orderId, newStatus });
 
+    // Deduct stock on the first payment only — the balance payment settles an
+    // order whose stock was already taken. The RPC is idempotent and atomic, so
+    // a retried callback cannot deduct twice and two concurrent buyers cannot
+    // both take the last unit. Preorder items are skipped inside the function.
+    if (!isBalancePayment) {
+      const { data: deducted, error: stockError } = await supabase
+        .rpc('decrement_inventory_for_order', { p_order_id: orderId });
+
+      if (stockError) {
+        // Never fail the callback over stock: the payment already succeeded and
+        // Paysera would keep retrying. Log it so it can be reconciled by hand.
+        log('Inventory deduction FAILED', { orderId, error: stockError.message });
+      } else {
+        log('Inventory deducted', { orderId, applied: deducted });
+      }
+    }
+
     // Create shipment if first payment (deposit or full)
     if (!isBalancePayment) {
       const { data: existingShipment } = await supabase
