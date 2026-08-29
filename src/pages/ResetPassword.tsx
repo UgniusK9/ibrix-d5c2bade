@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Loader2, Lock, Eye, EyeOff, CheckCircle2, Mail, ArrowLeft } from 'lucide-react';
 import { PageLayout } from '@/components/layout/PageLayout';
@@ -10,6 +10,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { z } from 'zod';
 import { Link } from 'react-router-dom';
+import { Turnstile, type TurnstileInstance } from '@marsidev/react-turnstile';
+import { TURNSTILE_SITE_KEY } from '@/config/turnstile';
 
 const emailSchema = z.string().email('Neteisingas el. pašto formatas');
 const passwordSchema = z.string().min(6, 'Slaptažodis turi būti bent 6 simbolių');
@@ -21,6 +23,8 @@ export default function ResetPassword() {
   const { updatePassword, isLoading } = useAuth();
   
   const [step, setStep] = useState<Step>('email');
+  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
+  const turnstileRef = useRef<TurnstileInstance | null>(null);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -115,12 +119,14 @@ export default function ResetPassword() {
     try {
       // Call our custom edge function that sends branded email
       const response = await supabase.functions.invoke('request-password-reset', {
-        body: { email },
+        body: { email, captchaToken },
       });
       
       if (response.error) {
         console.error('[ResetPassword] Error:', response.error);
         toast.error('Nepavyko išsiųsti nuorodos. Bandykite dar kartą.');
+        setCaptchaToken(null);
+        turnstileRef.current?.reset();
       } else {
         setStep('email-sent');
       }
@@ -341,7 +347,17 @@ export default function ResetPassword() {
                 )}
               </div>
 
-              <Button type="submit" className="w-full" disabled={loading}>
+              <div className="flex justify-center">
+                <Turnstile
+                  ref={turnstileRef}
+                  siteKey={TURNSTILE_SITE_KEY}
+                  onSuccess={(token) => setCaptchaToken(token)}
+                  onExpire={() => setCaptchaToken(null)}
+                  onError={() => setCaptchaToken(null)}
+                />
+              </div>
+
+              <Button type="submit" className="w-full" disabled={loading || !captchaToken}>
                 {loading ? (
                   <>
                     <Loader2 className="w-4 h-4 mr-2 animate-spin" />

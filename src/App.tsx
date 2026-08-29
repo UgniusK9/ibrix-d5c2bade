@@ -41,7 +41,6 @@ const Checkout = lazy(() => import("./pages/Checkout"));
 const OrderConfirmation = lazy(() => import("./pages/OrderConfirmation"));
 const Admin = lazy(() => import("./pages/Admin"));
 const SiuntosSekimas = lazy(() => import("./pages/SiuntosSekimas"));
-const Auth = lazy(() => import("./pages/Auth"));
 const ResetPassword = lazy(() => import("./pages/ResetPassword"));
 const Account = lazy(() => import("./pages/Account"));
 const AdminVerification = lazy(() => import("./pages/AdminVerification"));
@@ -144,7 +143,12 @@ const App = () => (
                 <Route path="/auth/success" element={<AuthSuccess />} />
                 <Route path="/auth/reset-password" element={<ResetPassword />} />
                 <Route path="/reset-password" element={<ResetPassword />} />
-                <Route path="/auth/legacy" element={<Auth />} />
+                {/* Legacy auth screen retired: its "forgot password" used
+                    supabase.auth.resetPasswordForEmail, which goes through
+                    Supabase SMTP rather than Resend and silently sent nothing.
+                    Kept as a redirect so any bookmarked link still lands
+                    somewhere that works. */}
+                <Route path="/auth/legacy" element={<Navigate to="/auth/login" replace />} />
 
                 {/* Protected: Customer account */}
                 <Route path="/account" element={
