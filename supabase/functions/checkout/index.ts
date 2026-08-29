@@ -329,12 +329,35 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Calculate final totals
-    const totalEur = subtotalEur + shippingEur - discountEur;
-    const balanceTotalEur = totalEur - immediatePaymentEur; // What remains to pay later
-    
-    // Final amount to charge Stripe (immediate - discount - wallet + shipping)
-    const stripeChargeEur = Math.max(0, immediatePaymentEur - discountEur - walletDeductionEur + shippingEur);
+    // Money is compared and stored in euros, so round every derived figure to
+    // cents — otherwise float drift leaves deposit + balance a fraction off the
+    // order total and the last balance payment can never settle exactly.
+    const round2 = (n: number) => Math.round(n * 100) / 100;
+
+    // Calculate final totals.
+    //
+    // Shipping is paid UP FRONT together with the deposit, never split across
+    // both payments. The previous version added shipping to the deposit charge
+    // while also leaving it inside the balance, so a preorder with courier
+    // delivery billed it twice: a 100 EUR item with a 30 EUR deposit and 4.99
+    // shipping produced 34.99 + 74.99 = 109.98 against a 104.99 order. A
+    // discount produced the mirror error, undercharging by its value.
+    const totalEur = round2(subtotalEur + shippingEur - discountEur);
+
+    // What the customer owes on this first payment before credits are applied.
+    const chargeBeforeCredits = round2(immediatePaymentEur + shippingEur);
+    const creditsApplied = round2(discountEur + walletDeductionEur);
+    const stripeChargeEur = round2(Math.max(0, chargeBeforeCredits - creditsApplied));
+
+    // A discount or wallet balance larger than the first payment must not be
+    // silently lost — carry the unused part over to reduce the balance.
+    const creditsOverflow = round2(Math.max(0, creditsApplied - chargeBeforeCredits));
+
+    // The balance is the product value the deposit did not cover. Shipping and
+    // discounts are already settled above, so they must not appear again here.
+    const balanceTotalEur = round2(
+      Math.max(0, subtotalEur - immediatePaymentEur - creditsOverflow)
+    );
 
     log(requestId, 'Totals calculated', { 
       subtotalEur, 
