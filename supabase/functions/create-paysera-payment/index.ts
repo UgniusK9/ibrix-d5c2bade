@@ -1,5 +1,7 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.49.1';
 import { encodeBase64 } from "https://deno.land/std@0.220.1/encoding/base64.ts";
+import { crypto as stdCrypto } from "https://deno.land/std@0.220.1/crypto/mod.ts";
+import { encodeHex } from "https://deno.land/std@0.220.1/encoding/hex.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -11,13 +13,13 @@ const log = (step: string, details?: any) => {
   console.log(`[PAYSERA-CREATE][${timestamp}] ${step}`, details ? JSON.stringify(details) : '');
 };
 
-// Generate Paysera signature (MD5)
+// Generate Paysera signature (MD5) — native crypto.subtle doesn't support MD5
+// in Deno, so we use the std library's extended crypto which does.
 async function generateSignature(data: string, password: string): Promise<string> {
   const encoder = new TextEncoder();
   const dataBytes = encoder.encode(data + password);
-  const hashBuffer = await crypto.subtle.digest('MD5', dataBytes);
-  const hashArray = Array.from(new Uint8Array(hashBuffer));
-  return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+  const hashBuffer = await stdCrypto.subtle.digest('MD5', dataBytes);
+  return encodeHex(new Uint8Array(hashBuffer));
 }
 
 // Encode data for Paysera (base64 URL-safe)
