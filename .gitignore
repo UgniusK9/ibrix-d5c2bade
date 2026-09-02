@@ -25,3 +25,6 @@ dist-ssr
 .vercel
 .env*
 design/
+
+# Written by `supabase link`; holds the linked project ref, not source.
+supabase/.temp/

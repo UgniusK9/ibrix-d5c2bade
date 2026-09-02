@@ -86,6 +86,12 @@ const PAYMENT_METHODS: PaymentMethod[] = [
     logo: '/payment-logos/paypal.svg',
     enabled: false,
   },
+  // ─── Paysera banklink ─────────────────────────────────────────────
+  // bankCode must be a payment_type key Paysera actually recognises; the
+  // authoritative list for this project is
+  // https://www.paysera.com/new/api/paymentMethods/258750/currency:EUR
+  // The keys are historical and do not track the banks' current names —
+  // Swedbank is still "hanza" (Hansabankas) and Citadele still "parex".
   {
     id: 'paysera-swedbank',
     code: 'swedbank',
@@ -93,8 +99,8 @@ const PAYMENT_METHODS: PaymentMethod[] = [
     title: 'Swedbank',
     subtitle: 'Tiesioginis mokėjimas per Swedbank',
     logo: '/payment-logos/swedbank.svg',
-    enabled: true, // Will be enabled when Paysera is configured
-    bankCode: 'hanzalt',
+    enabled: true,
+    bankCode: 'hanza',
   },
   {
     id: 'paysera-seb',
@@ -104,7 +110,7 @@ const PAYMENT_METHODS: PaymentMethod[] = [
     subtitle: 'Tiesioginis mokėjimas per SEB',
     logo: '/payment-logos/seb.svg',
     enabled: true,
-    bankCode: 'seblt',
+    bankCode: 'vb2',
   },
   {
     id: 'paysera-luminor',
@@ -114,7 +120,7 @@ const PAYMENT_METHODS: PaymentMethod[] = [
     subtitle: 'Tiesioginis mokėjimas per Luminor',
     logo: '/payment-logos/luminor.svg',
     enabled: true,
-    bankCode: 'lku',
+    bankCode: 'nord',
   },
   {
     id: 'paysera-revolut',
@@ -124,25 +130,15 @@ const PAYMENT_METHODS: PaymentMethod[] = [
     subtitle: 'Atsiskaityk per Revolut',
     logo: '/payment-logos/revolut.svg',
     enabled: true,
-    bankCode: 'revolut',
+    bankCode: 'lt_revolut',
   },
   {
     id: 'paysera-artea',
     code: 'artea',
     provider: 'paysera',
     title: 'Artea',
-    subtitle: 'Tiesioginis mokėjimas per Artea',
+    subtitle: 'Buvęs Šiaulių bankas',
     logo: '/payment-logos/artea.svg',
-    enabled: true,
-    bankCode: 'artea',
-  },
-  {
-    id: 'paysera-siauliu',
-    code: 'siauliu',
-    provider: 'paysera',
-    title: 'Šiaulių bankas',
-    subtitle: 'Tiesioginis mokėjimas per Šiaulių banką',
-    logo: '/payment-logos/siauliu.svg',
     enabled: true,
     bankCode: 'sb',
   },
@@ -151,7 +147,7 @@ const PAYMENT_METHODS: PaymentMethod[] = [
     code: 'lku',
     provider: 'paysera',
     title: 'LKU',
-    subtitle: 'Tiesioginis mokėjimas per LKU',
+    subtitle: 'Lietuvos centrinė kredito unija',
     logo: '/payment-logos/lku.svg',
     enabled: true,
     bankCode: 'lku',
@@ -164,7 +160,7 @@ const PAYMENT_METHODS: PaymentMethod[] = [
     subtitle: 'Tiesioginis mokėjimas per Citadele',
     logo: '/payment-logos/citadele.svg',
     enabled: true,
-    bankCode: 'citadele',
+    bankCode: 'parex',
   },
   {
     id: 'paysera-generic',
@@ -174,7 +170,9 @@ const PAYMENT_METHODS: PaymentMethod[] = [
     subtitle: 'Kiti Paysera mokėjimo būdai',
     logo: '/payment-logos/paysera.svg',
     enabled: true,
-    bankCode: 'paysera',
+    // No bankCode on purpose: with no `payment` parameter Paysera shows its own
+    // picker listing every method enabled for the project, including the ones
+    // not broken out above (Paysera wallet, Urbo bankas, transfer in branch).
   },
 ];
 
