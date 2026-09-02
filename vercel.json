@@ -5,6 +5,7 @@
   "framework": "vite",
   "rewrites": [
     { "source": "/sitemap.xml", "destination": "/sitemap.xml" },
+    { "source": "/api/paysera-callback", "destination": "https://xutfxycojeydcgrpsrsy.supabase.co/functions/v1/paysera-callback" },
     { "source": "/((?!api/).*)", "destination": "/index.html" }
   ],
   "headers": [
