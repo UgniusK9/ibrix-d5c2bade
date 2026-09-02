@@ -1,18 +1,22 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.49.1';
 import { decodeBase64 } from "https://deno.land/std@0.220.1/encoding/base64.ts";
+import { crypto as stdCrypto } from "https://deno.land/std@0.220.1/crypto/mod.ts";
+import { encodeHex } from "https://deno.land/std@0.220.1/encoding/hex.ts";
 
 const log = (step: string, details?: any) => {
   const timestamp = new Date().toISOString();
   console.log(`[PAYSERA-CALLBACK][${timestamp}] ${step}`, details ? JSON.stringify(details) : '');
 };
 
-// Verify Paysera signature
+// Verify Paysera signature. Deno's native crypto.subtle has no MD5, so calling it
+// here threw on every callback — the throw was swallowed by the outer catch, which
+// answers Paysera with 200 OK, so payments were silently never marked as paid.
+// The std library's extended crypto does support MD5.
 async function verifySignature(data: string, signature: string, password: string): Promise<boolean> {
   const encoder = new TextEncoder();
   const dataBytes = encoder.encode(data + password);
-  const hashBuffer = await crypto.subtle.digest('MD5', dataBytes);
-  const hashArray = Array.from(new Uint8Array(hashBuffer));
-  const expectedSignature = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+  const hashBuffer = await stdCrypto.subtle.digest('MD5', dataBytes);
+  const expectedSignature = encodeHex(new Uint8Array(hashBuffer));
   return signature.toLowerCase() === expectedSignature.toLowerCase();
 }
 
