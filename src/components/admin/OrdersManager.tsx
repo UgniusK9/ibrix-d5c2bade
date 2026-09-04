@@ -726,9 +726,26 @@ export function OrdersManager() {
                   <h3 className="font-semibold mb-2">Pristatymo adresas</h3>
                   {selectedOrder.shipping_address_json && (
                     <div className="text-sm text-muted-foreground">
-                      <p>{selectedOrder.shipping_address_json.street}</p>
-                      <p>{selectedOrder.shipping_address_json.city}, {selectedOrder.shipping_address_json.postal_code}</p>
-                      <p>{selectedOrder.shipping_address_json.country}</p>
+                      {selectedOrder.shipping_address_json.lockerName ? (
+                        <>
+                          <p className="font-medium">{selectedOrder.shipping_address_json.lockerName}</p>
+                          <p>{selectedOrder.shipping_address_json.lockerAddress}</p>
+                          {selectedOrder.shipping_address_json.lockerCity && (
+                            <p>{selectedOrder.shipping_address_json.lockerCity}, {selectedOrder.shipping_address_json.lockerPostalCode}</p>
+                          )}
+                          {selectedOrder.shipping_address_json.recipientPhone && (
+                            <p>Tel: {selectedOrder.shipping_address_json.recipientPhone}</p>
+                          )}
+                        </>
+                      ) : (
+                        <>
+                          <p>{selectedOrder.shipping_address_json.street}</p>
+                          <p>{selectedOrder.shipping_address_json.city}, {selectedOrder.shipping_address_json.postalCode || selectedOrder.shipping_address_json.postal_code}</p>
+                          {selectedOrder.shipping_address_json.country && (
+                            <p>{selectedOrder.shipping_address_json.country}</p>
+                          )}
+                        </>
+                      )}
                     </div>
                   )}
                 </div>

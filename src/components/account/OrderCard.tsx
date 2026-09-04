@@ -136,23 +136,38 @@ function copyToClipboard(text: string) {
 }
 
 // Progress steps for order status
-const orderSteps = [
+const preorderSteps = [
   { key: 'deposit_paid', label: 'Depozitas', icon: CreditCard },
   { key: 'balance_paid', label: 'Apmokėta', icon: CheckCircle2 },
   { key: 'packed', label: 'Supakuota', icon: Box },
   { key: 'shipped', label: 'Išsiųsta', icon: Truck },
   { key: 'delivered', label: 'Pristatyta', icon: MapPin },
 ];
+const inStockSteps = [
+  { key: 'deposit_paid', label: 'Apmokėta', icon: CreditCard },
+  { key: 'packed', label: 'Supakuota', icon: Box },
+  { key: 'shipped', label: 'Išsiųsta', icon: Truck },
+  { key: 'delivered', label: 'Pristatyta', icon: MapPin },
+];
 
-const getStepIndex = (status: string): number => {
-  const statusOrder = ['created', 'deposit_paid', 'awaiting_balance', 'balance_paid', 'packed', 'shipped', 'delivered'];
+const getStepIndex = (status: string, isPreorder: boolean): number => {
+  if (isPreorder) {
+    const statusOrder = ['created', 'deposit_paid', 'awaiting_balance', 'balance_paid', 'packed', 'shipped', 'delivered'];
+    const idx = statusOrder.indexOf(status);
+    if (idx <= 2) return 0;
+    if (idx === 3) return 1;
+    if (idx === 4) return 2;
+    if (idx === 5) return 3;
+    if (idx === 6) return 4;
+    return 0;
+  }
+  const statusOrder = ['created', 'deposit_paid', 'balance_paid', 'packed', 'shipped', 'delivered'];
   const idx = statusOrder.indexOf(status);
-  if (idx <= 1) return 0;
-  if (idx === 2) return 0;
+  if (idx <= 0) return -1;
+  if (idx <= 2) return 0;
   if (idx === 3) return 1;
   if (idx === 4) return 2;
   if (idx === 5) return 3;
-  if (idx === 6) return 4;
   return 0;
 };
 
@@ -170,13 +185,18 @@ export function OrderCard({
 }: OrderCardProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [isSupportOpen, setIsSupportOpen] = useState(false);
-  const config = statusConfig[order.status] || statusConfig['created'];
+  const rawConfig = statusConfig[order.status] || statusConfig['created'];
+  const isFullyPaidInStock = order.status === 'deposit_paid' && !order.preorder_flag;
+  const config = isFullyPaidInStock
+    ? { ...rawConfig, label: 'Prekės apmokėtos' }
+    : rawConfig;
   const StatusIcon = config.icon;
 
   const depositPayment = payments?.find(p => p.type === 'deposit' && p.status === 'succeeded');
   const balancePayment = payments?.find(p => p.type === 'balance' && p.status === 'succeeded');
   const totalPaid = (depositPayment?.amount_eur || 0) + (balancePayment?.amount_eur || 0);
-  const currentStep = getStepIndex(order.status);
+  const orderSteps = order.preorder_flag ? preorderSteps : inStockSteps;
+  const currentStep = getStepIndex(order.status, order.preorder_flag);
   const needsBalancePayment = order.status === 'awaiting_balance' || 
     (order.status === 'deposit_paid' && order.balance_total_eur > 0 && !balancePayment);
 

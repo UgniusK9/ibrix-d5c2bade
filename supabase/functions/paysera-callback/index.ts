@@ -44,6 +44,25 @@ function decodeData(encodedData: string): Record<string, string> {
   }
 }
 
+async function sendEmail(type: string, data: any) {
+  try {
+    const response = await fetch(
+      `${Deno.env.get('SUPABASE_URL')}/functions/v1/send-email`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')}`,
+        },
+        body: JSON.stringify({ type, ...data }),
+      }
+    );
+    log('Email sent', { type, status: response.status });
+  } catch (err) {
+    log('Email send failed (non-blocking)', err);
+  }
+}
+
 Deno.serve(async (req) => {
   const supabase = createClient(
     Deno.env.get('SUPABASE_URL') ?? '',
@@ -228,6 +247,78 @@ Deno.serve(async (req) => {
         });
         log('Shipment created', { trackingToken });
       }
+    }
+
+    // Send confirmation emails
+    const { data: fullOrder } = await supabase
+      .from('orders')
+      .select('*, order_items(*)')
+      .eq('id', orderId)
+      .single();
+
+    if (fullOrder) {
+      if (isBalancePayment) {
+        await sendEmail('balance_paid', {
+          email: fullOrder.email,
+          firstName: fullOrder.first_name,
+          orderNumber: fullOrder.order_number,
+          balanceEur: fullOrder.balance_total_eur,
+          totalEur: fullOrder.total_eur,
+        });
+      } else {
+        const { data: shipmentRow } = await supabase
+          .from('shipments')
+          .select('tracking_token')
+          .eq('order_id', orderId)
+          .maybeSingle();
+
+        await sendEmail('deposit_confirmed', {
+          email: fullOrder.email,
+          firstName: fullOrder.first_name,
+          orderNumber: fullOrder.order_number,
+          depositEur: fullOrder.deposit_total_eur,
+          balanceEur: fullOrder.balance_total_eur,
+          totalEur: fullOrder.total_eur,
+          hasPreorder: fullOrder.preorder_flag,
+          etaWeeksMin: fullOrder.preorder_eta_weeks_min,
+          etaWeeksMax: fullOrder.preorder_eta_weeks_max,
+          trackingToken: shipmentRow?.tracking_token,
+          items: fullOrder.order_items,
+        });
+
+        const shippingAddress = fullOrder.shipping_address_json as Record<string, any>;
+        const shippingMethod = shippingAddress?.lockerName
+          ? (shippingAddress.lockerName.includes('Omniva') ? 'Omniva paštomatas' :
+             shippingAddress.lockerName.includes('LP') ? 'LP EXPRESS paštomatas' :
+             shippingAddress.lockerName.includes('DPD') ? 'DPD paštomatas' : 'Paštomatas')
+          : 'Kurjeris į namus';
+
+        await sendEmail('admin_order_notification', {
+          orderNumber: fullOrder.order_number,
+          customerName: `${fullOrder.first_name} ${fullOrder.last_name}`,
+          customerEmail: fullOrder.email,
+          customerPhone: fullOrder.phone,
+          items: fullOrder.order_items?.map((i: any) => ({
+            title_snapshot: i.title_snapshot,
+            quantity: i.quantity,
+            unit_price_eur: i.unit_price_eur,
+          })),
+          subtotalEur: fullOrder.subtotal_eur,
+          discountEur: fullOrder.discount_eur || 0,
+          shippingEur: fullOrder.shipping_eur,
+          totalEur: fullOrder.total_eur,
+          depositEur: fullOrder.deposit_total_eur,
+          balanceEur: fullOrder.balance_total_eur,
+          shippingMethod,
+          shippingAddress: fullOrder.shipping_address_json,
+          paymentMethod: 'Paysera',
+          paymentType: 'deposit',
+          hasPreorder: fullOrder.preorder_flag,
+          etaWeeksMin: fullOrder.preorder_eta_weeks_min,
+          etaWeeksMax: fullOrder.preorder_eta_weeks_max,
+        });
+      }
+      log('Emails sent');
     }
 
     log('Callback processed successfully');

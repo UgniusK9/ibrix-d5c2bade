@@ -172,9 +172,10 @@ export default function SiuntosSekimas() {
     const steps = [];
 
     // Step 1: Order confirmed / Deposit paid
+    const isFullPayment = !shipment.preorder_flag || shipment.balance_eur === 0;
     steps.push({
       id: 'deposit',
-      label: 'Depozitas sumokėtas',
+      label: isFullPayment ? 'Užsakymas apmokėtas' : 'Depozitas sumokėtas',
       date: shipment.deposit_paid_at,
       completed: !!shipment.deposit_paid_at,
       icon: CreditCard,
@@ -326,7 +327,7 @@ export default function SiuntosSekimas() {
               </h2>
               <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                 <div className="p-3 bg-muted/30 rounded-lg">
-                  <p className="text-xs text-muted-foreground mb-1">Depozitas</p>
+                  <p className="text-xs text-muted-foreground mb-1">{shipment.preorder_flag && shipment.balance_eur > 0 ? 'Depozitas' : 'Mokėjimas'}</p>
                   <p className="font-semibold text-green-600">{formatPrice(shipment.deposit_eur)}</p>
                   {shipment.deposit_paid_at ? (
                     <p className="text-xs text-green-600 mt-1">✓ Sumokėtas</p>
