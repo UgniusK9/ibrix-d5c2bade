@@ -20,7 +20,7 @@ import { trackBeginCheckoutEvent, trackAddPaymentInfoEvent } from "@/hooks/useAn
 import { getStoredUtmParams } from "@/hooks/useUtmTracking";
 import { DiscountCodeInput, AppliedDiscount } from "@/components/checkout/DiscountCodeInput";
 import { InvoiceFields } from "@/components/checkout/InvoiceFields";
-import { LockerSearch } from "@/components/checkout/LockerSearch"; // legacy — kept for future use
+import { LockerSearch } from "@/components/checkout/LockerSearch";
 import { ManualLockerInput, ManualLockerData } from "@/components/checkout/ManualLockerInput";
 import { PhoneInput } from "@/components/checkout/PhoneInput";
 import { PaymentMethodSelector, PaymentMethod, PAYMENT_METHODS } from "@/components/checkout/PaymentMethodSelector";
@@ -63,7 +63,7 @@ export default function Checkout() {
   const [step, setStep] = useState<1 | 2>(1);
   const [appliedDiscount, setAppliedDiscount] = useState<AppliedDiscount | null>(null);
   const [wantsInvoice, setWantsInvoice] = useState(false);
-  const [selectedLocker, setSelectedLocker] = useState<LockerTerminal | null>(null); // legacy
+  const [selectedLocker, setSelectedLocker] = useState<LockerTerminal | null>(null);
   const [manualLocker, setManualLocker] = useState<ManualLockerData>({
     carrier: "",
     address: "",
@@ -96,6 +96,22 @@ export default function Checkout() {
 
   const shippingMethod = watch("shippingMethod");
   const isLockerMethod = shippingMethod?.includes("locker");
+
+  // Reset locker state when shipping method changes
+  useEffect(() => {
+    if (shippingMethod === 'omniva_locker') {
+      setManualLocker({ carrier: "", address: "", postalCode: "", phone: "" });
+    } else if (shippingMethod === 'dpd_locker') {
+      setSelectedLocker(null);
+      setManualLocker(prev => ({ ...prev, carrier: "dpd" }));
+    } else if (shippingMethod === 'lp_express_locker') {
+      setSelectedLocker(null);
+      setManualLocker(prev => ({ ...prev, carrier: "lp_express" }));
+    } else {
+      setSelectedLocker(null);
+      setManualLocker({ carrier: "", address: "", postalCode: "", phone: "" });
+    }
+  }, [shippingMethod]);
 
   // Check if cart has any preorder items
   const hasPreorderItems = items.some(item => item.status === 'preorder');
@@ -208,11 +224,12 @@ export default function Checkout() {
     const attribution = getStoredUtmParams() ?? undefined;
 
     if (step === 1) {
-      if (isLockerMethod) {
-        if (!manualLocker.carrier) {
-          toast.error("Pasirinkite pristatymo tiekėją");
+      if (shippingMethod === 'omniva_locker') {
+        if (!selectedLocker) {
+          toast.error("Pasirinkite Omniva paštomatą");
           return;
         }
+      } else if (isLockerMethod) {
         if (!manualLocker.address.trim()) {
           toast.error("Įveskite paštomato adresą");
           return;
@@ -254,31 +271,46 @@ export default function Checkout() {
     });
 
     try {
-      // Build shipping address payload from manual locker input or courier fields
+      // Build shipping address payload
       const carrierLabelMap: Record<string, string> = {
         dpd: "DPD",
         omniva: "Omniva",
         lp_express: "LP EXPRESS",
-        venipak: "Venipak",
       };
-      const shippingAddressPayload = isLockerMethod
-        ? {
-            lockerId: `manual_${manualLocker.carrier}`,
-            lockerName: `${carrierLabelMap[manualLocker.carrier] || manualLocker.carrier} paštomatas`,
-            lockerAddress: manualLocker.address,
-            lockerCity: "",
-            lockerPostalCode: manualLocker.postalCode,
-            carrier: manualLocker.carrier,
-            recipientPhone: manualLocker.phone,
-          }
-        : {
-            street: data.street,
-            city: data.city,
-            postalCode: data.postalCode,
-          };
-      const effectivePhone = isLockerMethod
-        ? manualLocker.phone || phoneValue
-        : phoneValue;
+      let shippingAddressPayload: Record<string, string | undefined>;
+      let effectivePhone: string;
+
+      if (shippingMethod === 'omniva_locker' && selectedLocker) {
+        shippingAddressPayload = {
+          lockerId: selectedLocker.id,
+          lockerName: selectedLocker.name,
+          lockerAddress: selectedLocker.address,
+          lockerCity: selectedLocker.city,
+          lockerPostalCode: selectedLocker.postalCode,
+          carrier: 'omniva',
+          recipientPhone: phoneValue,
+        };
+        effectivePhone = phoneValue;
+      } else if (isLockerMethod) {
+        const carrier = shippingMethod === 'dpd_locker' ? 'dpd' : 'lp_express';
+        shippingAddressPayload = {
+          lockerId: `manual_${carrier}`,
+          lockerName: `${carrierLabelMap[carrier]} paštomatas`,
+          lockerAddress: manualLocker.address,
+          lockerCity: "",
+          lockerPostalCode: manualLocker.postalCode,
+          carrier,
+          recipientPhone: manualLocker.phone,
+        };
+        effectivePhone = manualLocker.phone || phoneValue;
+      } else {
+        shippingAddressPayload = {
+          street: data.street,
+          city: data.city,
+          postalCode: data.postalCode,
+        };
+        effectivePhone = phoneValue;
+      }
 
       const checkoutItems = items.map(item => ({
         productId: item.productId,
@@ -593,19 +625,23 @@ export default function Checkout() {
                     })}
                   </RadioGroup>
 
-                  {isLockerMethod && (
+                  {isLockerMethod && shippingMethod === 'omniva_locker' && (
                     <div className="mt-4 p-4 bg-muted/30 rounded-lg border border-border">
-                      <ManualLockerInput
-                        value={manualLocker}
-                        onChange={setManualLocker}
-                      />
-                      {/* Legacy locker search — kept for future use:
                       <LockerSearch
                         shippingMethod={shippingMethod}
                         selectedLocker={selectedLocker}
                         onSelect={setSelectedLocker}
                       />
-                      */}
+                    </div>
+                  )}
+
+                  {isLockerMethod && shippingMethod !== 'omniva_locker' && (
+                    <div className="mt-4 p-4 bg-muted/30 rounded-lg border border-border">
+                      <ManualLockerInput
+                        value={manualLocker}
+                        onChange={setManualLocker}
+                        fixedCarrier={shippingMethod === 'dpd_locker' ? 'dpd' : 'lp_express'}
+                      />
                     </div>
                   )}
 

@@ -10,7 +10,7 @@ import {
 } from "@/components/ui/select";
 import { PhoneInput } from "@/components/checkout/PhoneInput";
 
-export type ManualCarrier = "dpd" | "omniva" | "lp_express" | "venipak";
+export type ManualCarrier = "dpd" | "omniva" | "lp_express";
 
 export interface ManualLockerData {
   carrier: ManualCarrier | "";
@@ -22,21 +22,22 @@ export interface ManualLockerData {
 interface ManualLockerInputProps {
   value: ManualLockerData;
   onChange: (value: ManualLockerData) => void;
+  fixedCarrier?: ManualCarrier;
 }
 
 const CARRIER_OPTIONS: { value: ManualCarrier; label: string }[] = [
-  { value: "dpd", label: "DPD paštomatas" },
   { value: "omniva", label: "Omniva paštomatas" },
   { value: "lp_express", label: "LP EXPRESS paštomatas" },
-  { value: "venipak", label: "Venipak paštomatas" },
+  { value: "dpd", label: "DPD paštomatas" },
 ];
 
-export function ManualLockerInput({ value, onChange }: ManualLockerInputProps) {
+export function ManualLockerInput({ value, onChange, fixedCarrier }: ManualLockerInputProps) {
   const update = (patch: Partial<ManualLockerData>) =>
     onChange({ ...value, ...patch });
 
   return (
     <div className="space-y-4">
+      {!fixedCarrier && (
       <div>
         <Label className="flex items-center gap-2 mb-2">
           <MapPin className="w-4 h-4 text-primary" />
@@ -58,6 +59,7 @@ export function ManualLockerInput({ value, onChange }: ManualLockerInputProps) {
           </SelectContent>
         </Select>
       </div>
+      )}
 
       <div>
         <Label htmlFor="locker-address">Paštomato adresas *</Label>
