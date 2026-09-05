@@ -17,6 +17,7 @@ import { GiftCardsManager } from "@/components/admin/GiftCardsManager";
 import { CategoriesManager } from "@/components/admin/CategoriesManager";
 import { NewsletterManager } from "@/components/admin/NewsletterManager";
 import { PromoBannersManager } from "@/components/admin/PromoBannersManager";
+import { GalleryManager } from "@/components/admin/GalleryManager";
 import { ReviewsManager } from "@/components/admin/ReviewsManager";
 import { StockNotificationsManager } from "@/components/admin/StockNotificationsManager";
 import { CreditsManager } from "@/components/admin/CreditsManager";
@@ -102,6 +103,10 @@ export default function Admin() {
             <TabsTrigger value="banners" className="gap-2">
               <Image className="w-4 h-4" />
               Baneriai
+            </TabsTrigger>
+            <TabsTrigger value="gallery" className="gap-2">
+              <Image className="w-4 h-4" />
+              Galerija
             </TabsTrigger>
             <TabsTrigger value="reviews" className="gap-2">
               <MessageSquare className="w-4 h-4" />
@@ -197,6 +202,10 @@ export default function Admin() {
 
           <TabsContent value="banners">
             <PromoBannersManager />
+          </TabsContent>
+
+          <TabsContent value="gallery">
+            <GalleryManager />
           </TabsContent>
 
           <TabsContent value="reviews">

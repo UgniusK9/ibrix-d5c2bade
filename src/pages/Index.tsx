@@ -9,6 +9,7 @@ import { useProducts } from "@/hooks/useProducts";
 const Footer = lazy(() => import("@/components/layout/Footer").then(m => ({ default: m.Footer })));
 const PromoBanner = lazy(() => import("@/components/home/PromoBanner").then(m => ({ default: m.PromoBanner })));
 const TrustBadges = lazy(() => import("@/components/home/TrustBadges").then(m => ({ default: m.TrustBadges })));
+const InspirationGallery = lazy(() => import("@/components/home/InspirationGallery").then(m => ({ default: m.InspirationGallery })));
 const TabbedProductCarousel = lazy(() => import("@/components/home/TabbedProductCarousel").then(m => ({ default: m.TabbedProductCarousel })));
 const ProductsSection = lazy(() => import("@/components/home/ProductsSection").then(m => ({ default: m.ProductsSection })));
 const BundlesSection = lazy(() => import("@/components/home/BundlesSection").then(m => ({ default: m.BundlesSection })));
@@ -53,6 +54,9 @@ const Index = () => {
 
           <Suspense fallback={<SectionFallback />}>
             <TrustBadges />
+          </Suspense>
+          <Suspense fallback={null}>
+            <InspirationGallery />
           </Suspense>
           <Suspense fallback={<SectionFallback />}>
             <TabbedProductCarousel products={products} />
