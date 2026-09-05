@@ -576,7 +576,7 @@ export const en = {
     getMagicLink: 'Get Magic Link',
     magicLinkSent: 'Magic link sent!',
     checkEmail: 'Check your email',
-    invalidCredentials: 'Invalid email or password',
+    invalidCredentials: 'The email or password you entered is incorrect',
     emailNotConfirmed: 'Please confirm your email before logging in',
     accountCreated: 'Account created!',
     emailAlreadyRegistered: 'This email is already registered',

@@ -578,7 +578,7 @@ export const lt = {
     getMagicLink: 'Gauti prisijungimo nuorodą',
     magicLinkSent: 'Prisijungimo nuoroda išsiųsta!',
     checkEmail: 'Patikrinkite el. paštą',
-    invalidCredentials: 'Neteisingas el. paštas arba slaptažodis',
+    invalidCredentials: 'Įvestas el. paštas arba slaptažodis yra neteisingas',
     emailNotConfirmed: 'Patvirtinkite el. paštą prieš prisijungdami',
     accountCreated: 'Paskyra sukurta!',
     emailAlreadyRegistered: 'Šis el. paštas jau užregistruotas',
