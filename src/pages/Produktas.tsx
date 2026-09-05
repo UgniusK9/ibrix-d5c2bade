@@ -104,7 +104,8 @@ export default function Produktas() {
   useEffect(() => {
     if (product) {
       trackViewContentEvent({
-        id: product.id,
+        // Catalogue feeds key on SKU, so the pixel must report SKU too.
+        id: product.sku || product.id,
         name: product.title,
         price: product.price_eur * 100, // convert to cents
         currency: 'EUR',

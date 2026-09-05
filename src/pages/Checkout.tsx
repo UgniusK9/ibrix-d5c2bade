@@ -251,7 +251,9 @@ export default function Checkout() {
       totalCents: finalImmediatePayment,
       currency: "EUR",
       items: items.map(item => ({
-        id: item.productId,
+        // SKU is the catalogue id; falls back to the UUID for carts persisted
+        // before `sku` was stored on the item.
+        id: item.sku || item.productId,
         name: item.title,
         price: item.price,
         quantity: item.quantity,

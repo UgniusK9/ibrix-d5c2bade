@@ -6,6 +6,10 @@ import { getLocalStateStorage } from '@/lib/browser-storage';
 
 export interface CartItem {
   productId: string; // UUID from Supabase
+  // SKU is what the Meta/Google catalogues key products on, so analytics events
+  // must report it rather than the UUID. Optional because carts persisted before
+  // this field existed are still in browsers.
+  sku?: string;
   productSlug: string;
   title: string;
   image: string;
@@ -94,6 +98,7 @@ export const useCartStore = create<CartStore>()(
         
         const newItem: CartItem = {
           productId: product.id,
+          sku: product.sku,
           productSlug: product.slug,
           title: variant ? `${product.title} - ${variant.name}` : product.title,
           image: getProductImage(product),
@@ -124,11 +129,14 @@ export const useCartStore = create<CartStore>()(
           });
         }
         
-        // Track AddToCart event
+        // Track AddToCart event. `id` must be the catalogue id (SKU), not the
+        // UUID, or Meta cannot match the event to a catalogue product.
         trackAddToCartEvent({
-          id: product.id,
+          id: product.sku || product.id,
           name: variant ? `${product.title} - ${variant.name}` : product.title,
-          price: finalPriceEur,
+          // ProductData.price is in cents; passing euros here reported values
+          // 100x too low to Meta and GA.
+          price: Math.round(finalPriceEur * 100),
           currency: 'EUR',
           quantity,
         });

@@ -11,6 +11,7 @@ import { lt } from "date-fns/locale";
 
 interface OrderItem {
   id: string;
+  sku_snapshot?: string;
   title_snapshot: string;
   quantity: number;
   unit_price_eur: number;
@@ -87,7 +88,8 @@ export default function OrderConfirmation() {
         totalCents: Math.round(order.deposit_total_eur * 100),
         currency: 'EUR',
         items: items.map(item => ({
-          id: item.id,
+          // Catalogue id (SKU), not the order_item row id.
+          id: item.sku_snapshot || item.id,
           name: item.title_snapshot,
           price: Math.round(item.unit_price_eur * 100),
           quantity: item.quantity,

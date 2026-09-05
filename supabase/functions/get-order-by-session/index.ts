@@ -72,7 +72,9 @@ Deno.serve(async (req) => {
     // Fetch order items
     const { data: orderItems } = await supabase
       .from('order_items')
-      .select('id, title_snapshot, quantity, unit_price_eur, unit_deposit_eur, category_snapshot')
+      // sku_snapshot is the catalogue id used by Meta/Google product feeds, so
+      // the Purchase event can be matched back to a catalogue product.
+      .select('id, sku_snapshot, title_snapshot, quantity, unit_price_eur, unit_deposit_eur, category_snapshot')
       .eq('order_id', orderId);
 
     // Fetch shipment for tracking token
