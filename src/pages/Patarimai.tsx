@@ -30,10 +30,10 @@ export default function Patarimai() {
         <div className="container max-w-3xl">
           <div className="flex items-center gap-3 mb-4">
             <BookOpen className="w-6 h-6 text-primary" />
-            <span className="text-sm text-muted-foreground">Patarimai</span>
+            <span className="text-sm text-muted-foreground">Straipsniai</span>
           </div>
           <h1 className="font-heading text-4xl font-bold mb-4">
-            Patarimai ir gidai
+            Straipsniai ir gidai
           </h1>
           <p className="text-muted-foreground text-lg mb-10">
             Praktiniai atsakymai į klausimus, kurie kyla prieš perkant pirmą

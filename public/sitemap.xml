@@ -2,127 +2,139 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
     <loc>https://ibrix.lt</loc>
-    <lastmod>2026-08-06</lastmod>
+    <lastmod>2026-09-05</lastmod>
     <changefreq>daily</changefreq>
     <priority>1.0</priority>
   </url>
   <url>
     <loc>https://ibrix.lt/patarimai</loc>
-    <lastmod>2026-08-06</lastmod>
+    <lastmod>2026-09-05</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
     <loc>https://ibrix.lt/patarimai/kaip-issirinkti-pirma-konstruktoriu</loc>
-    <lastmod>2026-08-06</lastmod>
+    <lastmod>2026-09-05</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
     <loc>https://ibrix.lt/patarimai/ar-mould-king-detales-tinka-lego</loc>
-    <lastmod>2026-08-06</lastmod>
+    <lastmod>2026-09-05</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
     <loc>https://ibrix.lt/patarimai/kas-yra-pre-order</loc>
-    <lastmod>2026-08-06</lastmod>
+    <lastmod>2026-09-05</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://ibrix.lt/patarimai/mould-king-ar-lego-ka-rinktis</loc>
+    <lastmod>2026-09-05</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://ibrix.lt/patarimai/lego-alternatyvos-lietuvoje</loc>
+    <lastmod>2026-09-05</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
     <loc>https://ibrix.lt/produktai/visi</loc>
-    <lastmod>2026-08-06</lastmod>
+    <lastmod>2026-09-05</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.9</priority>
   </url>
   <url>
     <loc>https://ibrix.lt/produktai/varikliai</loc>
-    <lastmod>2026-08-06</lastmod>
+    <lastmod>2026-09-05</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.9</priority>
   </url>
   <url>
     <loc>https://ibrix.lt/pre-order</loc>
-    <lastmod>2026-08-06</lastmod>
+    <lastmod>2026-09-05</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://ibrix.lt/dovanu-kuponai</loc>
-    <lastmod>2026-08-06</lastmod>
+    <lastmod>2026-09-05</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
     <loc>https://ibrix.lt/apie</loc>
-    <lastmod>2026-08-06</lastmod>
+    <lastmod>2026-09-05</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
     <loc>https://ibrix.lt/kontaktai</loc>
-    <lastmod>2026-08-06</lastmod>
+    <lastmod>2026-09-05</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
     <loc>https://ibrix.lt/pristatymas</loc>
-    <lastmod>2026-08-06</lastmod>
+    <lastmod>2026-09-05</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
     <loc>https://ibrix.lt/garantija</loc>
-    <lastmod>2026-08-06</lastmod>
+    <lastmod>2026-09-05</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
     <loc>https://ibrix.lt/grazinimai</loc>
-    <lastmod>2026-08-06</lastmod>
+    <lastmod>2026-09-05</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
     <loc>https://ibrix.lt/pagalba</loc>
-    <lastmod>2026-08-06</lastmod>
+    <lastmod>2026-09-05</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
     <loc>https://ibrix.lt/trukstamos-detales</loc>
-    <lastmod>2026-08-06</lastmod>
+    <lastmod>2026-09-05</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url>
   <url>
     <loc>https://ibrix.lt/palyginti</loc>
-    <lastmod>2026-08-06</lastmod>
+    <lastmod>2026-09-05</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.5</priority>
   </url>
   <url>
     <loc>https://ibrix.lt/atsiliepimai</loc>
-    <lastmod>2026-08-06</lastmod>
+    <lastmod>2026-09-05</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.5</priority>
   </url>
   <url>
     <loc>https://ibrix.lt/privatumo-politika</loc>
-    <lastmod>2026-08-06</lastmod>
+    <lastmod>2026-09-05</lastmod>
     <changefreq>yearly</changefreq>
     <priority>0.4</priority>
   </url>
   <url>
     <loc>https://ibrix.lt/slapukai</loc>
-    <lastmod>2026-08-06</lastmod>
+    <lastmod>2026-09-05</lastmod>
     <changefreq>yearly</changefreq>
     <priority>0.4</priority>
   </url>
   <url>
     <loc>https://ibrix.lt/taisykles</loc>
-    <lastmod>2026-08-06</lastmod>
+    <lastmod>2026-09-05</lastmod>
     <changefreq>yearly</changefreq>
     <priority>0.4</priority>
   </url>
@@ -141,6 +153,12 @@
   <url>
     <loc>https://ibrix.lt/produktas/mould-king-10005-300sl-classic-gullwing</loc>
     <lastmod>2026-07-26</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://ibrix.lt/produktas/test-checkout-1-cent</loc>
+    <lastmod>2026-09-04</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>

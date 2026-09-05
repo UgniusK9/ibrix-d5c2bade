@@ -46,30 +46,32 @@
     },
     {
       "slug": "ar-mould-king-detales-tinka-lego",
-      "title": "Ar MOULD KING detalės suderinamos su kitais konstruktoriais",
-      "description": "Dažniausiai užduodamas klausimas prieš perkant pirmą MOULD KING rinkinį. Paaiškiname, kaip veikia standartinė kaiščių sistema.",
+      "title": "Ar MOULD KING detalės tinka prie LEGO®",
+      "description": "Dažniausiai užduodamas klausimas prieš perkant pirmą MOULD KING rinkinį. Ar detalės jungiasi prie LEGO® kolekcijos ir kur yra ribos.",
       "published": "2026-08-07",
-      "readMinutes": 3,
-      "intro": "Prieš perkant pirmą MOULD KING rinkinį dažniausiai klausiama, ar detalės tiks prie jau turimos kolekcijos. Trumpas atsakymas – taip, fiziškai jos jungiasi.",
+      "readMinutes": 4,
+      "intro": "Trumpas atsakymas – taip, detalės fiziškai jungiasi prie LEGO®. Abu gamintojai naudoja tą pačią standartinę kaiščių sistemą, kurios matmenys nebeapsaugoti patentais. Bet yra keli niuansai, kuriuos verta žinoti prieš maišant rinkinius.",
       "sections": [
         {
-          "heading": "Kaip veikia standartinė sistema",
+          "heading": "Kodėl detalės apskritai jungiasi",
           "body": [
-            "MOULD KING konstruktoriai naudoja tą pačią standartinę kaiščių ir angų sistemą, kaip ir dauguma rinkoje esančių plastikinių konstruktorių. Kaiščių žingsnis ir skersmuo yra standartiniai, todėl detalės tarpusavyje jungiasi.",
-            "Tai reiškia, kad ašys, jungtys, pavaros ir sijos yra keičiamos tarpusavyje su kitų gamintojų technine linija."
+            "LEGO® kaiščių sistemos patentai baigėsi dar praėjusio amžiaus pabaigoje. Nuo tada kaiščių žingsnis, skersmuo ir sijų aukštis tapo faktiniu pramonės standartu, kurį naudoja MOULD KING, CaDA, Mega Bloks ir daugybė kitų gamintojų.",
+            "Praktiškai tai reiškia, kad ašys, jungtys, sijos, krumpliaračiai ir pavaros yra keičiami tarpusavyje. MOULD KING techninė linija atitinka LEGO® Technic geometriją."
           ]
         },
         {
-          "heading": "Ko tikėtis praktiškai",
+          "heading": "Kur yra ribos",
           "body": [
-            "Atskirų gamintojų plastiko atspalviai gali šiek tiek skirtis, ypač pilkos ir baltos spalvos. Jei modelį renkate eksponavimui, detales iš skirtingų rinkinių verta maišyti atsargiai.",
-            "Sujungimo standumas taip pat gali skirtis. Naujos detalės iš pradžių būna kietesnės ir prasimina po kelių surinkimų."
+            "Plastiko atspalviai skiriasi. Ryškiausiai tai matosi pilkose ir baltose detalėse – jei modelis skirtas eksponuoti, detales iš skirtingų gamintojų maišykite atsargiai.",
+            "Sujungimo standumas nėra identiškas. Naujos detalės iš pradžių būna kietesnės ir prasimina po kelių surinkimų.",
+            "Elektronika nesuderinama. Varikliai, valdikliai ir baterijų dėžutės tarp gamintojų skiriasi jungtimis ir įtampa, todėl juos rinkitės iš to paties gamintojo kaip ir rinkinys."
           ]
         },
         {
-          "heading": "Dėl elektronikos",
+          "heading": "Ką verta įvertinti prieš perkant",
           "body": [
-            "Varikliai, valdikliai ir baterijų dėžutės tarp gamintojų dažnai nesuderinami – skiriasi jungtys ir įtampa. Elektroninius komponentus rinkitės iš to paties gamintojo kaip ir rinkinys."
+            "Jei norite papildyti esamą LEGO® Technic kolekciją detalėmis – tiks. Jei ieškote atskiro modelio eksponavimui, maišyti nėra būtinybės ir klausimas atkrenta savaime.",
+            "Trūkstamas detales siunčiame nemokamai, todėl net jei rinkinyje kažko pritrūktų, spręsti to savarankiškai nereikės."
           ]
         }
       ],
@@ -79,7 +81,7 @@
         "label": "Peržiūrėti",
         "href": "/produktai/varikliai"
       },
-      "disclaimer": "LEGO® yra registruotas LEGO Group prekės ženklas. IBRIX nėra susijęs su LEGO Group, o MOULD KING yra atskiras gamintojas."
+      "disclaimer": "LEGO® yra registruotas LEGO Group prekės ženklas. IBRIX nėra susijęs su LEGO Group ir nėra jos įgaliotas atstovas. MOULD KING yra atskiras gamintojas."
     },
     {
       "slug": "kas-yra-pre-order",
@@ -116,6 +118,102 @@
         "label": "Skaityti daugiau",
         "href": "/pre-order"
       }
+    },
+    {
+      "slug": "mould-king-ar-lego-ka-rinktis",
+      "title": "MOULD KING ar LEGO®: ką rinktis",
+      "description": "Sąžiningas palyginimas – kaina, detalių kiekis, kokybė ir licencijos. Kada verta rinktis alternatyvą, o kada ne.",
+      "published": "2026-09-05",
+      "readMinutes": 6,
+      "intro": "Klausimas kyla beveik kiekvienam, kas pirmą kartą lygina dviejų panašaus dydžio konstruktorių kainas. Atsakymas priklauso nuo to, ko tiksliai ieškote – abu variantai turi sričių, kuriose akivaizdžiai laimi.",
+      "sections": [
+        {
+          "heading": "Kaina už detalę",
+          "body": [
+            "Tai ryškiausias skirtumas. Panašaus dydžio techninis modelis iš LEGO® Technic daugeliu atvejų kainuoja kelis kartus brangiau nei MOULD KING rinkinys su panašiu detalių skaičiumi.",
+            "Priežastis paprasta: LEGO® kainoje yra licencijos, rinkodara, pasaulinis platinimo tinklas ir prekės ženklo priemoka. MOULD KING parduoda be licencijų ir su trumpesne grandine."
+          ]
+        },
+        {
+          "heading": "Kur LEGO® pirmauja",
+          "body": [
+            "Detalių kokybės pastovumas. LEGO® gamybos tolerancijos yra vienos griežčiausių pramonėje, ir tai jaučiasi surenkant – detalės sėda vienodai, be standumo skirtumų tarp rinkinių.",
+            "Licencijuoti modeliai. Oficialūs Ferrari, Porsche ar Lamborghini modeliai yra tik LEGO®, nes licencijas turi jie.",
+            "Antrinė rinka. LEGO® rinkiniai išlaiko vertę ir juos lengva perparduoti. Alternatyvų antrinė rinka kur kas silpnesnė, todėl kaip investicija jie neveikia."
+          ]
+        },
+        {
+          "heading": "Kur pirmauja MOULD KING",
+          "body": [
+            "Sudėtingumas už tą pačią sumą. Už vidutinio LEGO® rinkinio kainą dažnai gaunate kelis kartus daugiau detalių ir sudėtingesnę mechaniką.",
+            "Nišiniai modeliai. Variklių pjūviai, GBC moduliai, mechaniniai laikrodžiai – tokių kategorijų LEGO® asortimente paprasčiausiai nėra.",
+            "Motorizacija dažnai įeina į komplektą, o ne perkama atskirai."
+          ]
+        },
+        {
+          "heading": "Ką rinktis praktiškai",
+          "body": [
+            "Vaikui arba dovanai, kai svarbus atpažįstamas prekės ženklas – LEGO®.",
+            "Suaugusiam, kuris nori sudėtingos mechanikos ir nenori mokėti priemokos už vardą – alternatyva turi daugiau prasmės.",
+            "Jei jau turite LEGO® Technic kolekciją, detalės tarpusavyje suderinamos, todėl rinktis tik vieną gamintoją nėra būtina."
+          ]
+        }
+      ],
+      "cta": {
+        "title": "MOULD KING techninė linija",
+        "note": "Varikliai, pavaros ir mechanizmai",
+        "label": "Peržiūrėti",
+        "href": "/produktai/varikliai"
+      },
+      "disclaimer": "LEGO® yra registruotas LEGO Group prekės ženklas. IBRIX nėra susijęs su LEGO Group ir nėra jos įgaliotas atstovas. MOULD KING yra atskiras gamintojas."
+    },
+    {
+      "slug": "lego-alternatyvos-lietuvoje",
+      "title": "LEGO® alternatyvos Lietuvoje: į ką žiūrėti perkant",
+      "description": "Kokios alternatyvos prieinamos Lietuvoje, kuo jos skiriasi ir kaip nenusivilti užsakant pigesnį konstruktorių.",
+      "published": "2026-09-05",
+      "readMinutes": 5,
+      "intro": "Alternatyvių gamintojų rinka per pastaruosius metus išaugo tiek, kad pats pasirinkimas tapo problema. Štai kas skiria rimtą rinkinį nuo to, kurio gailėsitės užsisakę.",
+      "sections": [
+        {
+          "heading": "Pagrindiniai gamintojai",
+          "body": [
+            "MOULD KING – stipriausias techniniuose modeliuose: varikliuose, GBC moduliuose, motorizuotoje technikoje. Didžiausias detalių kiekis už kainą.",
+            "CaDA – orientuojasi į automobilius ir turi oficialių licencijų, todėl kainuoja brangiau nei kitos alternatyvos.",
+            "Rinkoje yra ir daug bevardžių gamintojų, kurių kokybė sunkiai nuspėjama – būtent juos perkant dažniausiai nusiviliama."
+          ]
+        },
+        {
+          "heading": "Į ką žiūrėti prieš užsakant",
+          "body": [
+            "Instrukcijos. Rimtas rinkinys turi aiškią instrukciją piešiniais, o ne tekstu, kurį reikia versti.",
+            "Trūkstamų detalių politika. Bet kuriame konstruktoriuje gali pritrūkti detalės. Svarbu, ar pardavėjas ją atsiųs nemokamai, ar ieškoti teks patiems.",
+            "Garantija ir grąžinimas. Perkant iš ES pardavėjo galioja 14 dienų grąžinimo teisė ir dvejų metų garantija."
+          ]
+        },
+        {
+          "heading": "Kodėl užsakymas tiesiai iš Azijos dažnai brangesnis",
+          "body": [
+            "Deklaruota kaina retai būna galutinė. Importo mokesčiai ir PVM prisideda jau po užsakymo, o kurjeris ima administracinį mokestį už jų sutvarkymą.",
+            "Sudėjus viską, kainos skirtumas dažnai išnyksta arba tampa neigiamas.",
+            "Sugedus ar pritrūkus detalių, grąžinimas į ne ES šalį praktiškai neapsimoka – siuntimas kainuoja daugiau nei detalė."
+          ]
+        },
+        {
+          "heading": "Kaip veikia pas mus",
+          "body": [
+            "Rinkiniai atkeliauja į Lietuvą, todėl muito ir PVM klausimas jau išspręstas – kaina svetainėje yra galutinė.",
+            "Trūkstamas detales siunčiame nemokamai, o pre-order terminas nurodomas prie kiekvieno produkto, kad iš anksto žinotumėte, ko laukti."
+          ]
+        }
+      ],
+      "cta": {
+        "title": "Visi konstruktoriai",
+        "note": "Kaina svetainėje – galutinė",
+        "label": "Peržiūrėti",
+        "href": "/produktai/visi"
+      },
+      "disclaimer": "LEGO® yra registruotas LEGO Group prekės ženklas. IBRIX nėra susijęs su LEGO Group ir nėra jos įgaliotas atstovas. MOULD KING yra atskiras gamintojas."
     }
   ]
 }

@@ -24,6 +24,7 @@ import logoPng from "@/assets/logo.png";
 
 const navigation = [
   { name: "Kaip veikia pre-order", href: "/pre-order" },
+  { name: "Straipsniai", href: "/patarimai" },
   { name: "Pagalba", href: "/pagalba" },
   { name: "Apie mus", href: "/apie" },
   { name: "Kontaktai", href: "/kontaktai" },
