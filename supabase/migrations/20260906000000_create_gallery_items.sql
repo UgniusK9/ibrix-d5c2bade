@@ -34,3 +34,9 @@ create policy "Admins can manage gallery items"
     select 1 from public.users
     where users.id = auth.uid() and users.role = 'admin'::app_role
   ));
+
+-- RLS is only consulted after table GRANTs pass. Without this, the admin panel
+-- fails to save with a permission error even though the policy would allow it;
+-- new tables do not get write grants automatically here. anon keeps SELECT only,
+-- so the public can read active tiles and nothing more.
+grant insert, update, delete on public.gallery_items to authenticated;
