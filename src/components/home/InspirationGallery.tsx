@@ -42,7 +42,7 @@ export function InspirationGallery() {
       <div className="container">
         <div className="text-center max-w-2xl mx-auto mb-8 md:mb-10">
           <h2 className="font-heading text-2xl md:text-4xl font-bold text-foreground">
-            Kaip atrodo surinkti rinkiniai
+            Mūsų konstruktoriai
           </h2>
           <p className="text-muted-foreground mt-3 text-sm md:text-base">
             Tikros nuotraukos, ne gamintojo renderiai — pamatyk modelį prieš užsisakydamas.

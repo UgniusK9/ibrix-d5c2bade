@@ -157,7 +157,7 @@ export function GalleryManager() {
           <div>
             <CardTitle>Pagrindinio puslapio galerija</CardTitle>
             <CardDescription>
-              Nuotraukos rodomos skiltyje „Kaip atrodo surinkti rinkiniai“, prieš „Rask tobulą rinkinį“.
+              Nuotraukos rodomos skiltyje „Mūsų konstruktoriai“, prieš „Rask tobulą rinkinį“.
               Pirmoji aktyvi nuotrauka rodoma kaip didelė, kitos keturios – mažesnės. Rodomos daugiausiai 5.
             </CardDescription>
           </div>
