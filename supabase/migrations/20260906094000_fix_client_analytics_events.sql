@@ -7,8 +7,11 @@
 --      evaluated. Anonymous visitors are most of the traffic.
 --
 -- Visitors may append analytics events and nothing more: no select, update or
--- delete, and only the event names the storefront actually emits. Reading stays
--- admin-only. Edge functions use the service role and bypass both layers.
+-- delete, and only the event names the storefront actually emits. Purchases are
+-- deliberately NOT in that list: they are written server-side by
+-- paysera-callback and purchase-with-credits, so a forged client request cannot
+-- inflate revenue. Reading stays admin-only. Edge functions use the service role
+-- and bypass both layers.
 
 drop policy if exists "Anyone can log analytics events" on public.events;
 create policy "Anyone can log analytics events"
@@ -19,8 +22,7 @@ create policy "Anyone can log analytics events"
       'view_item',
       'add_to_cart',
       'begin_checkout',
-      'add_payment_info',
-      'purchase'
+      'add_payment_info'
     )
   );
 

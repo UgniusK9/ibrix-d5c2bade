@@ -63,6 +63,57 @@ async function sendEmail(type: string, data: any) {
   }
 }
 
+function newEventId() {
+  return `srv_paysera_${Date.now().toString(36)}_${Math.random().toString(36).substring(2, 8)}`;
+}
+
+// Purchases are recorded here rather than in the browser: the confirmation page
+// only runs if the customer comes back after paying, and ad blockers stop it
+// outright. This callback always runs, so it is the reliable place.
+async function logEvent(
+  supabase: any,
+  name: string,
+  eventId: string,
+  userId: string | null,
+  properties: Record<string, unknown>,
+) {
+  try {
+    const { error } = await supabase.from('events').insert({
+      name,
+      event_id: eventId,
+      source: 'server',
+      user_id: userId,
+      properties,
+    });
+    if (error) throw error;
+    log('Event logged', { name });
+  } catch (err) {
+    log('Event log failed (non-blocking)', err);
+  }
+}
+
+// Server-side Purchase for Meta. Shares the event id with nothing else, so Meta
+// has no browser duplicate to collapse — the storefront never sent a server
+// Purchase for Paysera orders at all.
+async function sendMetaCapi(eventData: Record<string, unknown>) {
+  try {
+    const response = await fetch(
+      `${Deno.env.get('SUPABASE_URL')}/functions/v1/meta-capi`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')}`,
+        },
+        body: JSON.stringify(eventData),
+      }
+    );
+    log('Meta CAPI sent', { status: response.status });
+  } catch (err) {
+    log('Meta CAPI failed (non-blocking)', err);
+  }
+}
+
 Deno.serve(async (req) => {
   const supabase = createClient(
     Deno.env.get('SUPABASE_URL') ?? '',
@@ -257,6 +308,51 @@ Deno.serve(async (req) => {
       .single();
 
     if (fullOrder) {
+      // Analytics + Meta, before the emails so a mail failure cannot skip them.
+      const items = (fullOrder.order_items || []) as Array<Record<string, any>>;
+      const contentIds = items.map(i => i.sku_snapshot).filter(Boolean);
+      const eventId = newEventId();
+
+      if (isBalancePayment) {
+        await logEvent(supabase, 'balance_paid', eventId, fullOrder.user_id, {
+          order_id: fullOrder.id,
+          order_number: fullOrder.order_number,
+          value: Number(fullOrder.balance_total_eur),
+          currency: 'EUR',
+          payment_method: 'paysera',
+        });
+      } else {
+        await logEvent(supabase, 'purchase', eventId, fullOrder.user_id, {
+          order_id: fullOrder.id,
+          order_number: fullOrder.order_number,
+          value: paidEur,
+          currency: 'EUR',
+          payment_method: 'paysera',
+          items: items.map(i => ({
+            item_id: i.sku_snapshot,
+            item_name: i.title_snapshot,
+            price: Number(i.unit_price_eur),
+            quantity: i.quantity,
+          })),
+        });
+
+        await sendMetaCapi({
+          eventName: 'Purchase',
+          eventId,
+          email: fullOrder.email,
+          phone: fullOrder.phone,
+          firstName: fullOrder.first_name,
+          lastName: fullOrder.last_name,
+          orderId: fullOrder.id,
+          orderNumber: fullOrder.order_number,
+          value: paidEur,
+          currency: 'EUR',
+          contentIds,
+          numItems: items.reduce((n, i) => n + (i.quantity || 1), 0),
+          sourceUrl: 'https://ibrix.lt',
+        });
+      }
+
       if (isBalancePayment) {
         await sendEmail('balance_paid', {
           email: fullOrder.email,

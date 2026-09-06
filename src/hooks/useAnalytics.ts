@@ -395,18 +395,9 @@ export function trackPurchaseEvent(data: PurchaseData): string {
 
   // Store for server-side sending (will be picked up by webhook)
   storeEventForServer('Purchase', eventId, { ...data, totalValue });
-  logEventToDb('purchase', eventId, {
-    order_id: data.orderId,
-    order_number: data.orderNumber,
-    value: totalValue,
-    currency,
-    items: data.items.map(i => ({
-      item_id: i.id,
-      item_name: i.name,
-      price: i.price / 100,
-      quantity: i.quantity || 1,
-    })),
-  });
+  // No logEventToDb here on purpose: purchases are recorded server-side by
+  // paysera-callback and purchase-with-credits, which run even when the customer
+  // never returns to the confirmation page. Logging here too would double-count.
   return eventId;
 }
 
