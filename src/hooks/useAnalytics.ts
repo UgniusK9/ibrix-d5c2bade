@@ -1,4 +1,5 @@
 import { useHasConsent } from '@/stores/cookieConsentStore';
+import { supabase } from '@/integrations/supabase/client';
 
 interface ProductData {
   id: string;
@@ -107,6 +108,27 @@ function storeEventForServer(eventName: string, eventId: string, data: any) {
   }
 }
 
+// First-party event log. The admin dashboard's funnel and top-products list read
+// straight from this table, so without these inserts it can only ever show zeros.
+// Fire-and-forget: analytics must never block or break a purchase.
+function logEventToDb(name: string, eventId: string, properties: Record<string, unknown>) {
+  void (async () => {
+    try {
+      const { data } = await supabase.auth.getSession();
+      const { error } = await supabase.from('events').insert({
+        name,
+        event_id: eventId,
+        source: 'client',
+        user_id: data.session?.user?.id ?? null,
+        properties: properties as never,
+      });
+      if (error) console.warn('[Analytics] events insert rejected:', error.message);
+    } catch (e) {
+      console.warn('[Analytics] events insert failed:', e);
+    }
+  })();
+}
+
 // ============================================
 // Standalone tracking functions (for stores/non-React code)
 // ============================================
@@ -154,6 +176,13 @@ export function trackViewContentEvent(product: ProductData): string {
   }
 
   storeEventForServer('ViewContent', eventId, { product, priceValue });
+  logEventToDb('view_item', eventId, {
+    product_id: product.id,
+    product_name: product.name,
+    price: priceValue,
+    currency: product.currency || 'EUR',
+    category: product.category,
+  });
   return eventId;
 }
 
@@ -200,6 +229,14 @@ export function trackAddToCartEvent(product: ProductData): string {
   }
 
   storeEventForServer('AddToCart', eventId, { product, priceValue });
+  logEventToDb('add_to_cart', eventId, {
+    product_id: product.id,
+    product_name: product.name,
+    price: priceValue,
+    quantity: product.quantity || 1,
+    currency: product.currency || 'EUR',
+    category: product.category,
+  });
   return eventId;
 }
 
@@ -246,6 +283,16 @@ export function trackBeginCheckoutEvent(data: CheckoutData): string {
   }
 
   storeEventForServer('InitiateCheckout', eventId, { ...data, totalValue });
+  logEventToDb('begin_checkout', eventId, {
+    value: totalValue,
+    currency,
+    items: data.items.map(i => ({
+      item_id: i.id,
+      item_name: i.name,
+      price: i.price / 100,
+      quantity: i.quantity || 1,
+    })),
+  });
   return eventId;
 }
 
@@ -290,6 +337,16 @@ export function trackAddPaymentInfoEvent(data: CheckoutData): string {
   }
 
   storeEventForServer('AddPaymentInfo', eventId, { ...data, totalValue });
+  logEventToDb('add_payment_info', eventId, {
+    value: totalValue,
+    currency,
+    items: data.items.map(i => ({
+      item_id: i.id,
+      item_name: i.name,
+      price: i.price / 100,
+      quantity: i.quantity || 1,
+    })),
+  });
   return eventId;
 }
 
@@ -338,6 +395,18 @@ export function trackPurchaseEvent(data: PurchaseData): string {
 
   // Store for server-side sending (will be picked up by webhook)
   storeEventForServer('Purchase', eventId, { ...data, totalValue });
+  logEventToDb('purchase', eventId, {
+    order_id: data.orderId,
+    order_number: data.orderNumber,
+    value: totalValue,
+    currency,
+    items: data.items.map(i => ({
+      item_id: i.id,
+      item_name: i.name,
+      price: i.price / 100,
+      quantity: i.quantity || 1,
+    })),
+  });
   return eventId;
 }
 
