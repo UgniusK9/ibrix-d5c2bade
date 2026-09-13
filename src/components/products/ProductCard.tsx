@@ -10,6 +10,7 @@ import { useWishlist } from "@/hooks/useWishlist";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { useTranslation } from "react-i18next";
 
 interface ProductCardProps {
   product: Product;
@@ -18,13 +19,14 @@ interface ProductCardProps {
 }
 
 const BADGE_CONFIG: Record<string, { label: string; className: string }> = {
-  new: { label: 'Naujiena', className: 'bg-success text-success-foreground' },
-  popular: { label: 'Populiarus', className: 'bg-accent text-accent-foreground' },
-  sale: { label: 'Akcija', className: 'bg-destructive text-destructive-foreground' },
-  limited: { label: 'Ribotas', className: 'bg-primary text-primary-foreground' },
+  new: { label: 'products.new', className: 'bg-success text-success-foreground' },
+  popular: { label: 'products.popular', className: 'bg-accent text-accent-foreground' },
+  sale: { label: 'products.sale', className: 'bg-destructive text-destructive-foreground' },
+  limited: { label: 'products.limited', className: 'bg-primary text-primary-foreground' },
 };
 
 export function ProductCard({ product, onQuickView, compact = false }: ProductCardProps) {
+  const { t } = useTranslation();
   const addItem = useCartStore((state) => state.addItem);
   const { addProduct, removeProduct, isInComparison } = useComparisonStore();
   const { isInWishlist, toggleWishlist } = useWishlist();
@@ -77,7 +79,7 @@ export function ProductCard({ product, onQuickView, compact = false }: ProductCa
     
     addItem(product);
 
-    toast.success("Pridėta į krepšelį", {
+    toast.success(t('products.addedToCart'), {
       description: product.title,
       position: "top-center",
     });
@@ -95,13 +97,13 @@ export function ProductCard({ product, onQuickView, compact = false }: ProductCa
     
     if (inComparison) {
       removeProduct(product.id);
-      toast.success("Pašalinta iš palyginimo");
+      toast.success(t('products.removedFromComparison'));
     } else {
       const added = addProduct(product);
       if (added) {
-        toast.success("Pridėta į palyginimą");
+        toast.success(t('products.addedToComparison'));
       } else {
-        toast.error("Galima palyginti tik 3 produktus");
+        toast.error(t('products.compareMax'));
       }
     }
   };
@@ -135,7 +137,7 @@ export function ProductCard({ product, onQuickView, compact = false }: ProductCa
                   : "bg-success/10 text-success border-success/20"
             )}
           >
-            {isOutOfStock ? "Išparduota" : isPreOrder ? "Pre-order" : "Sandėlyje"}
+            {isOutOfStock ? t('products.outOfStock') : isPreOrder ? t('products.preOrderLabel') : t('products.inStockLabel')}
           </Badge>
         </div>
         
@@ -154,7 +156,7 @@ export function ProductCard({ product, onQuickView, compact = false }: ProductCa
             if (!config) return null;
             return (
               <Badge key={badge} className={cn("text-xs font-bold px-2.5 py-1 shadow-sm", config.className)}>
-                {config.label}
+                {t(config.label)}
               </Badge>
             );
           })}
@@ -218,7 +220,7 @@ export function ProductCard({ product, onQuickView, compact = false }: ProductCa
           {detailsCount > 0 && (
             <span className="flex items-center gap-1">
               <Package className="w-3.5 h-3.5" />
-              {detailsCount} det.
+              {detailsCount} {t('products.pieces')}
             </span>
           )}
           <span className="flex items-center gap-1">
@@ -249,7 +251,7 @@ export function ProductCard({ product, onQuickView, compact = false }: ProductCa
             {/* Credits earned */}
             <p className="text-xs text-muted-foreground flex items-center gap-1 mt-0.5">
               <Sparkles className="w-3 h-3" />
-              +{creditsEarned}€ kreditų
+              +{creditsEarned}€ {t('credits.creditsWord')}
             </p>
           </div>
           

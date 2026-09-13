@@ -1,25 +1,15 @@
 import { Truck, Shield, Headphones } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useTranslation } from "react-i18next";
 
 const badges = [
-  {
-    icon: Truck,
-    title: "Nemokamas pristatymas",
-    description: "Į paštomatą – visada nemokamai",
-  },
-  {
-    icon: Shield,
-    title: "Aiškus pre-order",
-    description: "Atšaukti galima iki išsiuntimo",
-  },
-  {
-    icon: Headphones,
-    title: "Trūkstamos detalės",
-    description: "Nemokamai išsiunčiame",
-  },
+  { icon: Truck, title: "trustBadges.freeShipping", description: "trustBadges.freeShippingDesc" },
+  { icon: Shield, title: "trustBadges.clearPreOrder", description: "trustBadges.clearPreOrderDesc" },
+  { icon: Headphones, title: "trustBadges.missingParts", description: "trustBadges.missingPartsDesc" },
 ];
 
 export function TrustBadges() {
+  const { t } = useTranslation();
   return (
     <section className="py-5 border-b border-border bg-card">
       <div className="container">
@@ -34,8 +24,8 @@ export function TrustBadges() {
             >
               <badge.icon className="w-5 h-5 text-accent flex-shrink-0" strokeWidth={1.75} />
               <div className="min-w-0">
-                <span className="font-medium text-foreground">{badge.title}</span>
-                <span className="text-muted-foreground hidden sm:inline"> – {badge.description}</span>
+                <span className="font-medium text-foreground">{t(badge.title)}</span>
+                <span className="text-muted-foreground hidden sm:inline"> – {t(badge.description)}</span>
               </div>
             </div>
           ))}

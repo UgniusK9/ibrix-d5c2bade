@@ -23,29 +23,30 @@ import logo from "@/assets/logo.webp";
 import logoPng from "@/assets/logo.png";
 
 // secondary: true = only shown on wide screens (also reachable from the footer and mobile menu)
+// name = translation key; the label is looked up with t() at render so it follows the language switch
 const navigation = [
-  { name: "Kaip veikia pre-order", href: "/pre-order" },
-  { name: "Straipsniai", href: "/patarimai", secondary: true },
-  { name: "Pagalba", href: "/pagalba" },
-  { name: "Apie mus", href: "/apie", secondary: true },
-  { name: "Kontaktai", href: "/kontaktai", secondary: true },
+  { name: "nav.preOrder", href: "/pre-order" },
+  { name: "nav.guides", href: "/patarimai", secondary: true },
+  { name: "nav.help", href: "/pagalba" },
+  { name: "nav.about", href: "/apie", secondary: true },
+  { name: "nav.contact", href: "/kontaktai", secondary: true },
 ];
 
 const infoLinks = [
-  { name: "Pristatymas", href: "/pristatymas", icon: Truck },
-  { name: "Grąžinimai", href: "/grazinimai", icon: Undo2 },
-  { name: "Garantija", href: "/garantija", icon: Shield },
-  { name: "Atsiliepimai", href: "/atsiliepimai", icon: Star },
-  { name: "D.U.K", href: "/pagalba#faq", icon: HelpCircle },
-  { name: "Taisyklės", href: "/taisykles", icon: FileText },
-  { name: "Privatumo politika", href: "/privatumo-politika", icon: FileText },
-  { name: "Slapukų politika", href: "/slapukai", icon: Cookie },
+  { name: "nav.delivery", href: "/pristatymas", icon: Truck },
+  { name: "nav.returns", href: "/grazinimai", icon: Undo2 },
+  { name: "nav.warranty", href: "/garantija", icon: Shield },
+  { name: "nav.reviews", href: "/atsiliepimai", icon: Star },
+  { name: "nav.faq", href: "/pagalba#faq", icon: HelpCircle },
+  { name: "nav.terms", href: "/taisykles", icon: FileText },
+  { name: "nav.privacy", href: "/privatumo-politika", icon: FileText },
+  { name: "nav.cookies", href: "/slapukai", icon: Cookie },
 ];
 
 const topBarItems = [
-  { icon: Truck, text: "Nemokamas pristatymas LT" },
-  { icon: Clock, text: "Aiškus pre-order terminas" },
-  { icon: Headphones, text: "Pagalba lietuviškai" },
+  { icon: Truck, text: "hero.freeShippingLt" },
+  { icon: Clock, text: "header.preOrderEta" },
+  { icon: Headphones, text: "header.lithuanianSupport" },
 ];
 
 export function Header() {
@@ -68,13 +69,13 @@ export function Header() {
             {topBarItems.map((item, index) => (
               <span key={index} className="hidden md:inline-flex items-center gap-2 whitespace-nowrap text-primary-foreground/80 flex-shrink-0">
                 <item.icon className="h-3.5 w-3.5 flex-shrink-0" strokeWidth={2} />
-                <span className="truncate">{item.text}</span>
+                <span className="truncate">{t(item.text)}</span>
               </span>
             ))}
             {/* Mobile - show only first item */}
             <span className="md:hidden inline-flex items-center gap-2 text-primary-foreground/80">
               <Truck className="h-3.5 w-3.5 flex-shrink-0" strokeWidth={2} />
-              <span className="truncate">{topBarItems[0].text}</span>
+              <span className="truncate">{t(topBarItems[0].text)}</span>
             </span>
           </div>
         </div>
@@ -101,7 +102,7 @@ export function Header() {
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <button className="px-2 py-2 text-sm font-medium rounded-lg transition-colors whitespace-nowrap text-foreground/70 hover:text-foreground hover:bg-secondary flex items-center gap-1.5 flex-shrink-0">
-                    Informacija
+                    {t('nav.information')}
                     <ChevronDown className="h-3.5 w-3.5 flex-shrink-0" />
                   </button>
                 </DropdownMenuTrigger>
@@ -110,7 +111,7 @@ export function Header() {
                     <DropdownMenuItem key={item.name} asChild>
                       <Link to={item.href} className="flex items-center gap-3 px-3 py-2.5 cursor-pointer rounded-lg">
                         <item.icon className="h-4 w-4 text-muted-foreground flex-shrink-0" />
-                        {item.name}
+                        {t(item.name)}
                       </Link>
                     </DropdownMenuItem>
                   ))}
@@ -127,7 +128,7 @@ export function Header() {
                       : "text-foreground/70 hover:text-foreground hover:bg-secondary"
                   }`}
                 >
-                  {item.name}
+                  {t(item.name)}
                 </Link>
               ))}
             </nav>
@@ -205,7 +206,7 @@ export function Header() {
                 </SheetTrigger>
                 <SheetContent side="right" className="w-[300px] sm:w-[350px] p-0">
                   <SheetHeader className="p-6 border-b border-border">
-                    <SheetTitle className="text-left">Meniu</SheetTitle>
+                    <SheetTitle className="text-left">{t('misc.menu')}</SheetTitle>
                   </SheetHeader>
                   
                   <div className="p-4">
@@ -221,7 +222,7 @@ export function Header() {
                               : "text-foreground/70 hover:text-foreground hover:bg-secondary"
                           }`}
                         >
-                          {item.name}
+                          {t(item.name)}
                         </Link>
                       ))}
                     </nav>

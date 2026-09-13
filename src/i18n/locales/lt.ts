@@ -124,6 +124,7 @@ export const lt = {
   
   // Credits system
   credits: {
+    creditsWord: 'kreditų',
     title: 'Nario kreditai',
     subtitle: 'Kaupkite ir naudokite kreditus savo pirkiniams',
     balance: 'Jūsų balansas',
@@ -358,6 +359,10 @@ export const lt = {
   
   // Products
   products: {
+    businessDaysShort: 'd.d.',
+    weeksShort: 'sav.',
+    inStockLabel: 'Sandėlyje',
+    preOrderLabel: 'Pre-order',
     inStock: 'SANDĖLYJE',
     preOrder: 'PRE-ORDER',
     pieces: 'det.',
@@ -1175,6 +1180,7 @@ export const lt = {
   
   // Misc
   misc: {
+    menu: 'Meniu',
     preOrderInfo: 'Pre-order informacija',
     preOrderExplainer: 'Užsisakykite dabar, mokėkite tik užstatą. Likusią sumą sumokėsite kai prekė bus paruošta siuntimui.',
     trustBadge1: 'Nemokamas pristatymas',

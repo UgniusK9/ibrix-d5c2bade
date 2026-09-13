@@ -1,3 +1,4 @@
+import i18n from '@/i18n/config';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -128,12 +129,12 @@ export function formatPrice(price: number, currency: string = 'EUR'): string {
 // Helper to get ETA string
 export function getEtaString(product: Product): string {
   if (product.stock_status === 'in_stock') {
-    return '1–2 d.d.';
+    return `1–2 ${i18n.t('products.businessDaysShort')}`;
   }
   if (product.preorder_eta_weeks_min && product.preorder_eta_weeks_max) {
-    return `${product.preorder_eta_weeks_min}–${product.preorder_eta_weeks_max} sav.`;
+    return `${product.preorder_eta_weeks_min}–${product.preorder_eta_weeks_max} ${i18n.t('products.weeksShort')}`;
   }
-  return '8–10 sav.';
+  return `8–10 ${i18n.t('products.weeksShort')}`;
 }
 
 // Helper to get default product image

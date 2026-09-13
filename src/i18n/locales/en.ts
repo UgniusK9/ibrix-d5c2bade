@@ -122,6 +122,7 @@ export const en = {
   
   // Credits system
   credits: {
+    creditsWord: 'credits',
     title: 'Member Credits',
     subtitle: 'Earn and use credits on your purchases',
     balance: 'Your balance',
@@ -356,6 +357,10 @@ export const en = {
   
   // Products
   products: {
+    businessDaysShort: 'b.d.',
+    weeksShort: 'wks',
+    inStockLabel: 'In stock',
+    preOrderLabel: 'Pre-order',
     inStock: 'IN STOCK',
     preOrder: 'PRE-ORDER',
     pieces: 'pcs',
@@ -1173,6 +1178,7 @@ export const en = {
   
   // Misc
   misc: {
+    menu: 'Menu',
     preOrderInfo: 'Pre-order Information',
     preOrderExplainer: 'Order now, pay only a deposit. Pay the remaining amount when the item is ready for shipping.',
     trustBadge1: 'Free Shipping',
