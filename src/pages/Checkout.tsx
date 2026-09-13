@@ -825,7 +825,7 @@ export default function Checkout() {
         {/* Recommendations at bottom */}
         {step === 1 && (
           <div className="mt-8">
-            <CartRecommendations maxItems={4} title="Kiti galimi produktai" />
+            <CartRecommendations maxItems={4} title={t('cart.otherProducts')} />
           </div>
         )}
       </div>

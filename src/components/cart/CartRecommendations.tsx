@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Sparkles, ShoppingCart, ArrowRight } from 'lucide-react';
@@ -12,7 +13,8 @@ interface CartRecommendationsProps {
   title?: string;
 }
 
-export function CartRecommendations({ maxItems = 4, title = "Rekomenduojama jums" }: CartRecommendationsProps) {
+export function CartRecommendations({ maxItems = 4, title }: CartRecommendationsProps) {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { data: allProducts } = useProducts();
   const { items: cartItems, addItem } = useCartStore();
@@ -44,7 +46,7 @@ export function CartRecommendations({ maxItems = 4, title = "Rekomenduojama jums
     <div className="bg-card border border-border rounded-2xl p-6">
       <div className="flex items-center gap-2 mb-6">
         <Sparkles className="w-5 h-5 text-accent" />
-        <h2 className="font-heading font-semibold text-lg">{title}</h2>
+        <h2 className="font-heading font-semibold text-lg">{title ?? t('cart.recommended')}</h2>
       </div>
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -69,7 +71,7 @@ export function CartRecommendations({ maxItems = 4, title = "Rekomenduojama jums
                     : 'border-primary/50 text-primary bg-primary/10'
                 )}
               >
-                {product.stock_status === 'in_stock' ? 'Sandėlyje' : 'Pre-order'}
+                {product.stock_status === 'in_stock' ? t('products.inStockLabel') : t('products.preOrderLabel')}
               </Badge>
             </div>
             <div className="p-3">
@@ -88,7 +90,7 @@ export function CartRecommendations({ maxItems = 4, title = "Rekomenduojama jums
                 onClick={(e) => handleAddToCart(product, e)}
               >
                 <ShoppingCart className="w-3.5 h-3.5 mr-1.5" />
-                Į krepšelį
+                {t('products.toCart')}
               </Button>
             </div>
           </div>

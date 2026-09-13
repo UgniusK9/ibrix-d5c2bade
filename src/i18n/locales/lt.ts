@@ -359,6 +359,10 @@ export const lt = {
   
   // Products
   products: {
+    countLabel_one: '{{count}} konstruktorius',
+    countLabel_few: '{{count}} konstruktoriai',
+    countLabel_many: '{{count}} konstruktoriaus',
+    countLabel_other: '{{count}} konstruktorių',
     noCategories: 'Nėra kategorijų',
     viewAllConstructors: 'Peržiūrėti visus konstruktorius',
     searchNoResults: 'Nieko nerasta pagal „{{query}}“',
@@ -459,6 +463,14 @@ export const lt = {
   
   // Cart
   cart: {
+    itemCount_one: '{{count}} prekė',
+    itemCount_few: '{{count}} prekės',
+    itemCount_many: '{{count}} prekės',
+    itemCount_other: '{{count}} prekių',
+    inCart: 'Krepšelyje',
+    viewCart: 'Į krepšelį',
+    recommended: 'Rekomenduojama jums',
+    otherProducts: 'Kiti galimi produktai',
     title: 'Krepšelis',
     empty: 'Jūsų krepšelis tuščias',
     emptyTitle: 'Krepšelis tuščias',
@@ -1169,6 +1181,8 @@ export const lt = {
   
   // Footer
   footer: {
+    about: 'IBRIX – judantys mechaniniai konstruktoriai mechanikos fanams. Aiškus pre-order, pristatymas Lietuvoje ir pagalba lietuviškai.',
+    shippingPartners: 'Pristatymo partneriai',
     allRights: 'Visos teisės saugomos',
     newsletter: 'Naujienlaiškis',
     newsletterDesc: 'Gaukite naujienas ir specialius pasiūlymus',
@@ -1265,5 +1279,26 @@ export const lt = {
     analyticsDesc: 'Padeda suprasti, kaip naudojama svetainė (pvz., lankomumas, paspaudimai), kad galėtume ją pagerinti.',
     marketing: 'Marketingas',
     marketingDesc: 'Naudojama reklamos matavimui ir personalizavimui (pvz., Meta/Google).',
+  },
+  // Catalogue page (virtual categories + legacy slugs)
+  catalog: {
+    allDesc: 'Peržiūrėkite visą mūsų konstruktorių katalogą.',
+    giftCardsDesc: 'Dovanų kuponai artimiesiems',
+    offersDesc: 'Specialūs pasiūlymai ir nuolaidos',
+    newDesc: 'Naujausi produktai mūsų parduotuvėje',
+    popularDesc: 'Populiariausi konstruktoriai pagal pirkėjų pasirinkimą',
+    preorderDesc: 'Konstruktoriai, kuriuos galite užsisakyti iš anksto.',
+    inStockDesc: 'Konstruktoriai, kurie yra mūsų sandėlyje ir paruošti siuntimui.',
+    collectionWord: 'kolekcija',
+    engines: 'Varikliai',
+    enginesDesc: 'Mechaninių konstruktorių kolekcija su realiai judančiais mechanizmais.',
+    cars: 'Automobilių modeliai',
+    carsDesc: 'Detalūs automobilių modeliai kolekcijoms ir entuziastams.',
+    flowers: 'Gėlių rinkiniai',
+    flowersDesc: 'Unikalūs gėlių konstruktoriai ir dekoracijos.',
+    other: 'Kiti produktai',
+    otherDesc: 'Kiti unikalūs konstruktoriai ir priedai.',
+    collapse: 'Suskleisti kategoriją',
+    expand: 'Išskleisti kategoriją',
   },
 };

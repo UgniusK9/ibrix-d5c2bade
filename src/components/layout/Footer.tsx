@@ -159,14 +159,13 @@ export function Footer() {
               </picture>
             </Link>
             <p className="text-footer-foreground/70 text-sm leading-relaxed mb-6">
-              IBRIX – judantys mechaniniai konstruktoriai mechanikos fanams. Aiškus pre-order, 
-              pristatymas Lietuvoje ir pagalba lietuviškai.
+              {t('footer.about')}
             </p>
             
             {/* Payment methods */}
             <div className="mb-4">
               <p className="text-xs text-footer-foreground/50 uppercase tracking-wider mb-2">
-                Apmokėjimo būdai
+                {t('footer.paymentMethods')}
               </p>
               <div className="flex flex-wrap gap-1.5">
                 {paymentMethods.map((method) => (
@@ -180,7 +179,7 @@ export function Footer() {
             {/* Shipping */}
             <div>
               <p className="text-xs text-footer-foreground/50 uppercase tracking-wider mb-2">
-                Pristatymo partneriai
+                {t('footer.shippingPartners')}
               </p>
               <div className="flex flex-wrap gap-1.5">
                 {shippingPartners.map((partner) => (
@@ -279,7 +278,7 @@ export function Footer() {
               className="flex items-center gap-2 text-xs text-footer-foreground/50 hover:text-footer-foreground transition-colors"
             >
               <Cookie className="h-3.5 w-3.5" />
-              Slapukų nustatymai
+              {t('cookieBanner.settingsTitle')}
             </button>
           </div>
         </div>

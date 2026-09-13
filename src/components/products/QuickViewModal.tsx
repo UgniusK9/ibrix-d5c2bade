@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -16,13 +17,14 @@ interface QuickViewModalProps {
 }
 
 const BADGE_CONFIG: Record<string, { label: string; className: string }> = {
-  new: { label: 'Naujiena', className: 'bg-green-500 text-white' },
-  popular: { label: 'Populiarus', className: 'bg-orange-500 text-white' },
-  sale: { label: 'Išpardavimas', className: 'bg-red-500 text-white' },
-  limited: { label: 'Ribotas', className: 'bg-purple-500 text-white' },
+  new: { label: 'products.new', className: 'bg-success text-success-foreground' },
+  popular: { label: 'products.popular', className: 'bg-accent text-accent-foreground' },
+  sale: { label: 'products.sale', className: 'bg-destructive text-destructive-foreground' },
+  limited: { label: 'products.limited', className: 'bg-primary text-primary-foreground' },
 };
 
 export function QuickViewModal({ product, open, onOpenChange }: QuickViewModalProps) {
+  const { t } = useTranslation();
   const addItem = useCartStore((state) => state.addItem);
   const { isInWishlist, toggleWishlist } = useWishlist();
 
@@ -38,7 +40,7 @@ export function QuickViewModal({ product, open, onOpenChange }: QuickViewModalPr
 
   const handleAddToCart = () => {
     addItem(product);
-    toast.success("Pridėta į krepšelį", {
+    toast.success(t('products.addedToCart'), {
       description: product.title,
       position: "top-center",
     });
@@ -54,7 +56,7 @@ export function QuickViewModal({ product, open, onOpenChange }: QuickViewModalPr
       <DialogContent className="max-w-3xl p-0 gap-0 overflow-hidden">
         <DialogTitle className="sr-only">{product.title}</DialogTitle>
         <DialogDescription className="sr-only">
-          Greita peržiūra: {product.title}
+          {t('products.quickView')}: {product.title}
         </DialogDescription>
         
         <div className="grid md:grid-cols-2">
@@ -77,7 +79,7 @@ export function QuickViewModal({ product, open, onOpenChange }: QuickViewModalPr
                       : "bg-success text-success-foreground"
                 }`}
               >
-                {isOutOfStock ? "IŠPARDUOTA" : isPreOrder ? "PRE-ORDER" : "SANDĖLYJE"}
+                {isOutOfStock ? t('products.outOfStock') : isPreOrder ? t('products.preOrder') : t('products.inStock')}
               </Badge>
               
               {badges.map((badge) => {
@@ -85,7 +87,7 @@ export function QuickViewModal({ product, open, onOpenChange }: QuickViewModalPr
                 if (!config) return null;
                 return (
                   <Badge key={badge} className={`text-xs font-semibold px-2.5 py-1 ${config.className}`}>
-                    {config.label}
+                    {t(config.label)}
                   </Badge>
                 );
               })}
@@ -141,7 +143,7 @@ export function QuickViewModal({ product, open, onOpenChange }: QuickViewModalPr
                   onClick={handleAddToCart}
                 >
                   <ShoppingCart className="w-4 h-4 mr-2" />
-                  {isPreOrder ? "Užsisakyti (pre-order)" : "Į krepšelį"}
+                  {isPreOrder ? t('products.orderPreOrder') : t('products.toCart')}
                 </Button>
                 
                 <div className="flex gap-2">
@@ -151,7 +153,7 @@ export function QuickViewModal({ product, open, onOpenChange }: QuickViewModalPr
                     onClick={handleWishlist}
                   >
                     <Heart className={`w-4 h-4 mr-2 ${inWishlist ? 'fill-current' : ''}`} />
-                    {inWishlist ? 'Wishlist\'e' : 'Į wishlist'}
+                    {inWishlist ? t('products.removeFromWishlist') : t('products.addToWishlist')}
                   </Button>
                   
                   <Button variant="outline" asChild className="flex-1">

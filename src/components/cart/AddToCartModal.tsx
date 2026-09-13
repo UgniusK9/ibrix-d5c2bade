@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { CheckCircle2, ShoppingBag, ArrowRight, Package, Sparkles, Clock, X } from 'lucide-react';
@@ -16,6 +17,7 @@ interface AddToCartModalProps {
 }
 
 export function AddToCartModal({ isOpen, onClose, item }: AddToCartModalProps) {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { data: allProducts } = useProducts();
   const { items: cartItems, getTotalPrice, addItem } = useCartStore();
@@ -62,9 +64,9 @@ export function AddToCartModal({ isOpen, onClose, item }: AddToCartModalProps) {
                 <CheckCircle2 className="w-5 h-5" />
               </div>
               <div>
-                <p className="text-lg font-heading font-bold">Pridėta į krepšelį!</p>
+                <p className="text-lg font-heading font-bold">{t('products.addedToCart')}!</p>
                 <p className="text-sm font-normal text-muted-foreground">
-                  Krepšelyje: {itemCount} {itemCount === 1 ? 'prekė' : itemCount < 10 ? 'prekės' : 'prekių'}
+                  {t('cart.inCart')}: {t('cart.itemCount', { count: itemCount })}
                 </p>
               </div>
             </DialogTitle>
@@ -99,7 +101,7 @@ export function AddToCartModal({ isOpen, onClose, item }: AddToCartModalProps) {
                       : 'border-primary/50 text-primary bg-primary/5'
                   )}
                 >
-                  {item.status === 'in_stock' ? 'Sandėlyje' : 'Pre-order'}
+                  {item.status === 'in_stock' ? t('products.inStockLabel') : t('products.preOrderLabel')}
                 </Badge>
                 {item.eta && (
                   <span className="text-xs text-muted-foreground flex items-center gap-1">
@@ -129,13 +131,13 @@ export function AddToCartModal({ isOpen, onClose, item }: AddToCartModalProps) {
               className="w-full h-12 hover:bg-muted/50"
             >
               <ShoppingBag className="w-4 h-4 mr-2" />
-              Tęsti apsipirkimą
+              {t('cart.continueShopping')}
             </Button>
             <Button 
               onClick={handleViewCart} 
               className="w-full h-12 bg-primary hover:bg-primary/90"
             >
-              Į krepšelį
+              {t('cart.viewCart')}
               <ArrowRight className="w-4 h-4 ml-2" />
             </Button>
           </div>
@@ -166,7 +168,7 @@ export function AddToCartModal({ isOpen, onClose, item }: AddToCartModalProps) {
                       <p className="text-xs font-medium line-clamp-2 min-h-[2.5rem]">{product.title}</p>
                       <p className="text-xs text-primary font-bold mt-1">{formatPrice(product.price_eur)}</p>
                       <span className="text-[10px] text-muted-foreground group-hover:text-primary transition-colors">
-                        + Pridėti
+                        + {t('common.add')}
                       </span>
                     </button>
                   ))}

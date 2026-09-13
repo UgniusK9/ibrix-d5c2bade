@@ -33,11 +33,12 @@ interface Category {
 }
 
 // Special category slugs for virtual categories
+// values are translation keys
 const SPECIAL_CATEGORIES = {
-  'dovanu-kuponai': { name: 'Dovanų kuponai', description: 'Dovanų kuponai artimiesiems' },
-  'pasiulymai': { name: 'Pasiūlymai ir išpardavimai', description: 'Specialūs pasiūlymai ir nuolaidos' },
-  'naujienos': { name: 'Naujienos', description: 'Naujausi produktai mūsų parduotuvėje' },
-  'populiariausi': { name: 'Populiariausi', description: 'Populiariausi konstruktoriai pagal pirkėjų pasirinkimą' },
+  'dovanu-kuponai': { name: 'nav.giftCards', description: 'catalog.giftCardsDesc' },
+  'pasiulymai': { name: 'products.offers', description: 'catalog.offersDesc' },
+  'naujienos': { name: 'products.newProducts', description: 'catalog.newDesc' },
+  'populiariausi': { name: 'products.mostPopular', description: 'catalog.popularDesc' },
 };
 
 export default function Produktai() {
@@ -89,40 +90,40 @@ export default function Produktai() {
   // Determine current category from URL
   const currentCategory = useMemo(() => {
     if (!categorySlug || categorySlug === 'visi') {
-      return { id: 'all', name: 'Visi konstruktoriai', slug: 'visi', description: 'Peržiūrėkite visą mūsų konstruktorių katalogą.' };
+      return { id: 'all', name: t('nav.allConstructors'), slug: 'visi', description: t('catalog.allDesc') };
     }
     
     // Check special categories
     if (categorySlug in SPECIAL_CATEGORIES) {
       const special = SPECIAL_CATEGORIES[categorySlug as keyof typeof SPECIAL_CATEGORIES];
-      return { id: categorySlug, name: special.name, slug: categorySlug, description: special.description };
+      return { id: categorySlug, name: t(special.name), slug: categorySlug, description: t(special.description) };
     }
     
     // Check stock filter slugs
     if (categorySlug === 'preorder') {
-      return { id: 'preorder', name: 'Pre-order', slug: 'preorder', description: 'Konstruktoriai, kuriuos galite užsisakyti iš anksto.' };
+      return { id: 'preorder', name: t('products.preOrderLabel'), slug: 'preorder', description: t('catalog.preorderDesc') };
     }
     if (categorySlug === 'sandelyje') {
-      return { id: 'sandelyje', name: 'Sandėlyje', slug: 'sandelyje', description: 'Konstruktoriai, kurie yra mūsų sandėlyje ir paruošti siuntimui.' };
+      return { id: 'sandelyje', name: t('products.inStockLabel'), slug: 'sandelyje', description: t('catalog.inStockDesc') };
     }
     
     const found = categories.find(c => c.slug === categorySlug);
     if (found) {
-      return { ...found, description: found.description || `${found.name} kolekcija` };
+      return { ...found, description: found.description || `${found.name} ${t('catalog.collectionWord')}` };
     }
     // Fallback for legacy enum categories
     const legacyMap: Record<string, { name: string; description: string }> = {
-      varikliai: { name: 'Varikliai', description: 'Mechaninių konstruktorių kolekcija su realiai judančiais mechanizmais.' },
-      automobiliai: { name: 'Automobilių modeliai', description: 'Detalūs automobilių modeliai kolekcijoms ir entuziastams.' },
-      geles: { name: 'Gėlių rinkiniai', description: 'Unikalūs gėlių konstruktoriai ir dekoracijos.' },
-      kita: { name: 'Kiti produktai', description: 'Kiti unikalūs konstruktoriai ir priedai.' },
+      varikliai: { name: 'catalog.engines', description: 'catalog.enginesDesc' },
+      automobiliai: { name: 'catalog.cars', description: 'catalog.carsDesc' },
+      geles: { name: 'catalog.flowers', description: 'catalog.flowersDesc' },
+      kita: { name: 'catalog.other', description: 'catalog.otherDesc' },
     };
     const legacy = legacyMap[categorySlug];
     if (legacy) {
-      return { id: categorySlug, name: legacy.name, slug: categorySlug, description: legacy.description };
+      return { id: categorySlug, name: t(legacy.name), slug: categorySlug, description: t(legacy.description) };
     }
-    return { id: 'all', name: 'Visi konstruktoriai', slug: 'visi', description: 'Peržiūrėkite visą mūsų konstruktorių katalogą.' };
-  }, [categorySlug, categories]);
+    return { id: 'all', name: t('nav.allConstructors'), slug: 'visi', description: t('catalog.allDesc') };
+  }, [categorySlug, categories, t]);
 
   // Auto-expand the sidebar tree down to (and including) the active category
   useEffect(() => {
@@ -281,10 +282,10 @@ export default function Produktai() {
 
   // Special virtual categories shown below the DB category tree
   const specialNavItems = useMemo(() => ([
-    { id: 'dovanu-kuponai', name: 'Dovanų kuponai', slug: 'dovanu-kuponai', count: categoryCounts['dovanu-kuponai'] || 0 },
-    { id: 'pasiulymai', name: 'Pasiūlymai ir išpardavimai', slug: 'pasiulymai', count: categoryCounts['pasiulymai'] || 0 },
-    { id: 'naujienos', name: 'Naujienos', slug: 'naujienos', count: categoryCounts['naujienos'] || 0 },
-  ]), [categoryCounts]);
+    { id: 'dovanu-kuponai', name: t('nav.giftCards'), slug: 'dovanu-kuponai', count: categoryCounts['dovanu-kuponai'] || 0 },
+    { id: 'pasiulymai', name: t('products.offers'), slug: 'pasiulymai', count: categoryCounts['pasiulymai'] || 0 },
+    { id: 'naujienos', name: t('products.newProducts'), slug: 'naujienos', count: categoryCounts['naujienos'] || 0 },
+  ]), [categoryCounts, t]);
 
   return (
     <PageLayout>
@@ -298,9 +299,9 @@ export default function Produktai() {
         <div className="container">
           {/* Breadcrumb */}
           <nav className="flex items-center gap-2 text-sm text-muted-foreground mb-6">
-            <Link to="/" className="hover:text-foreground transition-colors">Pradžia</Link>
+            <Link to="/" className="hover:text-foreground transition-colors">{t('nav.home')}</Link>
             <ChevronRight className="w-4 h-4" />
-            <Link to="/produktai/visi" className="hover:text-foreground transition-colors">Konstruktoriai</Link>
+            <Link to="/produktai/visi" className="hover:text-foreground transition-colors">{t('nav.constructors')}</Link>
             {currentCategory.id !== 'all' && (
               <>
                 <ChevronRight className="w-4 h-4" />
@@ -323,7 +324,7 @@ export default function Produktai() {
             {/* Sidebar - Categories */}
             <aside className="space-y-6">
               <div className="bg-card rounded-xl border border-border p-4">
-                <h3 className="font-heading font-semibold mb-4">Kategorijos</h3>
+                <h3 className="font-heading font-semibold mb-4">{t('products.categories')}</h3>
                 {loadingCategories ? (
                   <div className="flex items-center justify-center py-4">
                     <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
@@ -339,7 +340,7 @@ export default function Produktai() {
                           : "hover:bg-muted text-muted-foreground hover:text-foreground"
                       )}
                     >
-                      <span>Visi konstruktoriai</span>
+                      <span>{t('nav.allConstructors')}</span>
                       {(categoryCounts['all'] || 0) > 0 && (
                         <Badge variant="secondary" className="text-xs">
                           {categoryCounts['all']}
@@ -380,12 +381,12 @@ export default function Produktai() {
 
               {/* Stock filter */}
               <div className="hidden lg:block bg-card rounded-xl border border-border p-4">
-                <h3 className="font-heading font-semibold mb-4">Prieinamumas</h3>
+                <h3 className="font-heading font-semibold mb-4">{t('products.availability')}</h3>
                 <div className="space-y-2">
                   {[
-                    { value: 'all', label: 'Visi', slug: 'visi' },
-                    { value: 'in_stock', label: 'Sandėlyje', slug: 'sandelyje' },
-                    { value: 'preorder', label: 'Pre-order', slug: 'preorder' },
+                    { value: 'all', label: t('common.all'), slug: 'visi' },
+                    { value: 'in_stock', label: t('products.inStockLabel'), slug: 'sandelyje' },
+                    { value: 'preorder', label: t('products.preOrderLabel'), slug: 'preorder' },
                   ].map((option) => (
                     <Link
                       key={option.value}
@@ -419,18 +420,18 @@ export default function Produktai() {
                     <Filter className="w-4 h-4 text-muted-foreground" />
                     <Select value={statusFilter} onValueChange={(v) => setStatusFilter(v as StatusFilter)}>
                       <SelectTrigger className="w-[140px]">
-                        <SelectValue placeholder="Statusas" />
+                        <SelectValue placeholder={t('products.availability')} />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="all">Visi</SelectItem>
-                        <SelectItem value="preorder">Pre-order</SelectItem>
-                        <SelectItem value="in_stock">Sandėlyje</SelectItem>
+                        <SelectItem value="all">{t('common.all')}</SelectItem>
+                        <SelectItem value="preorder">{t('products.preOrderLabel')}</SelectItem>
+                        <SelectItem value="in_stock">{t('products.inStockLabel')}</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
                   
                   <span className="text-sm text-muted-foreground">
-                    {filteredProducts.length} {filteredProducts.length === 1 ? 'konstruktorius' : 'konstruktoriai'}
+                    {t('products.countLabel', { count: filteredProducts.length })}
                   </span>
                 </div>
 
@@ -439,14 +440,14 @@ export default function Produktai() {
                   <Select value={sortBy} onValueChange={(v) => setSortBy(v as SortOption)}>
                     <SelectTrigger className="w-[180px]">
                       <ArrowUpDown className="w-4 h-4 mr-2" />
-                      <SelectValue placeholder="Rūšiuoti" />
+                      <SelectValue placeholder={t('common.sort')} />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="recommended">Perkamiausi</SelectItem>
-                      <SelectItem value="newest">Naujausi</SelectItem>
-                      <SelectItem value="price_asc">Kaina: nuo žemiausios</SelectItem>
-                      <SelectItem value="price_desc">Kaina: nuo aukščiausios</SelectItem>
-                      <SelectItem value="parts">Dalių skaičius</SelectItem>
+                      <SelectItem value="recommended">{t('products.recommended')}</SelectItem>
+                      <SelectItem value="newest">{t('products.newest')}</SelectItem>
+                      <SelectItem value="price_asc">{t('products.priceAsc')}</SelectItem>
+                      <SelectItem value="price_desc">{t('products.priceDesc')}</SelectItem>
+                      <SelectItem value="parts">{t('products.byParts')}</SelectItem>
                       <SelectItem value="name_asc">A-Z</SelectItem>
                     </SelectContent>
                   </Select>
@@ -480,7 +481,7 @@ export default function Produktai() {
               {/* Error State */}
               {error && (
                 <div className="bg-destructive/10 text-destructive rounded-xl p-6 text-center">
-                  Nepavyko užkrauti produktų. Bandykite vėliau.
+                  {t('products.loadError')}
                 </div>
               )}
 
@@ -515,7 +516,7 @@ export default function Produktai() {
                             "absolute top-2 left-2 text-[10px] font-semibold px-2 py-0.5",
                             isPreOrder ? "bg-primary text-primary-foreground" : "bg-success text-success-foreground"
                           )}>
-                            {isPreOrder ? "PRE-ORDER" : "SANDĖLYJE"}
+                            {isPreOrder ? t('products.preOrder') : t('products.inStock')}
                           </Badge>
                           {/* Quick view button on hover */}
                           <Button
@@ -602,13 +603,13 @@ export default function Produktai() {
                 <div className="bg-card rounded-xl p-12 text-center border border-border">
                   <Package className="h-16 w-16 text-muted-foreground/30 mx-auto mb-4" strokeWidth={1} />
                   <h3 className="font-heading text-xl font-semibold mb-2">
-                    Produktų nerasta
+                    {t('products.noProductsFound')}
                   </h3>
                   <p className="text-muted-foreground mb-4">
-                    Pagal pasirinktus filtrus produktų nerasta.
+                    {t('products.noProductsFoundDesc')}
                   </p>
                   <Button asChild variant="outline">
-                    <Link to="/produktai/visi">Peržiūrėti visus</Link>
+                    <Link to="/produktai/visi">{t('common.viewAll')}</Link>
                   </Button>
                 </div>
               )}
@@ -644,6 +645,7 @@ function CategorySidebarTree({
   counts: Record<string, number>;
   depth?: number;
 }) {
+  const { t } = useTranslation();
   if (nodes.length === 0) return null;
   return (
     <ul className={cn(depth > 0 && "ml-3 mt-0.5 space-y-1 border-l border-border pl-3")}>
@@ -676,7 +678,7 @@ function CategorySidebarTree({
                   type="button"
                   onClick={() => onToggle(node.id)}
                   className="px-2 py-2 flex-shrink-0 text-muted-foreground hover:text-foreground"
-                  aria-label={isExpanded ? "Suskleisti kategoriją" : "Išskleisti kategoriją"}
+                  aria-label={isExpanded ? t('catalog.collapse') : t('catalog.expand')}
                 >
                   <ChevronDown className={cn("w-3.5 h-3.5 transition-transform", isExpanded && "rotate-180")} />
                 </button>

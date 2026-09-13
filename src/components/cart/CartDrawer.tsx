@@ -49,7 +49,7 @@ export function CartDrawer() {
               <SheetDescription className="text-sm">
                 {totalItems === 0 
                   ? t('cart.empty')
-                  : `${totalItems} ${totalItems === 1 ? 'prekė' : 'prekės'}`
+                  : t('cart.itemCount', { count: totalItems })
                 }
               </SheetDescription>
             </div>
@@ -61,9 +61,9 @@ export function CartDrawer() {
             <div className="flex-1 flex items-center justify-center px-6">
               <EmptyState
                 variant="cart"
-                title={t('cart.emptyTitle') || "Krepšelis tuščias"}
-                description={t('cart.emptyDescription') || "Pridėkite konstruktorių, kad pradėtumėte apsipirkimą"}
-                actionLabel={t('cart.startShopping') || "Pradėti apsipirkimą"}
+                title={t('cart.emptyTitle')}
+                description={t('cart.emptyDescription')}
+                actionLabel={t('cart.startShopping')}
                 onAction={() => {
                   setOpen(false);
                   navigate('/produktai/visi');

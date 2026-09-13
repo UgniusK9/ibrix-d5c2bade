@@ -357,6 +357,10 @@ export const en = {
   
   // Products
   products: {
+    countLabel_one: '{{count}} constructor',
+    countLabel_few: '{{count}} constructors',
+    countLabel_many: '{{count}} constructors',
+    countLabel_other: '{{count}} constructors',
     noCategories: 'No categories',
     viewAllConstructors: 'View all constructors',
     searchNoResults: 'Nothing found for „{{query}}“',
@@ -457,6 +461,14 @@ export const en = {
   
   // Cart
   cart: {
+    itemCount_one: '{{count}} item',
+    itemCount_few: '{{count}} items',
+    itemCount_many: '{{count}} items',
+    itemCount_other: '{{count}} items',
+    inCart: 'In cart',
+    viewCart: 'Go to cart',
+    recommended: 'Recommended for you',
+    otherProducts: 'Other products you may like',
     title: 'Shopping Cart',
     empty: 'Your cart is empty',
     emptyTitle: 'Your cart is empty',
@@ -1167,6 +1179,8 @@ export const en = {
   
   // Footer
   footer: {
+    about: 'IBRIX – moving mechanical constructors for mechanics fans. Clear pre-order, delivery in Lithuania and support in Lithuanian.',
+    shippingPartners: 'Shipping partners',
     allRights: 'All rights reserved',
     newsletter: 'Newsletter',
     newsletterDesc: 'Get news and special offers',
@@ -1263,5 +1277,26 @@ export const en = {
     analyticsDesc: 'Help us understand how the site is used (e.g. visits, clicks) so we can improve it.',
     marketing: 'Marketing',
     marketingDesc: 'Used to measure and personalise advertising (e.g. Meta/Google).',
+  },
+  // Catalogue page (virtual categories + legacy slugs)
+  catalog: {
+    allDesc: 'Browse our full catalogue of constructors.',
+    giftCardsDesc: 'Gift cards for your loved ones',
+    offersDesc: 'Special offers and discounts',
+    newDesc: 'The newest products in our shop',
+    popularDesc: 'The most popular constructors, chosen by our customers',
+    preorderDesc: 'Constructors you can order in advance.',
+    inStockDesc: 'Constructors in our warehouse, ready to ship.',
+    collectionWord: 'collection',
+    engines: 'Engines',
+    enginesDesc: 'Mechanical constructors with genuinely moving mechanisms.',
+    cars: 'Car models',
+    carsDesc: 'Detailed car models for collectors and enthusiasts.',
+    flowers: 'Flower sets',
+    flowersDesc: 'Unique flower constructors and decorations.',
+    other: 'Other products',
+    otherDesc: 'Other unique constructors and accessories.',
+    collapse: 'Collapse category',
+    expand: 'Expand category',
   },
 };
