@@ -73,7 +73,7 @@ export function LegoStyleProductCard({ product }: LegoStyleProductCardProps) {
         {/* Yellow "Naujiena" badge - top right */}
         {isNew && (
           <div className="absolute top-3 right-3 z-10">
-            <span className="inline-block bg-amber-400 text-amber-900 text-xs font-bold px-3 py-1 rounded">
+            <span className="inline-block bg-foreground text-background text-xs font-semibold px-2.5 py-1 rounded-md">
               Naujiena
             </span>
           </div>
@@ -146,8 +146,7 @@ export function LegoStyleProductCard({ product }: LegoStyleProductCardProps) {
             disabled={isOutOfStock}
             className={cn(
               "flex-1 h-10 rounded-full text-sm font-medium gap-2",
-              "bg-amber-400 hover:bg-amber-500 text-amber-900",
-              "dark:bg-amber-500 dark:hover:bg-amber-600 dark:text-amber-950",
+              "bg-accent hover:bg-accent/90 text-accent-foreground",
               "transition-colors duration-200",
               isOutOfStock && "bg-gray-200 text-gray-500 cursor-not-allowed"
             )}

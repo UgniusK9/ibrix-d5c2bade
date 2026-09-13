@@ -9,9 +9,9 @@ import { cn } from "@/lib/utils";
 
 // Badge configuration with LEGO-style colors
 const stockBadges = {
-  preorder: { label: "Pre-order", bg: "bg-blue-500", text: "text-white" },
-  in_stock: { label: "Sandėlyje", bg: "bg-green-500", text: "text-white" },
-  out_of_stock: { label: "Išparduota", bg: "bg-gray-400", text: "text-white" },
+  preorder: { label: "Pre-order", bg: "bg-card border border-border", text: "text-foreground" },
+  in_stock: { label: "Sandėlyje", bg: "bg-success/10 border border-success/20", text: "text-success" },
+  out_of_stock: { label: "Išparduota", bg: "bg-muted", text: "text-muted-foreground" },
 };
 
 // Product badge configuration
@@ -96,10 +96,10 @@ export function ProductsSection() {
               <Link
                 key={product.id}
                 to={`/produktas/${product.slug}`}
-                className="group block bg-card rounded-2xl overflow-hidden border border-border transition-all duration-200 hover:-translate-y-1 hover:shadow-md"
+                className="group block bg-card rounded-2xl overflow-hidden border border-border transition-all duration-200 hover:shadow-medium hover:border-foreground/20"
               >
                 {/* Image container - takes ~70% of card */}
-                <div className="relative aspect-[4/3] bg-muted overflow-hidden p-4">
+                <div className="relative aspect-[4/3] bg-white overflow-hidden p-4">
                   <img
                     src={image}
                     alt={product.title}
@@ -123,7 +123,7 @@ export function ProductsSection() {
                   {(badges.length > 0 || hasSale) && (
                     <div className="absolute top-3 right-3 flex flex-col gap-1">
                       {hasSale && !badges.includes('sale') && (
-                        <Badge className="bg-red-500 text-white text-xs font-bold px-2 py-0.5">
+                        <Badge className="bg-destructive text-destructive-foreground text-xs font-bold px-2 py-0.5">
                           Akcija
                         </Badge>
                       )}
@@ -150,7 +150,7 @@ export function ProductsSection() {
                     <div className="flex items-baseline gap-2">
                       {product.sale_price_eur && product.sale_price_eur < product.price_eur ? (
                         <>
-                          <span className="font-heading font-bold text-xl text-red-500">
+                          <span className="font-heading font-bold text-xl text-destructive">
                             {formatPrice(product.sale_price_eur)}
                           </span>
                           <span className="text-sm text-muted-foreground line-through">

@@ -14,14 +14,14 @@ const buttonVariants = cva(
         // Destructive - danger actions
         destructive: "bg-destructive text-destructive-foreground shadow-sm hover:bg-destructive/90 active:scale-[0.98]",
         // Secondary - outlined, supporting action
-        outline: "border-2 border-primary bg-transparent text-primary hover:bg-primary hover:text-primary-foreground active:scale-[0.98]",
+        outline: "border border-input bg-card text-foreground hover:bg-secondary hover:border-foreground/25 active:scale-[0.98]",
         // Tertiary - subtle, low priority
         secondary: "bg-secondary text-secondary-foreground hover:bg-secondary/80 active:scale-[0.98]",
         // Ghost - minimal, icon buttons
-        ghost: "hover:bg-accent/10 hover:text-accent-foreground",
+        ghost: "hover:bg-secondary hover:text-foreground",
         // Link - text only
         link: "text-primary underline-offset-4 hover:underline",
-        // Accent - special CTA (yellow)
+        // Accent - buying actions (IBRIX orange)
         accent: "bg-accent text-accent-foreground shadow-sm hover:bg-accent/90 active:scale-[0.98]",
         // Success - positive actions
         success: "bg-success text-success-foreground shadow-sm hover:bg-success/90 active:scale-[0.98]",

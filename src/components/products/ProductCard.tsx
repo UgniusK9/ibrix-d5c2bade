@@ -111,31 +111,31 @@ export function ProductCard({ product, onQuickView, compact = false }: ProductCa
       to={`/produktas/${product.slug}`}
       className={cn(
         "group block bg-card rounded-xl overflow-hidden border border-border transition-all duration-200",
-        "hover:shadow-medium hover:border-primary/20 hover:-translate-y-0.5",
+        "hover:shadow-medium hover:border-foreground/20",
         isOutOfStock && "opacity-75"
       )}
     >
       {/* Image */}
-      <div className="relative aspect-square bg-secondary/30 overflow-hidden">
+      <div className="relative aspect-square bg-white overflow-hidden">
         <img
           src={image}
           alt={product.title}
-          className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+          className="w-full h-full object-contain p-3 transition-transform duration-300 group-hover:scale-[1.04]"
         />
         
         {/* Stock Badge - bottom left */}
         <div className="absolute bottom-3 left-3">
           <Badge 
             className={cn(
-              "text-xs font-bold px-2.5 py-1 shadow-sm",
-              isOutOfStock 
-                ? "bg-muted text-muted-foreground"
-                : isPreOrder 
-                  ? "bg-primary text-primary-foreground" 
-                  : "bg-success text-success-foreground"
+              "text-[11px] font-semibold px-2 py-0.5 border",
+              isOutOfStock
+                ? "bg-muted text-muted-foreground border-transparent"
+                : isPreOrder
+                  ? "bg-card text-foreground border-border"
+                  : "bg-success/10 text-success border-success/20"
             )}
           >
-            {isOutOfStock ? "IŠPARDUOTA" : isPreOrder ? "PRE-ORDER" : "SANDĖLYJE"}
+            {isOutOfStock ? "Išparduota" : isPreOrder ? "Pre-order" : "Sandėlyje"}
           </Badge>
         </div>
         
@@ -207,7 +207,7 @@ export function ProductCard({ product, onQuickView, compact = false }: ProductCa
         </p>
         
         <h3 className={cn(
-          "font-heading font-semibold text-foreground mb-2 line-clamp-2 group-hover:text-primary transition-colors",
+          "font-heading font-semibold text-foreground mb-2 line-clamp-2",
           compact ? "text-sm" : "text-base"
         )}>
           {product.title}
@@ -247,7 +247,7 @@ export function ProductCard({ product, onQuickView, compact = false }: ProductCa
               )}
             </div>
             {/* Credits earned */}
-            <p className="text-xs text-primary flex items-center gap-1 mt-0.5">
+            <p className="text-xs text-muted-foreground flex items-center gap-1 mt-0.5">
               <Sparkles className="w-3 h-3" />
               +{creditsEarned}€ kreditų
             </p>

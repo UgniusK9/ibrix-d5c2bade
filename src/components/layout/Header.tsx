@@ -22,12 +22,13 @@ import { ThemeToggle } from "@/components/theme/ThemeToggle";
 import logo from "@/assets/logo.webp";
 import logoPng from "@/assets/logo.png";
 
+// secondary: true = only shown on wide screens (also reachable from the footer and mobile menu)
 const navigation = [
   { name: "Kaip veikia pre-order", href: "/pre-order" },
-  { name: "Straipsniai", href: "/patarimai" },
+  { name: "Straipsniai", href: "/patarimai", secondary: true },
   { name: "Pagalba", href: "/pagalba" },
-  { name: "Apie mus", href: "/apie" },
-  { name: "Kontaktai", href: "/kontaktai" },
+  { name: "Apie mus", href: "/apie", secondary: true },
+  { name: "Kontaktai", href: "/kontaktai", secondary: true },
 ];
 
 const infoLinks = [
@@ -59,19 +60,19 @@ export function Header() {
   const isActive = (href: string) => location.pathname === href;
 
   return (
-    <header className="sticky top-0 z-50 bg-card shadow-soft w-full min-w-0">
-      {/* Top Bar - LEGO-like bright strip */}
+    <header className="sticky top-0 z-50 bg-card/95 backdrop-blur border-b border-border w-full min-w-0">
+      {/* Top Bar - thin navy utility strip */}
       <div className="bg-primary w-full">
         <div className="container max-w-full px-4 md:px-6 lg:px-8">
-          <div className="flex items-center justify-center gap-4 md:gap-8 py-2 text-xs md:text-sm">
+          <div className="flex items-center justify-center gap-6 md:gap-10 py-1.5 text-xs">
             {topBarItems.map((item, index) => (
-              <span key={index} className="hidden md:inline-flex items-center gap-2 whitespace-nowrap text-primary-foreground/90 font-medium flex-shrink-0">
+              <span key={index} className="hidden md:inline-flex items-center gap-2 whitespace-nowrap text-primary-foreground/80 flex-shrink-0">
                 <item.icon className="h-3.5 w-3.5 flex-shrink-0" strokeWidth={2} />
                 <span className="truncate">{item.text}</span>
               </span>
             ))}
             {/* Mobile - show only first item */}
-            <span className="md:hidden inline-flex items-center gap-2 text-primary-foreground font-medium">
+            <span className="md:hidden inline-flex items-center gap-2 text-primary-foreground/80">
               <Truck className="h-3.5 w-3.5 flex-shrink-0" strokeWidth={2} />
               <span className="truncate">{topBarItems[0].text}</span>
             </span>
@@ -80,14 +81,14 @@ export function Header() {
       </div>
 
       {/* Main Header */}
-      <div className="bg-card border-b border-border w-full">
+      <div className="w-full">
         <div className="container max-w-full px-4 md:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16 lg:h-18 gap-2 md:gap-4 min-w-0">
+          <div className="flex items-center justify-between h-16 lg:h-[72px] gap-2 md:gap-4 min-w-0">
             {/* Logo */}
             <Link to="/" className="flex-shrink-0">
               <picture>
                 <source srcSet={logo} type="image/webp" />
-                <img src={logoPng} alt="IBRIX" width={120} height={80} className="h-10 md:h-12 w-auto max-w-[120px] md:max-w-none object-contain dark:bg-white dark:rounded-lg dark:px-2 dark:py-1" fetchPriority="high" />
+                <img src={logoPng} alt="IBRIX" width={120} height={80} className="h-9 md:h-10 w-auto object-contain dark:bg-white dark:rounded-md dark:px-2 dark:py-1" fetchPriority="high" />
               </picture>
             </Link>
 
@@ -99,7 +100,7 @@ export function Header() {
               {/* Informacija Dropdown */}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <button className="px-3 xl:px-4 py-2 text-sm font-medium rounded-lg transition-colors whitespace-nowrap text-foreground/70 hover:text-foreground hover:bg-secondary flex items-center gap-1.5 flex-shrink-0">
+                  <button className="px-2 py-2 text-sm font-medium rounded-lg transition-colors whitespace-nowrap text-foreground/70 hover:text-foreground hover:bg-secondary flex items-center gap-1.5 flex-shrink-0">
                     Informacija
                     <ChevronDown className="h-3.5 w-3.5 flex-shrink-0" />
                   </button>
@@ -120,7 +121,7 @@ export function Header() {
                 <Link
                   key={item.name}
                   to={item.href}
-                  className={`px-3 xl:px-4 py-2 text-sm font-medium rounded-lg transition-colors whitespace-nowrap flex-shrink-0 ${
+                  className={`px-2 py-2 text-sm font-medium rounded-lg transition-colors whitespace-nowrap flex-shrink-0 ${item.secondary ? "hidden xl:inline-flex" : ""} ${
                     isActive(item.href)
                       ? "text-primary bg-primary/10"
                       : "text-foreground/70 hover:text-foreground hover:bg-secondary"
@@ -132,12 +133,12 @@ export function Header() {
             </nav>
 
             {/* Search - Desktop */}
-            <div className="hidden lg:block flex-1 max-w-xs xl:max-w-sm mx-4 xl:mx-6 min-w-0">
+            <div className="hidden lg:block w-44 xl:w-52 shrink-0 mx-2 xl:mx-4">
               <ProductSearch />
             </div>
 
             {/* Right Actions */}
-            <div className="flex items-center gap-1 md:gap-2 flex-shrink-0">
+            <div className="flex items-center gap-0.5 md:gap-1 flex-shrink-0">
               {/* Mobile Search Toggle */}
               <Button
                 variant="ghost"
@@ -148,32 +149,30 @@ export function Header() {
                 <Search className="h-5 w-5" />
               </Button>
 
-              {/* CTA Button - Desktop only */}
-              <Button asChild size="sm" variant="accent" className="hidden xl:flex h-10 px-4 xl:px-5 flex-shrink-0">
-                <Link to="/produktai/visi">
-                  <span className="truncate">{t('nav.viewConstructors')}</span>
-                  <ArrowRight className="ml-1.5 h-4 w-4 flex-shrink-0" />
-                </Link>
-              </Button>
-
               {/* User Account */}
               {user ? (
                 <div className="hidden lg:flex items-center">
                   <UserProfileDropdown />
                 </div>
               ) : (
-                <div className="hidden lg:flex items-center gap-2">
-                  <Button asChild variant="ghost" size="sm">
-                    <Link to="/auth/login">
-                      {t('header.login')}
-                    </Link>
+                <>
+                  {/* lg: one icon; 2xl: text buttons. Keeps the header on one line. */}
+                  <Button asChild variant="ghost" size="icon" className="hidden lg:inline-flex 2xl:hidden" title={t('header.login')}>
+                    <Link to="/auth/login"><User className="h-5 w-5" /></Link>
                   </Button>
-                  <Button asChild variant="outline" size="sm">
-                    <Link to="/auth/signup/step-1">
-                      {t('header.signUp')}
-                    </Link>
-                  </Button>
-                </div>
+                  <div className="hidden 2xl:flex items-center gap-1">
+                    <Button asChild variant="ghost" size="sm">
+                      <Link to="/auth/login">
+                        {t('header.login')}
+                      </Link>
+                    </Button>
+                    <Button asChild size="sm">
+                      <Link to="/auth/signup/step-1">
+                        {t('header.signUp')}
+                      </Link>
+                    </Button>
+                  </div>
+                </>
               )}
 
               {/* Theme Toggle */}

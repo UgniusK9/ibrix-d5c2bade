@@ -6,100 +6,99 @@
 
 @layer base {
   :root {
-    /* Original blue/orange palette */
-    --background: 210 40% 98%;
-    --foreground: 222 47% 11%;
-    
+    /* Clean premium: warm white ground, IBRIX navy for text/actions, IBRIX orange only for buying */
+    --background: 40 20% 98%;
+    --foreground: 222 38% 12%;
+
     --card: 0 0% 100%;
-    --card-foreground: 222 47% 11%;
-    
+    --card-foreground: 222 38% 12%;
+
     --popover: 0 0% 100%;
-    --popover-foreground: 222 47% 11%;
-    
-    /* Deep Blue primary */
-    --primary: 211 100% 44%;
+    --popover-foreground: 222 38% 12%;
+
+    /* IBRIX navy (logo) */
+    --primary: 222 42% 20%;
     --primary-foreground: 0 0% 100%;
-    
-    --secondary: 210 40% 96%;
-    --secondary-foreground: 222 47% 11%;
-    
-    --muted: 210 40% 96%;
-    --muted-foreground: 215 16% 47%;
-    
-    /* Orange accent */
-    --accent: 24 100% 50%;
+
+    --secondary: 40 14% 95%;
+    --secondary-foreground: 222 38% 12%;
+
+    --muted: 40 14% 95%;
+    --muted-foreground: 220 9% 42%;
+
+    /* IBRIX orange (logo), darkened a step so white text stays readable */
+    --accent: 22 88% 48%;
     --accent-foreground: 0 0% 100%;
-    
-    --destructive: 0 84% 60%;
+
+    --destructive: 0 72% 50%;
     --destructive-foreground: 0 0% 100%;
-    
-    --success: 142 76% 36%;
+
+    --success: 152 58% 32%;
     --success-foreground: 0 0% 100%;
-    
-    --border: 214 32% 91%;
-    --input: 214 32% 91%;
-    --ring: 211 100% 44%;
-    
-    --radius: 0.5rem;
-    
-    /* Footer */
-    --footer: 222 47% 11%;
-    --footer-foreground: 210 40% 98%;
-    
-    /* Sidebar */
+
+    --border: 40 10% 89%;
+    --input: 40 10% 86%;
+    --ring: 222 42% 20%;
+
+    --radius: 0.625rem;
+
+    --footer: 222 40% 11%;
+    --footer-foreground: 40 20% 96%;
+
     --sidebar-background: 0 0% 100%;
-    --sidebar-foreground: 222 47% 11%;
-    --sidebar-primary: 211 100% 44%;
+    --sidebar-foreground: 222 38% 12%;
+    --sidebar-primary: 222 42% 20%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 210 40% 96%;
-    --sidebar-accent-foreground: 222 47% 11%;
-    --sidebar-border: 214 32% 91%;
-    --sidebar-ring: 211 100% 44%;
+    --sidebar-accent: 40 14% 95%;
+    --sidebar-accent-foreground: 222 38% 12%;
+    --sidebar-border: 40 10% 89%;
+    --sidebar-ring: 222 42% 20%;
   }
 
   .dark {
-    --background: 222 47% 11%;
-    --foreground: 210 40% 98%;
-    
-    --card: 222 47% 14%;
-    --card-foreground: 210 40% 98%;
-    
-    --popover: 222 47% 14%;
-    --popover-foreground: 210 40% 98%;
-    
-    --primary: 211 100% 50%;
-    --primary-foreground: 0 0% 100%;
-    
-    --secondary: 217 33% 17%;
-    --secondary-foreground: 210 40% 98%;
-    
-    --muted: 217 33% 17%;
-    --muted-foreground: 215 20% 65%;
-    
-    --accent: 24 100% 50%;
+    --background: 222 30% 8%;
+    --foreground: 40 20% 96%;
+
+    --card: 222 26% 11%;
+    --card-foreground: 40 20% 96%;
+
+    --popover: 222 26% 11%;
+    --popover-foreground: 40 20% 96%;
+
+    /* navy is invisible on a dark ground, so actions flip to near-white */
+    --primary: 40 20% 94%;
+    --primary-foreground: 222 38% 12%;
+
+    --secondary: 222 20% 16%;
+    --secondary-foreground: 40 20% 96%;
+
+    --muted: 222 20% 16%;
+    --muted-foreground: 220 10% 65%;
+
+    --accent: 24 92% 53%;
     --accent-foreground: 0 0% 100%;
-    
-    --destructive: 0 84% 60%;
+
+    --destructive: 0 72% 55%;
     --destructive-foreground: 0 0% 100%;
-    
-    --success: 142 76% 36%;
+
+    --success: 152 55% 40%;
     --success-foreground: 0 0% 100%;
-    
-    --border: 217 33% 17%;
-    --input: 217 33% 17%;
-    --ring: 211 100% 50%;
-    
-    --footer: 222 47% 8%;
-    --footer-foreground: 210 40% 98%;
-    
-    --sidebar-background: 222 47% 11%;
-    --sidebar-foreground: 210 40% 98%;
-    --sidebar-primary: 211 100% 50%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 217 33% 17%;
-    --sidebar-accent-foreground: 210 40% 98%;
-    --sidebar-border: 217 33% 17%;
-    --sidebar-ring: 211 100% 50%;
+
+    --border: 222 18% 19%;
+    --input: 222 18% 22%;
+    --ring: 40 20% 90%;
+
+    --footer: 222 32% 6%;
+    --footer-foreground: 40 20% 96%;
+
+    --sidebar-background: 222 26% 11%;
+    --sidebar-foreground: 40 20% 96%;
+    --sidebar-primary: 40 20% 94%;
+    --sidebar-primary-foreground: 222 38% 12%;
+    --sidebar-accent: 222 20% 16%;
+    --sidebar-accent-foreground: 40 20% 96%;
+    --sidebar-border: 222 18% 19%;
+    --sidebar-ring: 40 20% 90%;
   }
 }
 
@@ -384,6 +383,6 @@
 
 /* Selection - branded */
 ::selection {
-  background: hsl(210 100% 45% / 0.2);
+  background: hsl(var(--accent) / 0.2);
   color: hsl(var(--foreground));
 }

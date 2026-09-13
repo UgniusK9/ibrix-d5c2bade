@@ -87,7 +87,7 @@ export function ProductSearch({ className, onClose, onSelect, isMobile, autoFocu
           onKeyDown={handleKeyDown}
           className={cn(
             "pl-10 pr-10 h-10 bg-secondary/50 border-border focus:border-primary focus:bg-background transition-colors",
-            isMobile ? "w-full" : "w-[200px] lg:w-[280px] focus:w-[320px]"
+            "w-full"
           )}
         />
         {query && (

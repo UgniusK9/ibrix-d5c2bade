@@ -83,7 +83,7 @@ export function CategoriesMegaMenu({ onNavigate }: CategoriesMegaMenuProps) {
       {/* Trigger */}
       <button
         className={cn(
-          "flex items-center gap-1 px-4 py-2 text-sm font-medium rounded-lg transition-colors",
+          "flex items-center gap-1 px-2 py-2 text-sm font-medium rounded-lg transition-colors",
           isOpen
             ? "text-primary bg-primary/5"
             : "text-muted-foreground hover:text-foreground hover:bg-muted"

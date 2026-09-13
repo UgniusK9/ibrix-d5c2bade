@@ -21,7 +21,7 @@ const badges = [
 
 export function TrustBadges() {
   return (
-    <section className="py-6 md:py-8 bg-secondary/30 dark:bg-secondary/10">
+    <section className="py-5 border-b border-border bg-card">
       <div className="container">
         <div className="flex flex-wrap items-center justify-center gap-4 md:gap-8 lg:gap-12">
           {badges.map((badge, index) => (
@@ -32,7 +32,7 @@ export function TrustBadges() {
                 "text-sm"
               )}
             >
-              <badge.icon className="w-5 h-5 text-primary flex-shrink-0" />
+              <badge.icon className="w-5 h-5 text-accent flex-shrink-0" strokeWidth={1.75} />
               <div className="min-w-0">
                 <span className="font-medium text-foreground">{badge.title}</span>
                 <span className="text-muted-foreground hidden sm:inline"> – {badge.description}</span>
