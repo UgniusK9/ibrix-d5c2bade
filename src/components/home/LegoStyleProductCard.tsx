@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { ShoppingCart, Heart, Calendar, Package } from "lucide-react";
@@ -13,6 +14,7 @@ interface LegoStyleProductCardProps {
 }
 
 export function LegoStyleProductCard({ product }: LegoStyleProductCardProps) {
+  const { t } = useTranslation();
   const addItem = useCartStore((state) => state.addItem);
   const { isInWishlist, toggleWishlist } = useWishlist();
   const [isAddingToCart, setIsAddingToCart] = useState(false);
@@ -43,7 +45,7 @@ export function LegoStyleProductCard({ product }: LegoStyleProductCardProps) {
     setIsAddingToCart(true);
     addItem(product);
 
-    toast.success("Pridėta į krepšelį", {
+    toast.success(t('products.addedToCart'), {
       description: product.title,
       position: "top-center",
     });
@@ -152,7 +154,7 @@ export function LegoStyleProductCard({ product }: LegoStyleProductCardProps) {
             )}
           >
             <ShoppingCart className="w-4 h-4" />
-            {isOutOfStock ? "Išparduota" : "Įtraukti į krepšelį"}
+            {isOutOfStock ? t('products.outOfStock') : t('products.addToCart')}
           </Button>
           
           <button

@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { useState, useEffect, useRef, useMemo } from "react";
 import { Link } from "react-router-dom";
 import { ChevronDown, ArrowRight, Grid3X3, Loader2 } from "lucide-react";
@@ -17,11 +18,11 @@ interface Category {
 type CategoryNode = TreeNode<Category>;
 
 const quickLinks = [
-  { name: "Visi konstruktoriai", href: "/produktai/visi", highlight: true },
-  { name: "Naujienos", href: "/produktai/naujienos" },
-  { name: "Populiariausi", href: "/produktai/populiariausi" },
-  { name: "Pre-order", href: "/produktai/preorder" },
-  { name: "Sandėlyje", href: "/produktai/sandelyje" },
+  { name: "nav.allConstructors", href: "/produktai/visi", highlight: true },
+  { name: "products.newProducts", href: "/produktai/naujienos" },
+  { name: "products.mostPopular", href: "/produktai/populiariausi" },
+  { name: "products.preOrderLabel", href: "/produktai/preorder" },
+  { name: "products.inStockLabel", href: "/produktai/sandelyje" },
 ];
 
 interface CategoriesMegaMenuProps {
@@ -29,6 +30,7 @@ interface CategoriesMegaMenuProps {
 }
 
 export function CategoriesMegaMenu({ onNavigate }: CategoriesMegaMenuProps) {
+  const { t } = useTranslation();
   const [isOpen, setIsOpen] = useState(false);
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
@@ -103,7 +105,7 @@ export function CategoriesMegaMenu({ onNavigate }: CategoriesMegaMenuProps) {
             {/* Left column - Quick links */}
             <div className="p-4 bg-muted/30">
               <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">
-                Peržiūrėti
+                {t('common.view')}
               </p>
               <nav className="space-y-1">
                 {quickLinks.map((link) => (
@@ -118,7 +120,7 @@ export function CategoriesMegaMenu({ onNavigate }: CategoriesMegaMenuProps) {
                         : "text-muted-foreground hover:text-foreground hover:bg-muted"
                     )}
                   >
-                    <span>{link.name}</span>
+                    <span>{t(link.name)}</span>
                     {link.highlight && <ArrowRight className="w-4 h-4" />}
                   </Link>
                 ))}
@@ -133,7 +135,7 @@ export function CategoriesMegaMenu({ onNavigate }: CategoriesMegaMenuProps) {
                 </div>
               ) : topLevel.length === 0 ? (
                 <div className="text-sm text-muted-foreground py-4">
-                  Nėra kategorijų
+                  {t('products.noCategories')}
                 </div>
               ) : (
                 <div className="grid grid-cols-3 gap-x-6 gap-y-6">
@@ -153,7 +155,7 @@ export function CategoriesMegaMenu({ onNavigate }: CategoriesMegaMenuProps) {
               className="flex items-center justify-center gap-2 text-sm text-primary font-medium hover:underline"
             >
               <Grid3X3 className="w-4 h-4" />
-              Peržiūrėti visus konstruktorius
+              {t('products.viewAllConstructors')}
               <ArrowRight className="w-4 h-4" />
             </Link>
           </div>

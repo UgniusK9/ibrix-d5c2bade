@@ -1,15 +1,12 @@
+import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
 import { CheckCircle2, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
-const benefits = [
-  "Rezervuojate artimiausią siuntą",
-  "Terminas matomas prie produkto (pvz., 8–10 sav.)",
-  "Atšaukti galima bet kada iki išsiuntimo",
-  "Į Lietuvą atsivežame tik realiai užsakytus modelius",
-];
+const benefits = ["home.po1", "home.po2", "home.po3", "home.po4"];
 
 export function PreOrderSection() {
+  const { t } = useTranslation();
   return (
     <section className="relative py-20 md:py-28 overflow-hidden">
       {/* Background */}
@@ -28,19 +25,18 @@ export function PreOrderSection() {
             </span>
             
             <h2 className="font-heading text-3xl md:text-4xl font-bold mb-6 leading-tight">
-              Pre-order – aiškiai ir be siurprizų.
+              {t('home.poTitle')}
             </h2>
             
             <p className="text-primary-foreground/75 mb-8 text-lg leading-relaxed">
-              Pre-order reiškia, kad rezervuojate modelį artimiausioje siuntoje. 
-              Terminas visada nurodytas prie produkto.
+              {t('home.poText')}
             </p>
 
             <ul className="space-y-4 mb-8">
               {benefits.map((benefit, index) => (
                 <li key={index} className="flex items-start gap-3">
                   <CheckCircle2 className="h-5 w-5 text-accent flex-shrink-0 mt-0.5" />
-                  <span className="text-primary-foreground/90">{benefit}</span>
+                  <span className="text-primary-foreground/90">{t(benefit)}</span>
                 </li>
               ))}
             </ul>
@@ -50,7 +46,7 @@ export function PreOrderSection() {
               className="bg-accent hover:bg-accent/90 text-accent-foreground font-semibold h-11 px-6"
             >
               <Link to="/pre-order" onClick={() => window.scrollTo(0, 0)}>
-                Sužinoti, kaip veikia pre-order
+                {t('home.poCta')}
                 <ArrowRight className="ml-2 h-4 w-4" />
               </Link>
             </Button>
@@ -68,9 +64,9 @@ export function PreOrderSection() {
                   <span className="font-heading text-6xl md:text-7xl font-bold text-accent">
                     8-10
                   </span>
-                  <p className="text-xl font-medium text-foreground mt-1">savaičių</p>
-                  <p className="text-sm text-muted-foreground mt-1">Tipinis pristatymo laikas</p>
-                  <p className="text-xs text-muted-foreground mt-2">Terminas skaičiuojamas nuo užsakymo patvirtinimo.</p>
+                  <p className="text-xl font-medium text-foreground mt-1">{t('home.poWeeks')}</p>
+                  <p className="text-sm text-muted-foreground mt-1">{t('home.poTypical')}</p>
+                  <p className="text-xs text-muted-foreground mt-2">{t('home.poCounted')}</p>
                 </div>
 
                 {/* Timeline visual */}
@@ -79,17 +75,17 @@ export function PreOrderSection() {
                     <div className="flex flex-col items-center">
                       <div className="w-3 h-3 rounded-full bg-accent" />
                       <div className="w-0.5 h-8 bg-border mt-1" />
-                      <span className="text-xs text-muted-foreground mt-1">Užsakymas</span>
+                      <span className="text-xs text-muted-foreground mt-1">{t('home.poStepOrder')}</span>
                     </div>
                     <div className="flex flex-col items-center">
                       <div className="w-3 h-3 rounded-full bg-primary" />
                       <div className="w-0.5 h-8 bg-border mt-1" />
-                      <span className="text-xs text-muted-foreground mt-1">Atvežimas</span>
+                      <span className="text-xs text-muted-foreground mt-1">{t('home.poStepArrival')}</span>
                     </div>
                     <div className="flex flex-col items-center">
                       <div className="w-3 h-3 rounded-full bg-success" />
                       <div className="w-0.5 h-8 bg-border mt-1" />
-                      <span className="text-xs text-muted-foreground mt-1">Išsiuntimas</span>
+                      <span className="text-xs text-muted-foreground mt-1">{t('home.poStepShipping')}</span>
                     </div>
                   </div>
                   {/* Connecting line */}

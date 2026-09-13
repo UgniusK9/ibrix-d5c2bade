@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
 import { ArrowRight, ShoppingCart, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -9,20 +10,21 @@ import { cn } from "@/lib/utils";
 
 // Badge configuration with LEGO-style colors
 const stockBadges = {
-  preorder: { label: "Pre-order", bg: "bg-card border border-border", text: "text-foreground" },
-  in_stock: { label: "Sandėlyje", bg: "bg-success/10 border border-success/20", text: "text-success" },
-  out_of_stock: { label: "Išparduota", bg: "bg-muted", text: "text-muted-foreground" },
+  preorder: { label: "products.preOrderLabel", bg: "bg-card border border-border", text: "text-foreground" },
+  in_stock: { label: "products.inStockLabel", bg: "bg-success/10 border border-success/20", text: "text-success" },
+  out_of_stock: { label: "products.outOfStock", bg: "bg-muted", text: "text-muted-foreground" },
 };
 
 // Product badge configuration
 const productBadges: Record<string, { label: string; bg: string }> = {
-  new: { label: "Naujiena", bg: "bg-emerald-500" },
-  popular: { label: "Populiarus", bg: "bg-orange-500" },
-  sale: { label: "Akcija", bg: "bg-red-500" },
-  limited: { label: "Ribotas", bg: "bg-purple-500" },
+  new: { label: "products.new", bg: "bg-emerald-500" },
+  popular: { label: "products.popular", bg: "bg-orange-500" },
+  sale: { label: "products.sale", bg: "bg-red-500" },
+  limited: { label: "products.limited", bg: "bg-purple-500" },
 };
 
 export function ProductsSection() {
+  const { t } = useTranslation();
   const addItem = useCartStore((state) => state.addItem);
   const { data: products, isLoading, error } = useProducts();
   
@@ -32,7 +34,7 @@ export function ProductsSection() {
   const handleAddToCart = (product: Product, e: React.MouseEvent) => {
     e.preventDefault();
     addItem(product);
-    toast.success("Pridėta į krepšelį", {
+    toast.success(t('products.addedToCart'), {
       description: product.title,
       position: "top-center",
     });
@@ -64,10 +66,10 @@ export function ProductsSection() {
         <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3 mb-8">
           <div>
             <h2 className="font-heading text-xl md:text-2xl font-bold text-foreground">
-              Populiarūs konstruktoriai
+              {t('home.popularTitle')}
             </h2>
             <p className="text-sm text-muted-foreground mt-1">
-              Atrask mūsų geriausius modelius
+              {t('home.popularSubtitle')}
             </p>
           </div>
           
@@ -77,7 +79,7 @@ export function ProductsSection() {
             className="w-fit h-10 px-5 text-sm font-medium border-primary/30 hover:bg-primary hover:text-primary-foreground hover:border-primary transition-all duration-200"
           >
             <Link to="/produktai/visi">
-              Peržiūrėti visus
+              {t('common.viewAll')}
               <ArrowRight className="ml-2 h-4 w-4" />
             </Link>
           </Button>
@@ -116,7 +118,7 @@ export function ProductsSection() {
                     badge.bg,
                     badge.text
                   )}>
-                    {badge.label}
+                    {t(badge.label)}
                   </div>
 
                   {/* Product badges - top right */}
@@ -132,7 +134,7 @@ export function ProductsSection() {
                         if (!config) return null;
                         return (
                           <Badge key={badgeKey} className={cn(config.bg, "text-white text-xs font-bold px-2 py-0.5")}>
-                            {config.label}
+                            {t(config.label)}
                           </Badge>
                         );
                       })}
@@ -170,7 +172,7 @@ export function ProductsSection() {
                       onClick={(e) => handleAddToCart(product, e)}
                     >
                       <ShoppingCart className="h-4 w-4 mr-1" />
-                      Į krepšelį
+                      {t('products.toCart')}
                     </Button>
                   </div>
                 </div>

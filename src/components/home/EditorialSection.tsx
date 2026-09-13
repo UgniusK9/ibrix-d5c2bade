@@ -1,9 +1,11 @@
+import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
 import { ArrowRight, Play } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
 
 export function EditorialSection() {
+  const { t } = useTranslation();
   return (
     <section className="py-16 md:py-24 bg-background">
       <div className="container">
@@ -23,20 +25,20 @@ export function EditorialSection() {
             {/* Content */}
             <div className="relative z-10">
               <span className="inline-block text-xs font-semibold text-accent uppercase tracking-widest mb-4">
-                NAUJIENA
+                {t('home.edNewBadge')}
               </span>
               <h3 className="font-heading text-2xl md:text-3xl font-bold text-primary-foreground mb-4">
-                Mechaninių variklių kolekcija
+                {t('home.edEnginesTitle')}
               </h3>
               <p className="text-primary-foreground/80 mb-6 max-w-sm">
-                Tikslūs, detalūs ir judantys. Kiekvienas modelis – tai inžinerijos šedevras ant jūsų stalo.
+                {t('home.edEnginesText')}
               </p>
               <Button 
                 asChild 
                 className="bg-primary-foreground text-primary hover:bg-primary-foreground/90"
               >
                 <Link to="/produktai/varikliai">
-                  Peržiūrėti
+                  {t('common.view')}
                   <ArrowRight className="ml-2 h-4 w-4" />
                 </Link>
               </Button>
@@ -56,20 +58,20 @@ export function EditorialSection() {
               <div className="flex flex-col md:flex-row md:items-center gap-6">
                 <div className="flex-1">
                   <span className="inline-block text-xs font-semibold text-primary uppercase tracking-widest mb-2">
-                    KAIP TAI VEIKIA
+                    {t('home.edHowBadge')}
                   </span>
                   <h4 className="font-heading text-xl font-bold mb-2">
-                    Pre-order su depozitu
+                    {t('home.edPreorderTitle')}
                   </h4>
                   <p className="text-muted-foreground text-sm mb-4">
-                    Užsakyk su mažu depoziou, sumokėk likutį kai prekė paruošta. Be rizikos.
+                    {t('home.edPreorderText')}
                   </p>
                   <Link 
                     to="/pre-order" 
                     onClick={() => window.scrollTo(0, 0)}
                     className="inline-flex items-center gap-2 text-primary hover:text-primary/80 font-medium text-sm"
                   >
-                    Sužinoti daugiau
+                    {t('common.learnMore')}
                     <ArrowRight className="w-4 h-4" />
                   </Link>
                 </div>
@@ -92,19 +94,19 @@ export function EditorialSection() {
               <div className="flex flex-col md:flex-row md:items-center gap-6">
                 <div className="flex-1">
                   <span className="inline-block text-xs font-semibold text-accent uppercase tracking-widest mb-2">
-                    DOVANŲ IDĖJA
+                    {t('home.edGiftBadge')}
                   </span>
                   <h4 className="font-heading text-xl font-bold mb-2">
-                    Dovanų kuponai
+                    {t('nav.giftCards')}
                   </h4>
                   <p className="text-muted-foreground text-sm mb-4">
-                    Nežinai ką padovanoti? Leisk pasirinkti pačiam – dovanų kuponas bet kokiai sumai.
+                    {t('home.edGiftText')}
                   </p>
                   <Link 
                     to="/dovanu-kuponai" 
                     className="inline-flex items-center gap-2 text-accent hover:text-accent/80 font-medium text-sm"
                   >
-                    Rinkti dovaną
+                    {t('home.edGiftCta')}
                     <ArrowRight className="w-4 h-4" />
                   </Link>
                 </div>

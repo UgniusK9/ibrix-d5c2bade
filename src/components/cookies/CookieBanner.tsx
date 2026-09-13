@@ -1,9 +1,11 @@
+import { useTranslation } from "react-i18next";
 import { useCookieConsentStore } from '@/stores/cookieConsentStore';
 import { Button } from '@/components/ui/button';
 import { Cookie, Settings } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 export function CookieBanner() {
+  const { t } = useTranslation();
   const { consent, hasInteracted, acceptAll, rejectNonEssential, openModal } = useCookieConsentStore();
   
   // Don't show if user has already interacted
@@ -26,14 +28,13 @@ export function CookieBanner() {
               <Cookie className="h-5 w-5 text-accent" />
             </div>
             <h2 className="font-heading font-semibold text-lg text-foreground">
-              Slapukai (cookies)
+              {t('cookieBanner.title')}
             </h2>
           </div>
           
           {/* Description */}
           <p className="text-muted-foreground text-sm mb-6 leading-relaxed">
-            Naudojame slapukus, kad svetainė veiktų, ir (jei sutinkate) analitikai bei marketingui. 
-            Galite pasirinkti, ką leisti.
+            {t('cookieBanner.text')}
           </p>
           
           {/* Buttons */}
@@ -43,7 +44,7 @@ export function CookieBanner() {
               className="flex-1 sm:flex-none"
               size="lg"
             >
-              Priimti visus
+              {t('cookieBanner.acceptAll')}
             </Button>
             <Button 
               onClick={rejectNonEssential}
@@ -51,7 +52,7 @@ export function CookieBanner() {
               className="flex-1 sm:flex-none"
               size="lg"
             >
-              Atmesti nebūtinus
+              {t('cookieBanner.rejectNonEssential')}
             </Button>
             <Button 
               onClick={openModal}
@@ -60,7 +61,7 @@ export function CookieBanner() {
               size="lg"
             >
               <Settings className="h-4 w-4 mr-2" />
-              Nustatymai
+              {t('cookieBanner.settings')}
             </Button>
           </div>
         </div>

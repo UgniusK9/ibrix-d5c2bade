@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { useCookieConsentStore, CookieConsent } from '@/stores/cookieConsentStore';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -18,35 +19,36 @@ interface ConsentCategory {
 const categories: ConsentCategory[] = [
   {
     id: 'necessary',
-    name: 'Būtini (privalomi)',
-    description: 'Reikalingi svetainės veikimui ir saugumui. Jų išjungti negalima.',
+    name: 'cookieBanner.necessary',
+    description: 'cookieBanner.necessaryDesc',
     icon: Shield,
     required: true,
   },
   {
     id: 'functional',
-    name: 'Funkciniai',
-    description: 'Padeda veikti pirkimo funkcijoms (pvz., krepšeliui / apmokėjimui) ir patogumui.',
+    name: 'cookieBanner.functional',
+    description: 'cookieBanner.functionalDesc',
     icon: Cog,
     required: false,
   },
   {
     id: 'analytics',
-    name: 'Analitika',
-    description: 'Padeda suprasti, kaip naudojama svetainė (pvz., lankomumas, paspaudimai), kad galėtume ją pagerinti.',
+    name: 'cookieBanner.analytics',
+    description: 'cookieBanner.analyticsDesc',
     icon: BarChart3,
     required: false,
   },
   {
     id: 'marketing',
-    name: 'Marketingas',
-    description: 'Naudojama reklamos matavimui ir personalizavimui (pvz., Meta/Google).',
+    name: 'cookieBanner.marketing',
+    description: 'cookieBanner.marketingDesc',
     icon: Megaphone,
     required: false,
   },
 ];
 
 export function CookieSettingsModal() {
+  const { t } = useTranslation();
   const { consent, isModalOpen, closeModal, setConsent } = useCookieConsentStore();
   
   const [localConsent, setLocalConsent] = useState({
@@ -81,9 +83,9 @@ export function CookieSettingsModal() {
     <Dialog open={isModalOpen} onOpenChange={(open) => !open && closeModal()}>
       <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="font-heading text-xl">Slapukų nustatymai</DialogTitle>
+          <DialogTitle className="font-heading text-xl">{t('cookieBanner.settingsTitle')}</DialogTitle>
           <DialogDescription>
-            Pasirinkite, kokius slapukus norite leisti. Būtini slapukai reikalingi svetainės veikimui.
+            {t('cookieBanner.settingsText')}
           </DialogDescription>
         </DialogHeader>
         
@@ -107,7 +109,7 @@ export function CookieSettingsModal() {
                       htmlFor={category.id}
                       className="font-medium text-foreground cursor-pointer"
                     >
-                      {category.name}
+                      {t(category.name)}
                     </Label>
                     <Switch
                       id={category.id}
@@ -118,7 +120,7 @@ export function CookieSettingsModal() {
                     />
                   </div>
                   <p className="text-sm text-muted-foreground leading-relaxed">
-                    {category.description}
+                    {t(category.description)}
                   </p>
                 </div>
               </div>
@@ -129,16 +131,16 @@ export function CookieSettingsModal() {
         {/* Footer links */}
         <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-muted-foreground mb-4">
           <Link to="/slapukai" className="hover:text-foreground transition-colors underline underline-offset-2">
-            Slapukų politika
+            {t('nav.cookies')}
           </Link>
           <Link to="/privatumo-politika" className="hover:text-foreground transition-colors underline underline-offset-2">
-            Privatumo politika
+            {t('nav.privacy')}
           </Link>
         </div>
         
         {/* Save button */}
         <Button onClick={handleSave} className="w-full" size="lg">
-          Išsaugoti pasirinkimą
+          {t('cookieBanner.save')}
         </Button>
       </DialogContent>
     </Dialog>

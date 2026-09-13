@@ -1,33 +1,35 @@
+import { useTranslation } from "react-i18next";
 import { Search, ShoppingCart, Wrench } from "lucide-react";
 
 const steps = [
   {
     number: "01",
     icon: Search,
-    title: "Išsirenkate modelį",
-    description: "Pasirenkate pagal tipą, detalių skaičių ir pristatymo statusą: sandėlyje arba pre-order.",
+    title: "home.hiw1Title",
+    description: "home.hiw1Desc",
   },
   {
     number: "02",
     icon: ShoppingCart,
-    title: "Užsisakote",
-    description: "Apmokate saugiai. Jei tai pre-order – terminas aiškiai nurodytas prie produkto.",
+    title: "home.hiw2Title",
+    description: "home.hiw2Desc",
   },
   {
     number: "03",
     icon: Wrench,
-    title: "Surenkate ir paleidžiate",
-    description: "Surenkate modelį, paleidžiate mechanizmą ir turite judantį variklį ekspozicijai.",
+    title: "home.hiw3Title",
+    description: "home.hiw3Desc",
   },
 ];
 
 export function HowItWorks() {
+  const { t } = useTranslation();
   return (
     <section className="py-16 md:py-24 bg-card border-y border-border">
       <div className="container">
         <div className="text-center mb-12">
           <span className="text-xs font-semibold text-accent uppercase tracking-widest mb-2 block">
-            PROCESAS
+            {t('home.hiwBadge')}
           </span>
           <h2 className="font-heading text-3xl md:text-4xl font-bold whitespace-nowrap">
             Kaip veikia pre-order
@@ -56,10 +58,10 @@ export function HowItWorks() {
 
                 {/* Content */}
                 <h3 className="font-heading text-lg font-semibold mb-2">
-                  {step.title}
+                  {t(step.title)}
                 </h3>
                 <p className="text-sm text-muted-foreground leading-relaxed max-w-[280px]">
-                  {step.description}
+                  {t(step.description)}
                 </p>
               </div>
             ))}
@@ -67,7 +69,7 @@ export function HowItWorks() {
 
           {/* Trust line after steps */}
           <p className="text-center text-sm text-muted-foreground mt-10 pt-8 border-t border-border">
-            Jei trūks detalės – nemokamai išsiunčiame per 5 darbo dienas.
+            {t('home.hiwTrust')}
           </p>
         </div>
       </div>

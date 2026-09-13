@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { useState, useCallback, useEffect } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import {
@@ -23,14 +24,14 @@ interface Tab {
 const tabs: Tab[] = [
   {
     id: "featured",
-    label: "Atrinkti",
+    label: "home.tabFeatured",
     filter: (products) => products.filter(p =>
       p.badges?.includes('popular') || p.badges?.includes('new') || true
     ).slice(0, 10),
   },
   {
     id: "popular",
-    label: "Populiarūs",
+    label: "common.popular",
     filter: (products) => products.filter(p =>
       p.badges?.includes('popular')
     ).slice(0, 10),
@@ -38,6 +39,7 @@ const tabs: Tab[] = [
 ];
 
 export function TabbedProductCarousel({ products }: TabbedProductCarouselProps) {
+  const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState<string>("featured");
   const [api, setApi] = useState<CarouselApi>();
   const [canScrollPrev, setCanScrollPrev] = useState(false);
@@ -99,7 +101,7 @@ export function TabbedProductCarousel({ products }: TabbedProductCarouselProps) 
       <div className="container">
         {/* Centered Title */}
         <h2 className="font-heading text-2xl md:text-3xl font-bold text-foreground text-center mb-6">
-          Rask tobulą rinkinį
+          {t('home.findYourSet')}
         </h2>
 
         {/* Header row: Tabs on left, Arrows on right */}
@@ -117,7 +119,7 @@ export function TabbedProductCarousel({ products }: TabbedProductCarouselProps) 
                     : "text-muted-foreground hover:text-foreground"
                 )}
               >
-                {tab.label}
+                {t(tab.label)}
               </button>
             ))}
           </div>

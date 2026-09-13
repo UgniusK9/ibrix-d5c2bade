@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Loader2, Package, ArrowRight, Sparkles } from "lucide-react";
@@ -44,6 +45,7 @@ const formatPrice = (amount: number) => {
 };
 
 export function BundlesSection() {
+  const { t } = useTranslation();
   const [bundles, setBundles] = useState<BundleWithProducts[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -147,10 +149,10 @@ export function BundlesSection() {
             </div>
             <div>
               <h2 className="font-heading text-2xl md:text-3xl font-bold text-foreground">
-                Surink savo kolekciją
+                {t('home.bundlesTitle')}
               </h2>
               <p className="text-muted-foreground">
-                Specialios kainos rinkiniams
+                {t('home.bundlesSubtitle')}
               </p>
             </div>
           </div>
@@ -245,7 +247,7 @@ export function BundlesSection() {
                   className="w-full bg-accent hover:bg-accent/90 text-accent-foreground font-bold"
                 >
                   <Link to={`/produktas/${bundle.triggerProduct?.id}`}>
-                    Peržiūrėti rinkinį
+                    {t('home.viewBundle')}
                     <ArrowRight className="w-4 h-4 ml-2" />
                   </Link>
                 </Button>

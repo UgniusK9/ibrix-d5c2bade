@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { Plus } from "lucide-react";
@@ -15,6 +16,7 @@ interface GalleryItem {
 /** Photos come from the admin panel — catalogue shots cannot be reused here,
  *  the secondary ones carry a manufacturer watermark. */
 export function InspirationGallery() {
+  const { t } = useTranslation();
   const [items, setItems] = useState<GalleryItem[]>([]);
   const [loaded, setLoaded] = useState(false);
 
@@ -42,10 +44,10 @@ export function InspirationGallery() {
       <div className="container">
         <div className="text-center max-w-2xl mx-auto mb-8 md:mb-10">
           <h2 className="font-heading text-2xl md:text-4xl font-bold text-foreground">
-            Mūsų konstruktoriai
+            {t('home.galleryTitle')}
           </h2>
           <p className="text-muted-foreground mt-3 text-sm md:text-base">
-            Tikros nuotraukos, ne gamintojo renderiai — pamatyk modelį prieš užsisakydamas.
+            {t('home.gallerySubtitle')}
           </p>
         </div>
 
@@ -79,11 +81,12 @@ function GalleryTile({
   className?: string;
   priority?: boolean;
 }) {
+  const { t } = useTranslation();
   const inner = (
     <>
       <img
         src={item.image_url}
-        alt={item.title || "Surinktas MOULD KING rinkinys"}
+        alt={item.title || t('home.galleryAlt')}
         loading={priority ? "eager" : "lazy"}
         decoding="async"
         className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-[1.04]"

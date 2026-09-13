@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { useState, useEffect, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Search, X, Loader2, ArrowRight } from "lucide-react";
@@ -16,6 +17,7 @@ interface ProductSearchProps {
 }
 
 export function ProductSearch({ className, onClose, onSelect, isMobile, autoFocus }: ProductSearchProps) {
+  const { t } = useTranslation();
   const [query, setQuery] = useState("");
   const [isOpen, setIsOpen] = useState(false);
   const { data: products, isLoading } = useProducts();
@@ -77,7 +79,7 @@ export function ProductSearch({ className, onClose, onSelect, isMobile, autoFocu
         <Input
           ref={inputRef}
           type="search"
-          placeholder="Ieškoti produktų..."
+          placeholder={t('header.searchProducts')}
           value={query}
           onChange={(e) => {
             setQuery(e.target.value);
@@ -115,7 +117,7 @@ export function ProductSearch({ className, onClose, onSelect, isMobile, autoFocu
             </div>
           ) : filteredProducts.length === 0 ? (
             <div className="p-4 text-center text-muted-foreground text-sm">
-              Nieko nerasta pagal „{query}"
+              {t('products.searchNoResults', { query })}
             </div>
           ) : (
             <>
@@ -141,7 +143,7 @@ export function ProductSearch({ className, onClose, onSelect, isMobile, autoFocu
                           {formatPrice(product.price_eur)}
                         </span>
                         <Badge variant="secondary" className="text-[10px] px-1.5 py-0">
-                          {product.stock_status === 'preorder' ? 'Pre-order' : 'Sandėlyje'}
+                          {product.stock_status === 'preorder' ? t('products.preOrderLabel') : t('products.inStockLabel')}
                         </Badge>
                       </div>
                     </div>
