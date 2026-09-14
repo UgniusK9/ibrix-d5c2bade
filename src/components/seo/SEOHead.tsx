@@ -1,4 +1,5 @@
 import { Helmet } from 'react-helmet-async';
+import { useTranslation } from 'react-i18next';
 import { COMPANY } from '@/config/company';
 
 interface SEOHeadProps {
@@ -28,11 +29,10 @@ const BRAND = 'MOULD KING';
 // Must match the og:image in index.html so crawler-visible and app-rendered
 // tags agree. Self-hosted; regenerate with scripts/generate-og-image.mjs.
 const DEFAULT_IMAGE = `${SITE_URL}/og-image.jpg`;
-const DEFAULT_DESCRIPTION = 'IBRIX - Aukštos kokybės variklių ir mechaninių modelių parduotuvė Lietuvoje. Pre-order sistema, nemokamas pristatymas, 14 dienų grąžinimas.';
 
 export function SEOHead({
   title,
-  description = DEFAULT_DESCRIPTION,
+  description,
   canonical,
   type = 'website',
   image = DEFAULT_IMAGE,
@@ -40,6 +40,9 @@ export function SEOHead({
   product,
   breadcrumbs,
 }: SEOHeadProps) {
+  const { t, i18n } = useTranslation();
+  const resolvedDescription = description || t('seo.defaultDescription');
+  const lang = i18n.language?.startsWith('en') ? 'en' : 'lt';
   const fullTitle = title === SITE_NAME ? title : `${title} | ${SITE_NAME}`;
   const fullCanonical = canonical ? `${SITE_URL}${canonical}` : undefined;
 
@@ -48,7 +51,7 @@ export function SEOHead({
     '@context': 'https://schema.org',
     '@type': 'Product',
     name: product.name,
-    description: product.description || description,
+    description: product.description || resolvedDescription,
     image: product.image || image,
     sku: product.sku,
     brand: {
@@ -116,19 +119,19 @@ export function SEOHead({
     <Helmet>
       {/* Basic Meta */}
       <title>{fullTitle}</title>
-      <meta name="description" content={description} />
+      <meta name="description" content={resolvedDescription} />
       {noindex && <meta name="robots" content="noindex, nofollow" />}
       {!noindex && <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />}
       {fullCanonical && <link rel="canonical" href={fullCanonical} />}
       
       {/* Language */}
-      <html lang="lt" />
-      <meta property="og:locale" content="lt_LT" />
+      <html lang={lang} />
+      <meta property="og:locale" content={lang === 'en' ? 'en_US' : 'lt_LT'} />
       
       {/* Open Graph */}
       <meta property="og:type" content={type} />
       <meta property="og:title" content={fullTitle} />
-      <meta property="og:description" content={description} />
+      <meta property="og:description" content={resolvedDescription} />
       <meta property="og:image" content={image} />
       <meta property="og:image:width" content="1200" />
       <meta property="og:image:height" content="630" />
@@ -138,7 +141,7 @@ export function SEOHead({
       {/* Twitter Card */}
       <meta name="twitter:card" content="summary_large_image" />
       <meta name="twitter:title" content={fullTitle} />
-      <meta name="twitter:description" content={description} />
+      <meta name="twitter:description" content={resolvedDescription} />
       <meta name="twitter:image" content={image} />
       
       {/* Product-specific Open Graph */}

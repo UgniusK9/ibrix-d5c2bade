@@ -2,10 +2,12 @@ import { Link, Navigate, useParams } from "react-router-dom";
 import { ArrowLeft, ArrowRight, Clock } from "lucide-react";
 import { PageLayout } from "@/components/layout/PageLayout";
 import { SEOHead } from "@/components/seo/SEOHead";
+import { useTranslation } from "react-i18next";
 import { getArticle } from "./Patarimai";
 
 export default function Straipsnis() {
   const { slug } = useParams<{ slug: string }>();
+  const { t, i18n } = useTranslation();
   const article = getArticle(slug);
 
   if (!article) return <Navigate to="/patarimai" replace />;
@@ -18,8 +20,8 @@ export default function Straipsnis() {
         canonical={`/patarimai/${article.slug}`}
         type="article"
         breadcrumbs={[
-          { name: "Pradžia", url: "/" },
-          { name: "Patarimai", url: "/patarimai" },
+          { name: t("nav.home"), url: "/" },
+          { name: t("nav.guides"), url: "/patarimai" },
           { name: article.title, url: `/patarimai/${article.slug}` },
         ]}
       />
@@ -30,7 +32,7 @@ export default function Straipsnis() {
             className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors mb-8"
           >
             <ArrowLeft className="w-4 h-4" />
-            Visi patarimai
+            {t('pgArticlePg.allGuides')}
           </Link>
 
           <h1 className="font-heading text-4xl font-bold mb-4">
@@ -40,10 +42,10 @@ export default function Straipsnis() {
           <div className="flex items-center gap-4 text-sm text-muted-foreground mb-8">
             <span className="flex items-center gap-1.5">
               <Clock className="w-4 h-4" />
-              {article.readMinutes} min. skaitymo
+              {t('pgArticlePg.readTime', { minutes: article.readMinutes })}
             </span>
             <time dateTime={article.published}>
-              {new Date(article.published).toLocaleDateString("lt-LT")}
+              {new Date(article.published).toLocaleDateString(i18n.language === 'en' ? 'en-GB' : 'lt-LT')}
             </time>
           </div>
 

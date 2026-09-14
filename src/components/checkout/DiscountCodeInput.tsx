@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Loader2, Tag, X, Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -20,6 +21,7 @@ interface DiscountCodeInputProps {
 }
 
 export function DiscountCodeInput({ cartTotal, onApply, appliedDiscount }: DiscountCodeInputProps) {
+  const { t } = useTranslation();
   const [code, setCode] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -49,14 +51,14 @@ export function DiscountCodeInput({ cartTotal, onApply, appliedDiscount }: Disco
           value: data.offer.value,
           title: data.offer.title,
         });
-        toast.success(`Nuolaida "${data.offer.title}" pritaikyta!`);
+        toast.success(t('coDiscount.applied', { title: data.offer.title }));
         setCode('');
       } else {
-        setError(data.message || 'Netinkamas kodas');
+        setError(data.message || t('checkout.invalidCode'));
       }
     } catch (e: any) {
       console.error('Discount validation error:', e);
-      setError(e.message || 'Klaida tikrinant kodą');
+      setError(e.message || t('coDiscount.checkError'));
     } finally {
       setIsLoading(false);
     }
@@ -83,7 +85,7 @@ export function DiscountCodeInput({ cartTotal, onApply, appliedDiscount }: Disco
           <div>
             <p className="text-sm font-medium text-green-700">{appliedDiscount.title}</p>
             <p className="text-xs text-green-600">
-              Kodas: {appliedDiscount.code} • {formatDiscount(appliedDiscount)}
+              {t('coDiscount.codeLine', { code: appliedDiscount.code, discount: formatDiscount(appliedDiscount) })}
             </p>
           </div>
         </div>
@@ -110,7 +112,7 @@ export function DiscountCodeInput({ cartTotal, onApply, appliedDiscount }: Disco
               setCode(e.target.value.toUpperCase());
               setError(null);
             }}
-            placeholder="Nuolaidos kodas"
+            placeholder={t('checkout.discountCode')}
             className="pl-10"
             onKeyDown={(e) => e.key === 'Enter' && validateCode()}
           />
@@ -123,7 +125,7 @@ export function DiscountCodeInput({ cartTotal, onApply, appliedDiscount }: Disco
           {isLoading ? (
             <Loader2 className="w-4 h-4 animate-spin" />
           ) : (
-            'Pritaikyti'
+            t('checkout.applyCode')
           )}
         </Button>
       </div>

@@ -31,19 +31,10 @@ import {
 
 // Trust items and box contents are now translatable via t() function
 
-const productFAQ = [
-  {
-    question: "Ar visos detalės bus rinkinyje?",
-    answer: "Taip, visi rinkiniai patikrinami prieš išsiuntimą. Jei vis dėlto trūktų detalės – susisiekite su mumis ir išspręsime per 5 darbo dienas, nemokamai.",
-  },
-  {
-    question: "Ar reikia specialių įrankių?",
-    answer: "Ne, visi reikalingi įrankiai įtraukti į rinkinį. Papildomai galite naudoti smulkų pincetą, bet tai nebūtina.",
-  },
-  {
-    question: "Ar modelis tikrai juda?",
-    answer: "Taip, visų variklio modelių mechanizmai yra veikiantys. Stūmokliai, alkūninis velenas ir kitos dalys juda sinchroniškai, imituojant tikrą variklio darbą.",
-  },
+const productFAQKeys = [
+  { q: 'pgProductX.faqQ1', a: 'pgProductX.faqA1' },
+  { q: 'pgProductX.faqQ2', a: 'pgProductX.faqA2' },
+  { q: 'pgProductX.faqQ3', a: 'pgProductX.faqA3' },
 ];
 
 export default function Produktas() {
@@ -223,7 +214,7 @@ export default function Produktas() {
     <PageLayout>
       <SEOHead 
         title={product.title}
-        description={product.short_desc || product.description || `${product.title} - aukštos kokybės modelis iš IBRIX. ${isPreOrder ? 'Pre-order su depozitu.' : 'Sandėlyje.'}`}
+        description={product.short_desc || product.description || t(isPreOrder ? 'pgProductX.seoPreorder' : 'pgProductX.seoInStock', { title: product.title })}
         canonical={`/produktas/${product.slug}`}
         type="product"
         image={image}
@@ -268,14 +259,14 @@ export default function Produktas() {
                   <button
                     onClick={() => setActiveImg((i) => (i - 1 + images.length) % images.length)}
                     className="absolute left-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-background/80 border border-border flex items-center justify-center hover:bg-background transition-colors"
-                    aria-label="Ankstesnė nuotrauka"
+                    aria-label={t('pgProductX.prevPhoto')}
                   >
                     <ArrowLeft className="w-4 h-4" />
                   </button>
                   <button
                     onClick={() => setActiveImg((i) => (i + 1) % images.length)}
                     className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-background/80 border border-border flex items-center justify-center hover:bg-background transition-colors"
-                    aria-label="Kita nuotrauka"
+                    aria-label={t('pgProductX.nextPhoto')}
                   >
                     <ArrowLeft className="w-4 h-4 rotate-180" />
                   </button>
@@ -489,8 +480,8 @@ export default function Produktas() {
               </PremiumAccordionTrigger>
               <PremiumAccordionContent>
                 <div className="space-y-4">
-                  {productFAQ.map((item, idx) => (
-                    <AccordionFaqItem key={idx} question={item.question} answer={item.answer} />
+                  {productFAQKeys.map((item, idx) => (
+                    <AccordionFaqItem key={idx} question={t(item.q)} answer={t(item.a)} />
                   ))}
                 </div>
               </PremiumAccordionContent>

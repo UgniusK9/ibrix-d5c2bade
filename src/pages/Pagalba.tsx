@@ -1,56 +1,59 @@
 import { Link } from "react-router-dom";
 import { Truck, RotateCcw, Shield, Puzzle, Clock, Phone, ArrowRight } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { PageLayout } from "@/components/layout/PageLayout";
 import { RouteSEO } from "@/components/seo/RouteSEO";
 import { Button } from "@/components/ui/button";
 import { FAQSection } from "@/components/home/FAQSection";
 
-const helpCards = [
-  {
-    icon: Truck,
-    title: "Pristatymas",
-    description: "Kiek kainuoja, kiek trunka, paštomatai/kurjeris, siuntos sekimas.",
-    href: "/pristatymas",
-    cta: "Pristatymo sąlygos",
-  },
-  {
-    icon: RotateCcw,
-    title: "Grąžinimai",
-    description: "14 dienų taisyklė, sąlygos, kaip pateikti grąžinimą.",
-    href: "/grazinimai",
-    cta: "Kaip grąžinti",
-  },
-  {
-    icon: Shield,
-    title: "Garantija",
-    description: "Kas laikoma garantiniu, kaip sprendžiame problemas.",
-    href: "/garantija",
-    cta: "Garantijos sąlygos",
-  },
-  {
-    icon: Puzzle,
-    title: "Trūkstamos detalės",
-    description: "Ką daryti, jei trūksta detalės, kiek trunka, ko reikia iš jūsų.",
-    href: "/trukstamos-detales",
-    cta: "Trūkstamų detalių sprendimas",
-  },
-  {
-    icon: Clock,
-    title: "Pre-order",
-    description: "Kaip veikia rezervacija, terminai, atšaukimas, statusai.",
-    href: "/pre-order",
-    cta: "Kaip veikia pre-order",
-  },
-  {
-    icon: Phone,
-    title: "Kontaktai",
-    description: "Parašykite arba paskambinkite. Atsakome darbo valandomis.",
-    href: "/kontaktai",
-    cta: "Susisiekti",
-  },
-];
-
 export default function Pagalba() {
+  const { t } = useTranslation();
+
+  const helpCards = [
+    {
+      icon: Truck,
+      title: t("pgHelp.deliveryTitle"),
+      description: t("pgHelp.deliveryDesc"),
+      href: "/pristatymas",
+      cta: t("pgHelp.deliveryCta"),
+    },
+    {
+      icon: RotateCcw,
+      title: t("pgHelp.returnsTitle"),
+      description: t("pgHelp.returnsDesc"),
+      href: "/grazinimai",
+      cta: t("pgHelp.returnsCta"),
+    },
+    {
+      icon: Shield,
+      title: t("pgHelp.warrantyTitle"),
+      description: t("pgHelp.warrantyDesc"),
+      href: "/garantija",
+      cta: t("pgHelp.warrantyCta"),
+    },
+    {
+      icon: Puzzle,
+      title: t("pgHelp.missingTitle"),
+      description: t("pgHelp.missingDesc"),
+      href: "/trukstamos-detales",
+      cta: t("pgHelp.missingCta"),
+    },
+    {
+      icon: Clock,
+      title: t("pgHelp.preorderTitle"),
+      description: t("pgHelp.preorderDesc"),
+      href: "/pre-order",
+      cta: t("pgHelp.preorderCta"),
+    },
+    {
+      icon: Phone,
+      title: t("pgHelp.contactTitle"),
+      description: t("pgHelp.contactDesc"),
+      href: "/kontaktai",
+      cta: t("pgHelp.contactCta"),
+    },
+  ];
+
   return (
     <PageLayout>
       <RouteSEO />
@@ -59,17 +62,17 @@ export default function Pagalba() {
           {/* Header */}
           <div className="max-w-2xl mx-auto text-center mb-12">
             <h1 className="font-heading text-4xl md:text-5xl font-bold mb-4">
-              Pagalba
+              {t("pgHelp.title")}
             </h1>
             <p className="text-lg text-muted-foreground mb-6">
-              Pasirinkite temą arba parašykite mums – atsakome lietuviškai.
+              {t("pgHelp.subtitle")}
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Button asChild className="bg-accent hover:bg-accent/90 text-accent-foreground">
-                <Link to="/kontaktai">Parašyti mums</Link>
+                <Link to="/kontaktai">{t("pgHelp.writeToUs")}</Link>
               </Button>
               <Button asChild variant="outline">
-                <a href="#faq">Peržiūrėti D.U.K.</a>
+                <a href="#faq">{t("pgHelp.viewFaq")}</a>
               </Button>
             </div>
           </div>
@@ -102,10 +105,10 @@ export default function Pagalba() {
           {/* Quick Contact */}
           <div className="max-w-xl mx-auto mt-16 text-center">
             <p className="text-muted-foreground mb-2">
-              Neradote atsakymo? Rašykite mums tiesiogiai:
+              {t("pgHelp.noAnswer")}
             </p>
             <p className="text-xs text-muted-foreground mb-4">
-              Atsakome darbo dienomis per 24 val.
+              {t("pgHelp.responseTime")}
             </p>
             <a 
               href="mailto:support@ibrix.lt" 

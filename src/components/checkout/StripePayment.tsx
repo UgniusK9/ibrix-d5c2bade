@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import { loadStripe } from "@stripe/stripe-js";
 import {
   Elements,
@@ -23,6 +24,7 @@ interface PaymentFormProps {
 }
 
 function PaymentForm({ orderId, onSuccess, onError }: PaymentFormProps) {
+  const { t } = useTranslation();
   const stripe = useStripe();
   const elements = useElements();
   const [isProcessing, setIsProcessing] = useState(false);
@@ -47,11 +49,11 @@ function PaymentForm({ orderId, onSuccess, onError }: PaymentFormProps) {
 
     if (error) {
       if (error.type === "card_error" || error.type === "validation_error") {
-        setMessage(error.message || "Mokėjimo klaida");
+        setMessage(error.message || t('coPay.payError'));
       } else {
-        setMessage("Netikėta klaida. Bandykite dar kartą.");
+        setMessage(t('coPay.unexpected'));
       }
-      onError(error.message || "Mokėjimo klaida");
+      onError(error.message || t('coPay.payError'));
     }
 
     setIsProcessing(false);
@@ -81,12 +83,12 @@ function PaymentForm({ orderId, onSuccess, onError }: PaymentFormProps) {
         {isProcessing ? (
           <>
             <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-            Apdorojama...
+            {t('checkout.processing')}
           </>
         ) : (
           <>
             <CreditCard className="w-4 h-4 mr-2" />
-            Apmokėti
+            {t('coPay.payNow')}
           </>
         )}
       </Button>
@@ -103,6 +105,7 @@ interface StripePaymentProps {
 }
 
 export function StripePayment({ orderId, amount, trackingToken, onSuccess, onError }: StripePaymentProps) {
+  const { t, i18n } = useTranslation();
   const [clientSecret, setClientSecret] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -114,7 +117,7 @@ export function StripePayment({ orderId, amount, trackingToken, onSuccess, onErr
     // Skip if not configured
     if (!isConfigured) {
       setIsLoading(false);
-      setError('Mokėjimų sistema nekonfigūruota');
+      setError(t('coPay.notConfigured'));
       return;
     }
 
@@ -132,7 +135,7 @@ export function StripePayment({ orderId, amount, trackingToken, onSuccess, onErr
         });
 
         if (fnError) {
-          throw new Error(fnError.message || 'Nepavyko sukurti mokėjimo');
+          throw new Error(fnError.message || t('coPay.createFailed'));
         }
 
         if (data?.error) {
@@ -142,28 +145,28 @@ export function StripePayment({ orderId, amount, trackingToken, onSuccess, onErr
         if (data?.clientSecret) {
           setClientSecret(data.clientSecret);
         } else {
-          throw new Error('Negauta mokėjimo informacija');
+          throw new Error(t('coPay.noInfo'));
         }
       } catch (err) {
         console.error('Payment intent error:', err);
-        setError(err instanceof Error ? err.message : 'Mokėjimo klaida');
-        onError(err instanceof Error ? err.message : 'Mokėjimo klaida');
+        setError(err instanceof Error ? err.message : t('coPay.payError'));
+        onError(err instanceof Error ? err.message : t('coPay.payError'));
       } finally {
         setIsLoading(false);
       }
     };
 
     createPaymentIntent();
-  }, [orderId, trackingToken, onError, isConfigured]);
+  }, [orderId, trackingToken, onError, isConfigured, t]);
 
   // Error states after hooks
   if (!isConfigured) {
     return (
       <div className="bg-destructive/10 border border-destructive/30 rounded-lg p-4 text-center">
         <AlertCircle className="w-8 h-8 text-destructive mx-auto mb-2" />
-        <p className="text-sm text-destructive font-medium">Mokėjimų sistema nekonfigūruota</p>
+        <p className="text-sm text-destructive font-medium">{t('coPay.notConfigured')}</p>
         <p className="text-xs text-muted-foreground mt-1">
-          Susisiekite su administratoriumi
+          {t('coPay.contactAdmin')}
         </p>
       </div>
     );
@@ -173,7 +176,7 @@ export function StripePayment({ orderId, amount, trackingToken, onSuccess, onErr
     return (
       <div className="text-center py-8">
         <Loader2 className="w-8 h-8 animate-spin mx-auto text-primary" />
-        <p className="text-sm text-muted-foreground mt-2">Ruošiamas mokėjimas...</p>
+        <p className="text-sm text-muted-foreground mt-2">{t('coPay.preparing')}</p>
       </div>
     );
   }
@@ -190,7 +193,7 @@ export function StripePayment({ orderId, amount, trackingToken, onSuccess, onErr
   if (!clientSecret) {
     return (
       <div className="bg-muted rounded-lg p-4 text-center">
-        <p className="text-sm text-muted-foreground">Mokėjimo forma nepasiekiama</p>
+        <p className="text-sm text-muted-foreground">{t('coPay.unavailable')}</p>
       </div>
     );
   }
@@ -211,7 +214,7 @@ export function StripePayment({ orderId, amount, trackingToken, onSuccess, onErr
             borderRadius: '8px',
           },
         },
-        locale: 'lt',
+        locale: i18n.language?.toLowerCase().startsWith('lt') ? 'lt' : 'en',
       }}
     >
       <PaymentForm orderId={orderId} onSuccess={onSuccess} onError={onError} />

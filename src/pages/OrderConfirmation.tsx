@@ -7,7 +7,8 @@ import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { trackPurchaseEvent } from "@/hooks/useAnalytics";
 import { format } from "date-fns";
-import { lt } from "date-fns/locale";
+import { lt, enUS } from "date-fns/locale";
+import { useTranslation } from "react-i18next";
 
 interface OrderItem {
   id: string;
@@ -64,6 +65,8 @@ interface Order {
 export default function OrderConfirmation() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
+  const { t, i18n } = useTranslation();
+  const dateLocale = i18n.language === 'en' ? enUS : lt;
   
   // Support multiple param names for backwards compat
   const sessionId = searchParams.get('session_id');
@@ -104,9 +107,9 @@ export default function OrderConfirmation() {
       if (!sessionId && !orderId) {
         // Check for legacy tracking token format
         if (legacyToken) {
-          setError('Ši nuoroda nebegalioja. Naudokite naują patvirtinimo nuorodą.');
+          setError(t('pgOrderConf.linkExpired'));
         } else {
-          setError('Trūksta užsakymo informacijos');
+          setError(t('pgOrderConf.missingInfo'));
         }
         setLoading(false);
         return;
@@ -123,13 +126,13 @@ export default function OrderConfirmation() {
 
         if (fnError) {
           console.error('Order fetch error:', fnError);
-          setError('Nepavyko užkrauti užsakymo');
+          setError(t('pgOrderConf.loadFailed'));
           setLoading(false);
           return;
         }
 
         if (!data?.success || !data?.order) {
-          setError(data?.error || 'Užsakymas nerastas');
+          setError(data?.error || t('order.orderNotFound'));
           setLoading(false);
           return;
         }
@@ -140,13 +143,14 @@ export default function OrderConfirmation() {
         setPayments(data.payments || []);
       } catch (err) {
         console.error('Order load error:', err);
-        setError('Klaida kraunant užsakymą');
+        setError(t('pgOrderConf.loadError'));
       } finally {
         setLoading(false);
       }
     }
 
     loadOrder();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sessionId, orderId, legacyToken]);
 
   const hasPreorder = order?.preorder_flag || false;
@@ -154,13 +158,13 @@ export default function OrderConfirmation() {
 
   const getShippingMethodName = (address: Record<string, string>) => {
     if (address?.lockerName) {
-      if (address.lockerName.toLowerCase().includes('omniva')) return 'Omniva paštomatas';
-      if (address.lockerName.toLowerCase().includes('lp express')) return 'LP EXPRESS paštomatas';
-      if (address.lockerName.toLowerCase().includes('dpd')) return 'DPD paštomatas';
+      if (address.lockerName.toLowerCase().includes('omniva')) return t('coLocker.carrierLocker', { carrier: 'Omniva' });
+      if (address.lockerName.toLowerCase().includes('lp express')) return t('coLocker.carrierLocker', { carrier: 'LP EXPRESS' });
+      if (address.lockerName.toLowerCase().includes('dpd')) return t('coLocker.carrierLocker', { carrier: 'DPD' });
       return address.lockerName;
     }
-    if (address?.lockerId) return 'Paštomatas';
-    return 'Kurjeris į namus';
+    if (address?.lockerId) return t('checkout.parcelLocker');
+    return t('checkout.courier');
   };
 
   const getPaymentMethodLabel = (provider: string | null, code: string | null) => {
@@ -173,23 +177,23 @@ export default function OrderConfirmation() {
         'mblt': 'Šiaulių bankas',
         'revolut': 'Revolut',
       };
-      return bankLabels[code || ''] || 'Bankinis pavedimas';
+      return bankLabels[code || ''] || t('pgOrderConf.bankTransfer');
     }
     if (provider === 'paypal') return 'PayPal';
     if (code === 'apple_pay') return 'Apple Pay';
     if (code === 'google_pay') return 'Google Pay';
-    return 'Mokėjimo kortelė';
+    return t('pgOrderConf.cardPayment');
   };
 
   const getStatusLabel = (status: string) => {
     const labels: Record<string, string> = {
-      'created': 'Laukiama apmokėjimo',
-      'deposit_paid': 'Depozitas sumokėtas',
-      'awaiting_balance': 'Laukiama likučio',
-      'balance_paid': 'Pilnai apmokėta',
-      'packed': 'Supakuota',
-      'shipped': 'Išsiųsta',
-      'delivered': 'Pristatyta',
+      'created': t('pgOrderConf.statusAwaitingPayment'),
+      'deposit_paid': t('pgOrderConf.statusDepositPaid'),
+      'awaiting_balance': t('pgOrderConf.statusAwaitingBalance'),
+      'balance_paid': t('order.fullPaid'),
+      'packed': t('order.packed'),
+      'shipped': t('order.shipped'),
+      'delivered': t('order.delivered'),
     };
     return labels[status] || status;
   };
@@ -203,8 +207,8 @@ export default function OrderConfirmation() {
   };
 
   const getSupportMailto = () => {
-    const subject = encodeURIComponent(`Klausimas dėl užsakymo ${order?.order_number || ''}`);
-    const body = encodeURIComponent(`Užsakymo numeris: ${order?.order_number || ''}\n\nAprašykite problemą:\n`);
+    const subject = encodeURIComponent(t('pgOrderConf.supportSubject', { orderNumber: order?.order_number || '' }));
+    const body = encodeURIComponent(t('pgOrderConf.supportBody', { orderNumber: order?.order_number || '' }));
     return `mailto:info@ibrix.lt?subject=${subject}&body=${body}`;
   };
 
@@ -214,7 +218,7 @@ export default function OrderConfirmation() {
         <div className="container py-16 max-w-2xl mx-auto">
           <div className="flex flex-col items-center justify-center gap-4">
             <Loader2 className="w-10 h-10 animate-spin text-primary" />
-            <p className="text-muted-foreground">Kraunamas užsakymas...</p>
+            <p className="text-muted-foreground">{t('pgOrderConf.loadingOrder')}</p>
           </div>
         </div>
       </PageLayout>
@@ -227,17 +231,17 @@ export default function OrderConfirmation() {
         <div className="container py-16 max-w-lg mx-auto text-center">
           <Package className="w-16 h-16 text-muted-foreground/30 mx-auto mb-4" />
           <h1 className="font-heading text-2xl font-bold mb-2">
-            {error || 'Užsakymas nerastas'}
+            {error || t('order.orderNotFound')}
           </h1>
           <p className="text-muted-foreground mb-6">
-            Patikrinkite nuorodą arba susisiekite su mumis.
+            {t('order.checkLinkOrContact')}
           </p>
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
             <Button asChild variant="outline">
-              <a href="mailto:info@ibrix.lt">Susisiekti</a>
+              <a href="mailto:info@ibrix.lt">{t('pgOrderConf.contactLink')}</a>
             </Button>
             <Button asChild>
-              <Link to="/produktai/visi">Grįžti į parduotuvę</Link>
+              <Link to="/produktai/visi">{t('order.backToStore')}</Link>
             </Button>
           </div>
         </div>
@@ -258,21 +262,21 @@ export default function OrderConfirmation() {
             <CheckCircle2 className="w-10 h-10 text-success" />
           </div>
           <h1 className="font-heading text-3xl font-bold mb-2">
-            Ačiū už užsakymą!
+            {t('order.thankYou')}
           </h1>
           <p className="text-muted-foreground">
-            Konstruktorių paruošime ir išsiųsime pagal nurodytą informaciją.
+            {t('order.prepareAndShip')}
           </p>
         </div>
 
         {/* Order number and date */}
         <div className="bg-card border border-border rounded-xl p-6 text-center mb-6">
-          <p className="text-sm text-muted-foreground mb-1">Užsakymo numeris</p>
+          <p className="text-sm text-muted-foreground mb-1">{t('order.orderNumber')}</p>
           <p className="font-heading text-2xl font-bold text-primary mb-2">
             {order.order_number}
           </p>
           <p className="text-sm text-muted-foreground">
-            {format(new Date(order.created_at), "yyyy-MM-dd HH:mm", { locale: lt })}
+            {format(new Date(order.created_at), "yyyy-MM-dd HH:mm", { locale: dateLocale })}
           </p>
           <Badge className="mt-3" variant={isPaid ? "default" : "secondary"}>
             {getStatusLabel(order.status)}
@@ -285,11 +289,11 @@ export default function OrderConfirmation() {
             <div className="flex items-center gap-3 mb-2">
               <Clock className="w-5 h-5 text-primary" />
               <span className="font-heading font-semibold">
-                Pre-order: ~{maxEtaWeeks} savaičių pristatymas
+                Pre-order: ~{maxEtaWeeks} {t('order.preOrderDelivery')}
               </span>
             </div>
             <p className="text-sm text-muted-foreground">
-              Pre-order prekės bus pristatytos per nurodytą laiką. Atšaukti galima bet kada iki išsiuntimo – grąžiname pilną sumą.
+              {t('order.preOrderNotice')}
             </p>
           </div>
         )}
@@ -299,10 +303,10 @@ export default function OrderConfirmation() {
           <div className="bg-success/5 border border-success/20 rounded-xl p-4 mb-6">
             <div className="flex items-center gap-3 mb-2">
               <CreditCard className="w-5 h-5 text-success" />
-              <span className="font-heading font-semibold">Mokėjimas gautas</span>
+              <span className="font-heading font-semibold">{t('order.paymentReceived')}</span>
             </div>
             <p className="text-sm text-muted-foreground">
-              Patvirtinimą išsiųsime į {order.email}
+              {t('order.confirmationSentTo')} {order.email}
             </p>
           </div>
         )}
@@ -312,17 +316,17 @@ export default function OrderConfirmation() {
           <div className="bg-accent/5 border border-accent/20 rounded-xl p-4 mb-6">
             <div className="flex items-center gap-3 mb-2">
               <Mail className="w-5 h-5 text-accent" />
-              <span className="font-heading font-semibold">Kas toliau?</span>
+              <span className="font-heading font-semibold">{t('order.whatsNext')}</span>
             </div>
             <p className="text-sm text-muted-foreground">
-              Kai prekė bus paruošta siuntimui, atsiųsime nuorodą apmokėti likusią sumą ({formatPrice(remainingBalance)}).
+              {t('order.balanceNotice')} ({formatPrice(remainingBalance)}).
             </p>
           </div>
         )}
 
         {/* Order items */}
         <div className="bg-card border border-border rounded-xl p-6 mb-6">
-          <h2 className="font-heading font-semibold mb-4">Užsakymo prekės</h2>
+          <h2 className="font-heading font-semibold mb-4">{t('order.orderItems')}</h2>
           <div className="space-y-4">
             {items.map((item) => (
               <div key={item.id} className="flex items-start justify-between py-2 border-b border-border last:border-0">
@@ -330,7 +334,7 @@ export default function OrderConfirmation() {
                   <p className="font-medium">{item.title_snapshot}</p>
                   <div className="flex items-center gap-2 mt-1">
                     <span className="text-sm text-muted-foreground">
-                      {item.quantity} vnt. × {formatPrice(item.unit_price_eur)}
+                      {item.quantity} {t('pgOrderConf.qtyUnit')} × {formatPrice(item.unit_price_eur)}
                     </span>
                   </div>
                 </div>
@@ -346,35 +350,35 @@ export default function OrderConfirmation() {
         <div className="bg-card border border-border rounded-xl p-6 mb-6">
           <div className="space-y-2">
             <div className="flex justify-between text-sm">
-              <span className="text-muted-foreground">Prekės</span>
+              <span className="text-muted-foreground">{t('order.products')}</span>
               <span>{formatPrice(order.subtotal_eur)}</span>
             </div>
             {order.discount_eur > 0 && (
               <div className="flex justify-between text-sm">
                 <span className="text-muted-foreground">
-                  Nuolaida {order.offer_code && `(${order.offer_code})`}
+                  {t('cart.discount')} {order.offer_code && `(${order.offer_code})`}
                 </span>
                 <span className="text-success">-{formatPrice(order.discount_eur)}</span>
               </div>
             )}
             <div className="flex justify-between text-sm">
-              <span className="text-muted-foreground">Pristatymas</span>
-              <span>{order.shipping_eur === 0 ? 'Nemokamas' : formatPrice(order.shipping_eur)}</span>
+              <span className="text-muted-foreground">{t('cart.shipping')}</span>
+              <span>{order.shipping_eur === 0 ? t('common.free') : formatPrice(order.shipping_eur)}</span>
             </div>
             <div className="h-px bg-border my-2" />
             <div className="flex justify-between font-bold text-lg">
-              <span>Iš viso</span>
+              <span>{t('cart.total')}</span>
               <span className="text-accent">{formatPrice(order.total_eur)}</span>
             </div>
             {hasPreorder && remainingBalance > 0 && (
               <>
                 <div className="h-px bg-border my-2" />
                 <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">Sumokėta dabar</span>
+                  <span className="text-muted-foreground">{t('order.paidNow')}</span>
                   <span className="text-success font-medium">{formatPrice(paidAmount)}</span>
                 </div>
                 <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">Liko sumokėti vėliau</span>
+                  <span className="text-muted-foreground">{t('order.payLaterAmount')}</span>
                   <span>{formatPrice(remainingBalance)}</span>
                 </div>
               </>
@@ -386,32 +390,32 @@ export default function OrderConfirmation() {
         <div className="bg-card border border-border rounded-xl p-6 mb-6">
           <div className="flex items-center gap-2 mb-3">
             <MapPin className="w-5 h-5 text-primary" />
-            <h2 className="font-heading font-semibold">Pristatymo informacija</h2>
+            <h2 className="font-heading font-semibold">{t('order.shippingInfo')}</h2>
           </div>
           <div className="space-y-2 text-sm">
             <p>
-              <span className="text-muted-foreground">Būdas:</span>{' '}
+              <span className="text-muted-foreground">{t('order.method')}:</span>{' '}
               <span className="font-medium">{getShippingMethodName(order.shipping_address_json)}</span>
             </p>
             {order.shipping_address_json?.lockerAddress && (
               <p>
-                <span className="text-muted-foreground">Adresas:</span>{' '}
+                <span className="text-muted-foreground">{t('checkout.address')}:</span>{' '}
                 {order.shipping_address_json.lockerAddress}
               </p>
             )}
             {order.shipping_address_json?.street && (
               <p>
-                <span className="text-muted-foreground">Adresas:</span>{' '}
+                <span className="text-muted-foreground">{t('checkout.address')}:</span>{' '}
                 {order.shipping_address_json.street}, {order.shipping_address_json.city} {order.shipping_address_json.postalCode}
               </p>
             )}
             <p>
-              <span className="text-muted-foreground">Gavėjas:</span>{' '}
+              <span className="text-muted-foreground">{t('order.recipient')}:</span>{' '}
               {order.first_name} {order.last_name}
             </p>
             {order.phone && (
               <p>
-                <span className="text-muted-foreground">Telefonas:</span>{' '}
+                <span className="text-muted-foreground">{t('checkout.phone')}:</span>{' '}
                 {order.phone}
               </p>
             )}
@@ -422,10 +426,10 @@ export default function OrderConfirmation() {
         <div className="bg-card border border-border rounded-xl p-6 mb-8">
           <div className="flex items-center gap-2 mb-3">
             <CreditCard className="w-5 h-5 text-primary" />
-            <h2 className="font-heading font-semibold">Mokėjimo informacija</h2>
+            <h2 className="font-heading font-semibold">{t('order.paymentInfo')}</h2>
           </div>
           <p className="text-sm">
-            <span className="text-muted-foreground">Būdas:</span>{' '}
+            <span className="text-muted-foreground">{t('order.method')}:</span>{' '}
             <span className="font-medium">{getPaymentMethodLabel(order.payment_provider, order.payment_method_code)}</span>
           </p>
         </div>
@@ -435,12 +439,12 @@ export default function OrderConfirmation() {
           {shipment?.tracking_token && (
             <Button onClick={handleTrackOrder} variant="outline" size="lg">
               <Truck className="w-4 h-4 mr-2" />
-              Sekti siuntą
+              {t('pgOrderConf.trackShipment')}
             </Button>
           )}
           <Button asChild size="lg">
             <Link to="/produktai/visi">
-              Tęsti apsipirkimą
+              {t('order.continueShoppingSingle')}
               <ArrowRight className="w-4 h-4 ml-2" />
             </Link>
           </Button>
@@ -451,7 +455,7 @@ export default function OrderConfirmation() {
           <Button asChild variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground">
             <a href={getSupportMailto()}>
               <HelpCircle className="w-4 h-4 mr-2" />
-              Kilo problema? Susisiekite
+              {t('order.issueContact')}
             </a>
           </Button>
         </div>

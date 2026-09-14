@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -34,6 +35,7 @@ interface ActiveCart {
 }
 
 export function ActiveCartsManager() {
+  const { t } = useTranslation();
   const [carts, setCarts] = useState<ActiveCart[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -103,7 +105,7 @@ export function ActiveCartsManager() {
       setCarts(list);
     } catch (e: any) {
       console.error(e);
-      toast.error("Klaida kraunant krepšelius: " + e.message);
+      toast.error(t("admOrders.cartsLoadError", { msg: e.message }));
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -122,15 +124,15 @@ export function ActiveCartsManager() {
     if (!selectedCart) return;
     const email = overrideEmail.trim() || selectedCart.email;
     if (!email) {
-      toast.error("Įveskite pirkėjo el. paštą");
+      toast.error(t("admOrders.cartsEnterEmail"));
       return;
     }
     if (!discountValue || discountValue <= 0) {
-      toast.error("Įveskite teisingą nuolaidos vertę");
+      toast.error(t("admOrders.cartsInvalidDiscount"));
       return;
     }
     if (discountType === "percent" && (discountValue < 1 || discountValue > 90)) {
-      toast.error("Procentas turi būti tarp 1 ir 90");
+      toast.error(t("admOrders.cartsPercentRange"));
       return;
     }
 
@@ -150,14 +152,14 @@ export function ActiveCartsManager() {
 
       if (error) throw error;
       if (data?.email_status === "sent") {
-        toast.success(`El. laiškas išsiųstas: ${email} (kodas: ${data.offer_code})`);
+        toast.success(t("admOrders.cartsEmailSent", { email, code: data.offer_code }));
       } else {
-        toast.warning(`Nuolaida sukurta (${data?.offer_code}), bet el. laiško siuntimas nepavyko: ${data?.email_error || ""}`);
+        toast.warning(t("admOrders.cartsEmailFailed", { code: data?.offer_code, err: data?.email_error || "" }));
       }
       setSelectedCart(null);
     } catch (e: any) {
       console.error(e);
-      toast.error("Klaida: " + e.message);
+      toast.error(t("admCommon.errorMsg", { msg: e.message }));
     } finally {
       setSending(false);
     }
@@ -178,12 +180,12 @@ export function ActiveCartsManager() {
           <div className="flex items-center justify-between">
             <CardTitle className="flex items-center gap-2">
               <ShoppingCart className="w-5 h-5 text-primary" />
-              Aktyvūs krepšeliai
+              {t("admOrders.cartsTitle")}
               <Badge variant="secondary">{carts.length}</Badge>
             </CardTitle>
             <Button variant="outline" size="sm" onClick={loadCarts} disabled={refreshing}>
               <RefreshCw className={`w-4 h-4 mr-2 ${refreshing ? "animate-spin" : ""}`} />
-              Atnaujinti
+              {t("admCommon.refresh")}
             </Button>
           </div>
         </CardHeader>
@@ -193,16 +195,16 @@ export function ActiveCartsManager() {
               <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
             </div>
           ) : carts.length === 0 ? (
-            <p className="text-center text-muted-foreground py-8">Šiuo metu aktyvių krepšelių nėra</p>
+            <p className="text-center text-muted-foreground py-8">{t("admOrders.cartsEmpty")}</p>
           ) : (
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Pirkėjas</TableHead>
-                  <TableHead className="text-center">Prekės</TableHead>
-                  <TableHead className="text-right">Vertė</TableHead>
-                  <TableHead>Paskutinis veiksmas</TableHead>
-                  <TableHead className="text-right">Veiksmai</TableHead>
+                  <TableHead>{t("admCommon.buyer")}</TableHead>
+                  <TableHead className="text-center">{t("admCommon.items")}</TableHead>
+                  <TableHead className="text-right">{t("admCommon.value")}</TableHead>
+                  <TableHead>{t("admOrders.cartsLastAction")}</TableHead>
+                  <TableHead className="text-right">{t("admCommon.actions")}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -219,19 +221,19 @@ export function ActiveCartsManager() {
                           <p className="font-medium text-sm">
                             {c.first_name || c.last_name
                               ? `${c.first_name || ""} ${c.last_name || ""}`.trim()
-                              : c.email || "Svečias"}
+                              : c.email || t("admCommon.guest")}
                           </p>
                           {c.email && (
                             <p className="text-xs text-muted-foreground">{c.email}</p>
                           )}
                           {!c.email && !c.user_id && (
-                            <p className="text-xs text-muted-foreground italic">Nėra el. pašto</p>
+                            <p className="text-xs text-muted-foreground italic">{t("admOrders.cartsNoEmail")}</p>
                           )}
                         </div>
                       </div>
                     </TableCell>
                     <TableCell className="text-center">
-                      <Badge variant="outline">{c.total_qty} vnt.</Badge>
+                      <Badge variant="outline">{t("admCommon.units", { num: c.total_qty })}</Badge>
                     </TableCell>
                     <TableCell className="text-right font-mono text-sm">
                       {c.cart_value_eur.toFixed(2)} €
@@ -246,7 +248,7 @@ export function ActiveCartsManager() {
                         disabled={!c.email && !c.user_id}
                       >
                         <Send className="w-4 h-4 mr-2" />
-                        Paskatinti nusipirkti
+                        {t("admOrders.cartsNudge")}
                       </Button>
                     </TableCell>
                   </TableRow>
@@ -260,15 +262,15 @@ export function ActiveCartsManager() {
       <Dialog open={!!selectedCart} onOpenChange={(o) => !o && setSelectedCart(null)}>
         <DialogContent className="rounded-2xl">
           <DialogHeader>
-            <DialogTitle>Siųsti nuolaidą</DialogTitle>
+            <DialogTitle>{t("admOrders.cartsDiscountTitle")}</DialogTitle>
             <DialogDescription>
-              Sukurkite asmeninį pasiūlymą šiam pirkėjui. Bus išsiųstas el. laiškas su unikaliu linku, kuris automatiškai pritaikys nuolaidą prisijungus.
+              {t("admOrders.cartsDiscountDesc")}
             </DialogDescription>
           </DialogHeader>
 
           <div className="space-y-4 py-2">
             <div className="space-y-2">
-              <Label htmlFor="recovery-email">Pirkėjo el. paštas</Label>
+              <Label htmlFor="recovery-email">{t("admOrders.cartsBuyerEmail")}</Label>
               <Input
                 id="recovery-email"
                 type="email"
@@ -279,22 +281,22 @@ export function ActiveCartsManager() {
             </div>
 
             <div className="space-y-2">
-              <Label>Nuolaidos tipas</Label>
+              <Label>{t("admOrders.cartsDiscountType")}</Label>
               <RadioGroup value={discountType} onValueChange={(v: any) => setDiscountType(v)}>
                 <div className="flex items-center gap-2">
                   <RadioGroupItem value="percent" id="r-percent" />
-                  <Label htmlFor="r-percent" className="cursor-pointer">Procentas (%)</Label>
+                  <Label htmlFor="r-percent" className="cursor-pointer">{t("admOrders.cartsPercent")}</Label>
                 </div>
                 <div className="flex items-center gap-2">
                   <RadioGroupItem value="fixed" id="r-fixed" />
-                  <Label htmlFor="r-fixed" className="cursor-pointer">Fiksuota suma (€)</Label>
+                  <Label htmlFor="r-fixed" className="cursor-pointer">{t("admOrders.cartsFixed")}</Label>
                 </div>
               </RadioGroup>
             </div>
 
             <div className="space-y-2">
               <Label htmlFor="discount-value">
-                Vertė {discountType === "percent" ? "(%)" : "(€)"}
+                {t("admCommon.value")} {discountType === "percent" ? "(%)" : "(€)"}
               </Label>
               <Input
                 id="discount-value"
@@ -307,12 +309,12 @@ export function ActiveCartsManager() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="custom-msg">Asmeninė žinutė (nebūtina)</Label>
+              <Label htmlFor="custom-msg">{t("admOrders.cartsCustomMsg")}</Label>
               <Textarea
                 id="custom-msg"
                 value={customMessage}
                 onChange={(e) => setCustomMessage(e.target.value)}
-                placeholder="Pvz., specialiai jums – nepraleiskite progos!"
+                placeholder={t("admOrders.cartsMsgPlaceholder")}
                 rows={3}
                 maxLength={300}
               />
@@ -320,7 +322,7 @@ export function ActiveCartsManager() {
 
             {selectedCart && (
               <div className="rounded-xl bg-muted/50 p-3 text-sm">
-                <p className="text-muted-foreground">Krepšelio vertė:</p>
+                <p className="text-muted-foreground">{t("admOrders.cartsValue")}</p>
                 <p className="font-mono font-semibold">{selectedCart.cart_value_eur.toFixed(2)} €</p>
               </div>
             )}
@@ -328,12 +330,12 @@ export function ActiveCartsManager() {
 
           <DialogFooter>
             <Button variant="outline" onClick={() => setSelectedCart(null)} disabled={sending}>
-              Atšaukti
+              {t("common.cancel")}
             </Button>
             <Button onClick={handleSendRecovery} disabled={sending}>
               {sending && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
               <Send className="w-4 h-4 mr-2" />
-              Siųsti pasiūlymą
+              {t("admOrders.cartsSendOffer")}
             </Button>
           </DialogFooter>
         </DialogContent>

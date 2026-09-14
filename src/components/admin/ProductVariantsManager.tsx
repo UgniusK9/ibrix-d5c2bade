@@ -8,6 +8,7 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select';
 import { supabase } from '@/integrations/supabase/client';
+import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 
 interface Variant {
@@ -28,12 +29,13 @@ interface ProductVariantsManagerProps {
 }
 
 const OPTION_TYPES = [
-  { value: 'size', label: 'Dydis' },
-  { value: 'color', label: 'Spalva' },
-  { value: 'other', label: 'Kita' },
+  { value: 'size', label: 'admProducts.varSize' },
+  { value: 'color', label: 'admProducts.varColor' },
+  { value: 'other', label: 'products.other' },
 ];
 
 export function ProductVariantsManager({ productId, productSku }: ProductVariantsManagerProps) {
+  const { t } = useTranslation();
   const [variants, setVariants] = useState<Variant[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -149,11 +151,11 @@ export function ProductVariantsManager({ productId, productSku }: ProductVariant
         if (error) throw error;
       }
 
-      toast.success('Variantai išsaugoti');
+      toast.success(t('admProducts.varSaved'));
       loadVariants();
     } catch (e: any) {
       console.error('Failed to save variants:', e);
-      toast.error(e.message || 'Nepavyko išsaugoti variantų');
+      toast.error(e.message || t('admProducts.varSaveError'));
     } finally {
       setSaving(false);
     }
@@ -170,23 +172,23 @@ export function ProductVariantsManager({ productId, productSku }: ProductVariant
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <Label className="text-base font-medium">Produkto variantai</Label>
+        <Label className="text-base font-medium">{t('admProducts.varTitle')}</Label>
         <Button type="button" variant="outline" size="sm" onClick={addVariant}>
           <Plus className="w-4 h-4 mr-1" />
-          Pridėti variantą
+          {t('admProducts.varAdd')}
         </Button>
       </div>
 
       {variants.length === 0 ? (
         <p className="text-sm text-muted-foreground text-center py-4 border border-dashed rounded-lg">
-          Nėra variantų. Pridėkite variantą, jei norite sekti dydžius, spalvas ir kt.
+          {t('admProducts.varEmpty')}
         </p>
       ) : (
         <div className="space-y-3">
           {variants.map((variant, index) => (
             <div key={index} className="grid grid-cols-12 gap-2 items-end p-3 border rounded-lg bg-muted/30">
               <div className="col-span-2">
-                <Label className="text-xs">Tipas</Label>
+                <Label className="text-xs">{t('admCommon.type')}</Label>
                 <Select
                   value={variant.option_type}
                   onValueChange={(v) => updateVariant(index, 'option_type', v)}
@@ -195,23 +197,23 @@ export function ProductVariantsManager({ productId, productSku }: ProductVariant
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    {OPTION_TYPES.map(t => (
-                      <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>
+                    {OPTION_TYPES.map(ot => (
+                      <SelectItem key={ot.value} value={ot.value}>{t(ot.label)}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
               </div>
               <div className="col-span-2">
-                <Label className="text-xs">Reikšmė</Label>
+                <Label className="text-xs">{t('admProducts.offerValue')}</Label>
                 <Input
                   className="h-9"
-                  placeholder="L, Raudona..."
+                  placeholder={t('admProducts.varValuePh')}
                   value={variant.option_value}
                   onChange={(e) => updateVariant(index, 'option_value', e.target.value)}
                 />
               </div>
               <div className="col-span-2">
-                <Label className="text-xs">SKU priedėlis</Label>
+                <Label className="text-xs">{t('admProducts.varSkuSuffix')}</Label>
                 <div className="flex items-center gap-1">
                   <span className="text-xs text-muted-foreground">{productSku}-</span>
                   <Input
@@ -223,7 +225,7 @@ export function ProductVariantsManager({ productId, productSku }: ProductVariant
                 </div>
               </div>
               <div className="col-span-2">
-                <Label className="text-xs">Kainos pokytis €</Label>
+                <Label className="text-xs">{t('admProducts.varPriceAdj')}</Label>
                 <Input
                   type="number"
                   step="0.01"
@@ -233,7 +235,7 @@ export function ProductVariantsManager({ productId, productSku }: ProductVariant
                 />
               </div>
               <div className="col-span-2">
-                <Label className="text-xs">Kiekis</Label>
+                <Label className="text-xs">{t('cart.quantity')}</Label>
                 <Input
                   type="number"
                   className="h-9"
@@ -245,7 +247,7 @@ export function ProductVariantsManager({ productId, productSku }: ProductVariant
                 <Badge variant={variant.status === 'active' ? 'default' : 'secondary'} className="cursor-pointer"
                   onClick={() => updateVariant(index, 'status', variant.status === 'active' ? 'inactive' : 'active')}
                 >
-                  {variant.status === 'active' ? 'Aktyvus' : 'Neaktyvus'}
+                  {variant.status === 'active' ? t('admCommon.active') : t('admCommon.inactive')}
                 </Badge>
                 <Button
                   type="button"
@@ -265,7 +267,7 @@ export function ProductVariantsManager({ productId, productSku }: ProductVariant
       {variants.length > 0 && (
         <Button type="button" onClick={saveVariants} disabled={saving} className="w-full">
           <Save className="w-4 h-4 mr-2" />
-          {saving ? 'Saugoma...' : 'Išsaugoti variantus'}
+          {saving ? t('admCommon.saving') : t('admProducts.varSave')}
         </Button>
       )}
     </div>

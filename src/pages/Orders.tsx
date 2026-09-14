@@ -88,16 +88,16 @@ interface BalanceRequest {
 }
 
 const statusOptions = [
-  { value: 'all', label: 'Visi užsakymai' },
-  { value: 'created', label: 'Sukurtas' },
-  { value: 'deposit_paid', label: 'Depozitas sumokėtas' },
-  { value: 'awaiting_balance', label: 'Laukia likučio' },
-  { value: 'balance_paid', label: 'Pilnai apmokėtas' },
-  { value: 'packed', label: 'Supakuotas' },
-  { value: 'shipped', label: 'Išsiųstas' },
-  { value: 'delivered', label: 'Pristatytas' },
-  { value: 'cancelled', label: 'Atšauktas' },
-  { value: 'refunded', label: 'Grąžintas' },
+  { value: 'all', label: 'pgOrdersX.filterAll' },
+  { value: 'created', label: 'order.created' },
+  { value: 'deposit_paid', label: 'pgOrdersX.filterDepositPaid' },
+  { value: 'awaiting_balance', label: 'pgOrdersX.filterAwaitingBalance' },
+  { value: 'balance_paid', label: 'pgOrdersX.filterBalancePaid' },
+  { value: 'packed', label: 'pgOrdersX.filterPacked' },
+  { value: 'shipped', label: 'pgOrdersX.filterShipped' },
+  { value: 'delivered', label: 'pgOrdersX.filterDelivered' },
+  { value: 'cancelled', label: 'pgOrdersX.filterCancelled' },
+  { value: 'refunded', label: 'pgOrdersX.filterRefunded' },
 ];
 
 export default function Orders() {
@@ -312,7 +312,7 @@ export default function Orders() {
             <SelectContent>
               {statusOptions.map((option) => (
                 <SelectItem key={option.value} value={option.value}>
-                  {option.label}
+                  {t(option.label)}
                 </SelectItem>
               ))}
             </SelectContent>

@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import { ArrowRight, BookOpen, Clock } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { PageLayout } from "@/components/layout/PageLayout";
 import { RouteSEO } from "@/components/seo/RouteSEO";
 import articlesData from "@/content/articles.json";
@@ -23,6 +24,8 @@ export function getArticle(slug?: string) {
 }
 
 export default function Patarimai() {
+  const { t } = useTranslation();
+
   return (
     <PageLayout>
       <RouteSEO />
@@ -30,14 +33,13 @@ export default function Patarimai() {
         <div className="container max-w-3xl">
           <div className="flex items-center gap-3 mb-4">
             <BookOpen className="w-6 h-6 text-primary" />
-            <span className="text-sm text-muted-foreground">Straipsniai</span>
+            <span className="text-sm text-muted-foreground">{t("pgGuides.eyebrow")}</span>
           </div>
           <h1 className="font-heading text-4xl font-bold mb-4">
-            Straipsniai ir gidai
+            {t("pgGuides.title")}
           </h1>
           <p className="text-muted-foreground text-lg mb-10">
-            Praktiniai atsakymai į klausimus, kurie kyla prieš perkant pirmą
-            techninį konstruktorių.
+            {t("pgGuides.subtitle")}
           </p>
 
           <div className="space-y-4">
@@ -56,10 +58,10 @@ export default function Patarimai() {
                 <div className="flex items-center gap-4 text-sm text-muted-foreground">
                   <span className="flex items-center gap-1.5">
                     <Clock className="w-4 h-4" />
-                    {article.readMinutes} min. skaitymo
+                    {t("pgGuides.readTime", { minutes: article.readMinutes })}
                   </span>
                   <span className="flex items-center gap-1.5 text-primary">
-                    Skaityti
+                    {t("pgGuides.readMore")}
                     <ArrowRight className="w-4 h-4" />
                   </span>
                 </div>

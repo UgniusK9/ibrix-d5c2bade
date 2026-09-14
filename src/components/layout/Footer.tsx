@@ -248,7 +248,7 @@ export function Footer() {
                 <MapPin className="h-4 w-4 text-accent mt-0.5" />
                 <div>
                   <p className="text-footer-foreground/50 text-xs">{t('checkout.city')}</p>
-                  <span className="text-footer-foreground/90">Vilnius, Lietuva</span>
+                  <span className="text-footer-foreground/90">{t('footer.address')}</span>
                 </div>
               </div>
               <div className="flex items-start gap-3">

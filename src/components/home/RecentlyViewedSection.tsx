@@ -1,4 +1,5 @@
 import { useEffect, useState, useRef } from "react";
+import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
 import { Clock, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -8,6 +9,7 @@ import { Product, getProductImage, formatPrice, transformProduct } from "@/hooks
 import { motion } from "framer-motion";
 
 export function RecentlyViewedSection() {
+  const { t } = useTranslation();
   const { productIds } = useRecentlyViewed();
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
@@ -65,12 +67,12 @@ export function RecentlyViewedSection() {
             <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
               <Clock className="w-4 h-4 text-primary" />
             </div>
-            <h2 className="font-heading text-base font-bold">Neseniai peržiūrėti</h2>
+            <h2 className="font-heading text-base font-bold">{t('products.recentlyViewed')}</h2>
           </div>
           
           <Button variant="ghost" size="sm" asChild>
             <Link to="/produktai/visi" className="flex items-center gap-1 text-xs">
-              Visi produktai
+              {t('common.viewAll')}
               <ArrowRight className="w-3 h-3" />
             </Link>
           </Button>

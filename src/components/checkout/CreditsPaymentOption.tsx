@@ -138,9 +138,9 @@ export function CreditsPaymentOption({
             <Wallet className="w-5 h-5 text-muted-foreground" />
           </div>
           <div>
-            <p className="font-medium text-muted-foreground">Mokėti kreditais</p>
+            <p className="font-medium text-muted-foreground">{t('coCredPay.title')}</p>
             <p className="text-xs text-muted-foreground">
-              Tik dalis prekių gali būti apmokėtos kreditais
+              {t('coCredPay.partial')}
             </p>
           </div>
         </div>
@@ -173,22 +173,22 @@ export function CreditsPaymentOption({
           <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-accent to-accent/80 flex items-center justify-center">
             <Sparkles className="w-4 h-4 text-accent-foreground" />
           </div>
-          <span className="font-medium">Mokėti kreditais</span>
+          <span className="font-medium">{t('coCredPay.title')}</span>
           {canSelect && (
             <Badge variant="outline" className="text-success border-success/30 bg-success/10 text-xs">
               <Check className="w-3 h-3 mr-1" />
-              Galite apmokėti
+              {t('coCredPay.canPay')}
             </Badge>
           )}
         </div>
         
         <div className="ml-10 space-y-1">
           <div className="flex items-center justify-between text-sm">
-            <span className="text-muted-foreground">Reikalinga kreditų:</span>
+            <span className="text-muted-foreground">{t('coCredPay.required')}</span>
             <span className="font-semibold">{creditsInfo.totalCreditsRequired}</span>
           </div>
           <div className="flex items-center justify-between text-sm">
-            <span className="text-muted-foreground">Jūsų balansas:</span>
+            <span className="text-muted-foreground">{t('coCredPay.balance')}</span>
             <span className={creditsInfo.userBalance >= creditsInfo.totalCreditsRequired ? 'text-success font-semibold' : 'text-muted-foreground'}>
               {creditsInfo.userBalance.toFixed(2)}
             </span>
@@ -197,17 +197,17 @@ export function CreditsPaymentOption({
           {!canSelect && creditsInfo.missingCredits > 0 && (
             <div className="flex items-center gap-1 text-destructive text-sm mt-2">
               <AlertCircle className="w-4 h-4" />
-              <span>Trūksta {creditsInfo.missingCredits.toFixed(0)} kreditų</span>
+              <span>{t('coCredPay.missing', { missing: creditsInfo.missingCredits.toFixed(0) })}</span>
             </div>
           )}
           
           {selected && canSelect && (
             <div className="mt-3 p-3 bg-success/10 rounded-lg border border-success/20">
               <p className="text-sm text-success font-medium">
-                ✓ Bus panaudota: {creditsInfo.totalCreditsRequired} kreditų
+                {t('coCredPay.willUse', { total: creditsInfo.totalCreditsRequired })}
               </p>
               <p className="text-xs text-success/80 mt-1">
-                Liks: {(creditsInfo.userBalance - creditsInfo.totalCreditsRequired).toFixed(2)} kreditų
+                {t('coCredPay.left', { remaining: (creditsInfo.userBalance - creditsInfo.totalCreditsRequired).toFixed(2) })}
               </p>
             </div>
           )}

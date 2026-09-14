@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { supabase } from '@/integrations/supabase/client';
+import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 
 interface EmailLog {
@@ -36,6 +37,7 @@ interface GiftCard {
 }
 
 export function GiftCardsManager() {
+  const { t } = useTranslation();
   const [giftCards, setGiftCards] = useState<GiftCard[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
@@ -75,7 +77,7 @@ export function GiftCardsManager() {
       setGiftCards(cardsWithLogs);
     } catch (e) {
       console.error('Failed to load gift cards:', e);
-      toast.error('Nepavyko įkelti dovanų kuponų');
+      toast.error(t('admCredits.giftLoadError'));
     } finally {
       setLoading(false);
     }
@@ -105,7 +107,7 @@ export function GiftCardsManager() {
           email: emailTo,
           data: {
             recipientEmail: emailTo,
-            recipientName: card.recipient_name || 'Gerbiamas kliente',
+            recipientName: card.recipient_name || t('admCredits.giftDefaultRecipient'),
             senderName: 'IBRIX',
             amount: card.initial_value_eur,
             code: card.code,
@@ -122,14 +124,14 @@ export function GiftCardsManager() {
       await logEmailSend(card.id, emailTo, 'sent');
       return true;
     } catch (err: any) {
-      await logEmailSend(card.id, emailTo, 'failed', err.message || 'Unknown error');
+      await logEmailSend(card.id, emailTo, 'failed', err.message || t('admCredits.giftUnknownError'));
       return false;
     }
   };
 
   const handleRetryEmail = async (card: GiftCard) => {
     if (!card.recipient_email) {
-      toast.error('Nėra gavėjo el. pašto');
+      toast.error(t('admCredits.giftNoEmail'));
       return;
     }
     
@@ -138,9 +140,9 @@ export function GiftCardsManager() {
     setSendingEmail(null);
     
     if (success) {
-      toast.success(`Laiškas išsiųstas į ${card.recipient_email}`);
+      toast.success(t('admCredits.giftSent', { email: card.recipient_email }));
     } else {
-      toast.error('Nepavyko išsiųsti laiško');
+      toast.error(t('admCredits.giftSendError'));
     }
     
     loadGiftCards();
@@ -148,7 +150,7 @@ export function GiftCardsManager() {
 
   const handleCreateGiftCard = async () => {
     if (newCardValue < 5) {
-      toast.error('Minimali suma: 5€');
+      toast.error(t('admCredits.giftMinAmount'));
       return;
     }
     
@@ -181,14 +183,14 @@ export function GiftCardsManager() {
         });
         
         if (emailSuccess) {
-          toast.success(`Dovanų kuponas sukurtas ir išsiųstas į ${recipientEmail}`);
+          toast.success(t('admCredits.giftCreatedSent', { email: recipientEmail }));
         } else {
-          toast.success(`Dovanų kuponas sukurtas: ${codeData}`, {
-            description: 'El. laiškas neišsiųstas - galite bandyti dar kartą',
+          toast.success(t('admCredits.giftCreated', { code: codeData }), {
+            description: t('admCredits.giftNotSentDesc'),
           });
         }
       } else {
-        toast.success(`Dovanų kuponas sukurtas: ${codeData}`);
+        toast.success(t('admCredits.giftCreated', { code: codeData }));
       }
       
       setIsCreateOpen(false);
@@ -199,7 +201,7 @@ export function GiftCardsManager() {
       loadGiftCards();
     } catch (e: any) {
       console.error('Failed to create gift card:', e);
-      toast.error(e.message || 'Nepavyko sukurti kupono');
+      toast.error(e.message || t('admCredits.giftCreateError'));
     } finally {
       setCreating(false);
     }
@@ -213,16 +215,16 @@ export function GiftCardsManager() {
         .eq('id', id);
 
       if (error) throw error;
-      toast.success('Kuponas deaktyvuotas');
+      toast.success(t('admCredits.giftDeactivated'));
       loadGiftCards();
     } catch (e) {
-      toast.error('Nepavyko deaktyvuoti kupono');
+      toast.error(t('admCredits.giftDeactivateError'));
     }
   };
 
   const copyCode = (code: string) => {
     navigator.clipboard.writeText(code);
-    toast.success('Kodas nukopijuotas');
+    toast.success(t('admCommon.codeCopied'));
   };
 
   const filteredCards = giftCards.filter(card => {
@@ -266,13 +268,13 @@ export function GiftCardsManager() {
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'active':
-        return <Badge className="bg-success/10 text-success border-success/30">Aktyvus</Badge>;
+        return <Badge className="bg-success/10 text-success border-success/30">{t("admCommon.active")}</Badge>;
       case 'redeemed':
-        return <Badge className="bg-blue-500/10 text-blue-600 border-blue-500/30">Panaudotas</Badge>;
+        return <Badge className="bg-blue-500/10 text-blue-600 border-blue-500/30">{t("admCredits.giftRedeemed")}</Badge>;
       case 'deactivated':
-        return <Badge className="bg-muted text-muted-foreground">Deaktyvuotas</Badge>;
+        return <Badge className="bg-muted text-muted-foreground">{t("admCredits.giftStatusDeactivated")}</Badge>;
       case 'expired':
-        return <Badge className="bg-destructive/10 text-destructive border-destructive/30">Pasibaigęs</Badge>;
+        return <Badge className="bg-destructive/10 text-destructive border-destructive/30">{t("admCredits.giftExpired")}</Badge>;
       default:
         return <Badge variant="outline">{status}</Badge>;
     }
@@ -285,16 +287,16 @@ export function GiftCardsManager() {
     const lastLog = logs[0];
     
     if (!lastLog) {
-      return { status: 'not_sent', label: 'Neišsiųstas' };
+      return { status: 'not_sent', label: t('admCredits.giftNotSent') };
     }
     
     if (lastLog.status === 'sent') {
-      return { status: 'sent', label: `Išsiųstas ${formatDateTime(lastLog.sent_at)}` };
+      return { status: 'sent', label: t('admCredits.giftSentAt', { time: formatDateTime(lastLog.sent_at) }) };
     }
     
     return { 
       status: 'failed', 
-      label: `Nepavyko: ${lastLog.error_message || 'Nežinoma klaida'}` 
+      label: t('admCredits.giftFailedLabel', { err: lastLog.error_message || t('admCredits.giftUnknownError') })
     };
   };
 
@@ -311,7 +313,7 @@ export function GiftCardsManager() {
                 </div>
                 <div>
                   <p className="text-2xl font-bold">{stats.total}</p>
-                  <p className="text-xs text-muted-foreground">Iš viso kuponų</p>
+                  <p className="text-xs text-muted-foreground">{t('admCredits.giftTotal')}</p>
                 </div>
               </div>
             </CardContent>
@@ -324,7 +326,7 @@ export function GiftCardsManager() {
                 </div>
                 <div>
                   <p className="text-2xl font-bold">{formatPrice(stats.totalValue)}</p>
-                  <p className="text-xs text-muted-foreground">Bendra vertė</p>
+                  <p className="text-xs text-muted-foreground">{t('admCredits.giftTotalValue')}</p>
                 </div>
               </div>
             </CardContent>
@@ -337,7 +339,7 @@ export function GiftCardsManager() {
                 </div>
                 <div>
                   <p className="text-2xl font-bold">{stats.active}</p>
-                  <p className="text-xs text-muted-foreground">Aktyvūs</p>
+                  <p className="text-xs text-muted-foreground">{t('admCredits.giftActivePlural')}</p>
                 </div>
               </div>
             </CardContent>
@@ -350,7 +352,7 @@ export function GiftCardsManager() {
                 </div>
                 <div>
                   <p className="text-2xl font-bold">{formatPrice(stats.outstandingBalance)}</p>
-                  <p className="text-xs text-muted-foreground">Nepanaudota</p>
+                  <p className="text-xs text-muted-foreground">{t('admCredits.giftUnused')}</p>
                 </div>
               </div>
             </CardContent>
@@ -363,7 +365,7 @@ export function GiftCardsManager() {
             <div className="relative flex-1 max-w-sm">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <Input
-                placeholder="Ieškoti pagal kodą ar el. paštą..."
+                placeholder={t('admCredits.giftSearchPh')}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="pl-10"
@@ -371,13 +373,13 @@ export function GiftCardsManager() {
             </div>
             <Select value={statusFilter} onValueChange={setStatusFilter}>
               <SelectTrigger className="w-[140px]">
-                <SelectValue placeholder="Statusas" />
+                <SelectValue placeholder={t('admCommon.statusLabel')} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Visi</SelectItem>
-                <SelectItem value="active">Aktyvūs</SelectItem>
-                <SelectItem value="redeemed">Panaudoti</SelectItem>
-                <SelectItem value="deactivated">Deaktyvuoti</SelectItem>
+                <SelectItem value="all">{t('common.all')}</SelectItem>
+                <SelectItem value="active">{t('admCredits.giftActivePlural')}</SelectItem>
+                <SelectItem value="redeemed">{t('admCredits.giftUsedPlural')}</SelectItem>
+                <SelectItem value="deactivated">{t('admCredits.giftDeactivatedPlural')}</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -389,16 +391,16 @@ export function GiftCardsManager() {
               <DialogTrigger asChild>
                 <Button>
                   <Plus className="w-4 h-4 mr-2" />
-                  Sukurti kuponą
+                  {t('admCredits.giftCreate')}
                 </Button>
               </DialogTrigger>
               <DialogContent>
                 <DialogHeader>
-                  <DialogTitle>Naujas dovanų kuponas</DialogTitle>
+                  <DialogTitle>{t('admCredits.giftNewTitle')}</DialogTitle>
                 </DialogHeader>
                 <div className="space-y-4 pt-4">
                   <div>
-                    <Label>Vertė (EUR) *</Label>
+                    <Label>{t('admCredits.giftValueLabel')}</Label>
                     <div className="flex gap-2 mt-2">
                       {[10, 25, 50, 100].map(val => (
                         <Button 
@@ -421,7 +423,7 @@ export function GiftCardsManager() {
                     />
                   </div>
                   <div>
-                    <Label>Gavėjo el. paštas (neprivaloma)</Label>
+                    <Label>{t('admCredits.giftEmailLabel')}</Label>
                     <Input
                       type="email"
                       value={recipientEmail}
@@ -431,7 +433,7 @@ export function GiftCardsManager() {
                     />
                   </div>
                   <div>
-                    <Label>Gavėjo vardas (neprivaloma)</Label>
+                    <Label>{t('admCredits.giftNameLabel')}</Label>
                     <Input
                       value={recipientName}
                       onChange={(e) => setRecipientName(e.target.value)}
@@ -440,16 +442,16 @@ export function GiftCardsManager() {
                     />
                   </div>
                   <div>
-                    <Label>Asmeninis pranešimas (neprivaloma)</Label>
+                    <Label>{t('admCredits.giftMsgLabel')}</Label>
                     <Input
                       value={personalMessage}
                       onChange={(e) => setPersonalMessage(e.target.value)}
-                      placeholder="Su gimtadieniu!"
+                      placeholder={t('admCredits.giftMsgPh')}
                       className="mt-1"
                     />
                   </div>
                   <Button onClick={handleCreateGiftCard} disabled={creating} className="w-full">
-                    {creating ? 'Kuriama...' : 'Sukurti kuponą'}
+                    {creating ? t('admCredits.giftCreating') : t('admCredits.giftCreate')}
                   </Button>
                 </div>
               </DialogContent>
@@ -462,29 +464,29 @@ export function GiftCardsManager() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Gift className="w-5 h-5" />
-              Dovanų kuponai ({filteredCards.length})
+              {t('admCredits.giftTitleCount', { num: filteredCards.length })}
             </CardTitle>
           </CardHeader>
           <CardContent>
             {loading ? (
-              <div className="text-center py-8 text-muted-foreground">Kraunama...</div>
+              <div className="text-center py-8 text-muted-foreground">{t('common.loading')}</div>
             ) : filteredCards.length === 0 ? (
               <div className="text-center py-8 text-muted-foreground">
-                Dovanų kuponų nerasta
+                {t('admCredits.giftNotFound')}
               </div>
             ) : (
               <div className="overflow-x-auto">
                 <table className="w-full">
                   <thead>
                     <tr className="text-left text-sm text-muted-foreground border-b">
-                      <th className="py-3 px-2">Kodas</th>
-                      <th className="py-3 px-2">Vertė</th>
-                      <th className="py-3 px-2">Likutis</th>
-                      <th className="py-3 px-2">Statusas</th>
-                      <th className="py-3 px-2">Gavėjas</th>
-                      <th className="py-3 px-2">El. laiškas</th>
-                      <th className="py-3 px-2">Sukurta</th>
-                      <th className="py-3 px-2 text-right">Veiksmai</th>
+                      <th className="py-3 px-2">{t('admCredits.giftCode')}</th>
+                      <th className="py-3 px-2">{t('admCommon.value')}</th>
+                      <th className="py-3 px-2">{t('admOrders.ordPayBalance')}</th>
+                      <th className="py-3 px-2">{t('admCommon.statusLabel')}</th>
+                      <th className="py-3 px-2">{t('admCredits.giftRecipient')}</th>
+                      <th className="py-3 px-2">{t('admCredits.giftEmail')}</th>
+                      <th className="py-3 px-2">{t('admCommon.created')}</th>
+                      <th className="py-3 px-2 text-right">{t('admCommon.actions')}</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -562,7 +564,7 @@ export function GiftCardsManager() {
                                       <Mail className={`w-4 h-4 ${sendingEmail === card.id ? 'animate-pulse' : ''}`} />
                                     </Button>
                                   </TooltipTrigger>
-                                  <TooltipContent>Siųsti laišką</TooltipContent>
+                                  <TooltipContent>{t('admCredits.giftSendMail')}</TooltipContent>
                                 </Tooltip>
                               )}
                               {card.status === 'active' && (
@@ -576,7 +578,7 @@ export function GiftCardsManager() {
                                       <Trash2 className="w-4 h-4 text-destructive" />
                                     </Button>
                                   </TooltipTrigger>
-                                  <TooltipContent>Deaktyvuoti</TooltipContent>
+                                  <TooltipContent>{t('admCredits.giftDeactivate')}</TooltipContent>
                                 </Tooltip>
                               )}
                             </div>

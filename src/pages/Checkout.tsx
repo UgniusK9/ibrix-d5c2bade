@@ -26,10 +26,10 @@ import { PaymentMethodSelector, PaymentMethod, PAYMENT_METHODS } from "@/compone
 import { CreditsPaymentOption, CreditsInfo } from "@/components/checkout/CreditsPaymentOption";
 
 
-const checkoutSchema = z.object({
-  firstName: z.string().min(1, "Vardas privalomas").max(50),
-  lastName: z.string().min(1, "Pavardė privaloma").max(50),
-  email: z.string().email("Neteisingas el. pašto adresas"),
+const getCheckoutSchema = (t: (key: string) => string) => z.object({
+  firstName: z.string().min(1, t('pgCheckoutX.valFirstName')).max(50),
+  lastName: z.string().min(1, t('pgCheckoutX.valLastName')).max(50),
+  email: z.string().email(t('pgCheckoutX.valEmail')),
   phone: z.string().optional().or(z.literal("")),
   shippingMethod: z.enum(["omniva_locker", "lp_express_locker", "dpd_locker", "courier"]),
   lockerAddress: z.string().optional(),
@@ -44,7 +44,7 @@ const checkoutSchema = z.object({
   invoiceAddress: z.string().optional(),
 });
 
-type CheckoutFormData = z.infer<typeof checkoutSchema>;
+type CheckoutFormData = z.infer<ReturnType<typeof getCheckoutSchema>>;
 
 const getShippingMethods = (t: (key: string) => string) => [
   { id: "omniva_locker", label: "Omniva " + t('checkout.parcelLocker').toLowerCase(), price: 0, icon: Package },
@@ -86,7 +86,7 @@ export default function Checkout() {
     formState: { errors },
     setValue,
   } = useForm<CheckoutFormData>({
-    resolver: zodResolver(checkoutSchema),
+    resolver: zodResolver(getCheckoutSchema(t)),
     defaultValues: {
       shippingMethod: "omniva_locker",
     },
@@ -167,7 +167,7 @@ export default function Checkout() {
           body: { token },
         });
         if (error || !data?.ok) {
-          toast.error(data?.error || "Nuolaidos linkas negalioja");
+          toast.error(data?.error || t('pgCheckoutX.recoveryInvalid'));
           return;
         }
         // Validate via existing offer system to fetch the canonical offer record
@@ -182,13 +182,13 @@ export default function Checkout() {
             value: validation.offer.value,
             title: validation.offer.title,
           });
-          toast.success(`🎁 Asmeninė nuolaida pritaikyta: ${data.offer_code}`);
+          toast.success(t('pgCheckoutX.recoveryApplied', { code: data.offer_code }));
         } else {
-          toast.error("Nepavyko pritaikyti nuolaidos. Bandykite dar kartą.");
+          toast.error(t('pgCheckoutX.recoveryFailed'));
         }
       } catch (e: any) {
         console.error("[recovery]", e);
-        toast.error("Klaida tikrinant nuolaidos linką");
+        toast.error(t('pgCheckoutX.recoveryError'));
       }
     })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -219,20 +219,20 @@ export default function Checkout() {
     if (step === 1) {
       if (isLockerMethod) {
         if (!manualLocker.address.trim()) {
-          toast.error("Įveskite paštomato adresą");
+          toast.error(t('pgCheckoutX.lockerAddressReq'));
           return;
         }
         if (!manualLocker.postalCode.trim()) {
-          toast.error("Įveskite pašto kodą");
+          toast.error(t('pgCheckoutX.postalReq'));
           return;
         }
         if (!manualLocker.phone.trim()) {
-          toast.error("Įveskite telefono numerį");
+          toast.error(t('pgCheckoutX.phoneReq'));
           return;
         }
       }
       if (data.shippingMethod === 'courier' && (!data.street || !data.city || !data.postalCode)) {
-        toast.error("Užpildykite visą pristatymo adresą");
+        toast.error(t('pgCheckoutX.addressIncomplete'));
         return;
       }
       setStep(2);
@@ -241,7 +241,7 @@ export default function Checkout() {
 
     // Validate payment method selection
     if (!payWithCredits && !selectedPaymentMethod) {
-      toast.error("Pasirinkite mokėjimo būdą");
+      toast.error(t('pgCheckoutX.paymentRequired'));
       return;
     }
 
@@ -274,7 +274,7 @@ export default function Checkout() {
       const shippingAddressPayload = isLockerMethod
         ? {
             lockerId: `manual_${carrierForMethod}`,
-            lockerName: `${carrierLabelMap[carrierForMethod]} paštomatas`,
+            lockerName: t('pgCheckoutX.lockerName', { carrier: carrierLabelMap[carrierForMethod] }),
             lockerAddress: manualLocker.address,
             lockerCity: "",
             lockerPostalCode: manualLocker.postalCode,
@@ -322,11 +322,11 @@ export default function Checkout() {
 
         if (result?.success) {
           clearCart();
-          toast.success("Užsakymas sėkmingai apmokėtas kreditais!");
+          toast.success(t('pgCheckoutX.creditsPaid'));
           navigate(`/uzsakymas?order_id=${result.orderId}`);
           return;
         } else {
-          throw new Error(result?.error || "Nepavyko apmokėti kreditais");
+          throw new Error(result?.error || t('pgCheckoutX.creditsFailed'));
         }
       }
 
@@ -362,7 +362,7 @@ export default function Checkout() {
           clearCart();
           window.location.href = result.checkoutUrl;
         } else {
-          throw new Error("Nepavyko sukurti apmokėjimo sesijos");
+          throw new Error(t('pgCheckoutX.stripeFailed'));
         }
       } else if (selectedPaymentMethod.provider === 'paysera') {
         // For Paysera, first create order then redirect to Paysera
@@ -407,7 +407,7 @@ export default function Checkout() {
           clearCart();
           window.location.href = payseraResult.redirectUrl;
         } else {
-          throw new Error("Nepavyko sukurti Paysera mokėjimo");
+          throw new Error(t('pgCheckoutX.payseraFailed'));
         }
       } else if (selectedPaymentMethod.provider === 'opay') {
         // OPAY: create order, then initiate OPAY payment
@@ -449,7 +449,7 @@ export default function Checkout() {
           clearCart();
           window.location.href = opayResult.redirectUrl;
         } else {
-          throw new Error(opayResult?.error || "Nepavyko sukurti OPAY mokėjimo");
+          throw new Error(opayResult?.error || t('pgCheckoutX.opayFailed'));
         }
       } else if (selectedPaymentMethod.provider === 'inbank') {
         // Inbank: create order, then redirect to Inbank application
@@ -490,14 +490,14 @@ export default function Checkout() {
           clearCart();
           window.location.href = inbankResult.redirectUrl;
         } else {
-          throw new Error(inbankResult?.error || "Nepavyko sukurti Inbank paraiškos");
+          throw new Error(inbankResult?.error || t('pgCheckoutX.inbankFailed'));
         }
       } else if (selectedPaymentMethod.provider === 'paypal') {
-        toast.error("PayPal mokėjimai bus prieinami greitai");
+        toast.error(t('pgCheckoutX.paypalSoon'));
       }
     } catch (error: any) {
       console.error("Checkout error:", error);
-      toast.error(error.message || "Klaida apdorojant užsakymą");
+      toast.error(error.message || t('pgCheckoutX.orderError'));
     } finally {
       setIsLoading(false);
     }
@@ -620,16 +620,16 @@ export default function Checkout() {
                   {shippingMethod === "courier" && (
                     <div className="mt-4 space-y-4 p-4 bg-muted/50 rounded-lg">
                       <div>
-                        <Label htmlFor="street">Gatvė, namo nr. *</Label>
+                        <Label htmlFor="street">{t('pgCheckoutX.streetLabel')}</Label>
                         <Input {...register("street")} id="street" />
                       </div>
                       <div className="grid sm:grid-cols-2 gap-4">
                         <div>
-                          <Label htmlFor="city">Miestas *</Label>
+                          <Label htmlFor="city">{t('pgCheckoutX.cityLabel')}</Label>
                           <Input {...register("city")} id="city" />
                         </div>
                         <div>
-                          <Label htmlFor="postalCode">Pašto kodas *</Label>
+                          <Label htmlFor="postalCode">{t('pgCheckoutX.postalLabel')}</Label>
                           <Input {...register("postalCode")} id="postalCode" />
                         </div>
                       </div>
@@ -639,11 +639,11 @@ export default function Checkout() {
 
                 {/* Notes */}
                 <div className="bg-card border border-border rounded-xl p-6">
-                  <Label htmlFor="notes">Pastabos (neprivaloma)</Label>
+                  <Label htmlFor="notes">{t('pgCheckoutX.notesLabel')}</Label>
                   <Textarea
                     {...register("notes")}
                     id="notes"
-                    placeholder="Papildoma informacija apie pristatymą..."
+                    placeholder={t('pgCheckoutX.notesPlaceholder')}
                     className="mt-2"
                   />
                 </div>
@@ -673,7 +673,7 @@ export default function Checkout() {
               <div className="bg-card border border-border rounded-xl p-6 space-y-4">
                 <h2 className="font-semibold text-lg flex items-center gap-2">
                   <CreditCard className="w-5 h-5" />
-                  Pasirinkite mokėjimo būdą
+                  {t('pgCheckoutX.payMethodTitle')}
                 </h2>
                 
                 {/* Credits Payment Option - show first if eligible */}
@@ -709,13 +709,13 @@ export default function Checkout() {
                     onClick={() => setPayWithCredits(false)}
                     className="text-sm text-muted-foreground hover:text-foreground underline"
                   >
-                    Arba mokėti pinigais →
+                    {t('pgCheckoutX.payWithMoney')}
                   </button>
                 )}
 
                 {baseLaterPayment > 0 && !payWithCredits && (
                   <p className="text-sm text-muted-foreground mt-4">
-                    Likusi suma ({formatCartPrice(baseLaterPayment)}) bus apmokėta vėliau, prieš siunčiant užsakymą.
+                    {t('pgCheckoutX.remainingNote', { amount: formatCartPrice(baseLaterPayment) })}
                   </p>
                 )}
               </div>
@@ -735,7 +735,7 @@ export default function Checkout() {
               ) : step === 1 ? (
                 t('common.next')
               ) : payWithCredits && creditsInfo?.canPayWithCredits ? (
-                `Apmokėti ${creditsInfo.totalCreditsRequired} kreditais`
+                t('pgCheckoutX.payWithCreditsBtn', { amount: creditsInfo.totalCreditsRequired })
               ) : (
                 `${t('cart.checkout')} ${formatCartPrice(finalImmediatePayment)}`
               )}
@@ -781,23 +781,23 @@ export default function Checkout() {
                 </div>
                 {appliedDiscount && (
                   <div className="flex justify-between text-sm text-green-600">
-                    <span>Nuolaida ({appliedDiscount.code})</span>
+                      <span>{t('pgCheckoutX.discountLabel', { code: appliedDiscount.code })}</span>
                     <span>-{formatCartPrice(discountAmount)}</span>
                   </div>
                 )}
                 {payWithCredits && creditsInfo && (
                   <>
                     <div className="flex justify-between text-sm text-accent font-medium">
-                      <span>Apmokama kreditais</span>
-                      <span>{creditsInfo.totalCreditsRequired} kreditų</span>
+                        <span>{t('pgCheckoutX.paidWithCredits')}</span>
+                        <span>{t('pgCheckoutX.creditsAmount', { amount: creditsInfo.totalCreditsRequired })}</span>
                     </div>
                     <div className="flex justify-between font-semibold text-success pt-2 border-t border-dashed">
-                      <span>Mokėsite dabar</span>
+                        <span>{t('pgCheckoutX.payNow')}</span>
                       <span>0,00 €</span>
                     </div>
                     {baseLaterPayment > 0 && (
                       <div className="flex justify-between text-sm text-success">
-                        <span>Likusi suma (vėliau)</span>
+                        <span>{t('pgCheckoutX.remainingLater')}</span>
                         <span>0,00 € ✓</span>
                       </div>
                     )}
@@ -806,12 +806,12 @@ export default function Checkout() {
                 {!payWithCredits && (
                   <>
                     <div className="flex justify-between font-semibold text-primary pt-2 border-t border-dashed">
-                      <span>{baseLaterPayment > 0 ? "Mokėsite dabar" : "Iš viso"}</span>
+                        <span>{baseLaterPayment > 0 ? t('pgCheckoutX.payNow') : t('cart.total')}</span>
                       <span>{formatCartPrice(finalImmediatePayment)}</span>
                     </div>
                     {baseLaterPayment > 0 && (
                       <div className="flex justify-between text-sm text-muted-foreground">
-                        <span>Likusi suma (vėliau)</span>
+                        <span>{t('pgCheckoutX.remainingLater')}</span>
                         <span>{formatCartPrice(baseLaterPayment)}</span>
                       </div>
                     )}

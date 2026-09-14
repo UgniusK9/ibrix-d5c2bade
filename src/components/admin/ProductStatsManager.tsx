@@ -6,6 +6,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Loader2, TrendingUp, Eye, EyeOff } from "lucide-react";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useTranslation } from "react-i18next";
 
 interface Product {
   id: string;
@@ -30,12 +31,13 @@ interface ProductStats {
 }
 
 const RANGES = [
-  { id: "7", label: "7 d." },
-  { id: "30", label: "30 d." },
-  { id: "90", label: "90 d." },
+  { id: "7", label: "admAnalytics.stats7d" },
+  { id: "30", label: "admAnalytics.stats30d" },
+  { id: "90", label: "admAnalytics.stats90d" },
 ];
 
 export function ProductStatsManager() {
+  const { t } = useTranslation();
   const [products, setProducts] = useState<Product[]>([]);
   const [selectedProductId, setSelectedProductId] = useState<string>("");
   const [rangeDays, setRangeDays] = useState<number>(30);
@@ -137,12 +139,12 @@ export function ProductStatsManager() {
           <div className="flex items-center justify-between flex-wrap gap-4">
             <CardTitle className="flex items-center gap-2">
               <TrendingUp className="w-5 h-5 text-primary" />
-              Peržiūrų tendencijos
+              {t("admAnalytics.statsTrends")}
             </CardTitle>
             <Tabs value={String(rangeDays)} onValueChange={(v) => setRangeDays(Number(v))}>
               <TabsList>
                 {RANGES.map((r) => (
-                  <TabsTrigger key={r.id} value={r.id}>{r.label}</TabsTrigger>
+                  <TabsTrigger key={r.id} value={r.id}>{t(r.label)}</TabsTrigger>
                 ))}
               </TabsList>
             </Tabs>
@@ -152,7 +154,7 @@ export function ProductStatsManager() {
           <div className="mb-4 max-w-md">
             <Select value={selectedProductId} onValueChange={setSelectedProductId}>
               <SelectTrigger>
-                <SelectValue placeholder="Pasirinkite konstruktorių" />
+                <SelectValue placeholder={t("admAnalytics.statsSelectPh")} />
               </SelectTrigger>
               <SelectContent>
                 {products.map((p) => (
@@ -199,15 +201,15 @@ export function ProductStatsManager() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-base">
               <Eye className="w-4 h-4 text-primary" />
-              Daugiausiai peržiūrų ({rangeDays} d.)
+              {t("admAnalytics.statsTop", { num: rangeDays })}
             </CardTitle>
           </CardHeader>
           <CardContent>
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Konstruktorius</TableHead>
-                  <TableHead className="text-right">Peržiūros</TableHead>
+                  <TableHead>{t("admAnalytics.statsConstructor")}</TableHead>
+                  <TableHead className="text-right">{t("admAnalytics.dashViews")}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -220,7 +222,7 @@ export function ProductStatsManager() {
                 {top5.length === 0 && (
                   <TableRow>
                     <TableCell colSpan={2} className="text-center text-muted-foreground py-6">
-                      Nėra duomenų
+                      {t("admCommon.noData")}
                     </TableCell>
                   </TableRow>
                 )}
@@ -233,15 +235,15 @@ export function ProductStatsManager() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-base">
               <EyeOff className="w-4 h-4 text-muted-foreground" />
-              Mažiausiai peržiūrų ({rangeDays} d.)
+              {t("admAnalytics.statsBottom", { num: rangeDays })}
             </CardTitle>
           </CardHeader>
           <CardContent>
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Konstruktorius</TableHead>
-                  <TableHead className="text-right">Peržiūros</TableHead>
+                  <TableHead>{t("admAnalytics.statsConstructor")}</TableHead>
+                  <TableHead className="text-right">{t("admAnalytics.dashViews")}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -254,7 +256,7 @@ export function ProductStatsManager() {
                 {bottom5.length === 0 && (
                   <TableRow>
                     <TableCell colSpan={2} className="text-center text-muted-foreground py-6">
-                      Nėra duomenų
+                      {t("admCommon.noData")}
                     </TableCell>
                   </TableRow>
                 )}

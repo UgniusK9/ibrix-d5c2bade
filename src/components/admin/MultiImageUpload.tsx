@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { supabase } from '@/integrations/supabase/client';
+import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 
 interface MultiImageUploadProps {
@@ -18,9 +19,10 @@ export function MultiImageUpload({
   value = [], 
   onChange, 
   folder = 'products', 
-  label = 'Nuotraukos',
+  label,
   maxImages = 10,
 }: MultiImageUploadProps) {
+  const { t } = useTranslation();
   const [uploading, setUploading] = useState(false);
   const [urlMode, setUrlMode] = useState(false);
   const [newUrl, setNewUrl] = useState('');
@@ -33,7 +35,7 @@ export function MultiImageUpload({
 
     const remainingSlots = maxImages - value.length;
     if (remainingSlots <= 0) {
-      toast.error(`Maksimalus nuotraukų skaičius: ${maxImages}`);
+      toast.error(t('admCommon.uploadMaxReached', { max: maxImages }));
       return;
     }
 
@@ -42,11 +44,11 @@ export function MultiImageUpload({
     // Validate all files
     for (const file of filesToUpload) {
       if (!file.type.startsWith('image/')) {
-        toast.error('Pasirinkite tik nuotraukų failus');
+        toast.error(t('admCommon.uploadPickImagesOnly'));
         return;
       }
       if (file.size > 5 * 1024 * 1024) {
-        toast.error('Nuotrauka per didelė (max 5MB)');
+        toast.error(t('admCommon.uploadTooLarge'));
         return;
       }
     }
@@ -76,10 +78,10 @@ export function MultiImageUpload({
       }
 
       onChange([...value, ...newUrls]);
-      toast.success(`Įkelta ${newUrls.length} nuotrauka(-os)`);
+      toast.success(t('admCommon.uploadUploadedCount', { num: newUrls.length }));
     } catch (e: any) {
       console.error('Upload error:', e);
-      toast.error(e.message || 'Nepavyko įkelti nuotraukų');
+      toast.error(e.message || t('admCommon.uploadErrorPlural'));
     } finally {
       setUploading(false);
       if (inputRef.current) {
@@ -92,7 +94,7 @@ export function MultiImageUpload({
     if (!newUrl.trim()) return;
     
     if (value.length >= maxImages) {
-      toast.error(`Maksimalus nuotraukų skaičius: ${maxImages}`);
+      toast.error(t('admCommon.uploadMaxReached', { max: maxImages }));
       return;
     }
 
@@ -101,9 +103,9 @@ export function MultiImageUpload({
       new URL(newUrl);
       onChange([...value, newUrl.trim()]);
       setNewUrl('');
-      toast.success('Nuotrauka pridėta');
+      toast.success(t('admCommon.uploadAdded'));
     } catch {
-      toast.error('Neteisingas URL formatas');
+      toast.error(t('admCommon.uploadBadUrl'));
     }
   };
 
@@ -136,7 +138,7 @@ export function MultiImageUpload({
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between">
-        <Label>{label} ({value.length}/{maxImages})</Label>
+        <Label>{label || t('admCommon.uploadPhotosLabel')} ({value.length}/{maxImages})</Label>
         <Button
           type="button"
           variant="ghost"
@@ -144,7 +146,7 @@ export function MultiImageUpload({
           className="text-xs h-6"
           onClick={() => setUrlMode(!urlMode)}
         >
-          {urlMode ? 'Įkelti failą' : 'Pridėti URL'}
+          {urlMode ? t('admCommon.uploadFile') : t('admCommon.uploadAddUrl')}
         </Button>
       </div>
 
@@ -158,7 +160,7 @@ export function MultiImageUpload({
             onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), handleAddUrl())}
           />
           <Button type="button" size="sm" onClick={handleAddUrl}>
-            Pridėti
+            {t('common.add')}
           </Button>
         </div>
       )}
@@ -185,13 +187,13 @@ export function MultiImageUpload({
             {uploading ? (
               <>
                 <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
-                <span className="text-xs text-muted-foreground">Įkeliama...</span>
+                <span className="text-xs text-muted-foreground">{t('admCommon.uploadUploading')}</span>
               </>
             ) : (
               <>
                 <ImagePlus className="w-6 h-6 text-muted-foreground" />
                 <span className="text-xs text-muted-foreground">
-                  Pasirinkti nuotraukas (galima kelias)
+                  {t('admCommon.uploadChooseMany')}
                 </span>
               </>
             )}
@@ -215,7 +217,7 @@ export function MultiImageUpload({
             >
               <img
                 src={url}
-                alt={`Image ${index + 1}`}
+                alt={t('admCommon.uploadImgAlt', { num: index + 1 })}
                 className="w-full h-full object-cover"
                 onError={(e) => {
                   e.currentTarget.src = '/placeholder.svg';
@@ -241,7 +243,7 @@ export function MultiImageUpload({
               {/* Index Badge */}
               {index === 0 && (
                 <div className="absolute bottom-1 left-1 px-1.5 py-0.5 bg-primary text-primary-foreground text-[10px] font-bold rounded">
-                  Pagrindinė
+                  {t('admCommon.uploadMainBadge')}
                 </div>
               )}
             </div>
@@ -250,7 +252,7 @@ export function MultiImageUpload({
       )}
 
       <p className="text-xs text-muted-foreground">
-        Vilkite nuotraukas, kad pakeistumėte jų tvarką. Pirmoji bus rodoma kaip pagrindinė.
+        {t('admCommon.uploadDragHint')}
       </p>
     </div>
   );

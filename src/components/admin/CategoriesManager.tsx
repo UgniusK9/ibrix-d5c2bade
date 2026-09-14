@@ -13,6 +13,7 @@ import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { ImageUpload } from './ImageUpload';
 import { buildCategoryTree, topLevelCategories, flattenWithDepth } from '@/lib/categoryTree';
+import { useTranslation } from 'react-i18next';
 
 interface Category {
   id: string;
@@ -27,6 +28,7 @@ interface Category {
 }
 
 export function CategoriesManager() {
+  const { t } = useTranslation();
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
   const [showDialog, setShowDialog] = useState(false);
@@ -53,7 +55,7 @@ export function CategoriesManager() {
       setCategories(data || []);
     } catch (e) {
       console.error('Failed to load categories:', e);
-      toast.error('Nepavyko užkrauti kategorijų');
+      toast.error(t('admProducts.catLoadError'));
     } finally {
       setLoading(false);
     }
@@ -115,7 +117,7 @@ export function CategoriesManager() {
 
   const handleSave = async () => {
     if (!formData.name || !formData.slug) {
-      toast.error('Pavadinimas ir slug yra privalomi');
+      toast.error(t('admProducts.catRequired'));
       return;
     }
 
@@ -136,25 +138,25 @@ export function CategoriesManager() {
           .update(payload)
           .eq('id', editingCategory.id);
         if (error) throw error;
-        toast.success('Kategorija atnaujinta');
+        toast.success(t('admProducts.catUpdated'));
       } else {
         const { error } = await supabase
           .from('categories')
           .insert(payload);
         if (error) throw error;
-        toast.success('Kategorija sukurta');
+        toast.success(t('admProducts.catCreated'));
       }
 
       setShowDialog(false);
       loadCategories();
     } catch (e: any) {
       console.error('Failed to save category:', e);
-      toast.error(e.message || 'Nepavyko išsaugoti kategorijos');
+      toast.error(e.message || t('admProducts.catSaveError'));
     }
   };
 
   const handleDelete = async (category: Category) => {
-    if (!confirm(`Ar tikrai norite ištrinti kategoriją "${category.name}"?`)) return;
+    if (!confirm(t('admProducts.catDeleteConfirm', { name: category.name }))) return;
 
     try {
       const { error } = await supabase
@@ -162,11 +164,11 @@ export function CategoriesManager() {
         .delete()
         .eq('id', category.id);
       if (error) throw error;
-      toast.success('Kategorija ištrinta');
+      toast.success(t('admProducts.catDeleted'));
       loadCategories();
     } catch (e: any) {
       console.error('Failed to delete category:', e);
-      toast.error(e.message || 'Nepavyko ištrinti kategorijos');
+      toast.error(e.message || t('admProducts.catDeleteError'));
     }
   };
 
@@ -183,18 +185,18 @@ export function CategoriesManager() {
           <div>
             <CardTitle className="font-heading text-lg flex items-center gap-2">
               <FolderTree className="w-5 h-5" />
-              Kategorijos
+              {t('products.categories')}
             </CardTitle>
-            <CardDescription>Produktų kategorijų valdymas</CardDescription>
+            <CardDescription>{t('admProducts.catSubtitle')}</CardDescription>
           </div>
           <div className="flex gap-2">
             <Button onClick={loadCategories} variant="outline" size="sm" disabled={loading}>
               <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
-              Atnaujinti
+              {t('admCommon.refresh')}
             </Button>
             <Button onClick={openCreateDialog} size="sm">
               <Plus className="w-4 h-4 mr-2" />
-              Nauja kategorija
+              {t('admProducts.catNew')}
             </Button>
           </div>
         </div>
@@ -207,7 +209,7 @@ export function CategoriesManager() {
         ) : categories.length === 0 ? (
           <div className="text-center py-8 text-muted-foreground">
             <FolderTree className="w-12 h-12 mx-auto mb-2 opacity-50" />
-            <p>Nėra kategorijų</p>
+            <p>{t('products.noCategories')}</p>
           </div>
         ) : (
           <div className="space-y-2">
@@ -239,13 +241,13 @@ export function CategoriesManager() {
                     <div className="flex items-center gap-2">
                       <span className="font-medium">{category.name}</span>
                       <Badge variant={category.active ? 'default' : 'secondary'}>
-                        {category.active ? 'Aktyvi' : 'Neaktyvi'}
+                        {category.active ? t('admProducts.catActive') : t('admProducts.catInactive')}
                       </Badge>
                     </div>
                     <div className="text-xs text-muted-foreground flex items-center gap-2">
                       <span>/{category.slug}</span>
                       {getParentName(category.parent_id) && (
-                        <span>• Tėvinė: {getParentName(category.parent_id)}</span>
+                        <span>{t('admProducts.catParent', { name: getParentName(category.parent_id) })}</span>
                       )}
                     </div>
                   </div>
@@ -267,17 +269,17 @@ export function CategoriesManager() {
           <DialogContent>
             <DialogHeader>
               <DialogTitle>
-                {editingCategory ? 'Redaguoti kategoriją' : 'Nauja kategorija'}
+                {editingCategory ? t('admProducts.catEditTitle') : t('admProducts.catNew')}
               </DialogTitle>
               <DialogDescription>
-                Užpildykite kategorijos informaciją
+                {t('admProducts.catFillInfo')}
               </DialogDescription>
             </DialogHeader>
 
             <div className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label>Pavadinimas *</Label>
+                  <Label>{t('admCommon.name')} *</Label>
                   <Input
                     value={formData.name}
                     onChange={(e) => {
@@ -287,7 +289,7 @@ export function CategoriesManager() {
                         slug: editingCategory ? formData.slug : generateSlug(e.target.value),
                       });
                     }}
-                    placeholder="Varikliai"
+                    placeholder={t('products.engines')}
                   />
                 </div>
                 <div className="space-y-2">
@@ -301,11 +303,11 @@ export function CategoriesManager() {
               </div>
 
               <div className="space-y-2">
-                <Label>Aprašymas</Label>
+                <Label>{t('products.description')}</Label>
                 <Textarea
                   value={formData.description}
                   onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                  placeholder="Kategorijos aprašymas..."
+                  placeholder={t('admProducts.catDescPh')}
                   rows={2}
                 />
               </div>
@@ -314,21 +316,21 @@ export function CategoriesManager() {
                 value={formData.image_url}
                 onChange={(url) => setFormData({ ...formData, image_url: url })}
                 folder="categories"
-                label="Kategorijos nuotrauka"
+                label={t('admProducts.catImageLabel')}
               />
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label>Tėvinė kategorija</Label>
+                  <Label>{t('admProducts.catParentLabel')}</Label>
                   <Select
                     value={formData.parent_id}
                     onValueChange={(v) => setFormData({ ...formData, parent_id: v === 'none' ? '' : v })}
                   >
                     <SelectTrigger>
-                      <SelectValue placeholder="Nėra" />
+                      <SelectValue placeholder={t('common.none')} />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="none">Nėra (pagrindinė)</SelectItem>
+                      <SelectItem value="none">{t('admProducts.catRootOption')}</SelectItem>
                       {flatCategoryTree
                         .filter(({ node }) => node.id !== editingCategory?.id)
                         .map(({ node, depth }) => (
@@ -340,7 +342,7 @@ export function CategoriesManager() {
                   </Select>
                 </div>
                 <div className="space-y-2">
-                  <Label>Rikiavimo eilė</Label>
+                  <Label>{t('admProducts.catSortOrder')}</Label>
                   <Input
                     type="number"
                     value={formData.sort_order}
@@ -354,16 +356,16 @@ export function CategoriesManager() {
                   checked={formData.active}
                   onCheckedChange={(checked) => setFormData({ ...formData, active: checked })}
                 />
-                <Label>Aktyvi kategorija</Label>
+                <Label>{t('admProducts.catActiveLabel')}</Label>
               </div>
             </div>
 
             <DialogFooter>
               <Button variant="outline" onClick={() => setShowDialog(false)}>
-                Atšaukti
+                {t('common.cancel')}
               </Button>
               <Button onClick={handleSave}>
-                {editingCategory ? 'Atnaujinti' : 'Sukurti'}
+                {editingCategory ? t('admProducts.catUpdate') : t('admProducts.catCreate')}
               </Button>
             </DialogFooter>
           </DialogContent>

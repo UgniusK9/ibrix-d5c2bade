@@ -2,6 +2,7 @@ import { Header } from "@/components/layout/Header";
 import { HeroSection } from "@/components/home/HeroSection";
 import { SEOHead } from "@/components/seo/SEOHead";
 import { lazy, Suspense, useState, useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import { supabase } from "@/integrations/supabase/client";
 import { useProducts } from "@/hooks/useProducts";
 
@@ -21,6 +22,7 @@ const PreOrderSection = lazy(() => import("@/components/home/PreOrderSection").t
 const SectionFallback = () => <div style={{ minHeight: 200 }} />;
 
 const Index = () => {
+  const { t } = useTranslation();
   const [hasBanners, setHasBanners] = useState(false);
   const { data: products = [] } = useProducts();
 
@@ -38,7 +40,7 @@ const Index = () => {
     <>
       <SEOHead 
         title="IBRIX" 
-        description="IBRIX - Aukstos kokybes varikliu ir mechaniniu modeliu parduotuve Lietuvoje. Pre-order sistema, nemokamas pristatymas, 14 dienu grazinimas."
+        description={t('seo.defaultDescription')}
         canonical="/"
       />
       <div className="min-h-screen flex flex-col overflow-x-hidden w-full">

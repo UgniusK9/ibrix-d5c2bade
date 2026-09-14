@@ -27,6 +27,7 @@ import type { Database } from '@/integrations/supabase/types';
 import { ProductVariantsManager } from './ProductVariantsManager';
 import { MultiImageUpload } from './MultiImageUpload';
 import { buildCategoryTree, topLevelCategories, flattenWithDepth } from '@/lib/categoryTree';
+import { useTranslation } from 'react-i18next';
 
 type ProductStatus = Database['public']['Enums']['product_status'];
 type StockStatus = Database['public']['Enums']['stock_status'];
@@ -126,10 +127,10 @@ const AGE_CATEGORY_OPTIONS = [
 ];
 
 const BADGE_OPTIONS = [
-  { value: 'new', label: 'Naujiena', color: 'bg-green-500' },
-  { value: 'popular', label: 'Populiarus', color: 'bg-orange-500' },
-  { value: 'sale', label: 'Išpardavimas', color: 'bg-red-500' },
-  { value: 'limited', label: 'Ribotas', color: 'bg-purple-500' },
+  { value: 'new', label: 'products.new', color: 'bg-green-500' },
+  { value: 'popular', label: 'products.popular', color: 'bg-orange-500' },
+  { value: 'sale', label: 'admProducts.pmBadgeSale', color: 'bg-red-500' },
+  { value: 'limited', label: 'products.limited', color: 'bg-purple-500' },
 ];
 
 const formatPrice = (amount: number) => {
@@ -140,6 +141,7 @@ const formatPrice = (amount: number) => {
 };
 
 export function ProductsManager() {
+  const { t } = useTranslation();
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
@@ -188,7 +190,7 @@ export function ProductsManager() {
       }
     } catch (e: any) {
       console.error('Failed to load products:', e);
-      toast.error('Nepavyko užkrauti produktų');
+      toast.error(t('admProducts.pmLoadError'));
     } finally {
       setLoading(false);
     }
@@ -295,22 +297,22 @@ export function ProductsManager() {
   };
 
   const validateForm = (): string | null => {
-    if (!formData.sku.trim()) return 'SKU yra privalomas';
-    if (!formData.slug.trim()) return 'Slug yra privalomas';
-    if (!formData.title.trim()) return 'Pavadinimas yra privalomas';
+    if (!formData.sku.trim()) return t('admProducts.pmSkuRequired');
+    if (!formData.slug.trim()) return t('admProducts.pmSlugRequired');
+    if (!formData.title.trim()) return t('admProducts.offerTitleRequired');
     
     const price = parseFloat(formData.price_eur);
     const deposit = parseFloat(formData.deposit_eur);
     
-    if (isNaN(price) || price <= 0) return 'Kaina turi būti didesnė nei 0';
-    if (isNaN(deposit) || deposit < 0) return 'Depozitas negali būti neigiamas';
-    if (deposit > price) return 'Depozitas negali viršyti kainos';
+    if (isNaN(price) || price <= 0) return t('admProducts.pmPricePositive');
+    if (isNaN(deposit) || deposit < 0) return t('admProducts.pmDepositNegative');
+    if (deposit > price) return t('admProducts.pmDepositExceeds');
     
     if (formData.stock_status === 'preorder') {
       const minEta = parseInt(formData.preorder_eta_weeks_min);
       const maxEta = parseInt(formData.preorder_eta_weeks_max);
-      if (isNaN(minEta) || minEta < 1) return 'Pre-order produktams reikia nurodyti ETA savaites';
-      if (!isNaN(maxEta) && maxEta < minEta) return 'Max ETA negali būti mažesnis už Min ETA';
+      if (isNaN(minEta) || minEta < 1) return t('admProducts.pmEtaRequired');
+      if (!isNaN(maxEta) && maxEta < minEta) return t('admProducts.pmEtaMaxMin');
     }
     
     return null;
@@ -375,12 +377,12 @@ export function ProductsManager() {
 
       if (error) throw error;
       
-      toast.success(editingProduct ? 'Produktas atnaujintas' : 'Produktas sukurtas');
+      toast.success(editingProduct ? t('admProducts.pmUpdated') : t('admProducts.pmCreated'));
       setFormOpen(false);
       loadProducts();
     } catch (e: any) {
       console.error('Failed to save product:', e);
-      toast.error(e.message || 'Nepavyko išsaugoti produkto');
+      toast.error(e.message || t('admProducts.pmSaveError'));
     } finally {
       setSaving(false);
     }
@@ -397,16 +399,16 @@ export function ProductsManager() {
       if (error) throw error;
 
       if (data?.archived) {
-        toast.success(data.message || 'Produktas turi užsakymų — deaktyvuotas vietoje ištrynimo');
+        toast.success(data.message || t('admProducts.pmArchived'));
       } else {
-        toast.success('Produktas ištrintas');
+        toast.success(t('admProducts.pmDeleted'));
       }
       setDeleteDialogOpen(false);
       setProductToDelete(null);
       loadProducts();
     } catch (e: any) {
       console.error('Failed to delete product:', e);
-      toast.error(e.message || 'Nepavyko ištrinti produkto');
+      toast.error(e.message || t('admProducts.pmDeleteError'));
     }
   };
 
@@ -418,7 +420,7 @@ export function ProductsManager() {
     const total = products.length;
     for (let i = 0; i < products.length; i++) {
       const p = products[i];
-      setDeleteAllProgress(`Trinama ${i + 1} / ${total}: ${p.title}`);
+      setDeleteAllProgress(t('admProducts.pmDeleting', { num: i + 1, total, title: p.title }));
       try {
         const { data, error } = await supabase.functions.invoke('admin', {
           body: { action: 'delete_product', productId: p.id },
@@ -435,7 +437,7 @@ export function ProductsManager() {
     setDeleteAllOpen(false);
     setDeleteAllConfirm('');
     setDeleteAllProgress('');
-    toast.success(`Ištrinta: ${deleted}, deaktyvuota: ${archived}${failed ? `, nepavyko: ${failed}` : ''}`);
+    toast.success(t('admProducts.pmBulkResult', { deleted, archived }) + (failed ? t('admProducts.pmBulkFailed', { num: failed }) : ''));
     loadProducts();
   };
 
@@ -454,8 +456,8 @@ export function ProductsManager() {
   const getStockStatusBadge = (status: StockStatus) => {
     const config = {
       'preorder': { label: 'Pre-order', className: 'bg-primary/10 text-primary' },
-      'in_stock': { label: 'Sandėlyje', className: 'bg-green-500/10 text-green-600' },
-      'out_of_stock': { label: 'Išparduota', className: 'bg-destructive/10 text-destructive' },
+      'in_stock': { label: t('products.inStockLabel'), className: 'bg-green-500/10 text-green-600' },
+      'out_of_stock': { label: t('products.outOfStock'), className: 'bg-destructive/10 text-destructive' },
     };
     const c = config[status];
     return <Badge variant="outline" className={c.className}>{c.label}</Badge>;
@@ -463,8 +465,8 @@ export function ProductsManager() {
 
   const getStatusBadge = (status: ProductStatus) => {
     const config = {
-      'active': { label: 'Aktyvus', className: 'bg-green-500/10 text-green-600' },
-      'inactive': { label: 'Neaktyvus', className: 'bg-muted text-muted-foreground' },
+      'active': { label: t('admCommon.active'), className: 'bg-green-500/10 text-green-600' },
+      'inactive': { label: t('admCommon.inactive'), className: 'bg-muted text-muted-foreground' },
     };
     const c = config[status];
     return <Badge variant="outline" className={c.className}>{c.label}</Badge>;
@@ -478,7 +480,7 @@ export function ProductsManager() {
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <Input
-              placeholder="Ieškoti..."
+              placeholder={t('admCommon.searchPh')}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="pl-9 w-48"
@@ -487,24 +489,24 @@ export function ProductsManager() {
           
           <Select value={statusFilter} onValueChange={(v) => setStatusFilter(v as ProductStatus | 'all')}>
             <SelectTrigger className="w-36">
-              <SelectValue placeholder="Statusas" />
+              <SelectValue placeholder={t('admCommon.statusLabel')} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">Visi statusai</SelectItem>
-              <SelectItem value="active">Aktyvūs</SelectItem>
-              <SelectItem value="inactive">Neaktyvūs</SelectItem>
+              <SelectItem value="all">{t('products.allStatuses')}</SelectItem>
+              <SelectItem value="active">{t('admCredits.giftActivePlural')}</SelectItem>
+              <SelectItem value="inactive">{t('admProducts.pmInactivePlural')}</SelectItem>
             </SelectContent>
           </Select>
           
           <Select value={stockFilter} onValueChange={(v) => setStockFilter(v as StockStatus | 'all')}>
             <SelectTrigger className="w-36">
-              <SelectValue placeholder="Likutis" />
+              <SelectValue placeholder={t('admOrders.ordPayBalance')} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">Visos būsenos</SelectItem>
+              <SelectItem value="all">{t('admProducts.pmAllStates')}</SelectItem>
               <SelectItem value="preorder">Pre-order</SelectItem>
-              <SelectItem value="in_stock">Sandėlyje</SelectItem>
-              <SelectItem value="out_of_stock">Išparduota</SelectItem>
+              <SelectItem value="in_stock">{t('products.inStockLabel')}</SelectItem>
+              <SelectItem value="out_of_stock">{t('products.outOfStock')}</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -512,7 +514,7 @@ export function ProductsManager() {
         <div className="flex gap-2">
           <Button onClick={loadProducts} variant="outline" size="sm" disabled={loading}>
             <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
-            Atnaujinti
+            {t('admCommon.refresh')}
           </Button>
           <Button
             onClick={() => { setDeleteAllConfirm(''); setDeleteAllOpen(true); }}
@@ -521,11 +523,11 @@ export function ProductsManager() {
             disabled={loading || products.length === 0}
           >
             <Trash2 className="w-4 h-4 mr-2" />
-            Ištrinti visus produktus
+            {t('admProducts.pmDeleteAllBtn')}
           </Button>
           <Button onClick={openCreateForm}>
             <Plus className="w-4 h-4 mr-2" />
-            Naujas produktas
+            {t('admProducts.pmNew')}
           </Button>
         </div>
       </div>
@@ -534,18 +536,18 @@ export function ProductsManager() {
       {loading ? (
         <div className="text-center py-12">
           <RefreshCw className="w-8 h-8 animate-spin mx-auto text-muted-foreground" />
-          <p className="text-muted-foreground mt-2">Kraunama...</p>
+          <p className="text-muted-foreground mt-2">{t('common.loading')}</p>
         </div>
       ) : filteredProducts.length === 0 ? (
         <div className="text-center py-12">
           <Package className="w-16 h-16 text-muted-foreground/30 mx-auto mb-4" />
           <h2 className="font-heading text-xl font-semibold mb-2">
-            {products.length === 0 ? 'Nėra produktų' : 'Nerasta produktų'}
+            {products.length === 0 ? t('admProducts.pmEmpty') : t('admProducts.pmNoResults')}
           </h2>
           <p className="text-muted-foreground">
             {products.length === 0 
-              ? 'Sukurkite pirmą produktą spaudžiant "Naujas produktas"' 
-              : 'Pabandykite pakeisti filtrus arba paiešką'}
+              ? t('admProducts.pmCreateFirst', { action: t('admProducts.pmNew') }) 
+              : t('admOrders.ordTryFilters')}
           </p>
         </div>
       ) : (
@@ -554,12 +556,12 @@ export function ProductsManager() {
             <TableHeader>
               <TableRow>
                 <TableHead className="w-16"></TableHead>
-                <TableHead>Produktas</TableHead>
+                <TableHead>{t('admCommon.product')}</TableHead>
                 <TableHead>SKU</TableHead>
-                <TableHead>Kaina</TableHead>
-                <TableHead>Depozitas</TableHead>
-                <TableHead>Būsena</TableHead>
-                <TableHead>Statusas</TableHead>
+                <TableHead>{t('admProducts.pmPrice')}</TableHead>
+                <TableHead>{t('admOrders.ordPayDeposit')}</TableHead>
+                <TableHead>{t('admCommon.status')}</TableHead>
+                <TableHead>{t('admCommon.statusLabel')}</TableHead>
                 <TableHead></TableHead>
               </TableRow>
             </TableHeader>
@@ -600,14 +602,14 @@ export function ProductsManager() {
                       <DropdownMenuContent align="end">
                         <DropdownMenuItem onClick={() => openEditForm(product)}>
                           <Edit className="w-4 h-4 mr-2" />
-                          Redaguoti
+                          {t('common.edit')}
                         </DropdownMenuItem>
                         <DropdownMenuItem 
                           onClick={() => { setProductToDelete(product); setDeleteDialogOpen(true); }}
                           className="text-destructive"
                         >
                           <Trash2 className="w-4 h-4 mr-2" />
-                          Ištrinti
+                          {t('common.delete')}
                         </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
@@ -624,10 +626,10 @@ export function ProductsManager() {
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="font-heading">
-              {editingProduct ? 'Redaguoti produktą' : 'Naujas produktas'}
+              {editingProduct ? t('admProducts.pmEditTitle') : t('admProducts.pmNew')}
             </DialogTitle>
             <DialogDescription>
-              {editingProduct ? `Redaguojamas: ${editingProduct.title}` : 'Užpildykite produkto informaciją'}
+              {editingProduct ? t('admProducts.offerEditing', { title: editingProduct.title }) : t('admProducts.pmFillInfo')}
             </DialogDescription>
           </DialogHeader>
 
@@ -635,12 +637,12 @@ export function ProductsManager() {
             {/* Basic info */}
             <div className="grid grid-cols-2 gap-4">
               <div className="col-span-2">
-                <Label htmlFor="title">Pavadinimas *</Label>
+                <Label htmlFor="title">{t('admCommon.name')} *</Label>
                 <Input
                   id="title"
                   value={formData.title}
                   onChange={(e) => handleTitleChange(e.target.value)}
-                  placeholder="Produkto pavadinimas"
+                  placeholder={t('admProducts.pmTitlePh')}
                 />
               </div>
               <div>
@@ -666,21 +668,21 @@ export function ProductsManager() {
             {/* Descriptions */}
             <div className="space-y-4">
               <div>
-                <Label htmlFor="short_desc">Trumpas aprašymas</Label>
+                <Label htmlFor="short_desc">{t('admProducts.impShortDesc')}</Label>
                 <Input
                   id="short_desc"
                   value={formData.short_desc}
                   onChange={(e) => setFormData(prev => ({ ...prev, short_desc: e.target.value }))}
-                  placeholder="Trumpas aprašymas produktų sąraše"
+                  placeholder={t('admProducts.pmShortPh')}
                 />
               </div>
               <div>
-                <Label htmlFor="description">Pilnas aprašymas</Label>
+                <Label htmlFor="description">{t('admProducts.pmFullDesc')}</Label>
                 <Textarea
                   id="description"
                   value={formData.description}
                   onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
-                  placeholder="Detalus produkto aprašymas..."
+                  placeholder={t('admProducts.pmDescPh')}
                   rows={4}
                 />
               </div>
@@ -689,7 +691,7 @@ export function ProductsManager() {
             {/* Pricing */}
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <Label htmlFor="price_eur">Pardavimo kaina (EUR) *</Label>
+                <Label htmlFor="price_eur">{t('admProducts.pmPriceLabel')}</Label>
                 <Input
                   id="price_eur"
                   type="number"
@@ -701,7 +703,7 @@ export function ProductsManager() {
                 />
               </div>
               <div>
-                <Label htmlFor="deposit_eur">Depozitas (EUR) *</Label>
+                <Label htmlFor="deposit_eur">{t('admProducts.pmDepositLabel')}</Label>
                 <Input
                   id="deposit_eur"
                   type="number"
@@ -712,14 +714,14 @@ export function ProductsManager() {
                   placeholder="0.00"
                 />
                 <p className="text-xs text-muted-foreground mt-1">
-                  Suma užsakant
+                  {t('admProducts.pmDepositHint')}
                 </p>
               </div>
             </div>
             
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <Label htmlFor="sale_price_eur">Akcijos kaina (EUR)</Label>
+                <Label htmlFor="sale_price_eur">{t('admProducts.pmSaleLabel')}</Label>
                 <Input
                   id="sale_price_eur"
                   type="number"
@@ -727,15 +729,15 @@ export function ProductsManager() {
                   min="0"
                   value={formData.sale_price_eur}
                   onChange={(e) => setFormData(prev => ({ ...prev, sale_price_eur: e.target.value }))}
-                  placeholder="Palikti tuščią jei nėra akcijos"
+                  placeholder={t('admProducts.pmSalePh')}
                   className={formData.sale_price_eur ? "border-orange-500 focus-visible:ring-orange-500" : ""}
                 />
                 <p className="text-xs text-muted-foreground mt-1">
-                  Rodoma kaip nuolaida
+                  {t('admProducts.pmSaleHint')}
                 </p>
               </div>
               <div>
-                <Label htmlFor="cost_price_eur">Savikaina (EUR)</Label>
+                <Label htmlFor="cost_price_eur">{t('admProducts.pmCostLabel')}</Label>
                 <Input
                   id="cost_price_eur"
                   type="number"
@@ -756,7 +758,7 @@ export function ProductsManager() {
                       const isPositive = profit > 0;
                       return (
                         <div className={`text-xs mt-1 font-medium ${isPositive ? 'text-green-600' : 'text-destructive'}`}>
-                          Pelnas: {formatPrice(profit)} ({margin}% marža)
+                          {t('admProducts.pmProfit', { amount: formatPrice(profit), margin })}
                         </div>
                       );
                     }
@@ -769,7 +771,7 @@ export function ProductsManager() {
             {/* Status and Category */}
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <Label>Būsena</Label>
+                <Label>{t('admCommon.status')}</Label>
                 <Select 
                   value={formData.stock_status} 
                   onValueChange={(v) => setFormData(prev => ({ ...prev, stock_status: v as StockStatus }))}
@@ -779,8 +781,8 @@ export function ProductsManager() {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="preorder">Pre-order</SelectItem>
-                    <SelectItem value="in_stock">Sandėlyje</SelectItem>
-                    <SelectItem value="out_of_stock">Išparduota</SelectItem>
+                    <SelectItem value="in_stock">{t('products.inStockLabel')}</SelectItem>
+                    <SelectItem value="out_of_stock">{t('products.outOfStock')}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -794,8 +796,8 @@ export function ProductsManager() {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="active">Aktyvus</SelectItem>
-                    <SelectItem value="inactive">Neaktyvus</SelectItem>
+                    <SelectItem value="active">{t('admCommon.active')}</SelectItem>
+                    <SelectItem value="inactive">{t('admCommon.inactive')}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -804,16 +806,16 @@ export function ProductsManager() {
             {/* Category */}
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <Label>Kategorija</Label>
+                <Label>{t('products.category')}</Label>
                 <Select
                   value={formData.category_id || "none"}
                   onValueChange={(v) => setFormData(prev => ({ ...prev, category_id: v === "none" ? "" : v }))}
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="Pasirinkite kategoriją" />
+                    <SelectValue placeholder={t('admProducts.bundleSelectCategory')} />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="none">Nepasirinkta</SelectItem>
+                    <SelectItem value="none">{t('admProducts.pmNotSelected')}</SelectItem>
                     {flatCategoryTree.map(({ node, depth }) => (
                       <SelectItem key={node.id} value={node.id} style={{ paddingLeft: 8 + depth * 16 }}>
                         {depth > 0 ? '↳ ' : ''}{node.name}
@@ -823,7 +825,7 @@ export function ProductsManager() {
                 </Select>
               </div>
               <div>
-                <Label>Skiltis</Label>
+                <Label>{t('admProducts.pmSection')}</Label>
                 <Select
                   value={formData.category}
                   onValueChange={(v) => setFormData(prev => ({ ...prev, category: v as ProductCategory }))}
@@ -837,10 +839,10 @@ export function ProductsManager() {
                         {depth > 0 ? '↳ ' : ''}{node.name}
                       </SelectItem>
                     ))}
-                    <SelectItem value="engines">Varikliai (senas)</SelectItem>
-                    <SelectItem value="cars">Automobiliai (senas)</SelectItem>
-                    <SelectItem value="flowers">Gėlės (senas)</SelectItem>
-                    <SelectItem value="other">Kita (senas)</SelectItem>
+                    <SelectItem value="engines">{t('admProducts.pmLegacyEngines')}</SelectItem>
+                    <SelectItem value="cars">{t('admProducts.pmLegacyCars')}</SelectItem>
+                    <SelectItem value="flowers">{t('admProducts.pmLegacyFlowers')}</SelectItem>
+                    <SelectItem value="other">{t('admProducts.pmLegacyOther')}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -849,27 +851,27 @@ export function ProductsManager() {
             {/* Age Category & Details Count */}
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <Label>Amžiaus kategorija</Label>
+                <Label>{t('admProducts.pmAgeCat')}</Label>
                 <Select 
                   value={formData.age_category || "none"} 
                   onValueChange={(v) => setFormData(prev => ({ ...prev, age_category: v === "none" ? "" : v as AgeCategory }))}
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="Pasirinkite amžių" />
+                    <SelectValue placeholder={t('admProducts.pmAgePh')} />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="none">Nepasirinkta</SelectItem>
+                    <SelectItem value="none">{t('admProducts.pmNotSelected')}</SelectItem>
                     {AGE_CATEGORY_OPTIONS.map((opt) => (
                       <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
                 <p className="text-xs text-muted-foreground mt-1">
-                  Rodoma produkto kortelėje
+                  {t('admProducts.pmAgeHint')}
                 </p>
               </div>
               <div>
-                <Label htmlFor="details_count">Detalių skaičius</Label>
+                <Label htmlFor="details_count">{t('products.partsCount')}</Label>
                 <Input
                   id="details_count"
                   type="number"
@@ -879,7 +881,7 @@ export function ProductsManager() {
                   placeholder="0"
                 />
                 <p className="text-xs text-muted-foreground mt-1">
-                  Konstruktoriaus detalių kiekis
+                  {t('admProducts.pmDetailsHint')}
                 </p>
               </div>
             </div>
@@ -888,7 +890,7 @@ export function ProductsManager() {
             {formData.stock_status === 'preorder' && (
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <Label htmlFor="eta_min">ETA min (savaitės) *</Label>
+                  <Label htmlFor="eta_min">{t('admProducts.pmEtaMin')}</Label>
                   <Input
                     id="eta_min"
                     type="number"
@@ -899,7 +901,7 @@ export function ProductsManager() {
                   />
                 </div>
                 <div>
-                  <Label htmlFor="eta_max">ETA max (savaitės)</Label>
+                  <Label htmlFor="eta_max">{t('admProducts.pmEtaMax')}</Label>
                   <Input
                     id="eta_max"
                     type="number"
@@ -915,7 +917,7 @@ export function ProductsManager() {
             {/* Inventory */}
             {formData.stock_status === 'in_stock' && (
               <div className="w-1/2">
-                <Label htmlFor="inventory_qty">Kiekis sandėlyje</Label>
+                <Label htmlFor="inventory_qty">{t('admProducts.pmStockQty')}</Label>
                 <Input
                   id="inventory_qty"
                   type="number"
@@ -929,7 +931,7 @@ export function ProductsManager() {
 
             {/* Badges */}
             <div className="space-y-3">
-              <Label>Ženkliukai</Label>
+              <Label>{t('admProducts.pmBadges')}</Label>
               <div className="flex flex-wrap gap-2">
                 {BADGE_OPTIONS.map((badge) => {
                   const isSelected = formData.badges.includes(badge.value);
@@ -951,7 +953,7 @@ export function ProductsManager() {
                           : 'bg-muted text-muted-foreground hover:bg-muted/80'
                       }`}
                     >
-                      {badge.label}
+                      {t(badge.label)}
                     </button>
                   );
                 })}
@@ -960,15 +962,15 @@ export function ProductsManager() {
 
             {/* Tags */}
             <div className="space-y-2">
-              <Label htmlFor="tags">Žymės (atskirtos kableliais)</Label>
+              <Label htmlFor="tags">{t('admProducts.pmTags')}</Label>
               <Input
                 id="tags"
                 value={formData.tagsInput}
                 onChange={(e) => setFormData(prev => ({ ...prev, tagsInput: e.target.value }))}
-                placeholder="v8, variklis, porsche, klasika"
+                placeholder={t('admProducts.pmTagsPh')}
               />
               <p className="text-xs text-muted-foreground">
-                Naudojamos susijusių produktų rekomendacijoms
+                {t('admProducts.pmTagsHint')}
               </p>
             </div>
 
@@ -976,7 +978,7 @@ export function ProductsManager() {
             <div className="bg-gradient-to-r from-amber-50 to-amber-100 dark:from-amber-950 dark:to-amber-900 border border-amber-200 dark:border-amber-800 rounded-xl p-4 space-y-3">
               <div className="flex items-center gap-2">
                 <span className="text-lg">🎁</span>
-                <Label className="text-amber-700 dark:text-amber-300 font-semibold">Kreditų kaina</Label>
+                <Label className="text-amber-700 dark:text-amber-300 font-semibold">{t('admProducts.pmCreditsPrice')}</Label>
               </div>
               <Input
                 id="credits_cost_eur"
@@ -985,12 +987,11 @@ export function ProductsManager() {
                 min="0"
                 value={formData.credits_cost_eur}
                 onChange={(e) => setFormData(prev => ({ ...prev, credits_cost_eur: e.target.value }))}
-                placeholder="Palikti tuščią jei negalima įsigyti už kreditus"
+                placeholder={t('admProducts.pmCreditsPh')}
                 className="bg-white dark:bg-background"
               />
               <p className="text-xs text-amber-600 dark:text-amber-400">
-                Kiek kreditų (EUR vertė) reikia, kad klientas galėtų gauti šį produktą nemokamai. 
-                Jei tuščia - produkto negalima įsigyti už kreditus.
+                {t('admProducts.pmCreditsHint')}
               </p>
             </div>
 
@@ -999,7 +1000,7 @@ export function ProductsManager() {
               value={formData.images}
               onChange={(urls) => setFormData(prev => ({ ...prev, images: urls }))}
               folder="products"
-              label="Konstruktoriaus nuotraukos"
+              label={t('admProducts.pmImagesLabel')}
               maxImages={10}
             />
           </div>
@@ -1013,18 +1014,18 @@ export function ProductsManager() {
 
           <DialogFooter>
             <Button variant="outline" onClick={() => setFormOpen(false)}>
-              Atšaukti
+              {t('common.cancel')}
             </Button>
             <Button onClick={handleSave} disabled={saving}>
               {saving ? (
                 <>
                   <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
-                  Saugoma...
+                  {t('admCommon.saving')}
                 </>
               ) : (
                 <>
                   <Save className="w-4 h-4 mr-2" />
-                  {editingProduct ? 'Atnaujinti' : 'Sukurti'}
+                  {editingProduct ? t('admProducts.catUpdate') : t('admProducts.catCreate')}
                 </>
               )}
             </Button>
@@ -1036,16 +1037,15 @@ export function ProductsManager() {
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Ištrinti produktą?</AlertDialogTitle>
+            <AlertDialogTitle>{t('admProducts.pmDeleteTitle')}</AlertDialogTitle>
             <AlertDialogDescription>
-              Ar tikrai norite ištrinti "{productToDelete?.title}"? 
-              Šis veiksmas negrįžtamas.
+              {t('admProducts.offerDeleteDesc', { title: productToDelete?.title })}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Atšaukti</AlertDialogCancel>
+            <AlertDialogCancel>{t('common.cancel')}</AlertDialogCancel>
             <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-              Ištrinti
+              {t('common.delete')}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -1057,12 +1057,12 @@ export function ProductsManager() {
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-destructive">
               <AlertTriangle className="w-5 h-5" />
-              Ištrinti VISUS produktus?
+              {t('admProducts.pmDeleteAllTitle')}
             </DialogTitle>
             <DialogDescription>
-              Bus bandoma ištrinti {products.length} produkt{products.length === 1 ? 'ą' : 'us'}.
-              Produktai, kurie turi užsakymų, bus deaktyvuoti (ne pašalinti), kad išsaugotų istoriją.
-              Šis veiksmas negrįžtamas. Įrašykite <strong>IŠTRINTI</strong>, kad patvirtintumėte.
+              {products.length === 1 ? t('admProducts.pmDeleteAllCountOne', { num: products.length }) : t('admProducts.pmDeleteAllCountMany', { num: products.length })}
+              {t('admProducts.pmDeleteAllHint1')}
+              {t('admProducts.pmDeleteAllHint2')} <strong>IŠTRINTI</strong>{t('admProducts.pmDeleteAllHint3')}
             </DialogDescription>
           </DialogHeader>
           <Input
@@ -1077,7 +1077,7 @@ export function ProductsManager() {
           )}
           <DialogFooter>
             <Button variant="outline" onClick={() => setDeleteAllOpen(false)} disabled={deletingAll}>
-              Atšaukti
+              {t('common.cancel')}
             </Button>
             <Button
               variant="destructive"
@@ -1089,7 +1089,7 @@ export function ProductsManager() {
               ) : (
                 <Trash2 className="w-4 h-4 mr-2" />
               )}
-              Ištrinti visus
+              {t('admProducts.pmDeleteAllConfirm')}
             </Button>
           </DialogFooter>
         </DialogContent>

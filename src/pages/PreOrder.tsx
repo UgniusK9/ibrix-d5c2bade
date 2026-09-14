@@ -1,29 +1,9 @@
 import { Link } from "react-router-dom";
 import { ArrowRight, Clock, Package, Truck, RotateCcw, Headphones, CheckCircle2, ShieldCheck } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { PageLayout } from "@/components/layout/PageLayout";
 import { RouteSEO } from "@/components/seo/RouteSEO";
 import { Button } from "@/components/ui/button";
-
-const steps = [
-  {
-    number: "01",
-    title: "Užsisakote",
-    description: "Išsirenkate norimą variklį ir pateikiate užsakymą. Apmokėjimas atliekamas iš karto – tai rezervuoja jūsų vietą partijoje.",
-    icon: ShoppingCart,
-  },
-  {
-    number: "02",
-    title: "Partija ruošiama",
-    description: "Jūsų produktas gamykloje surenkamas ir siunčiamas į Lietuvą. Paprastai tai trunka 8–10 savaičių.",
-    icon: Package,
-  },
-  {
-    number: "03",
-    title: "Išsiunčiame jums",
-    description: "Kai tik produktas pasiekia mūsų sandėlį, per 1–2 darbo dienas išsiunčiame į pasirinktą paštomatą – nemokamai.",
-    icon: Truck,
-  },
-];
 
 function ShoppingCart({ className }: { className?: string }) {
   return (
@@ -33,30 +13,53 @@ function ShoppingCart({ className }: { className?: string }) {
   );
 }
 
-const bulletPoints = [
-  {
-    icon: Clock,
-    title: "Terminas visada aiškiai nurodytas",
-    description: "Kiekvieno produkto puslapyje matote tikslų pristatymo terminą.",
-  },
-  {
-    icon: RotateCcw,
-    title: "Atšaukti galima bet kada iki išsiuntimo",
-    description: "Persigalvojote? Grąžiname pilną sumą be jokių klausimų.",
-  },
-  {
-    icon: Truck,
-    title: "Nemokamas siuntimas į paštomatą",
-    description: "Siuntimas į bet kurį Omniva, LP Express ar DPD paštomatą Lietuvoje nemokamas.",
-  },
-  {
-    icon: Headphones,
-    title: "Pagalba lietuviškai + trūkstamų detalių sprendimas",
-    description: "Mūsų komanda padeda lietuviškai. Jei trūksta detalių – sprendžiame nemokamai.",
-  },
-];
-
 export default function PreOrder() {
+  const { t } = useTranslation();
+
+  const steps = [
+    {
+      number: "01",
+      title: t("pgPreorder.step1Title"),
+      description: t("pgPreorder.step1Desc"),
+      icon: ShoppingCart,
+    },
+    {
+      number: "02",
+      title: t("pgPreorder.step2Title"),
+      description: t("pgPreorder.step2Desc"),
+      icon: Package,
+    },
+    {
+      number: "03",
+      title: t("pgPreorder.step3Title"),
+      description: t("pgPreorder.step3Desc"),
+      icon: Truck,
+    },
+  ];
+
+  const bulletPoints = [
+    {
+      icon: Clock,
+      title: t("pgPreorder.bullet1Title"),
+      description: t("pgPreorder.bullet1Desc"),
+    },
+    {
+      icon: RotateCcw,
+      title: t("pgPreorder.bullet2Title"),
+      description: t("pgPreorder.bullet2Desc"),
+    },
+    {
+      icon: Truck,
+      title: t("pgPreorder.bullet3Title"),
+      description: t("pgPreorder.bullet3Desc"),
+    },
+    {
+      icon: Headphones,
+      title: t("pgPreorder.bullet4Title"),
+      description: t("pgPreorder.bullet4Desc"),
+    },
+  ];
+
   return (
     <PageLayout>
       <RouteSEO />
@@ -66,14 +69,13 @@ export default function PreOrder() {
           <div className="max-w-3xl mx-auto text-center mb-16">
             <span className="inline-flex items-center gap-2 text-xs font-semibold text-primary uppercase tracking-widest mb-4">
               <Clock className="w-4 h-4" />
-              Pre-order sistema
+              {t("pgPreorder.badge")}
             </span>
             <h1 className="font-heading text-4xl md:text-5xl font-bold mb-6">
-              Kaip veikia pre-order?
+              {t("pgPreorder.title")}
             </h1>
             <p className="text-lg text-muted-foreground">
-              Pre-order leidžia užsisakyti produktą, kurio šiuo metu nėra sandėlyje. 
-              Tai paprasta, saugu ir visiškai skaidru – štai kaip tai veikia.
+              {t("pgPreorder.subtitle")}
             </p>
           </div>
 
@@ -123,15 +125,13 @@ export default function PreOrder() {
                 <Clock className="w-8 h-8 text-accent" />
               </div>
               <h2 className="font-heading text-2xl font-bold mb-2">
-                8–10 savaičių
+                {t("pgPreorder.etaTitle")}
               </h2>
               <p className="text-muted-foreground mb-4">
-                Standartinis pre-order pristatymo laikas nuo užsakymo pateikimo
+                {t("pgPreorder.etaSubtitle")}
               </p>
               <p className="text-sm text-muted-foreground">
-                Kodėl tiek? Produktai siunčiami DDP (pristatymas iki durų) iš gamyklos, 
-                įskaitant visus muitus ir mokesčius. Tai užtikrina, kad jūs gaunate produktą 
-                be papildomų išlaidų.
+                {t("pgPreorder.etaExplanation")}
               </p>
             </div>
           </div>
@@ -142,10 +142,10 @@ export default function PreOrder() {
       <section className="py-16 md:py-24">
         <div className="container">
           <h2 className="font-heading text-2xl md:text-3xl font-bold text-center mb-4">
-            Svarbiausia žinoti
+            {t("pgPreorder.importantTitle")}
           </h2>
           <p className="text-muted-foreground text-center mb-12 max-w-xl mx-auto">
-            Mūsų pre-order sistema sukurta taip, kad būtų kuo paprastesnė ir saugesnė
+            {t("pgPreorder.importantSubtitle")}
           </p>
 
           <div className="grid md:grid-cols-2 gap-6 max-w-4xl mx-auto">
@@ -170,16 +170,16 @@ export default function PreOrder() {
           <div className="max-w-3xl mx-auto text-center">
             <ShieldCheck className="w-12 h-12 mx-auto mb-4 text-accent" />
             <h2 className="font-heading text-2xl font-bold mb-4">
-              Atšaukimo politika
+              {t("pgPreorder.cancellationTitle")}
             </h2>
             <p className="text-primary-foreground/80 mb-6">
-              Persigalvojote arba aplinkybės pasikeitė? Jokių problemų. 
-              Galite atšaukti savo pre-order užsakymą bet kada iki produkto išsiuntimo 
-              iš mūsų sandėlio. Grąžiname <strong>100% sumos</strong> per 5–7 darbo dienas.
+              {t("pgPreorder.cancellationBefore")}{" "}
+              <strong>{t("pgPreorder.cancellationHighlight")}</strong>{" "}
+              {t("pgPreorder.cancellationAfter")}
             </p>
             <div className="flex items-center justify-center gap-2 text-accent">
               <CheckCircle2 className="w-5 h-5" />
-              <span className="font-medium">Be jokių papildomų mokesčių ar klausimų</span>
+              <span className="font-medium">{t("pgPreorder.cancellationNote")}</span>
             </div>
           </div>
         </div>
@@ -190,14 +190,14 @@ export default function PreOrder() {
         <div className="container">
           <div className="max-w-2xl mx-auto text-center">
             <h2 className="font-heading text-2xl md:text-3xl font-bold mb-4">
-              Pasiruošę užsisakyti?
+              {t("pgPreorder.readyTitle")}
             </h2>
             <p className="text-muted-foreground mb-8">
-              Peržiūrėkite mūsų variklio modelių kolekciją ir išsirinkite savo mėgstamą
+              {t("pgPreorder.readyDesc")}
             </p>
             <Button asChild size="lg" className="bg-accent hover:bg-accent/90 text-accent-foreground">
               <Link to="/produktai/visi">
-                Peržiūrėti konstruktorius
+                {t("pgPreorder.browseConstructors")}
                 <ArrowRight className="ml-2 h-5 w-5" />
               </Link>
             </Button>

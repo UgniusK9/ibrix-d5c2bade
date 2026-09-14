@@ -63,7 +63,7 @@ export default function SignupStep2() {
   };
 
   const passwordStrength = getPasswordStrength(password);
-  const strengthLabels = ['', 'Labai silpnas', 'Silpnas', 'Vidutinis', 'Stiprus', 'Labai stiprus'];
+  const strengthLabels = ['', 'pgAuthX.pwVeryWeak', 'pgAuthX.pwWeak', 'pgAuthX.pwMedium', 'pgAuthX.pwStrong', 'pgAuthX.pwVeryStrong'];
   const strengthColors = ['', 'bg-destructive', 'bg-orange-500', 'bg-yellow-500', 'bg-green-500', 'bg-green-600'];
 
   useEffect(() => {
@@ -205,7 +205,7 @@ export default function SignupStep2() {
       if (error || !data?.success) {
         setIsLoading(false);
         resetCaptcha();
-        toast.error(data?.error || error?.message || 'Registracijos klaida');
+        toast.error(data?.error || error?.message || t('pgAuthX.regError'));
         return;
       }
 
@@ -213,11 +213,11 @@ export default function SignupStep2() {
       localStorage.removeItem('signup_step1');
 
       setIsLoading(false);
-      toast.success('Patvirtinimo kodas išsiųstas į el. paštą');
+      toast.success(t('pgAuthX.codeSentToast'));
       navigate('/auth/verify-email', { state: { email, firstName } });
     } catch (err: any) {
       setIsLoading(false);
-      toast.error(err.message || 'Registracijos klaida');
+      toast.error(err.message || t('pgAuthX.regError'));
     }
   };
 
@@ -358,20 +358,20 @@ export default function SignupStep2() {
                     ))}
                   </div>
                   <p className={`text-xs ${passwordStrength.score >= 4 ? 'text-success' : 'text-muted-foreground'}`}>
-                    {strengthLabels[passwordStrength.score]}
+                    {t(strengthLabels[passwordStrength.score])}
                   </p>
                   <div className="text-xs text-muted-foreground space-y-0.5">
                     <p className={passwordStrength.checks.length ? 'text-success' : ''}>
-                      {passwordStrength.checks.length ? '✓' : '○'} Mažiausiai 8 simboliai
+                      {passwordStrength.checks.length ? '✓' : '○'} {t('authFlow.passwordMin8')}
                     </p>
                     <p className={passwordStrength.checks.uppercase ? 'text-success' : ''}>
-                      {passwordStrength.checks.uppercase ? '✓' : '○'} Didžioji raidė (A-Z)
+                      {passwordStrength.checks.uppercase ? '✓' : '○'} {t('pgAuthX.pwUppercase')}
                     </p>
                     <p className={passwordStrength.checks.number ? 'text-success' : ''}>
-                      {passwordStrength.checks.number ? '✓' : '○'} Skaičius (0-9)
+                      {passwordStrength.checks.number ? '✓' : '○'} {t('pgAuthX.pwNumber')}
                     </p>
                     <p className={passwordStrength.checks.special ? 'text-success' : ''}>
-                      {passwordStrength.checks.special ? '✓' : '○'} Specialus simbolis (!@#$...)
+                      {passwordStrength.checks.special ? '✓' : '○'} {t('pgAuthX.pwSpecial')}
                     </p>
                   </div>
                 </div>

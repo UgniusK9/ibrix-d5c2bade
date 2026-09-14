@@ -7,6 +7,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { supabase } from '@/integrations/supabase/client';
+import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
@@ -79,6 +80,7 @@ const formatPrice = (amount: number) => {
 };
 
 export function OffersManager() {
+  const { t } = useTranslation();
   const [offers, setOffers] = useState<Offer[]>([]);
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
@@ -111,7 +113,7 @@ export function OffersManager() {
       }
     } catch (e: any) {
       console.error('Failed to load offers:', e);
-      toast.error('Nepavyko užkrauti pasiūlymų');
+      toast.error(t('admProducts.offerLoadError'));
     } finally {
       setLoading(false);
     }
@@ -166,14 +168,14 @@ export function OffersManager() {
   };
 
   const validateForm = (): string | null => {
-    if (!formData.title.trim()) return 'Pavadinimas yra privalomas';
-    if (!formData.code.trim()) return 'Kodas yra privalomas';
+    if (!formData.title.trim()) return t('admProducts.offerTitleRequired');
+    if (!formData.code.trim()) return t('admProducts.offerCodeRequired');
     
     const value = parseFloat(formData.value);
-    if (isNaN(value) || value <= 0) return 'Reikšmė turi būti didesnė nei 0';
+    if (isNaN(value) || value <= 0) return t('admProducts.offerValuePositive');
     
     if (formData.type === 'percent' && value > 100) {
-      return 'Procentinė nuolaida negali viršyti 100%';
+      return t('admProducts.offerPercentMax');
     }
     
     return null;
@@ -209,12 +211,12 @@ export function OffersManager() {
 
       if (error) throw error;
       
-      toast.success(editingOffer ? 'Pasiūlymas atnaujintas' : 'Pasiūlymas sukurtas');
+      toast.success(editingOffer ? t('admProducts.offerUpdated') : t('admProducts.offerCreated'));
       setFormOpen(false);
       loadOffers();
     } catch (e: any) {
       console.error('Failed to save offer:', e);
-      toast.error(e.message || 'Nepavyko išsaugoti pasiūlymo');
+      toast.error(e.message || t('admProducts.offerSaveError'));
     } finally {
       setSaving(false);
     }
@@ -230,19 +232,19 @@ export function OffersManager() {
 
       if (error) throw error;
       
-      toast.success('Pasiūlymas ištrintas');
+      toast.success(t('admProducts.offerDeleted'));
       setDeleteDialogOpen(false);
       setOfferToDelete(null);
       loadOffers();
     } catch (e: any) {
       console.error('Failed to delete offer:', e);
-      toast.error(e.message || 'Nepavyko ištrinti pasiūlymo');
+      toast.error(e.message || t('admProducts.offerDeleteError'));
     }
   };
 
   const handleAssign = async () => {
     if (!assigningOffer || (!selectedUserId && !selectedSegment)) {
-      toast.error('Pasirinkite vartotoją arba segmentą');
+      toast.error(t('admProducts.offerSelectTarget'));
       return;
     }
 
@@ -258,7 +260,7 @@ export function OffersManager() {
 
       if (error) throw error;
       
-      toast.success('Pasiūlymas priskirtas');
+      toast.success(t('admProducts.offerAssigned'));
       setAssignDialogOpen(false);
       setAssigningOffer(null);
       setSelectedUserId('');
@@ -266,7 +268,7 @@ export function OffersManager() {
       loadOffers();
     } catch (e: any) {
       console.error('Failed to assign offer:', e);
-      toast.error(e.message || 'Nepavyko priskirti pasiūlymo');
+      toast.error(e.message || t('admProducts.offerAssignError'));
     }
   };
 
@@ -294,7 +296,7 @@ export function OffersManager() {
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <Input
-              placeholder="Ieškoti..."
+              placeholder={t('admCommon.searchPh')}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="pl-9 w-48"
@@ -305,11 +307,11 @@ export function OffersManager() {
         <div className="flex gap-2">
           <Button onClick={loadOffers} variant="outline" size="sm" disabled={loading}>
             <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
-            Atnaujinti
+            {t('admCommon.refresh')}
           </Button>
           <Button onClick={openCreateForm}>
             <Plus className="w-4 h-4 mr-2" />
-            Naujas pasiūlymas
+            {t('admProducts.offerNew')}
           </Button>
         </div>
       </div>
@@ -318,18 +320,18 @@ export function OffersManager() {
       {loading ? (
         <div className="text-center py-12">
           <RefreshCw className="w-8 h-8 animate-spin mx-auto text-muted-foreground" />
-          <p className="text-muted-foreground mt-2">Kraunama...</p>
+          <p className="text-muted-foreground mt-2">{t('common.loading')}</p>
         </div>
       ) : filteredOffers.length === 0 ? (
         <div className="text-center py-12">
           <Tag className="w-16 h-16 text-muted-foreground/30 mx-auto mb-4" />
           <h2 className="font-heading text-xl font-semibold mb-2">
-            {offers.length === 0 ? 'Nėra pasiūlymų' : 'Nerasta pasiūlymų'}
+            {offers.length === 0 ? t('admProducts.offerEmpty') : t('admProducts.offerNoResults')}
           </h2>
           <p className="text-muted-foreground">
             {offers.length === 0 
-              ? 'Sukurkite pirmą pasiūlymą spaudžiant "Naujas pasiūlymas"' 
-              : 'Pabandykite pakeisti paiešką'}
+              ? t('admProducts.offerCreateFirst', { action: t('admProducts.offerNew') }) 
+              : t('admProducts.offerTrySearch')}
           </p>
         </div>
       ) : (
@@ -337,12 +339,12 @@ export function OffersManager() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Pasiūlymas</TableHead>
-                <TableHead>Kodas</TableHead>
-                <TableHead>Nuolaida</TableHead>
-                <TableHead>Statusas</TableHead>
-                <TableHead>Galioja</TableHead>
-                <TableHead>Panaudota</TableHead>
+                <TableHead>{t('admProducts.offerOffer')}</TableHead>
+                <TableHead>{t('admCredits.giftCode')}</TableHead>
+                <TableHead>{t('cart.discount')}</TableHead>
+                <TableHead>{t('admCommon.statusLabel')}</TableHead>
+                <TableHead>{t('admProducts.offerValid')}</TableHead>
+                <TableHead>{t('admProducts.offerUsed')}</TableHead>
                 <TableHead></TableHead>
               </TableRow>
             </TableHeader>
@@ -369,17 +371,17 @@ export function OffersManager() {
                   </TableCell>
                   <TableCell>
                     <Badge variant="outline" className={offer.active ? 'bg-green-500/10 text-green-600' : 'bg-muted text-muted-foreground'}>
-                      {offer.active ? 'Aktyvus' : 'Neaktyvus'}
+                      {offer.active ? t('admCommon.active') : t('admCommon.inactive')}
                     </Badge>
                   </TableCell>
                   <TableCell className="text-sm text-muted-foreground">
                     {offer.starts_at || offer.ends_at ? (
                       <div>
-                        {offer.starts_at && <p>Nuo: {new Date(offer.starts_at).toLocaleDateString('lt-LT')}</p>}
-                        {offer.ends_at && <p>Iki: {new Date(offer.ends_at).toLocaleDateString('lt-LT')}</p>}
+                        {offer.starts_at && <p>{t('admProducts.offerFrom', { date: new Date(offer.starts_at).toLocaleDateString('lt-LT') })}</p>}
+                        {offer.ends_at && <p>{t('admProducts.offerTo', { date: new Date(offer.ends_at).toLocaleDateString('lt-LT') })}</p>}
                       </div>
                     ) : (
-                      'Neribotas'
+                      t('admProducts.offerUnlimited')
                     )}
                   </TableCell>
                   <TableCell>
@@ -405,18 +407,18 @@ export function OffersManager() {
                       <DropdownMenuContent align="end">
                         <DropdownMenuItem onClick={() => openEditForm(offer)}>
                           <Edit className="w-4 h-4 mr-2" />
-                          Redaguoti
+                          {t('common.edit')}
                         </DropdownMenuItem>
                         <DropdownMenuItem onClick={() => { setAssigningOffer(offer); setAssignDialogOpen(true); }}>
                           <Users className="w-4 h-4 mr-2" />
-                          Priskirti
+                          {t('admProducts.offerAssign')}
                         </DropdownMenuItem>
                         <DropdownMenuItem 
                           onClick={() => { setOfferToDelete(offer); setDeleteDialogOpen(true); }}
                           className="text-destructive"
                         >
                           <Trash2 className="w-4 h-4 mr-2" />
-                          Ištrinti
+                          {t('common.delete')}
                         </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
@@ -433,38 +435,38 @@ export function OffersManager() {
         <DialogContent className="max-w-lg">
           <DialogHeader>
             <DialogTitle className="font-heading">
-              {editingOffer ? 'Redaguoti pasiūlymą' : 'Naujas pasiūlymas'}
+              {editingOffer ? t('admProducts.offerEditTitle') : t('admProducts.offerNew')}
             </DialogTitle>
             <DialogDescription>
-              {editingOffer ? `Redaguojamas: ${editingOffer.title}` : 'Sukurkite naują nuolaidos pasiūlymą'}
+              {editingOffer ? t('admProducts.offerEditing', { title: editingOffer.title }) : t('admProducts.offerCreateDesc')}
             </DialogDescription>
           </DialogHeader>
 
           <div className="space-y-4 py-4">
             <div>
-              <Label htmlFor="title">Pavadinimas *</Label>
+              <Label htmlFor="title">{t('admCommon.name')} *</Label>
               <Input
                 id="title"
                 value={formData.title}
                 onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
-                placeholder="Vasaros nuolaida"
+                placeholder={t('admProducts.offerTitlePh')}
               />
             </div>
 
             <div>
-              <Label htmlFor="description">Aprašymas</Label>
+              <Label htmlFor="description">{t('products.description')}</Label>
               <Textarea
                 id="description"
                 value={formData.description}
                 onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
-                placeholder="Specialus pasiūlymas..."
+                placeholder={t('admProducts.offerDescPh')}
                 rows={2}
               />
             </div>
 
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <Label htmlFor="code">Kodas *</Label>
+                <Label htmlFor="code">{t('admCredits.giftCode')} *</Label>
                 <Input
                   id="code"
                   value={formData.code}
@@ -479,14 +481,14 @@ export function OffersManager() {
                   size="sm"
                   onClick={() => setFormData(prev => ({ ...prev, code: generateCode() }))}
                 >
-                  Generuoti
+                  {t('admProducts.offerGenerate')}
                 </Button>
               </div>
             </div>
 
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <Label>Tipas</Label>
+                <Label>{t('admCommon.type')}</Label>
                 <Select 
                   value={formData.type} 
                   onValueChange={(v) => setFormData(prev => ({ ...prev, type: v as OfferType }))}
@@ -495,13 +497,13 @@ export function OffersManager() {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="percent">Procentai (%)</SelectItem>
-                    <SelectItem value="fixed">Fiksuota suma (€)</SelectItem>
+                    <SelectItem value="percent">{t('admProducts.offerPercent')}</SelectItem>
+                    <SelectItem value="fixed">{t('admOrders.cartsFixed')}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
               <div>
-                <Label htmlFor="value">Reikšmė *</Label>
+                <Label htmlFor="value">{t('admProducts.offerValue')} *</Label>
                 <Input
                   id="value"
                   type="number"
@@ -517,7 +519,7 @@ export function OffersManager() {
 
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <Label htmlFor="starts_at">Galioja nuo</Label>
+                <Label htmlFor="starts_at">{t('admProducts.offerValidFrom')}</Label>
                 <Input
                   id="starts_at"
                   type="date"
@@ -526,7 +528,7 @@ export function OffersManager() {
                 />
               </div>
               <div>
-                <Label htmlFor="ends_at">Galioja iki</Label>
+                <Label htmlFor="ends_at">{t('admProducts.offerValidTo')}</Label>
                 <Input
                   id="ends_at"
                   type="date"
@@ -537,7 +539,7 @@ export function OffersManager() {
             </div>
 
             <div className="flex items-center justify-between">
-              <Label htmlFor="active">Aktyvus</Label>
+              <Label htmlFor="active">{t('admCommon.active')}</Label>
               <Switch
                 id="active"
                 checked={formData.active}
@@ -548,16 +550,16 @@ export function OffersManager() {
 
           <DialogFooter>
             <Button variant="outline" onClick={() => setFormOpen(false)}>
-              Atšaukti
+              {t('common.cancel')}
             </Button>
             <Button onClick={handleSave} disabled={saving}>
               {saving ? (
                 <>
                   <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
-                  Saugoma...
+                  {t('admCommon.saving')}
                 </>
               ) : (
-                editingOffer ? 'Atnaujinti' : 'Sukurti'
+                (editingOffer ? t('admProducts.catUpdate') : t('admProducts.catCreate'))
               )}
             </Button>
           </DialogFooter>
@@ -568,18 +570,18 @@ export function OffersManager() {
       <Dialog open={assignDialogOpen} onOpenChange={setAssignDialogOpen}>
         <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle className="font-heading">Priskirti pasiūlymą</DialogTitle>
+            <DialogTitle className="font-heading">{t('admProducts.offerAssignTitle')}</DialogTitle>
             <DialogDescription>
-              Priskirti "{assigningOffer?.title}" vartotojui arba segmentui
+              {t('admProducts.offerAssignDesc', { title: assigningOffer?.title })}
             </DialogDescription>
           </DialogHeader>
 
           <div className="space-y-4 py-4">
             <div>
-              <Label>Vartotojas</Label>
+              <Label>{t('admCommon.user')}</Label>
               <Select value={selectedUserId} onValueChange={setSelectedUserId}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Pasirinkti vartotoją..." />
+                  <SelectValue placeholder={t('admProducts.offerSelectUser')} />
                 </SelectTrigger>
                 <SelectContent>
                   {users.map(user => (
@@ -591,19 +593,19 @@ export function OffersManager() {
               </Select>
             </div>
 
-            <div className="text-center text-sm text-muted-foreground">arba</div>
+            <div className="text-center text-sm text-muted-foreground">{t('common.or')}</div>
 
             <div>
-              <Label>Segmentas</Label>
+              <Label>{t('admProducts.offerSegment')}</Label>
               <Select value={selectedSegment} onValueChange={(v) => setSelectedSegment(v as SegmentKey)}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Pasirinkti segmentą..." />
+                  <SelectValue placeholder={t('admProducts.offerSelectSegment')} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="CART_ABANDONER">Nebaigę pirkimo</SelectItem>
-                  <SelectItem value="HIGH_INTENT">Aukštas susidomėjimas</SelectItem>
-                  <SelectItem value="RETURNING">Grįžtantys</SelectItem>
-                  <SelectItem value="NEW_USER">Nauji vartotojai</SelectItem>
+                  <SelectItem value="CART_ABANDONER">{t('admProducts.offerSegAbandoned')}</SelectItem>
+                  <SelectItem value="HIGH_INTENT">{t('admProducts.offerSegHighIntent')}</SelectItem>
+                  <SelectItem value="RETURNING">{t('admProducts.offerSegReturning')}</SelectItem>
+                  <SelectItem value="NEW_USER">{t('admProducts.offerSegNew')}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -611,10 +613,10 @@ export function OffersManager() {
 
           <DialogFooter>
             <Button variant="outline" onClick={() => setAssignDialogOpen(false)}>
-              Atšaukti
+              {t('common.cancel')}
             </Button>
             <Button onClick={handleAssign}>
-              Priskirti
+              {t('admProducts.offerAssign')}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -624,16 +626,15 @@ export function OffersManager() {
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Ištrinti pasiūlymą?</AlertDialogTitle>
+            <AlertDialogTitle>{t('admProducts.offerDeleteTitle')}</AlertDialogTitle>
             <AlertDialogDescription>
-              Ar tikrai norite ištrinti "{offerToDelete?.title}"? 
-              Šis veiksmas negrįžtamas.
+              {t('admProducts.offerDeleteDesc', { title: offerToDelete?.title })}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Atšaukti</AlertDialogCancel>
+            <AlertDialogCancel>{t('common.cancel')}</AlertDialogCancel>
             <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-              Ištrinti
+              {t('common.delete')}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

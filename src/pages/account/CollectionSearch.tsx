@@ -84,7 +84,7 @@ export default function CollectionSearch() {
           className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground mb-6 transition-colors"
         >
           <ArrowLeft className="w-4 h-4" />
-          Grįžti į mano kolekciją
+          {t('pgCollect.backToCollection')}
         </Link>
 
         {/* Hero */}
@@ -93,17 +93,17 @@ export default function CollectionSearch() {
             <Users className="w-8 h-8 text-primary" />
           </div>
           <h1 className="font-heading text-2xl md:text-3xl font-bold mb-2">
-            Kolekcijų paieška
+            {t('pgCollect.title')}
           </h1>
           <p className="text-muted-foreground">
-            Raskite kitų konstruktorių mėgėjų kolekcijas pagal jų slapyvardį
+            {t('pgCollect.subtitle')}
           </p>
         </div>
 
         {/* Search Input */}
         <div className="flex gap-2 max-w-md mx-auto mb-8">
           <Input
-            placeholder="Įveskite slapyvardį..."
+            placeholder={t('pgCollect.searchPlaceholder')}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             onKeyDown={handleKeyDown}
@@ -133,10 +133,10 @@ export default function CollectionSearch() {
             <CardContent>
               <Lock className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
               <h3 className="font-heading font-semibold text-lg mb-2">
-                Kolekcija nerasta arba privati
+                {t('pgCollect.notFoundTitle')}
               </h3>
               <p className="text-muted-foreground">
-                Šis vartotojas neturi viešos kolekcijos arba tokio slapyvardžio nėra.
+                {t('pgCollect.notFoundDesc')}
               </p>
             </CardContent>
           </Card>
@@ -146,9 +146,9 @@ export default function CollectionSearch() {
           <>
             <div className="flex items-center justify-between mb-6">
               <h2 className="font-heading font-semibold text-lg">
-                {searchQuery} kolekcija
+                {t('pgCollect.userCollection', { username: searchQuery })}
               </h2>
-              <Badge variant="outline">{results.length} konstruktorių</Badge>
+              <Badge variant="outline">{t('pgCollect.buildersCount', { total: results.length })}</Badge>
             </div>
 
             <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -173,7 +173,7 @@ export default function CollectionSearch() {
                             : 'bg-amber-500 text-white'
                         }`}
                       >
-                        {item.source === 'online' ? 'E-parduotuvė' : 'Parduotuvė'}
+                        {item.source === 'online' ? t('pgCollect.sourceOnline') : t('pgCollect.sourceOffline')}
                       </Badge>
                     </div>
                     {item.quantity > 1 && (
@@ -194,7 +194,7 @@ export default function CollectionSearch() {
                       {item.product_details_json?.detailsCount && (
                         <span className="flex items-center gap-1">
                           <Package className="w-3.5 h-3.5" />
-                          {item.product_details_json.detailsCount as number} det.
+                          {item.product_details_json.detailsCount as number} {t('products.pieces')}
                         </span>
                       )}
                     </div>
@@ -210,7 +210,7 @@ export default function CollectionSearch() {
           <Card className="bg-muted/50">
             <CardContent className="p-6 text-center">
               <p className="text-sm text-muted-foreground">
-                <strong>Pastaba:</strong> Matomos tik tos kolekcijos, kurių savininkai įjungė viešą rodymą nustatymuose.
+                <strong>{t('pgCollect.noteLabel')}</strong> {t('pgCollect.noteText')}
               </p>
             </CardContent>
           </Card>

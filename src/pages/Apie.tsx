@@ -1,33 +1,36 @@
 import { Clock, Truck, Headphones, Puzzle, ArrowRight } from "lucide-react";
 import { Link } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { PageLayout } from "@/components/layout/PageLayout";
 import { RouteSEO } from "@/components/seo/RouteSEO";
 import { Button } from "@/components/ui/button";
 
-const expectations = [
-  {
-    icon: Clock,
-    title: "Aiškus pre-order",
-    description: "Visada žinosite, kada tikėtis produkto. Terminai nurodyti kiekvieno modelio puslapyje.",
-  },
-  {
-    icon: Truck,
-    title: "Nemokamas pristatymas į paštomatą",
-    description: "Pristatome nemokamai į bet kurį paštomatą Lietuvoje – Omniva, LP Express ar DPD.",
-  },
-  {
-    icon: Headphones,
-    title: "Pagalba lietuviškai",
-    description: "Mūsų komanda kalba lietuviškai ir pasiruošusi padėti bet kokiu klausimu.",
-  },
-  {
-    icon: Puzzle,
-    title: "Trūkstamos detalės išsprendžiamos",
-    description: "Jei jūsų rinkinyje trūksta detalės – išspręsime per 5 darbo dienas, nemokamai.",
-  },
-];
-
 export default function Apie() {
+  const { t } = useTranslation();
+
+  const expectations = [
+    {
+      icon: Clock,
+      title: t("pgAbout.exp1Title"),
+      description: t("pgAbout.exp1Desc"),
+    },
+    {
+      icon: Truck,
+      title: t("pgAbout.exp2Title"),
+      description: t("pgAbout.exp2Desc"),
+    },
+    {
+      icon: Headphones,
+      title: t("pgAbout.exp3Title"),
+      description: t("pgAbout.exp3Desc"),
+    },
+    {
+      icon: Puzzle,
+      title: t("pgAbout.exp4Title"),
+      description: t("pgAbout.exp4Desc"),
+    },
+  ];
+
   return (
     <PageLayout>
       <RouteSEO />
@@ -36,33 +39,28 @@ export default function Apie() {
           <div className="max-w-3xl mx-auto">
             {/* Header */}
             <h1 className="font-heading text-4xl md:text-5xl font-bold mb-8">
-              Apie IBRIX
+              {t("pgAbout.title")}
             </h1>
 
             {/* Story */}
             <div className="prose prose-lg max-w-none mb-16">
               <p className="text-lg text-muted-foreground leading-relaxed mb-6">
-                IBRIX – judančių mechaninių variklių modelių parduotuvė Lietuvoje. 
-                Mūsų fokusas – judantys variklių modeliai, kurie ne tik gražiai atrodo, bet ir realiai juda.
+                {t("pgAbout.story1")}
               </p>
               
               <p className="text-lg text-muted-foreground leading-relaxed mb-6">
-                Tokie modeliai dažnai užsakomi iš užsienio su neaiškiais terminais ir jokios pagalbos. 
-                Mes norėjome, kad būtų paprasčiau: aiškus pre-order, normalus aptarnavimas ir sprendimai, 
-                jei kažkas ne taip.
+                {t("pgAbout.story2")}
               </p>
 
               <p className="text-lg text-muted-foreground leading-relaxed">
-                Dirbame su tiekėjais taip, kad galėtume nurodyti realius terminus. 
-                Jei trūksta detalės – ją atsiunčiame. Jei persigalvojote iki išsiuntimo – atšaukiate. 
-                Jei prekė netinka – grąžinate per 14 dienų.
+                {t("pgAbout.story3")}
               </p>
             </div>
 
             {/* Expectations Card */}
             <div className="bg-card border border-border rounded-2xl p-8">
               <h2 className="font-heading text-2xl font-bold mb-6">
-                Ko tikėtis dirbant su ibrix
+                {t("pgAbout.expectationsTitle")}
               </h2>
               
               <div className="grid sm:grid-cols-2 gap-6">
@@ -83,18 +81,18 @@ export default function Apie() {
             {/* CTA */}
             <div className="mt-12 text-center">
               <p className="text-muted-foreground mb-6">
-                Turite klausimų? Parašykite mums arba peržiūrėkite kolekciją.
+                {t("pgAbout.ctaText")}
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
                 <Button asChild size="lg" className="bg-accent hover:bg-accent/90 text-accent-foreground">
                   <Link to="/produktai/visi">
-                    Peržiūrėti konstruktorius
+                    {t("pgAbout.browseConstructors")}
                     <ArrowRight className="ml-2 h-5 w-5" />
                   </Link>
                 </Button>
                 <Button asChild variant="outline" size="lg">
                   <Link to="/kontaktai">
-                    Susisiekti
+                    {t("pgAbout.contactCta")}
                   </Link>
                 </Button>
               </div>

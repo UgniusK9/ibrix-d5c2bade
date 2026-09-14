@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Loader2, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
@@ -13,14 +14,6 @@ import {
 } from '@/components/ui/dialog';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-
-const REFUND_REASONS = [
-  { value: 'defective', label: 'Prekė sugadinta arba neveikia' },
-  { value: 'not_as_described', label: 'Prekė neatitinka aprašymo' },
-  { value: 'wrong_item', label: 'Gavau ne tą prekę' },
-  { value: 'changed_mind', label: 'Persigalvojau' },
-  { value: 'other', label: 'Kita priežastis' },
-];
 
 interface RefundRequestFormProps {
   orderId: string;
@@ -39,6 +32,14 @@ export function RefundRequestForm({
   onClose,
   onSuccess,
 }: RefundRequestFormProps) {
+  const { t } = useTranslation();
+  const REFUND_REASONS = [
+    { value: 'defective', label: t('refund.reasonDefective') },
+    { value: 'not_as_described', label: t('refund.reasonNotAsDescribed') },
+    { value: 'wrong_item', label: t('refund.reasonWrongItem') },
+    { value: 'changed_mind', label: t('refund.reasonChangedMind') },
+    { value: 'other', label: t('refund.reasonOther') },
+  ];
   const [reason, setReason] = useState('');
   const [notes, setNotes] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -47,7 +48,7 @@ export function RefundRequestForm({
     e.preventDefault();
     
     if (!reason) {
-      toast.error('Pasirinkite grąžinimo priežastį');
+      toast.error(t('refund.selectReason'));
       return;
     }
 
@@ -57,7 +58,7 @@ export function RefundRequestForm({
       const { data: { session } } = await supabase.auth.getSession();
       
       if (!session) {
-        toast.error('Turite būti prisijungęs');
+        toast.error(t('refund.loginRequired'));
         return;
       }
 
@@ -73,12 +74,12 @@ export function RefundRequestForm({
 
       if (error) throw error;
 
-      toast.success('Grąžinimo prašymas pateiktas');
+      toast.success(t('refund.submitted'));
       onSuccess();
       onClose();
     } catch (error: any) {
       console.error('Refund request error:', error);
-      toast.error(error.message || 'Klaida pateikiant prašymą');
+      toast.error(error.message || t('refund.submitFailed'));
     } finally {
       setIsLoading(false);
     }
@@ -88,15 +89,15 @@ export function RefundRequestForm({
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Prašyti grąžinimo</DialogTitle>
+          <DialogTitle>{t('refund.title')}</DialogTitle>
           <DialogDescription>
-            Užsakymas {orderNumber} • Suma: {maxAmount.toFixed(2)}€
+            {t('refund.order')} {orderNumber} • {t('refund.amount')}: {maxAmount.toFixed(2)}€
           </DialogDescription>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <Label className="text-base">Priežastis *</Label>
+            <Label className="text-base">{t('refund.reason')} *</Label>
             <RadioGroup value={reason} onValueChange={setReason} className="mt-2">
               {REFUND_REASONS.map((r) => (
                 <label
@@ -111,12 +112,12 @@ export function RefundRequestForm({
           </div>
 
           <div>
-            <Label htmlFor="notes">Papildoma informacija</Label>
+            <Label htmlFor="notes">{t('refund.additionalInfo')}</Label>
             <Textarea
               id="notes"
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
-              placeholder="Aprašykite problemą išsamiau..."
+              placeholder={t('refund.descPlaceholder')}
               className="mt-2"
               rows={3}
             />
@@ -125,8 +126,7 @@ export function RefundRequestForm({
           <div className="flex items-start gap-2 p-3 bg-yellow-500/10 rounded-lg border border-yellow-500/30">
             <AlertCircle className="w-4 h-4 text-yellow-600 mt-0.5 shrink-0" />
             <p className="text-xs text-yellow-700">
-              Grąžinimo prašymas bus peržiūrėtas per 1-3 darbo dienas. 
-              Apie sprendimą informuosime el. paštu.
+              {t('refund.reviewNote')}
             </p>
           </div>
 
@@ -138,16 +138,16 @@ export function RefundRequestForm({
               disabled={isLoading}
               className="flex-1"
             >
-              Atšaukti
+              {t('common.cancel')}
             </Button>
             <Button type="submit" disabled={isLoading || !reason} className="flex-1">
               {isLoading ? (
                 <>
                   <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  Siunčiama...
+                  {t('common.sending')}
                 </>
               ) : (
-                'Pateikti prašymą'
+                t('refund.submit')
               )}
             </Button>
           </div>

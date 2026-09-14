@@ -3,6 +3,7 @@ import { RefreshCw, TrendingUp, TrendingDown, DollarSign, ShoppingCart, Package,
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { supabase } from '@/integrations/supabase/client';
+import { useTranslation } from 'react-i18next';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
@@ -47,6 +48,7 @@ const formatPrice = (amount: number) => {
 };
 
 export function AnalyticsDashboard() {
+  const { t } = useTranslation();
   const [loading, setLoading] = useState(true);
   const [period, setPeriod] = useState<'7d' | '30d' | '90d'>('30d');
   const [kpi, setKpi] = useState<KPIData | null>(null);
@@ -86,11 +88,11 @@ export function AnalyticsDashboard() {
   };
 
   const funnelSteps = funnel ? [
-    { label: 'Peržiūros', value: funnel.view_item, icon: Eye },
-    { label: 'Į krepšelį', value: funnel.add_to_cart, icon: ShoppingCart },
-    { label: 'Pradėjo checkout', value: funnel.begin_checkout, icon: MousePointerClick },
-    { label: 'Depozitas sumokėtas', value: funnel.deposit_paid, icon: CreditCard },
-    { label: 'Pilnai apmokėta', value: funnel.balance_paid, icon: CheckCircle },
+    { label: t('admAnalytics.dashViews'), value: funnel.view_item, icon: Eye },
+    { label: t('products.toCart'), value: funnel.add_to_cart, icon: ShoppingCart },
+    { label: t('admAnalytics.dashCheckoutStarted'), value: funnel.begin_checkout, icon: MousePointerClick },
+    { label: t('admAnalytics.dashDepositPaid'), value: funnel.deposit_paid, icon: CreditCard },
+    { label: t('admAnalytics.dashFullyPaid'), value: funnel.balance_paid, icon: CheckCircle },
   ] : [];
 
   return (
@@ -98,8 +100,8 @@ export function AnalyticsDashboard() {
       {/* Header */}
       <div className="flex flex-col md:flex-row gap-4 items-start md:items-center justify-between">
         <div>
-          <h2 className="font-heading text-xl font-bold">Analitika</h2>
-          <p className="text-sm text-muted-foreground">Duomenys iš DB (first-party)</p>
+          <h2 className="font-heading text-xl font-bold">{t('admAnalytics.dashTitle')}</h2>
+          <p className="text-sm text-muted-foreground">{t('admAnalytics.dashSubtitle')}</p>
         </div>
         
         <div className="flex gap-2">
@@ -108,15 +110,15 @@ export function AnalyticsDashboard() {
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="7d">7 dienos</SelectItem>
-              <SelectItem value="30d">30 dienų</SelectItem>
-              <SelectItem value="90d">90 dienų</SelectItem>
+              <SelectItem value="7d">{t('admAnalytics.charts7d')}</SelectItem>
+              <SelectItem value="30d">{t('admAnalytics.charts30d')}</SelectItem>
+              <SelectItem value="90d">{t('admAnalytics.charts90d')}</SelectItem>
             </SelectContent>
           </Select>
           
           <Button onClick={loadAnalytics} variant="outline" size="sm" disabled={loading}>
             <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
-            Atnaujinti
+            {t('admCommon.refresh')}
           </Button>
         </div>
       </div>
@@ -124,7 +126,7 @@ export function AnalyticsDashboard() {
       {loading ? (
         <div className="text-center py-12">
           <RefreshCw className="w-8 h-8 animate-spin mx-auto text-muted-foreground" />
-          <p className="text-muted-foreground mt-2">Kraunama...</p>
+          <p className="text-muted-foreground mt-2">{t('common.loading')}</p>
         </div>
       ) : (
         <>
@@ -134,15 +136,15 @@ export function AnalyticsDashboard() {
               <CardHeader className="pb-2">
                 <CardDescription className="flex items-center gap-2">
                   <DollarSign className="w-4 h-4" />
-                  Pajamos (viso)
+                  {t('admAnalytics.dashRevenueTotal')}
                 </CardDescription>
               </CardHeader>
               <CardContent>
                 <p className="text-2xl font-bold">{formatPrice(kpi?.totalRevenue || 0)}</p>
                 <div className="text-xs text-muted-foreground mt-1">
-                  <span className="text-green-600">Depozitai: {formatPrice(kpi?.depositRevenue || 0)}</span>
+                  <span className="text-green-600">{t('admAnalytics.chartsDeposits')}: {formatPrice(kpi?.depositRevenue || 0)}</span>
                   <br />
-                  <span className="text-blue-600">Likučiai: {formatPrice(kpi?.balanceRevenue || 0)}</span>
+                  <span className="text-blue-600">{t('admAnalytics.chartsBalances')}: {formatPrice(kpi?.balanceRevenue || 0)}</span>
                 </div>
               </CardContent>
             </Card>
@@ -151,7 +153,7 @@ export function AnalyticsDashboard() {
               <CardHeader className="pb-2">
                 <CardDescription className="flex items-center gap-2">
                   <Package className="w-4 h-4" />
-                  Užsakymai
+                  {t('account.orders')}
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -163,7 +165,7 @@ export function AnalyticsDashboard() {
               <CardHeader className="pb-2">
                 <CardDescription className="flex items-center gap-2">
                   <TrendingUp className="w-4 h-4" />
-                  Vidutinis užsakymas
+                  {t('admAnalytics.dashAov')}
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -175,7 +177,7 @@ export function AnalyticsDashboard() {
               <CardHeader className="pb-2">
                 <CardDescription className="flex items-center gap-2">
                   <TrendingDown className="w-4 h-4" />
-                  Grąžinimai
+                  {t('admAnalytics.chartsRefunds')}
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -188,8 +190,8 @@ export function AnalyticsDashboard() {
           {/* Funnel */}
           <Card>
             <CardHeader>
-              <CardTitle className="font-heading text-lg">Konversijų piltuvėlis</CardTitle>
-              <CardDescription>Iš DB events lentelės</CardDescription>
+              <CardTitle className="font-heading text-lg">{t('admAnalytics.dashFunnel')}</CardTitle>
+              <CardDescription>{t('admAnalytics.dashFunnelDesc')}</CardDescription>
             </CardHeader>
             <CardContent>
               {funnel ? (
@@ -218,7 +220,7 @@ export function AnalyticsDashboard() {
                   })}
                 </div>
               ) : (
-                <p className="text-center text-muted-foreground py-8">Nėra duomenų</p>
+                <p className="text-center text-muted-foreground py-8">{t('admCommon.noData')}</p>
               )}
             </CardContent>
           </Card>
@@ -226,8 +228,8 @@ export function AnalyticsDashboard() {
           {/* Top Products */}
           <Card>
             <CardHeader>
-              <CardTitle className="font-heading text-lg">Top produktai</CardTitle>
-              <CardDescription>Pagal view_item / add_to_cart / purchase</CardDescription>
+              <CardTitle className="font-heading text-lg">{t('admAnalytics.dashTopProducts')}</CardTitle>
+              <CardDescription>{t('admAnalytics.dashTopDesc')}</CardDescription>
             </CardHeader>
             <CardContent>
               {topProducts.length > 0 ? (
@@ -246,22 +248,22 @@ export function AnalyticsDashboard() {
                       <div className="flex gap-4 text-sm">
                         <div className="text-center">
                           <p className="font-semibold">{product.views}</p>
-                          <p className="text-xs text-muted-foreground">peržiūros</p>
+                          <p className="text-xs text-muted-foreground">{t('admAnalytics.dashViewsCount')}</p>
                         </div>
                         <div className="text-center">
                           <p className="font-semibold">{product.adds_to_cart}</p>
-                          <p className="text-xs text-muted-foreground">krepšelis</p>
+                          <p className="text-xs text-muted-foreground">{t('admAnalytics.dashAddedToCart')}</p>
                         </div>
                         <div className="text-center">
                           <p className="font-semibold text-green-600">{product.purchases}</p>
-                          <p className="text-xs text-muted-foreground">pirkimai</p>
+                          <p className="text-xs text-muted-foreground">{t('admAnalytics.dashPurchases')}</p>
                         </div>
                       </div>
                     </div>
                   ))}
                 </div>
               ) : (
-                <p className="text-center text-muted-foreground py-8">Nėra duomenų</p>
+                <p className="text-center text-muted-foreground py-8">{t('admCommon.noData')}</p>
               )}
             </CardContent>
           </Card>
@@ -269,8 +271,8 @@ export function AnalyticsDashboard() {
           {/* Integration Status */}
           <Card>
             <CardHeader>
-              <CardTitle className="font-heading text-lg">Integracijų statusas</CardTitle>
-              <CardDescription>GA4 ir Meta Pixel įvykių indikatoriai</CardDescription>
+              <CardTitle className="font-heading text-lg">{t('admAnalytics.dashIntegrations')}</CardTitle>
+              <CardDescription>{t('admAnalytics.dashIntegrationsDesc')}</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -280,7 +282,7 @@ export function AnalyticsDashboard() {
                     <Button variant="outline" size="sm" asChild>
                       <a href="https://analytics.google.com" target="_blank" rel="noopener noreferrer">
                         <ExternalLink className="w-3 h-3 mr-1" />
-                        Atidaryti
+                        {t('admCommon.open')}
                       </a>
                     </Button>
                   </div>
@@ -288,15 +290,15 @@ export function AnalyticsDashboard() {
                     <div>
                       <Badge variant="outline" className="bg-green-500/10 text-green-600">
                         <CheckCircle className="w-3 h-3 mr-1" />
-                        Aktyvus
+                        {t('admCommon.active')}
                       </Badge>
                       <p className="text-xs text-muted-foreground mt-1">
-                        Paskutinis: {new Date(integrationStatus.ga4_last_event).toLocaleString('lt-LT')}
+                        {t('admAnalytics.dashLastEvent', { time: new Date(integrationStatus.ga4_last_event).toLocaleString('lt-LT') })}
                       </p>
                     </div>
                   ) : (
                     <Badge variant="outline" className="bg-yellow-500/10 text-yellow-600">
-                      Nėra įvykių
+                      {t('admAnalytics.dashNoEvents')}
                     </Badge>
                   )}
                 </div>
@@ -307,7 +309,7 @@ export function AnalyticsDashboard() {
                     <Button variant="outline" size="sm" asChild>
                       <a href="https://business.facebook.com/events_manager" target="_blank" rel="noopener noreferrer">
                         <ExternalLink className="w-3 h-3 mr-1" />
-                        Atidaryti
+                        {t('admCommon.open')}
                       </a>
                     </Button>
                   </div>
@@ -315,15 +317,15 @@ export function AnalyticsDashboard() {
                     <div>
                       <Badge variant="outline" className="bg-green-500/10 text-green-600">
                         <CheckCircle className="w-3 h-3 mr-1" />
-                        Aktyvus
+                        {t('admCommon.active')}
                       </Badge>
                       <p className="text-xs text-muted-foreground mt-1">
-                        Paskutinis: {new Date(integrationStatus.meta_last_event).toLocaleString('lt-LT')}
+                        {t('admAnalytics.dashLastEvent', { time: new Date(integrationStatus.meta_last_event).toLocaleString('lt-LT') })}
                       </p>
                     </div>
                   ) : (
                     <Badge variant="outline" className="bg-yellow-500/10 text-yellow-600">
-                      Nėra įvykių
+                      {t('admAnalytics.dashNoEvents')}
                     </Badge>
                   )}
                 </div>

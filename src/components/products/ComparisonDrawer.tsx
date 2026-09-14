@@ -7,11 +7,13 @@ import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { useComparisonStore } from '@/stores/comparisonStore';
+import { useTranslation } from 'react-i18next';
 import { formatPrice, getProductImage, getEtaString, type Product } from '@/hooks/useProducts';
 import { useCartStore } from '@/stores/cartStore';
 import { toast } from 'sonner';
 
 export function ComparisonDrawer() {
+  const { t } = useTranslation();
   const { products, removeProduct, clearAll } = useComparisonStore();
   const addItem = useCartStore((state) => state.addItem);
   const [showDifferencesOnly, setShowDifferencesOnly] = useState(false);
@@ -20,7 +22,7 @@ export function ComparisonDrawer() {
 
   const handleAddToCart = (product: Product) => {
     addItem(product);
-    toast.success("Pridėta į krepšelį", {
+    toast.success(t('products.addedToCart'), {
       description: product.title,
       position: "top-center",
     });
@@ -30,7 +32,7 @@ export function ComparisonDrawer() {
   const comparisonRows = [
     {
       key: 'price',
-      label: 'Kaina',
+      label: t('comparison.price'),
       getValue: (p: Product) => p.sale_price_eur || p.price_eur,
       render: (product: Product) => (
         <div className="flex flex-col items-center gap-1">
@@ -53,7 +55,7 @@ export function ComparisonDrawer() {
     },
     {
       key: 'deposit',
-      label: 'Depozitas',
+      label: t('comparison.deposit'),
       getValue: (p: Product) => p.deposit_eur,
       render: (product: Product) => (
         <span className="font-semibold text-primary">
@@ -63,7 +65,7 @@ export function ComparisonDrawer() {
     },
     {
       key: 'balance',
-      label: 'Likutis',
+      label: t('comparison.balance'),
       getValue: (p: Product) => p.price_eur - p.deposit_eur,
       render: (product: Product) => (
         <span className="font-medium text-muted-foreground">
@@ -73,21 +75,21 @@ export function ComparisonDrawer() {
     },
     {
       key: 'status',
-      label: 'Būsena',
+      label: t('comparison.status'),
       getValue: (p: Product) => p.stock_status,
       render: (product: Product) => (
         <Badge 
           variant={product.stock_status === 'in_stock' ? 'default' : 'secondary'}
           className={product.stock_status === 'in_stock' ? 'bg-green-500' : ''}
         >
-          {product.stock_status === 'preorder' ? 'Pre-order' : 
-           product.stock_status === 'in_stock' ? 'Sandėlyje' : 'Išparduota'}
+          {product.stock_status === 'preorder' ? t('products.preOrderLabel') : 
+           product.stock_status === 'in_stock' ? t('products.inStockLabel') : t('products.outOfStock')}
         </Badge>
       ),
     },
     {
       key: 'eta',
-      label: 'Pristatymas',
+      label: t('comparison.eta'),
       getValue: (p: Product) => getEtaString(p),
       render: (product: Product) => (
         <span className="flex items-center gap-1.5 text-sm">
@@ -98,30 +100,30 @@ export function ComparisonDrawer() {
     },
     {
       key: 'details',
-      label: 'Detalių sk.',
+      label: t('comparison.partsCount'),
       getValue: (p: Product) => (p.details_json as Record<string, unknown>)?.detailsCount as number || 0,
       render: (product: Product) => {
         const detailsCount = (product.details_json as Record<string, unknown>)?.detailsCount as number || 0;
         return (
           <span className="flex items-center gap-1.5 text-sm">
             <Package className="w-4 h-4 text-muted-foreground" />
-            {detailsCount > 0 ? `${detailsCount} det.` : '—'}
+            {detailsCount > 0 ? `${detailsCount} ${t('products.pieces')}` : '—'}
           </span>
         );
       },
     },
     {
       key: 'assembly',
-      label: 'Surinkimo laikas',
+      label: t('comparison.assemblyTime'),
       getValue: (p: Product) => (p.details_json as Record<string, unknown>)?.assemblyHours as number || 0,
       render: (product: Product) => {
         const assemblyHours = (product.details_json as Record<string, unknown>)?.assemblyHours as number || 0;
-        return assemblyHours > 0 ? `${assemblyHours} val.` : '—';
+        return assemblyHours > 0 ? `${assemblyHours} ${t('products.hours')}` : '—';
       },
     },
     {
       key: 'dimensions',
-      label: 'Matmenys',
+      label: t('comparison.dimensions'),
       getValue: (p: Product) => (p.details_json as Record<string, unknown>)?.dimensions as string || '',
       render: (product: Product) => {
         const dimensions = (product.details_json as Record<string, unknown>)?.dimensions as string || '';
@@ -130,7 +132,7 @@ export function ComparisonDrawer() {
     },
     {
       key: 'weight',
-      label: 'Svoris',
+      label: t('comparison.weight'),
       getValue: (p: Product) => (p.details_json as Record<string, unknown>)?.weight as string || '',
       render: (product: Product) => {
         const weight = (product.details_json as Record<string, unknown>)?.weight as string || '';
@@ -139,7 +141,7 @@ export function ComparisonDrawer() {
     },
     {
       key: 'sku',
-      label: 'SKU',
+      label: t('comparison.sku'),
       getValue: (p: Product) => p.sku,
       render: (product: Product) => (
         <span className="font-mono text-xs">{product.sku}</span>
@@ -168,13 +170,13 @@ export function ComparisonDrawer() {
           size="lg"
         >
           <Scale className="w-5 h-5" />
-          Palyginti ({products.length}/3)
+          {t('misc.compare')} ({products.length}/3)
         </Button>
       </SheetTrigger>
       <SheetContent side="bottom" className="h-[85vh] overflow-y-auto">
         <SheetHeader className="mb-6">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <SheetTitle className="font-heading text-xl">Produktų palyginimas</SheetTitle>
+            <SheetTitle className="font-heading text-xl">{t('comparison.title')}</SheetTitle>
             <div className="flex items-center gap-4">
               {/* Differences filter */}
               {products.length >= 2 && (
@@ -186,7 +188,7 @@ export function ComparisonDrawer() {
                   />
                   <Label htmlFor="diff-toggle" className="text-sm cursor-pointer flex items-center gap-1.5">
                     {showDifferencesOnly ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
-                    Tik skirtumai
+                    {t('comparison.differencesOnly')}
                   </Label>
                 </div>
               )}
@@ -195,13 +197,13 @@ export function ComparisonDrawer() {
               <Button asChild variant="outline" size="sm">
                 <Link to="/palyginti">
                   <Maximize2 className="w-4 h-4 mr-2" />
-                  Pilnas vaizdas
+                  {t('comparison.fullView')}
                 </Link>
               </Button>
               
               <Button variant="ghost" size="sm" onClick={clearAll} className="text-destructive hover:text-destructive">
                 <Trash2 className="w-4 h-4 mr-2" />
-                Išvalyti
+                {t('comparison.clear')}
               </Button>
             </div>
           </div>
@@ -213,7 +215,7 @@ export function ComparisonDrawer() {
             <thead>
               <tr>
                 <th className="text-left p-4 border-b border-border w-40 text-sm font-medium text-muted-foreground sticky left-0 bg-background">
-                  Savybė
+                  {t('comparison.property')}
                 </th>
                 {products.map((product) => (
                   <th key={product.id} className="p-4 border-b border-border min-w-[220px] max-w-[280px]">
@@ -244,7 +246,7 @@ export function ComparisonDrawer() {
                           onClick={() => handleAddToCart(product)}
                         >
                           <ShoppingCart className="w-3.5 h-3.5 mr-1" />
-                          Į krepšelį
+                          {t('comparison.toCart')}
                         </Button>
                         <Button 
                           asChild
@@ -254,7 +256,7 @@ export function ComparisonDrawer() {
                         >
                           <Link to={`/produktas/${product.slug}`}>
                             <ExternalLink className="w-3.5 h-3.5 mr-1" />
-                            Peržiūrėti
+                            {t('comparison.open')}
                           </Link>
                         </Button>
                       </div>
@@ -267,7 +269,7 @@ export function ComparisonDrawer() {
                     <div className="w-24 h-24 bg-muted rounded-xl mx-auto mb-3 flex items-center justify-center border-2 border-dashed border-border">
                       <Scale className="w-8 h-8 text-muted-foreground/30" />
                     </div>
-                    <p className="text-sm text-muted-foreground">Pridėkite produktą</p>
+                    <p className="text-sm text-muted-foreground">{t('comparison.addConstructor')}</p>
                   </th>
                 ))}
               </tr>
@@ -287,7 +289,7 @@ export function ComparisonDrawer() {
                       <span className="flex items-center gap-2">
                         {row.label}
                         {hasDiff && (
-                          <span className="w-2 h-2 rounded-full bg-primary" title="Skirtumas" />
+                          <span className="w-2 h-2 rounded-full bg-primary" title={t('comparison.difference')} />
                         )}
                       </span>
                     </td>
@@ -311,12 +313,12 @@ export function ComparisonDrawer() {
         {/* Description comparison */}
         {products.some(p => p.short_desc) && (
           <div className="mt-6 pt-6 border-t">
-            <h3 className="font-heading font-semibold mb-4">Trumpi aprašymai</h3>
+            <h3 className="font-heading font-semibold mb-4">{t('comparison.shortDescriptions')}</h3>
             <div className="grid gap-4" style={{ gridTemplateColumns: `repeat(${products.length}, minmax(200px, 1fr))` }}>
               {products.map((product) => (
                 <div key={product.id} className="p-4 bg-muted/50 rounded-lg">
                   <p className="font-medium text-sm mb-2">{product.title}</p>
-                  <p className="text-sm text-muted-foreground">{product.short_desc || 'Aprašymas nepateiktas'}</p>
+                  <p className="text-sm text-muted-foreground">{product.short_desc || t('comparison.noDescription')}</p>
                 </div>
               ))}
             </div>
@@ -326,7 +328,7 @@ export function ComparisonDrawer() {
         {/* Tags comparison */}
         {products.some(p => p.tags && p.tags.length > 0) && (
           <div className="mt-6 pt-6 border-t">
-            <h3 className="font-heading font-semibold mb-4">Žymės</h3>
+            <h3 className="font-heading font-semibold mb-4">{t('comparison.tags')}</h3>
             <div className="grid gap-4" style={{ gridTemplateColumns: `repeat(${products.length}, minmax(200px, 1fr))` }}>
               {products.map((product) => (
                 <div key={product.id} className="p-4 bg-muted/50 rounded-lg">
@@ -338,7 +340,7 @@ export function ComparisonDrawer() {
                       </Badge>
                     ))}
                     {(!product.tags || product.tags.length === 0) && (
-                      <span className="text-sm text-muted-foreground">Žymių nėra</span>
+                      <span className="text-sm text-muted-foreground">{t('comparison.noTags')}</span>
                     )}
                   </div>
                 </div>

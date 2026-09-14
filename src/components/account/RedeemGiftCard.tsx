@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Gift, ArrowRight, Check, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -13,6 +14,7 @@ interface RedeemGiftCardProps {
 }
 
 export function RedeemGiftCard({ onSuccess }: RedeemGiftCardProps) {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const [code, setCode] = useState('');
   const [isRedeeming, setIsRedeeming] = useState(false);
@@ -24,12 +26,12 @@ export function RedeemGiftCard({ onSuccess }: RedeemGiftCardProps) {
 
   const handleRedeem = async () => {
     if (!code.trim()) {
-      toast.error('Įveskite kupono kodą');
+      toast.error(t('redeem.enterCode'));
       return;
     }
 
     if (!user) {
-      toast.error('Prisijunkite, kad galėtumėte aktyvuoti kuponą');
+      toast.error(t('redeem.loginRequired'));
       return;
     }
 
@@ -43,17 +45,17 @@ export function RedeemGiftCard({ onSuccess }: RedeemGiftCardProps) {
         .single();
 
       if (findError || !giftCard) {
-        toast.error('Kuponas nerastas');
+        toast.error(t('redeem.notFound'));
         return;
       }
 
       if (giftCard.status !== 'active') {
-        toast.error('Šis kuponas jau panaudotas arba negalioja');
+        toast.error(t('redeem.alreadyUsed'));
         return;
       }
 
       if (giftCard.current_balance_eur <= 0) {
-        toast.error('Kupono balansas yra 0€');
+        toast.error(t('redeem.zeroBalance'));
         return;
       }
 
@@ -101,7 +103,7 @@ export function RedeemGiftCard({ onSuccess }: RedeemGiftCardProps) {
           wallet_id: walletId,
           type: 'gift_card_redeem',
           amount_eur: amountToAdd,
-          description: `Dovanų kuponas: ${giftCard.code}`,
+          description: t('redeem.description', { code: giftCard.code }),
           reference_type: 'gift_card',
           reference_id: giftCard.id,
         });
@@ -122,12 +124,12 @@ export function RedeemGiftCard({ onSuccess }: RedeemGiftCardProps) {
       if (redeemError) throw redeemError;
 
       setRedeemResult({ success: true, amount: amountToAdd });
-      toast.success(`Kuponas aktyvuotas! +${formatPrice(amountToAdd)} pridėta į piniginę`);
+      toast.success(t('redeem.activated', { amount: formatPrice(amountToAdd) }));
       onSuccess?.(amountToAdd);
       setCode('');
     } catch (e: any) {
       console.error('Redeem error:', e);
-      toast.error(e.message || 'Nepavyko aktyvuoti kupono');
+      toast.error(e.message || t('redeem.activateFailed'));
       setRedeemResult({ success: false });
     } finally {
       setIsRedeeming(false);
@@ -139,7 +141,7 @@ export function RedeemGiftCard({ onSuccess }: RedeemGiftCardProps) {
       <CardHeader>
         <CardTitle className="flex items-center gap-2 text-lg">
           <Gift className="w-5 h-5 text-primary" />
-          Aktyvuoti dovanų kuponą
+          {t('redeem.title')}
         </CardTitle>
       </CardHeader>
       <CardContent>
@@ -148,25 +150,25 @@ export function RedeemGiftCard({ onSuccess }: RedeemGiftCardProps) {
             <div className="w-12 h-12 bg-success/10 rounded-full flex items-center justify-center mx-auto mb-3">
               <Check className="w-6 h-6 text-success" />
             </div>
-            <p className="font-semibold">Kuponas aktyvuotas!</p>
+            <p className="font-semibold">{t('redeem.activatedTitle')}</p>
             <p className="text-2xl font-bold text-success mt-1">
               +{formatPrice(redeemResult.amount || 0)}
             </p>
             <p className="text-sm text-muted-foreground mt-2">
-              Suma pridėta į jūsų piniginę
+              {t('redeem.addedToWallet')}
             </p>
             <Button 
               variant="outline" 
               className="mt-4"
               onClick={() => setRedeemResult(null)}
             >
-              Aktyvuoti dar vieną
+              {t('redeem.activateAnother')}
             </Button>
           </div>
         ) : (
           <div className="space-y-4">
             <div>
-              <Label>Kupono kodas</Label>
+              <Label>{t('redeem.couponCode')}</Label>
               <Input
                 value={code}
                 onChange={(e) => setCode(e.target.value.toUpperCase())}
@@ -182,11 +184,11 @@ export function RedeemGiftCard({ onSuccess }: RedeemGiftCardProps) {
               {isRedeeming ? (
                 <>
                   <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  Tikrinama...
+                  {t('redeem.checking')}
                 </>
               ) : (
                 <>
-                  Aktyvuoti
+                  {t('redeem.activate')}
                   <ArrowRight className="w-4 h-4 ml-2" />
                 </>
               )}

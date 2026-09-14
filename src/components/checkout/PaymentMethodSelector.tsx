@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/utils";
 import { Check, Lock } from "lucide-react";
 
@@ -6,8 +7,11 @@ export type PaymentMethod = {
   id: string;
   code: string;
   provider: 'stripe' | 'paypal' | 'paysera' | 'opay' | 'inbank';
-  title: string;
-  subtitle: string;
+  titleKey?: string; // i18n key under coPay.* — resolved via t() at render
+  titleVars?: Record<string, string | number>;
+  fixedTitle?: string; // brand literal, used when titleKey is absent (never translated)
+  subtitleKey: string;
+  subtitleVars?: Record<string, string | number>;
   logo: string;
   enabled: boolean;
   bankCode?: string; // For Paysera/OPAY banklink
@@ -20,8 +24,8 @@ const PAYMENT_METHODS: PaymentMethod[] = [
     id: 'opay-card',
     code: 'opay_card',
     provider: 'opay',
-    title: 'Banko kortelė',
-    subtitle: 'Visa, Mastercard per OPAY',
+    titleKey: 'coPay.opayCardTitle',
+    subtitleKey: 'coPay.opayCardSub',
     logo: '/payment-logos/card.svg',
     enabled: false,
   },
@@ -29,8 +33,8 @@ const PAYMENT_METHODS: PaymentMethod[] = [
     id: 'opay-banklink',
     code: 'opay_banklink',
     provider: 'opay',
-    title: 'Banko pavedimas',
-    subtitle: 'Swedbank, SEB, Luminor, Revolut ir kt. per OPAY',
+    titleKey: 'coPay.opayBankTitle',
+    subtitleKey: 'coPay.opayBankSub',
     logo: '/payment-logos/swedbank.svg',
     enabled: false,
   },
@@ -40,8 +44,10 @@ const PAYMENT_METHODS: PaymentMethod[] = [
     id: 'inbank-12',
     code: 'inbank_12m',
     provider: 'inbank',
-    title: 'Inbank išsimokėjimas (12 mėn.)',
-    subtitle: 'Mokėk dalimis per 12 mėnesių',
+    titleKey: 'coPay.inbankTitle',
+    titleVars: { months: 12 },
+    subtitleKey: 'coPay.inbankSub',
+    subtitleVars: { months: 12 },
     logo: '/payment-logos/card.svg',
     enabled: false,
     periodMonths: 12,
@@ -50,8 +56,10 @@ const PAYMENT_METHODS: PaymentMethod[] = [
     id: 'inbank-24',
     code: 'inbank_24m',
     provider: 'inbank',
-    title: 'Inbank išsimokėjimas (24 mėn.)',
-    subtitle: 'Mokėk dalimis per 24 mėnesius',
+    titleKey: 'coPay.inbankTitle',
+    titleVars: { months: 24 },
+    subtitleKey: 'coPay.inbankSub',
+    subtitleVars: { months: 24 },
     logo: '/payment-logos/card.svg',
     enabled: false,
     periodMonths: 24,
@@ -60,8 +68,10 @@ const PAYMENT_METHODS: PaymentMethod[] = [
     id: 'inbank-36',
     code: 'inbank_36m',
     provider: 'inbank',
-    title: 'Inbank išsimokėjimas (36 mėn.)',
-    subtitle: 'Mokėk dalimis per 36 mėnesius',
+    titleKey: 'coPay.inbankTitle',
+    titleVars: { months: 36 },
+    subtitleKey: 'coPay.inbankSub',
+    subtitleVars: { months: 36 },
     logo: '/payment-logos/card.svg',
     enabled: false,
     periodMonths: 36,
@@ -72,8 +82,8 @@ const PAYMENT_METHODS: PaymentMethod[] = [
     id: 'stripe-card',
     code: 'card',
     provider: 'stripe',
-    title: 'Kortelė (Stripe)',
-    subtitle: 'Senas mokėjimo būdas — neaktyvus',
+    titleKey: 'coPay.stripeTitle',
+    subtitleKey: 'coPay.stripeSub',
     logo: '/payment-logos/card.svg',
     enabled: false,
   },
@@ -81,8 +91,8 @@ const PAYMENT_METHODS: PaymentMethod[] = [
     id: 'paypal',
     code: 'paypal',
     provider: 'paypal',
-    title: 'PayPal',
-    subtitle: 'Atsiskaityk per PayPal paskyrą',
+    fixedTitle: 'PayPal',
+    subtitleKey: 'coPay.paypalSub',
     logo: '/payment-logos/paypal.svg',
     enabled: false,
   },
@@ -96,8 +106,9 @@ const PAYMENT_METHODS: PaymentMethod[] = [
     id: 'paysera-swedbank',
     code: 'swedbank',
     provider: 'paysera',
-    title: 'Swedbank',
-    subtitle: 'Tiesioginis mokėjimas per Swedbank',
+    fixedTitle: 'Swedbank',
+    subtitleKey: 'coPay.bankDirect',
+    subtitleVars: { bank: 'Swedbank' },
     logo: '/payment-logos/swedbank.svg',
     enabled: true,
     bankCode: 'hanza',
@@ -106,8 +117,9 @@ const PAYMENT_METHODS: PaymentMethod[] = [
     id: 'paysera-seb',
     code: 'seb',
     provider: 'paysera',
-    title: 'SEB',
-    subtitle: 'Tiesioginis mokėjimas per SEB',
+    fixedTitle: 'SEB',
+    subtitleKey: 'coPay.bankDirect',
+    subtitleVars: { bank: 'SEB' },
     logo: '/payment-logos/seb.svg',
     enabled: true,
     bankCode: 'vb2',
@@ -116,8 +128,9 @@ const PAYMENT_METHODS: PaymentMethod[] = [
     id: 'paysera-luminor',
     code: 'luminor',
     provider: 'paysera',
-    title: 'Luminor',
-    subtitle: 'Tiesioginis mokėjimas per Luminor',
+    fixedTitle: 'Luminor',
+    subtitleKey: 'coPay.bankDirect',
+    subtitleVars: { bank: 'Luminor' },
     logo: '/payment-logos/luminor.svg',
     enabled: true,
     bankCode: 'nord',
@@ -126,8 +139,9 @@ const PAYMENT_METHODS: PaymentMethod[] = [
     id: 'paysera-revolut',
     code: 'revolut',
     provider: 'paysera',
-    title: 'Revolut',
-    subtitle: 'Atsiskaityk per Revolut',
+    fixedTitle: 'Revolut',
+    subtitleKey: 'coPay.payVia',
+    subtitleVars: { bank: 'Revolut' },
     logo: '/payment-logos/revolut.svg',
     enabled: true,
     bankCode: 'lt_revolut',
@@ -136,8 +150,8 @@ const PAYMENT_METHODS: PaymentMethod[] = [
     id: 'paysera-artea',
     code: 'artea',
     provider: 'paysera',
-    title: 'Artea',
-    subtitle: 'Buvęs Šiaulių bankas',
+    fixedTitle: 'Artea',
+    subtitleKey: 'coPay.arteaSub',
     logo: '/payment-logos/artea.svg',
     enabled: true,
     bankCode: 'sb',
@@ -146,8 +160,8 @@ const PAYMENT_METHODS: PaymentMethod[] = [
     id: 'paysera-lku',
     code: 'lku',
     provider: 'paysera',
-    title: 'LKU',
-    subtitle: 'Lietuvos centrinė kredito unija',
+    fixedTitle: 'LKU',
+    subtitleKey: 'coPay.lkuSub',
     logo: '/payment-logos/lku.svg',
     enabled: true,
     bankCode: 'lku',
@@ -156,8 +170,9 @@ const PAYMENT_METHODS: PaymentMethod[] = [
     id: 'paysera-citadele',
     code: 'citadele',
     provider: 'paysera',
-    title: 'Citadele',
-    subtitle: 'Tiesioginis mokėjimas per Citadele',
+    fixedTitle: 'Citadele',
+    subtitleKey: 'coPay.bankDirect',
+    subtitleVars: { bank: 'Citadele' },
     logo: '/payment-logos/citadele.svg',
     enabled: true,
     bankCode: 'parex',
@@ -166,8 +181,8 @@ const PAYMENT_METHODS: PaymentMethod[] = [
     id: 'paysera-generic',
     code: 'paysera',
     provider: 'paysera',
-    title: 'Paysera',
-    subtitle: 'Kiti Paysera mokėjimo būdai',
+    fixedTitle: 'Paysera',
+    subtitleKey: 'coPay.payseraSub',
     logo: '/payment-logos/paysera.svg',
     enabled: true,
     // No bankCode on purpose: with no `payment` parameter Paysera shows its own
@@ -224,17 +239,24 @@ const LogoFallback: React.FC<{ code: string }> = ({ code }) => {
 };
 
 export function PaymentMethodSelector({ selectedMethod, onSelect }: PaymentMethodSelectorProps) {
+  const { t } = useTranslation();
   const [imgErrors, setImgErrors] = useState<Set<string>>(new Set());
 
   const handleImgError = (methodId: string) => {
     setImgErrors(prev => new Set(prev).add(methodId));
   };
 
+  const getTitle = (method: PaymentMethod) =>
+    method.titleKey ? t(method.titleKey, method.titleVars) : (method.fixedTitle ?? '');
+  const getSubtitle = (method: PaymentMethod) => t(method.subtitleKey, method.subtitleVars);
+
   return (
     <div className="space-y-2">
       {PAYMENT_METHODS.map((method) => {
         const isSelected = selectedMethod === method.id;
         const showFallback = imgErrors.has(method.id);
+        const title = getTitle(method);
+        const subtitle = getSubtitle(method);
         
         return (
           <button
@@ -258,7 +280,7 @@ export function PaymentMethodSelector({ selectedMethod, onSelect }: PaymentMetho
               ) : (
                 <img
                   src={method.logo}
-                  alt={method.title}
+                  alt={title}
                   className="max-w-full max-h-full object-contain"
                   onError={() => handleImgError(method.id)}
                 />
@@ -268,14 +290,14 @@ export function PaymentMethodSelector({ selectedMethod, onSelect }: PaymentMetho
             {/* Text */}
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2">
-                <span className="font-medium">{method.title}</span>
+                <span className="font-medium">{title}</span>
                 {!method.enabled && (
                   <span className="text-xs bg-muted text-muted-foreground px-2 py-0.5 rounded-full">
-                    Greitai
+                    {t('coPay.soon')}
                   </span>
                 )}
               </div>
-              <p className="text-sm text-muted-foreground truncate">{method.subtitle}</p>
+              <p className="text-sm text-muted-foreground truncate">{subtitle}</p>
             </div>
             
             {/* Radio indicator */}
@@ -294,7 +316,7 @@ export function PaymentMethodSelector({ selectedMethod, onSelect }: PaymentMetho
       {/* Security note */}
       <div className="flex items-center gap-2 text-xs text-muted-foreground pt-2">
         <Lock className="w-3 h-3" />
-        <span>Visi mokėjimai yra saugūs ir šifruoti</span>
+        <span>{t('coPay.secure')}</span>
       </div>
     </div>
   );

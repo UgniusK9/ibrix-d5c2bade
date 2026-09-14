@@ -9,17 +9,19 @@ import { Label } from '@/components/ui/label';
 import { useComparisonStore } from '@/stores/comparisonStore';
 import { formatPrice, getProductImage, getEtaString, type Product } from '@/hooks/useProducts';
 import { useCartStore } from '@/stores/cartStore';
+import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import { SEOHead } from '@/components/seo/SEOHead';
 
 export default function Palyginti() {
   const { products, removeProduct, clearAll } = useComparisonStore();
+  const { t } = useTranslation();
   const addItem = useCartStore((state) => state.addItem);
   const [showDifferencesOnly, setShowDifferencesOnly] = useState(false);
 
   const handleAddToCart = (product: Product) => {
     addItem(product);
-    toast.success("Pridėta į krepšelį", {
+    toast.success(t("products.addedToCart"), {
       description: product.title,
       position: "top-center",
     });
@@ -29,7 +31,7 @@ export default function Palyginti() {
   const comparisonRows = useMemo(() => [
     {
       key: 'price',
-      label: 'Kaina',
+      label: t('comparison.price'),
       getValue: (p: Product) => p.sale_price_eur || p.price_eur,
       render: (product: Product) => (
         <div className="flex flex-col items-center gap-1">
@@ -52,7 +54,7 @@ export default function Palyginti() {
     },
     {
       key: 'deposit',
-      label: 'Depozitas',
+      label: t('comparison.deposit'),
       getValue: (p: Product) => p.deposit_eur,
       render: (product: Product) => (
         <span className="font-semibold text-primary">
@@ -62,7 +64,7 @@ export default function Palyginti() {
     },
     {
       key: 'balance',
-      label: 'Likutis',
+      label: t('comparison.balance'),
       getValue: (p: Product) => p.price_eur - p.deposit_eur,
       render: (product: Product) => (
         <span className="font-medium text-muted-foreground">
@@ -72,21 +74,21 @@ export default function Palyginti() {
     },
     {
       key: 'status',
-      label: 'Būsena',
+      label: t('comparison.status'),
       getValue: (p: Product) => p.stock_status,
       render: (product: Product) => (
         <Badge 
           variant={product.stock_status === 'in_stock' ? 'default' : 'secondary'}
           className={product.stock_status === 'in_stock' ? 'bg-green-500' : ''}
         >
-          {product.stock_status === 'preorder' ? 'Pre-order' : 
-           product.stock_status === 'in_stock' ? 'Sandėlyje' : 'Išparduota'}
+          {product.stock_status === 'preorder' ? t('products.preOrderLabel') : 
+           product.stock_status === 'in_stock' ? t('products.inStockLabel') : t('products.outOfStock')}
         </Badge>
       ),
     },
     {
       key: 'eta',
-      label: 'Pristatymas',
+      label: t('comparison.eta'),
       getValue: (p: Product) => getEtaString(p),
       render: (product: Product) => (
         <span className="text-sm">{getEtaString(product)}</span>
@@ -94,25 +96,25 @@ export default function Palyginti() {
     },
     {
       key: 'details',
-      label: 'Detalių sk.',
+      label: t('comparison.partsCount'),
       getValue: (p: Product) => (p.details_json as Record<string, unknown>)?.detailsCount as number || 0,
       render: (product: Product) => {
         const count = (product.details_json as Record<string, unknown>)?.detailsCount as number || 0;
-        return <span>{count > 0 ? `${count} det.` : '—'}</span>;
+        return <span>{count > 0 ? `${count} ${t('products.pieces')}` : '—'}</span>;
       },
     },
     {
       key: 'assembly',
-      label: 'Surinkimo laikas',
+      label: t('comparison.assemblyTime'),
       getValue: (p: Product) => (p.details_json as Record<string, unknown>)?.assemblyHours as number || 0,
       render: (product: Product) => {
         const hours = (product.details_json as Record<string, unknown>)?.assemblyHours as number || 0;
-        return <span>{hours > 0 ? `${hours} val.` : '—'}</span>;
+        return <span>{hours > 0 ? `${hours} ${t('products.hours')}` : '—'}</span>;
       },
     },
     {
       key: 'dimensions',
-      label: 'Matmenys',
+      label: t('comparison.dimensions'),
       getValue: (p: Product) => (p.details_json as Record<string, unknown>)?.dimensions as string || '',
       render: (product: Product) => {
         const dims = (product.details_json as Record<string, unknown>)?.dimensions as string || '';
@@ -121,7 +123,7 @@ export default function Palyginti() {
     },
     {
       key: 'weight',
-      label: 'Svoris',
+      label: t('comparison.weight'),
       getValue: (p: Product) => (p.details_json as Record<string, unknown>)?.weight as string || '',
       render: (product: Product) => {
         const weight = (product.details_json as Record<string, unknown>)?.weight as string || '';
@@ -138,13 +140,13 @@ export default function Palyginti() {
     },
     {
       key: 'category',
-      label: 'Kategorija',
+      label: t('comparison.category'),
       getValue: (p: Product) => p.category,
       render: (product: Product) => (
         <Badge variant="outline">{product.category}</Badge>
       ),
     },
-  ], []);
+  ], [t]);
 
   // Filter rows to show only differences
   const filteredRows = useMemo(() => {
@@ -170,8 +172,8 @@ export default function Palyginti() {
   return (
     <PageLayout>
       <SEOHead 
-        title="Konstruktorių palyginimas"
-        description="Palyginkite konstruktorius ir pasirinkite geriausią variantą"
+        title={t('comparison.title')}
+        description={t('pgComparePg.seoDesc')}
         canonical="/palyginti"
       />
       
@@ -182,17 +184,17 @@ export default function Palyginti() {
           className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground transition-colors mb-8"
         >
           <ArrowLeft className="w-4 h-4 mr-2" />
-          Grįžti į konstruktorius
+          {t('comparison.backToConstructors')}
         </Link>
 
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
           <div>
             <h1 className="font-heading text-3xl md:text-4xl font-bold mb-2">
-              Konstruktorių palyginimas
+              {t('comparison.title')}
             </h1>
             <p className="text-muted-foreground">
-              Palyginkite iki 3 konstruktorių vienu metu
+              {t('comparison.subtitle')}
             </p>
           </div>
           
@@ -208,14 +210,14 @@ export default function Palyginti() {
                   />
                   <Label htmlFor="differences" className="text-sm cursor-pointer flex items-center gap-1.5">
                     {showDifferencesOnly ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
-                    Tik skirtumai
+                    {t('comparison.differencesOnly')}
                   </Label>
                 </div>
               )}
               
               <Button variant="ghost" size="sm" onClick={clearAll} className="text-destructive hover:text-destructive">
                 <Trash2 className="w-4 h-4 mr-2" />
-                Išvalyti
+                {t('comparison.clear')}
               </Button>
             </div>
           )}
@@ -225,12 +227,12 @@ export default function Palyginti() {
         {products.length === 0 && (
           <div className="text-center py-16 bg-muted/30 rounded-2xl border border-dashed border-border">
             <Scale className="w-16 h-16 text-muted-foreground/30 mx-auto mb-4" />
-            <h2 className="font-heading text-xl font-semibold mb-2">Nėra konstruktorių palyginimui</h2>
+            <h2 className="font-heading text-xl font-semibold mb-2">{t('comparison.empty')}</h2>
             <p className="text-muted-foreground mb-6">
-              Pridėkite konstruktorius paspaudę palyginimo mygtuką konstruktoriaus puslapyje
+              {t('comparison.emptyDesc')}
             </p>
             <Button asChild>
-              <Link to="/produktai/visi">Peržiūrėti konstruktorius</Link>
+              <Link to="/produktai/visi">{t('nav.viewConstructors')}</Link>
             </Button>
           </div>
         )}
@@ -242,7 +244,7 @@ export default function Palyginti() {
               <thead>
                 <tr>
                   <th className="text-left p-4 border-b border-border w-40 text-sm font-medium text-muted-foreground sticky left-0 bg-background z-10">
-                    Savybė
+                    {t('comparison.property')}
                   </th>
                   {products.map((product) => (
                     <th key={product.id} className="p-4 border-b border-border min-w-[250px] max-w-[320px]">
@@ -272,7 +274,7 @@ export default function Palyginti() {
                             onClick={() => handleAddToCart(product)}
                           >
                             <ShoppingCart className="w-3.5 h-3.5 mr-1" />
-                            Į krepšelį
+                            {t('comparison.toCart')}
                           </Button>
                           <Button 
                             asChild
@@ -282,7 +284,7 @@ export default function Palyginti() {
                           >
                             <Link to={`/produktas/${product.slug}`}>
                               <ExternalLink className="w-3.5 h-3.5 mr-1" />
-                              Atidaryti
+                              {t('comparison.open')}
                             </Link>
                           </Button>
                         </div>
@@ -295,7 +297,7 @@ export default function Palyginti() {
                       <div className="w-32 h-32 bg-muted rounded-xl mx-auto mb-3 flex items-center justify-center border-2 border-dashed border-border">
                         <Scale className="w-10 h-10 text-muted-foreground/30" />
                       </div>
-                      <p className="text-sm text-muted-foreground">Pridėkite konstruktorių</p>
+                      <p className="text-sm text-muted-foreground">{t('comparison.addConstructor')}</p>
                     </th>
                   ))}
                 </tr>
@@ -316,7 +318,7 @@ export default function Palyginti() {
                           {row.label}
                           {hasDiff && (
                             <Badge variant="outline" className="text-[10px] px-1.5 py-0 text-primary border-primary/30">
-                              skirtumas
+                              {t('comparison.difference')}
                             </Badge>
                           )}
                         </span>
@@ -342,12 +344,12 @@ export default function Palyginti() {
         {/* Description comparison */}
         {products.length > 0 && products.some(p => p.short_desc) && (
           <div className="mt-8 pt-8 border-t">
-            <h2 className="font-heading text-xl font-semibold mb-4">Trumpi aprašymai</h2>
+            <h2 className="font-heading text-xl font-semibold mb-4">{t('comparison.shortDescriptions')}</h2>
             <div className="grid gap-4" style={{ gridTemplateColumns: `repeat(${Math.min(products.length, 3)}, minmax(200px, 1fr))` }}>
               {products.map((product) => (
                 <div key={product.id} className="p-4 bg-muted/50 rounded-xl">
                   <p className="font-medium text-sm mb-2">{product.title}</p>
-                  <p className="text-sm text-muted-foreground">{product.short_desc || 'Aprašymas nepateiktas'}</p>
+                  <p className="text-sm text-muted-foreground">{product.short_desc || t('comparison.noDescription')}</p>
                 </div>
               ))}
             </div>
@@ -357,7 +359,7 @@ export default function Palyginti() {
         {/* Tags comparison */}
         {products.length > 0 && products.some(p => p.tags && p.tags.length > 0) && (
           <div className="mt-8 pt-8 border-t">
-            <h2 className="font-heading text-xl font-semibold mb-4">Žymės</h2>
+            <h2 className="font-heading text-xl font-semibold mb-4">{t('comparison.tags')}</h2>
             <div className="grid gap-4" style={{ gridTemplateColumns: `repeat(${Math.min(products.length, 3)}, minmax(200px, 1fr))` }}>
               {products.map((product) => (
                 <div key={product.id} className="p-4 bg-muted/50 rounded-xl">
@@ -369,7 +371,7 @@ export default function Palyginti() {
                       </Badge>
                     ))}
                     {(!product.tags || product.tags.length === 0) && (
-                      <span className="text-sm text-muted-foreground">Žymių nėra</span>
+                      <span className="text-sm text-muted-foreground">{t('comparison.noTags')}</span>
                     )}
                   </div>
                 </div>

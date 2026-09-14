@@ -97,7 +97,7 @@ export function CreditsManager() {
       toast.success(t('credits.admin.saved'));
     } catch (err) {
       console.error('Error saving settings:', err);
-      toast.error('Failed to save settings');
+      toast.error(t('admCredits.saveSettingsError'));
     } finally {
       setSaving(false);
     }
@@ -140,13 +140,13 @@ export function CreditsManager() {
 
   const handleAdjustment = async (type: 'add' | 'subtract') => {
     if (!selectedUser || !adjustAmount || !adjustReason.trim()) {
-      toast.error('Please fill all fields');
+      toast.error(t('admCredits.fillAllFields'));
       return;
     }
 
     const amount = parseFloat(adjustAmount);
     if (isNaN(amount) || amount <= 0) {
-      toast.error('Invalid amount');
+      toast.error(t('admCredits.invalidAmount'));
       return;
     }
 
@@ -210,7 +210,7 @@ export function CreditsManager() {
       setAdjustReason('');
     } catch (err) {
       console.error('Error adjusting balance:', err);
-      toast.error('Failed to adjust balance');
+      toast.error(t('admCredits.adjustError'));
     } finally {
       setAdjusting(false);
     }
@@ -237,15 +237,15 @@ export function CreditsManager() {
         <TabsList>
           <TabsTrigger value="settings" className="gap-2">
             <Settings className="w-4 h-4" />
-            Nustatymai
+            {t('account.settings')}
           </TabsTrigger>
           <TabsTrigger value="lookup" className="gap-2">
             <Search className="w-4 h-4" />
-            Paieška
+            {t('admCommon.searchTitle')}
           </TabsTrigger>
           <TabsTrigger value="users" className="gap-2">
             <Users className="w-4 h-4" />
-            Visi vartotojai
+            {t('admCredits.allUsersTab')}
           </TabsTrigger>
         </TabsList>
 
@@ -384,7 +384,7 @@ export function CreditsManager() {
                     <Input
                       value={adjustReason}
                       onChange={(e) => setAdjustReason(e.target.value)}
-                      placeholder="Priežastis..."
+                      placeholder={t('admCredits.reasonPh')}
                     />
                   </div>
                 </div>

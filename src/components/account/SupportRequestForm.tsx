@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { HelpCircle, Package, AlertTriangle, MessageSquare, Check, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -17,28 +18,28 @@ interface SupportRequestFormProps {
   orderNumber: string;
 }
 
-const requestTypes = [
-  { 
-    id: 'return', 
-    label: 'Prekės grąžinimas', 
-    icon: Package,
-    description: 'Noriu grąžinti prekę ir atgauti pinigus'
-  },
-  { 
-    id: 'missing_parts', 
-    label: 'Trūkstamos detalės', 
-    icon: AlertTriangle,
-    description: 'Gavau prekę be kai kurių dalių'
-  },
-  { 
-    id: 'other', 
-    label: 'Kita informacija', 
-    icon: MessageSquare,
-    description: 'Turiu kitą klausimą apie užsakymą'
-  },
-];
-
 export function SupportRequestForm({ isOpen, onClose, orderId, orderNumber }: SupportRequestFormProps) {
+  const { t } = useTranslation();
+  const requestTypes = [
+    {
+      id: 'return',
+      label: t('support.reasonReturn'),
+      icon: Package,
+      description: t('support.reasonReturnDesc'),
+    },
+    {
+      id: 'missing_parts',
+      label: t('support.reasonMissing'),
+      icon: AlertTriangle,
+      description: t('support.reasonMissingDesc'),
+    },
+    {
+      id: 'other',
+      label: t('support.reasonOther'),
+      icon: MessageSquare,
+      description: t('support.reasonOtherDesc'),
+    },
+  ];
   const { user } = useAuth();
   const [requestType, setRequestType] = useState<string>('');
   const [message, setMessage] = useState('');
@@ -47,12 +48,12 @@ export function SupportRequestForm({ isOpen, onClose, orderId, orderNumber }: Su
 
   const handleSubmit = async () => {
     if (!requestType) {
-      toast.error('Pasirinkite užklausos tipą');
+      toast.error(t('support.selectType'));
       return;
     }
 
     if (!message.trim()) {
-      toast.error('Įveskite pranešimą');
+      toast.error(t('support.enterMessage'));
       return;
     }
 
@@ -75,10 +76,10 @@ export function SupportRequestForm({ isOpen, onClose, orderId, orderNumber }: Su
       if (error) throw error;
 
       setIsSuccess(true);
-      toast.success('Užklausa išsiųsta sėkmingai');
+      toast.success(t('support.sent'));
     } catch (e: any) {
       console.error('Support request error:', e);
-      toast.error(e.message || 'Nepavyko išsiųsti užklausos');
+      toast.error(e.message || t('support.sendFailed'));
     } finally {
       setIsSubmitting(false);
     }
@@ -97,7 +98,7 @@ export function SupportRequestForm({ isOpen, onClose, orderId, orderNumber }: Su
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <HelpCircle className="w-5 h-5" />
-            Turiu klausimą
+            {t('support.haveQuestion')}
           </DialogTitle>
         </DialogHeader>
 
@@ -106,22 +107,22 @@ export function SupportRequestForm({ isOpen, onClose, orderId, orderNumber }: Su
             <div className="w-16 h-16 bg-success/10 rounded-full flex items-center justify-center mx-auto mb-4">
               <Check className="w-8 h-8 text-success" />
             </div>
-            <h3 className="font-semibold text-lg mb-2">Užklausa priimta!</h3>
+            <h3 className="font-semibold text-lg mb-2">{t('support.acceptedTitle')}</h3>
             <p className="text-muted-foreground text-sm">
-              Mūsų komanda peržiūrės jūsų užklausą ir susisieks su jumis el. paštu per 1-2 darbo dienas.
+              {t('support.acceptedText')}
             </p>
             <Button onClick={handleClose} className="mt-6">
-              Uždaryti
+              {t('common.close')}
             </Button>
           </div>
         ) : (
           <div className="space-y-6 pt-4">
             <div className="text-sm text-muted-foreground">
-              Užsakymas: <span className="font-mono font-medium text-foreground">{orderNumber}</span>
+              {t('support.order')}: <span className="font-mono font-medium text-foreground">{orderNumber}</span>
             </div>
 
             <div className="space-y-3">
-              <Label>Pasirinkite temą</Label>
+              <Label>{t('support.chooseTopic')}</Label>
               <RadioGroup value={requestType} onValueChange={setRequestType}>
                 {requestTypes.map((type) => {
                   const Icon = type.icon;
@@ -150,18 +151,18 @@ export function SupportRequestForm({ isOpen, onClose, orderId, orderNumber }: Su
             </div>
 
             <div className="space-y-2">
-              <Label>Jūsų pranešimas</Label>
+              <Label>{t('support.yourMessage')}</Label>
               <Textarea
                 value={message}
                 onChange={(e) => setMessage(e.target.value)}
-                placeholder="Aprašykite savo situaciją..."
+                placeholder={t('support.messagePlaceholder')}
                 rows={4}
               />
             </div>
 
             <div className="flex gap-3">
               <Button variant="outline" onClick={handleClose} className="flex-1">
-                Atšaukti
+                {t('common.cancel')}
               </Button>
               <Button 
                 onClick={handleSubmit} 
@@ -171,10 +172,10 @@ export function SupportRequestForm({ isOpen, onClose, orderId, orderNumber }: Su
                 {isSubmitting ? (
                   <>
                     <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    Siunčiama...
+                    {t('common.sending')}
                   </>
                 ) : (
-                  'Siųsti'
+                  t('support.send')
                 )}
               </Button>
             </div>

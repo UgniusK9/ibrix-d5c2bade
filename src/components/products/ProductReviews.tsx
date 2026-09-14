@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Star, User, CheckCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -7,7 +8,7 @@ import { Label } from '@/components/ui/label';
 import { useProductReviews } from '@/hooks/useProductReviews';
 import { useAuth } from '@/contexts/AuthContext';
 import { format } from 'date-fns';
-import { lt } from 'date-fns/locale';
+import { lt, enUS } from 'date-fns/locale';
 
 interface ProductReviewsProps {
   productId: string;
@@ -15,6 +16,8 @@ interface ProductReviewsProps {
 }
 
 export function ProductReviews({ productId, productTitle }: ProductReviewsProps) {
+  const { t, i18n } = useTranslation();
+  const dateLocale = i18n.language?.startsWith('en') ? enUS : lt;
   const { reviews, loading, averageRating, reviewCount, canReview, submitReview } = useProductReviews(productId);
   const { user } = useAuth();
   const [showForm, setShowForm] = useState(false);
@@ -75,14 +78,14 @@ export function ProductReviews({ productId, productTitle }: ProductReviewsProps)
           <div>
             {averageRating && renderStars(averageRating)}
             <p className="text-sm text-muted-foreground mt-1">
-              {reviewCount} {reviewCount === 1 ? 'atsiliepimas' : 'atsiliepimai'}
+              {reviewCount} {reviewCount === 1 ? t('reviews.reviewsSingle') : t('reviews.reviewsPlural')}
             </p>
           </div>
         </div>
 
         {canReview && !showForm && (
           <Button onClick={() => setShowForm(true)}>
-            Parašyti atsiliepimą
+            {t('reviews.writeReview')}
           </Button>
         )}
       </div>
@@ -90,41 +93,41 @@ export function ProductReviews({ productId, productTitle }: ProductReviewsProps)
       {/* Review Form */}
       {showForm && (
         <form onSubmit={handleSubmit} className="bg-muted/50 rounded-xl p-6 space-y-4">
-          <h3 className="font-heading font-semibold">Jūsų atsiliepimas apie "{productTitle}"</h3>
+          <h3 className="font-heading font-semibold">{t('reviews.yourReviewAbout', { title: productTitle })}</h3>
           
           <div className="space-y-2">
-            <Label>Įvertinimas</Label>
+            <Label>{t('reviews.rating')}</Label>
             {renderStars(rating, true, 'w-8 h-8')}
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="review-title">Antraštė</Label>
+            <Label htmlFor="review-title">{t('reviews.reviewTitle')}</Label>
             <Input
               id="review-title"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              placeholder="Trumpa atsiliepimo antraštė..."
+              placeholder={t('reviews.reviewTitlePlaceholder')}
               maxLength={100}
             />
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="review-content">Atsiliepimas</Label>
+            <Label htmlFor="review-content">{t('reviews.reviewContent')}</Label>
             <Textarea
               id="review-content"
               value={content}
               onChange={(e) => setContent(e.target.value)}
-              placeholder="Papasakokite apie savo patirtį..."
+              placeholder={t('reviews.reviewContentPlaceholder')}
               rows={4}
             />
           </div>
 
           <div className="flex gap-2">
             <Button type="submit" disabled={submitting}>
-              {submitting ? 'Siunčiama...' : 'Siųsti atsiliepimą'}
+              {submitting ? t('common.sending') : t('reviews.submitReview')}
             </Button>
             <Button type="button" variant="outline" onClick={() => setShowForm(false)}>
-              Atšaukti
+              {t('common.cancel')}
             </Button>
           </div>
         </form>
@@ -132,12 +135,12 @@ export function ProductReviews({ productId, productTitle }: ProductReviewsProps)
 
       {/* Reviews List */}
       {loading ? (
-        <div className="text-center py-8 text-muted-foreground">Kraunama...</div>
+        <div className="text-center py-8 text-muted-foreground">{t('common.loading')}</div>
       ) : reviews.length === 0 ? (
         <div className="text-center py-8">
           <p className="text-muted-foreground">
-            Šis produktas dar neturi atsiliepimų.
-            {!user && ' Prisijunkite ir įsigykite produktą, kad galėtumėte palikti atsiliepimą.'}
+            {t('reviews.noReviews')}
+            {!user && ` ${t('reviews.loginHint')}`}
           </p>
         </div>
       ) : (
@@ -155,12 +158,12 @@ export function ProductReviews({ productId, productTitle }: ProductReviewsProps)
                       {review.verified_purchase && (
                         <span className="flex items-center gap-1 text-xs text-green-600">
                           <CheckCircle className="w-3 h-3" />
-                          Patvirtintas pirkėjas
+                          {t('reviews.verifiedBuyer')}
                         </span>
                       )}
                     </div>
                     <p className="text-xs text-muted-foreground">
-                      {format(new Date(review.created_at), 'yyyy-MM-dd', { locale: lt })}
+                      {format(new Date(review.created_at), 'yyyy-MM-dd', { locale: dateLocale })}
                     </p>
                   </div>
                 </div>

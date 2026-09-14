@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useProducts, formatPrice, getEtaString, getProductImage, Product } from "@/hooks/useProducts";
 import { useCartStore } from "@/stores/cartStore";
+import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import {
   Select,
@@ -19,6 +20,7 @@ type StatusFilter = "all" | "preorder" | "in_stock";
 
 export default function Varikliai() {
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
+  const { t } = useTranslation();
   const addItem = useCartStore((state) => state.addItem);
   const { data: products, isLoading, error } = useProducts();
 
@@ -33,7 +35,7 @@ export default function Varikliai() {
   const handleAddToCart = (product: Product, e: React.MouseEvent) => {
     e.preventDefault();
     addItem(product);
-    toast.success("Pridėta į krepšelį", {
+    toast.success(t("products.addedToCart"), {
       description: product.title,
       position: "top-center",
     });
@@ -46,11 +48,10 @@ export default function Varikliai() {
           {/* Header */}
           <div className="mb-8">
             <h1 className="font-heading text-3xl md:text-4xl font-bold mb-2">
-              Varikliai
+              {t('engines.title')}
             </h1>
             <p className="text-muted-foreground max-w-xl">
-              Mechaninių konstruktorių kolekcija su realiai judančiais mechanizmais. 
-              Išsirinkite savo mėgstamą konfigūraciją.
+              {t('engines.subtitle')}
             </p>
           </div>
 
@@ -58,17 +59,17 @@ export default function Varikliai() {
           <div className="flex flex-wrap gap-4 mb-8 p-4 bg-card rounded-xl border border-border">
             <div className="flex items-center gap-2">
               <Filter className="w-4 h-4 text-muted-foreground" />
-              <span className="text-sm font-medium">Filtrai:</span>
+              <span className="text-sm font-medium">{t('products.filters')}:</span>
             </div>
             
             <Select value={statusFilter} onValueChange={(v) => setStatusFilter(v as StatusFilter)}>
               <SelectTrigger className="w-[160px]">
-                <SelectValue placeholder="Statusas" />
+                <SelectValue placeholder={t('pgEnginesPg.statusPlaceholder')} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Visi statusai</SelectItem>
-                <SelectItem value="preorder">Pre-order</SelectItem>
-                <SelectItem value="in_stock">Sandėlyje</SelectItem>
+                <SelectItem value="all">{t('products.allStatuses')}</SelectItem>
+                <SelectItem value="preorder">{t('products.preOrderLabel')}</SelectItem>
+                <SelectItem value="in_stock">{t('products.inStockLabel')}</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -83,7 +84,7 @@ export default function Varikliai() {
           {/* Error State */}
           {error && (
             <div className="bg-destructive/10 text-destructive rounded-xl p-6 text-center">
-              Nepavyko užkrauti produktų. Bandykite vėliau.
+              {t('products.loadError')}
             </div>
           )}
 
@@ -109,7 +110,7 @@ export default function Varikliai() {
                         className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                       />
                       <Badge className={`absolute top-3 left-3 text-xs font-semibold px-2.5 py-1 ${isPreOrder ? "bg-primary text-primary-foreground" : "bg-success text-success-foreground"}`}>
-                        {isPreOrder ? "PRE-ORDER" : "SANDĖLYJE"}
+                        {isPreOrder ? t('products.preOrder') : t('products.inStock')}
                       </Badge>
                     </div>
                     <div className="p-5">
@@ -123,7 +124,7 @@ export default function Varikliai() {
                         {detailsCount > 0 && (
                           <span className="flex items-center gap-1.5">
                             <Package className="w-3.5 h-3.5" />
-                            {detailsCount} det.
+                            {detailsCount} {t('products.pieces')}
                           </span>
                         )}
                         <span className="flex items-center gap-1.5">
@@ -155,10 +156,10 @@ export default function Varikliai() {
             <div className="bg-card rounded-2xl p-12 text-center border border-border">
               <Package className="h-16 w-16 text-muted-foreground/30 mx-auto mb-4" strokeWidth={1} />
               <h3 className="font-heading text-xl font-semibold mb-2">
-                Produktų nerasta
+                {t('products.noProductsFound')}
               </h3>
               <p className="text-muted-foreground">
-                Pagal pasirinktus filtrus produktų nerasta. Pabandykite pakeisti filtrus.
+                {t('products.noProductsFoundDesc')}
               </p>
             </div>
           )}

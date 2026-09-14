@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
+import { useTranslation } from "react-i18next";
 
 interface IntegrationStatus {
   name: string;
@@ -14,6 +15,7 @@ interface IntegrationStatus {
 }
 
 export function AnalyticsIntegrationStatus() {
+  const { t } = useTranslation();
   const [integrations, setIntegrations] = useState<IntegrationStatus[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -92,16 +94,16 @@ export function AnalyticsIntegrationStatus() {
   const getStatusBadge = (status: IntegrationStatus['status']) => {
     switch (status) {
       case 'active':
-        return <Badge className="bg-success/10 text-success border-success/20">Aktyvus</Badge>;
+        return <Badge className="bg-success/10 text-success border-success/20">{t("admCommon.active")}</Badge>;
       case 'warning':
-        return <Badge className="bg-yellow-500/10 text-yellow-600 border-yellow-500/20">Ribota veikla</Badge>;
+        return <Badge className="bg-yellow-500/10 text-yellow-600 border-yellow-500/20">{t("admAnalytics.intLimited")}</Badge>;
       case 'inactive':
-        return <Badge variant="destructive">Nekonfigūruota</Badge>;
+        return <Badge variant="destructive">{t("admAnalytics.intNotConfigured")}</Badge>;
     }
   };
 
   const formatLastEvent = (dateString?: string) => {
-    if (!dateString) return 'Nėra duomenų';
+    if (!dateString) return t('admCommon.noData');
     const date = new Date(dateString);
     const now = new Date();
     const diffMs = now.getTime() - date.getTime();
@@ -109,17 +111,17 @@ export function AnalyticsIntegrationStatus() {
     const diffHours = Math.floor(diffMs / 3600000);
     const diffDays = Math.floor(diffMs / 86400000);
 
-    if (diffMins < 60) return `prieš ${diffMins} min.`;
-    if (diffHours < 24) return `prieš ${diffHours} val.`;
-    return `prieš ${diffDays} d.`;
+    if (diffMins < 60) return t('admAnalytics.intMinsAgo', { num: diffMins });
+    if (diffHours < 24) return t('admAnalytics.intHoursAgo', { num: diffHours });
+    return t('admAnalytics.intDaysAgo', { num: diffDays });
   };
 
   return (
     <Card>
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
         <div>
-          <CardTitle className="text-lg">Integracijų statusas</CardTitle>
-          <CardDescription>GA4 ir Meta Pixel veikimo būklė</CardDescription>
+          <CardTitle className="text-lg">{t("admAnalytics.dashIntegrations")}</CardTitle>
+          <CardDescription>{t("admAnalytics.intSubtitle")}</CardDescription>
         </div>
         <Button 
           variant="outline" 
@@ -128,7 +130,7 @@ export function AnalyticsIntegrationStatus() {
           disabled={loading}
         >
           <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
-          Atnaujinti
+          {t("admCommon.refresh")}
         </Button>
       </CardHeader>
       <CardContent>
@@ -143,9 +145,9 @@ export function AnalyticsIntegrationStatus() {
                 <div>
                   <p className="font-medium">{integration.name}</p>
                   <p className="text-sm text-muted-foreground">
-                    Paskutinis įvykis: {formatLastEvent(integration.lastEvent)}
+                    {t("admAnalytics.intLastEvent", { val: formatLastEvent(integration.lastEvent) })}
                     {integration.eventCount !== undefined && integration.eventCount > 0 && (
-                      <span className="ml-2">• {integration.eventCount} įv. per 24h</span>
+                      <span className="ml-2">{t("admAnalytics.intEvents24h", { num: integration.eventCount })}</span>
                     )}
                   </p>
                 </div>
@@ -156,15 +158,15 @@ export function AnalyticsIntegrationStatus() {
 
           {/* Setup hints */}
           <div className="mt-4 p-4 rounded-lg bg-muted/50 text-sm">
-            <p className="font-medium mb-2">Konfigūravimo instrukcijos:</p>
+            <p className="font-medium mb-2">{t("admAnalytics.intSetupHints")}</p>
             <ul className="space-y-1 text-muted-foreground">
               <li className="flex items-center gap-2">
                 <span className="w-1.5 h-1.5 rounded-full bg-primary" />
-                GA4: Nustatyti <code className="px-1 bg-muted rounded">GA_MEASUREMENT_ID</code> secret'ą
+                {t("admAnalytics.intGaSet")} <code className="px-1 bg-muted rounded">GA_MEASUREMENT_ID</code> {t("admAnalytics.intSecretWord")}
               </li>
               <li className="flex items-center gap-2">
                 <span className="w-1.5 h-1.5 rounded-full bg-primary" />
-                Meta: Nustatyti <code className="px-1 bg-muted rounded">META_PIXEL_ID</code> ir <code className="px-1 bg-muted rounded">META_CAPI_TOKEN</code>
+                {t("admAnalytics.intMetaSet")} <code className="px-1 bg-muted rounded">META_PIXEL_ID</code> {t("common.and")} <code className="px-1 bg-muted rounded">META_CAPI_TOKEN</code>
               </li>
               <li className="flex items-start gap-2">
                 <span className="w-1.5 h-1.5 rounded-full bg-primary mt-1.5" />

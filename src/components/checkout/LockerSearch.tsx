@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import { MapPin, Search, ChevronDown, Check, Loader2 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -32,6 +33,7 @@ function getCarrierFromMethod(shippingMethod: string): 'omniva' | 'lp_express' |
 }
 
 export function LockerSearch({ shippingMethod, selectedLocker, onSelect }: LockerSearchProps) {
+  const { t } = useTranslation();
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<LockerTerminal[]>([]);
   const [isOpen, setIsOpen] = useState(false);
@@ -123,7 +125,7 @@ export function LockerSearch({ shippingMethod, selectedLocker, onSelect }: Locke
     <div ref={containerRef} className="relative space-y-3">
       <Label className="flex items-center gap-2">
         <MapPin className="w-4 h-4 text-primary" />
-        Pasirinkite {getCarrierLabel()} paštomatą *
+        {t('coLocker.choose', { carrier: getCarrierLabel() })} *
       </Label>
 
       {/* Selected locker display */}
@@ -137,7 +139,7 @@ export function LockerSearch({ shippingMethod, selectedLocker, onSelect }: Locke
             </div>
             <Badge variant="outline" className="flex-shrink-0 text-xs border-primary/30 text-primary">
               <Check className="w-3 h-3 mr-1" />
-              Pasirinkta
+              {t('coLocker.selected')}
             </Badge>
           </div>
         </div>
@@ -149,7 +151,7 @@ export function LockerSearch({ shippingMethod, selectedLocker, onSelect }: Locke
         <Input
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          placeholder="Įveskite miestą arba adresą..."
+          placeholder={t('coLocker.searchPh')}
           className="pl-10 pr-10"
           onFocus={() => query.length >= 2 && results.length > 0 && setIsOpen(true)}
         />
@@ -193,14 +195,14 @@ export function LockerSearch({ shippingMethod, selectedLocker, onSelect }: Locke
       {/* No results message */}
       {query.length >= 2 && !isLoading && results.length === 0 && (
         <p className="text-sm text-muted-foreground px-1">
-          Nerasta paštomatų pagal „{query}"
+          {t('coLocker.noResults', { query })}
         </p>
       )}
 
       {/* Hint when no query */}
       {!selectedLocker && query.length < 2 && (
         <p className="text-xs text-muted-foreground px-1">
-          Pradėkite rašyti miestą, pvz. „Vilnius", „Kaunas", „Klaipėda"
+          {t('coLocker.hint')}
         </p>
       )}
     </div>

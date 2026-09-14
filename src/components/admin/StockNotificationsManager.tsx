@@ -12,6 +12,7 @@ import {
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { supabase } from '@/integrations/supabase/client';
+import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { lt } from 'date-fns/locale';
@@ -31,6 +32,7 @@ interface StockNotification {
 }
 
 export function StockNotificationsManager() {
+  const { t } = useTranslation();
   const [notifications, setNotifications] = useState<StockNotification[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -52,7 +54,7 @@ export function StockNotificationsManager() {
       setNotifications(data || []);
     } catch (e) {
       console.error('Failed to load notifications:', e);
-      toast.error('Nepavyko užkrauti pranešimų');
+      toast.error(t('admStock.snLoadError'));
     } finally {
       setLoading(false);
     }
@@ -74,10 +76,10 @@ export function StockNotificationsManager() {
         .eq('id', id);
 
       if (error) throw error;
-      toast.success('Pažymėta kaip išsiųsta');
+      toast.success(t('admStock.snMarked'));
       loadNotifications();
     } catch (e) {
-      toast.error('Nepavyko atnaujinti');
+      toast.error(t('admStock.snUpdateError'));
     } finally {
       setSendingId(null);
     }
@@ -92,10 +94,10 @@ export function StockNotificationsManager() {
         .eq('id', deleteId);
 
       if (error) throw error;
-      toast.success('Pranešimas ištrintas');
+      toast.success(t('admStock.snDeleted'));
       loadNotifications();
     } catch (e) {
-      toast.error('Nepavyko ištrinti');
+      toast.error(t('admCommon.deleteFailed'));
     } finally {
       setDeleteId(null);
     }
@@ -129,22 +131,22 @@ export function StockNotificationsManager() {
         <div>
           <h3 className="text-lg font-semibold flex items-center gap-2">
             <Bell className="w-5 h-5 text-primary" />
-            Pranešimai apie sandėlį
+            {t('admStock.snTitle')}
           </h3>
           <p className="text-sm text-muted-foreground">
-            Vartotojai, laukiantys prekių grįžimo į sandėlį
+            {t('admStock.snSubtitle')}
           </p>
         </div>
         <div className="flex items-center gap-2">
           <Badge variant="outline" className="text-xs">
-            Laukia: {pendingCount}
+            {t('admStock.snPending', { num: pendingCount })}
           </Badge>
           <Badge variant="secondary" className="text-xs">
-            Išsiųsta: {notifiedCount}
+            {t('admStock.snSent', { num: notifiedCount })}
           </Badge>
           <Button variant="outline" size="sm" onClick={loadNotifications}>
             <RefreshCw className={`w-4 h-4 mr-1 ${loading ? 'animate-spin' : ''}`} />
-            Atnaujinti
+            {t('admCommon.refresh')}
           </Button>
         </div>
       </div>
@@ -153,7 +155,7 @@ export function StockNotificationsManager() {
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
         <Input
           className="pl-10"
-          placeholder="Ieškoti pagal el. paštą arba produktą..."
+          placeholder={t('admStock.snSearchPh')}
           value={search}
           onChange={(e) => setSearch(e.target.value)}
         />
@@ -166,7 +168,7 @@ export function StockNotificationsManager() {
       ) : Object.keys(byProduct).length === 0 ? (
         <div className="text-center py-12 border border-dashed rounded-lg">
           <Bell className="w-12 h-12 text-muted-foreground/30 mx-auto mb-4" />
-          <p className="text-muted-foreground">Nėra pranešimų užklausų</p>
+          <p className="text-muted-foreground">{t('admStock.snEmpty')}</p>
         </div>
       ) : (
         <div className="space-y-4">
@@ -175,7 +177,7 @@ export function StockNotificationsManager() {
               <CardHeader className="pb-3">
                 <CardTitle className="text-base flex items-center justify-between">
                   <div>
-                    <span className="font-semibold">{product?.title || 'Nežinomas produktas'}</span>
+                    <span className="font-semibold">{product?.title || t('admStock.snUnknownProduct')}</span>
                     <span className="text-sm font-mono text-muted-foreground ml-2">
                       {product?.sku}
                     </span>
@@ -184,8 +186,8 @@ export function StockNotificationsManager() {
                     variant={product?.stock_status === 'in_stock' ? 'default' : 'secondary'}
                     className="text-xs"
                   >
-                    {product?.stock_status === 'in_stock' ? 'Sandėlyje' : 
-                     product?.stock_status === 'preorder' ? 'Pre-order' : 'Nėra'}
+                    {product?.stock_status === 'in_stock' ? t('products.inStockLabel') : 
+                     product?.stock_status === 'preorder' ? 'Pre-order' : t('common.none')}
                   </Badge>
                 </CardTitle>
               </CardHeader>
@@ -193,10 +195,10 @@ export function StockNotificationsManager() {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>El. paštas</TableHead>
-                      <TableHead>Užklausta</TableHead>
-                      <TableHead>Būsena</TableHead>
-                      <TableHead className="text-right">Veiksmai</TableHead>
+                      <TableHead>{t('admCommon.email')}</TableHead>
+                      <TableHead>{t('admStock.snRequested')}</TableHead>
+                      <TableHead>{t('admCommon.status')}</TableHead>
+                      <TableHead className="text-right">{t('admCommon.actions')}</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -208,11 +210,11 @@ export function StockNotificationsManager() {
                         </TableCell>
                         <TableCell>
                           {n.status === 'pending' ? (
-                            <Badge variant="outline" className="text-xs">Laukia</Badge>
+                            <Badge variant="outline" className="text-xs">{t('admProducts.photoWaiting')}</Badge>
                           ) : (
                             <Badge variant="secondary" className="text-xs">
                               <Check className="w-3 h-3 mr-1" />
-                              Išsiųsta {n.notified_at && format(new Date(n.notified_at), 'MM-dd')}
+                              {t('admContent.nlSent')} {n.notified_at && format(new Date(n.notified_at), 'MM-dd')}
                             </Badge>
                           )}
                         </TableCell>
@@ -230,7 +232,7 @@ export function StockNotificationsManager() {
                                 ) : (
                                   <Send className="w-3 h-3" />
                                 )}
-                                <span className="ml-1 hidden sm:inline">Pažymėti</span>
+                                <span className="ml-1 hidden sm:inline">{t('admStock.snMark')}</span>
                               </Button>
                             )}
                             <Button
@@ -256,15 +258,15 @@ export function StockNotificationsManager() {
       <AlertDialog open={!!deleteId} onOpenChange={() => setDeleteId(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Ištrinti pranešimą?</AlertDialogTitle>
+            <AlertDialogTitle>{t('admStock.snDeleteTitle')}</AlertDialogTitle>
             <AlertDialogDescription>
-              Šis veiksmas negrįžtamas. Vartotojas nebegaus pranešimo apie šią prekę.
+              {t('admStock.snDeleteDesc')}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Atšaukti</AlertDialogCancel>
+            <AlertDialogCancel>{t('common.cancel')}</AlertDialogCancel>
             <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground">
-              Ištrinti
+              {t('common.delete')}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

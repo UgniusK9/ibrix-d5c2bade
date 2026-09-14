@@ -88,7 +88,7 @@ export default function VerifyEmail() {
       const password = sessionStorage.getItem('signup_pending_password');
       
       if (!password) {
-        setError('Slaptažodis nerastas. Pradėkite registraciją iš naujo.');
+        setError(t('pgAuthX.errPasswordMissing'));
         setIsLoading(false);
         return;
       }
@@ -105,7 +105,7 @@ export default function VerifyEmail() {
       sessionStorage.removeItem('signup_pending_password');
 
       if (verifyError || !data?.success) {
-        setError(data?.error || 'Neteisingas arba pasibaigęs kodas');
+        setError(data?.error || t('pgAuthX.errInvalidCode'));
         setIsLoading(false);
         return;
       }
@@ -116,11 +116,11 @@ export default function VerifyEmail() {
         return;
       }
 
-      toast.success('Paskyra sėkmingai sukurta!');
+      toast.success(t('pgAuthX.successCreated'));
       navigate('/auth/success');
     } catch (err: any) {
       sessionStorage.removeItem('signup_pending_password');
-      setError(err.message || 'Patvirtinimo klaida');
+      setError(err.message || t('authFlow.verificationError'));
       setIsLoading(false);
     }
   };
@@ -134,13 +134,13 @@ export default function VerifyEmail() {
       });
 
       if (error || !data?.success) {
-        toast.error(data?.error || 'Nepavyko išsiųsti kodo');
+        toast.error(data?.error || t('pgAuthX.errResend'));
       } else {
-        toast.success('Naujas kodas išsiųstas');
+        toast.success(t('authFlow.codeSent'));
         setResendCooldown(60);
       }
     } catch {
-      toast.error('Nepavyko išsiųsti kodo');
+      toast.error(t('pgAuthX.errResend'));
     }
   };
 
@@ -177,10 +177,10 @@ export default function VerifyEmail() {
             </div>
 
             <h1 className="font-heading text-2xl md:text-3xl font-bold text-foreground mb-2">
-              Suaktyvinkite savo paskyrą
+              {t('pgAuthX.activateTitle')}
             </h1>
             <p className="text-muted-foreground mb-2">
-              Patvirtinimo kodas išsiųstas į:
+              {t('pgAuthX.codeSentTo')}
             </p>
             <p className="font-semibold text-foreground mb-6">{email}</p>
 
@@ -208,7 +208,7 @@ export default function VerifyEmail() {
             {error && <p className="text-destructive text-sm mb-4">{error}</p>}
 
             <p className="text-muted-foreground text-sm mb-6">
-              Jūsų kodas galioja <strong>24 valandas</strong>
+              {t('pgAuthX.codeValidPrefix')} <strong>{t('pgAuthX.codeValidTime')}</strong>
             </p>
 
             <Button
@@ -219,7 +219,7 @@ export default function VerifyEmail() {
               {isLoading ? (
                 <>
                   <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  Tikrinama...
+                  {t('pgAuthX.checking')}
                 </>
               ) : (
                 t('common.continue')
@@ -232,8 +232,8 @@ export default function VerifyEmail() {
               className="text-sm text-primary hover:text-primary/80 disabled:text-muted-foreground disabled:cursor-not-allowed"
             >
               {resendCooldown > 0
-                ? `Siųsti kodą iš naujo (${resendCooldown}s)`
-                : 'Negavote kodo? Siųsti iš naujo'}
+                ? t('pgAuthX.resendWithTimer', { seconds: resendCooldown })
+                : t('pgAuthX.resendPrompt')}
             </button>
           </div>
         </div>

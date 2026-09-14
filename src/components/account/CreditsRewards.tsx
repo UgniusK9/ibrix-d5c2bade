@@ -77,7 +77,7 @@ export function CreditsRewards({ userBalance }: CreditsRewardsProps) {
         <div className="w-16 h-16 rounded-full bg-muted mx-auto mb-4 flex items-center justify-center">
           <Gift className="w-8 h-8 text-muted-foreground/50" />
         </div>
-        <p className="text-muted-foreground mb-4">Šiuo metu nėra produktų, kuriuos galima įsigyti už kreditus</p>
+        <p className="text-muted-foreground mb-4">{t('credits.emptyRewards')}</p>
         <Button asChild variant="outline">
           <Link to="/produktai/visi">{t('credits.shopNow')}</Link>
         </Button>
@@ -89,7 +89,7 @@ export function CreditsRewards({ userBalance }: CreditsRewardsProps) {
     <div className="bg-card border border-border rounded-2xl overflow-hidden">
       <div className="p-4 border-b border-border flex items-center gap-3">
         <Gift className="w-5 h-5 text-primary" />
-        <h2 className="font-semibold text-lg">Rinkiniai už kreditus</h2>
+        <h2 className="font-semibold text-lg">{t('credits.bundlesTitle')}</h2>
       </div>
 
       <div className="grid sm:grid-cols-2 gap-4 p-4">
@@ -118,7 +118,7 @@ export function CreditsRewards({ userBalance }: CreditsRewardsProps) {
                 )}
                 {canAfford && (
                   <Badge className="absolute top-2 right-2 bg-green-500 text-white">
-                    Gali įsigyti!
+                    {t('credits.canAfford')}
                   </Badge>
                 )}
               </div>
@@ -131,11 +131,11 @@ export function CreditsRewards({ userBalance }: CreditsRewardsProps) {
                     <p className="text-xs text-muted-foreground line-through">{formatPrice(product.price_eur)}</p>
                     <div className="flex items-center gap-1">
                       <Tag className="w-4 h-4 text-primary" />
-                      <span className="font-bold text-primary">{product.credits_cost_eur} kreditų</span>
+                      <span className="font-bold text-primary">{product.credits_cost_eur} {t('credits.creditsWord')}</span>
                     </div>
                   </div>
                   {!canAfford && (
-                    <p className="text-xs text-destructive">Trūksta {(product.credits_cost_eur - userBalance).toFixed(0)}</p>
+                    <p className="text-xs text-destructive">{t('credits.missing', { amount: (product.credits_cost_eur - userBalance).toFixed(0) })}</p>
                   )}
                 </div>
               </div>

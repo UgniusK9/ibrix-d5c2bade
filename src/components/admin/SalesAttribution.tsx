@@ -4,6 +4,7 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { RefreshCw, TrendingUp, AlertCircle } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 type Period = '24h' | '7d' | '30d' | '90d';
 
@@ -34,6 +35,7 @@ function Breakdown({
   rows: Row[];
   total: number;
 }) {
+  const { t } = useTranslation();
   return (
     <Card className="p-6">
       <h3 className="font-heading font-semibold mb-1">{title}</h3>
@@ -41,7 +43,7 @@ function Breakdown({
 
       {rows.length === 0 ? (
         <p className="text-sm text-muted-foreground py-4">
-          Nėra duomenų už šį laikotarpį.
+          {t('admAnalytics.attrNoData')}
         </p>
       ) : (
         <div className="space-y-3">
@@ -54,7 +56,7 @@ function Breakdown({
                   <span className="text-sm tabular-nums whitespace-nowrap">
                     {eur(row.revenue)}
                     <span className="text-muted-foreground ml-2">
-                      {row.orders} užs.
+                      {t('admAnalytics.attrOrdersAbbr', { num: row.orders })}
                     </span>
                   </span>
                 </div>
@@ -74,6 +76,7 @@ function Breakdown({
 }
 
 export function SalesAttribution() {
+  const { t } = useTranslation();
   const [period, setPeriod] = useState<Period>('30d');
   const [data, setData] = useState<AttributionData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -105,10 +108,9 @@ export function SalesAttribution() {
     <div className="space-y-6">
       <div className="flex items-center justify-between gap-4 flex-wrap">
         <div>
-          <h2 className="font-heading text-2xl font-bold">Iš kur ateina pardavimai</h2>
+          <h2 className="font-heading text-2xl font-bold">{t('admAnalytics.attrTitle')}</h2>
           <p className="text-sm text-muted-foreground mt-1">
-            Skaičiuojama iš užsakymų, ne iš pikselių — reklamos blokatoriai šių
-            duomenų nepaslepia.
+            {t('admAnalytics.attrSubtitle')}
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -129,29 +131,29 @@ export function SalesAttribution() {
       </div>
 
       {loading && !data ? (
-        <Card className="p-8 text-center text-muted-foreground">Kraunama…</Card>
+        <Card className="p-8 text-center text-muted-foreground">{t('admAnalytics.attrLoading')}</Card>
       ) : !data ? (
         <Card className="p-8 text-center text-muted-foreground">
-          Nepavyko įkelti duomenų.
+          {t('admAnalytics.attrLoadError')}
         </Card>
       ) : (
         <>
           <div className="grid gap-4 sm:grid-cols-3">
             <Card className="p-5">
-              <div className="text-sm text-muted-foreground">Pajamos</div>
+              <div className="text-sm text-muted-foreground">{t('admAnalytics.attrRevenue')}</div>
               <div className="text-2xl font-semibold mt-1">
                 {eur(data.summary.revenue)}
               </div>
             </Card>
             <Card className="p-5">
-              <div className="text-sm text-muted-foreground">Užsakymai</div>
+              <div className="text-sm text-muted-foreground">{t('account.orders')}</div>
               <div className="text-2xl font-semibold mt-1">
                 {data.summary.orders}
               </div>
             </Card>
             <Card className="p-5">
               <div className="text-sm text-muted-foreground">
-                Su žinomu šaltiniu
+                {t('admAnalytics.attrKnownSource')}
               </div>
               <div className="text-2xl font-semibold mt-1">
                 {Math.round(data.summary.attributedShare * 100)}%
@@ -168,10 +170,9 @@ export function SalesAttribution() {
                 <AlertCircle className="w-5 h-5 text-yellow-600 shrink-0 mt-0.5" />
                 <div className="text-sm">
                   <span className="font-medium">
-                    Daugiau nei pusė užsakymų be šaltinio.
+                    {t('admAnalytics.attrWarnTitle')}
                   </span>{' '}
-                  Dažniausia priežastis — nuorodos be UTM žymų. Naudokite
-                  pažymėtas nuorodas socialiniuose tinkluose.
+                  {t('admAnalytics.attrWarnDesc')}
                 </div>
               </div>
             </Card>
@@ -179,22 +180,22 @@ export function SalesAttribution() {
 
           <div className="grid gap-4 lg:grid-cols-2">
             <Breakdown
-              title="Pagal šaltinį"
-              hint="TikTok, Facebook, tiesioginiai apsilankymai"
+              title={t('admAnalytics.attrBySource')}
+              hint={t('admAnalytics.attrBySourceHint')}
               rows={data.bySource}
               total={data.summary.revenue}
             />
             <Breakdown
-              title="Pagal kampaniją"
-              hint="utm_campaign reikšmės"
+              title={t('admAnalytics.attrByCampaign')}
+              hint={t('admAnalytics.attrByCampaignHint')}
               rows={data.byCampaign}
               total={data.summary.revenue}
             />
           </div>
 
           <Breakdown
-            title="Pagal turinį"
-            hint="utm_content — kuris konkretus video ar įrašas atnešė pardavimą"
+            title={t('admAnalytics.attrByContent')}
+            hint={t('admAnalytics.attrByContentHint')}
             rows={data.byContent}
             total={data.summary.revenue}
           />
@@ -204,10 +205,9 @@ export function SalesAttribution() {
               <div className="flex gap-3">
                 <TrendingUp className="w-5 h-5 text-muted-foreground shrink-0 mt-0.5" />
                 <div className="text-sm text-muted-foreground">
-                  Kol kas užsakymų nėra. Kai tik atsiras pirmas apmokėtas
-                  užsakymas iš pažymėtos nuorodos, jis pasirodys čia.
+                  {t('admAnalytics.attrEmptyHint')}
                   <Badge variant="outline" className="ml-2">
-                    laukiama duomenų
+                    {t('admAnalytics.attrWaitingData')}
                   </Badge>
                 </div>
               </div>

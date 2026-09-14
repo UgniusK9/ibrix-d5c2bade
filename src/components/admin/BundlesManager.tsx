@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
 import { supabase } from '@/integrations/supabase/client';
+import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
@@ -49,6 +50,7 @@ const formatPrice = (amount: number) => {
 };
 
 export function BundlesManager() {
+  const { t } = useTranslation();
   const [bundles, setBundles] = useState<BundleRule[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
@@ -86,7 +88,7 @@ export function BundlesManager() {
       setProducts(productsRes.data || []);
     } catch (e) {
       console.error('Failed to load bundles:', e);
-      toast.error('Nepavyko įkelti bundle taisyklių');
+      toast.error(t('admProducts.bundleLoadError'));
     } finally {
       setLoading(false);
     }
@@ -133,7 +135,7 @@ export function BundlesManager() {
 
   const handleSave = async () => {
     if (!form.name.trim()) {
-      toast.error('Įveskite taisyklės pavadinimą');
+      toast.error(t('admProducts.bundleEnterName'));
       return;
     }
 
@@ -157,13 +159,13 @@ export function BundlesManager() {
           .update(data)
           .eq('id', editBundle.id);
         if (error) throw error;
-        toast.success('Taisyklė atnaujinta');
+        toast.success(t('admProducts.bundleUpdated'));
       } else {
         const { error } = await supabase
           .from('bundle_rules')
           .insert(data);
         if (error) throw error;
-        toast.success('Taisyklė sukurta');
+        toast.success(t('admProducts.bundleCreated'));
       }
 
       setEditBundle(null);
@@ -172,21 +174,21 @@ export function BundlesManager() {
       await loadData();
     } catch (e: any) {
       console.error('Failed to save bundle:', e);
-      toast.error(e.message || 'Nepavyko išsaugoti');
+      toast.error(e.message || t('admCommon.saveFailed'));
     }
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm('Ar tikrai norite ištrinti šią taisyklę?')) return;
+    if (!confirm(t('admProducts.bundleDeleteConfirm'))) return;
 
     try {
       const { error } = await supabase.from('bundle_rules').delete().eq('id', id);
       if (error) throw error;
-      toast.success('Taisyklė ištrinta');
+      toast.success(t('admProducts.bundleDeleted'));
       await loadData();
     } catch (e) {
       console.error('Failed to delete bundle:', e);
-      toast.error('Nepavyko ištrinti');
+      toast.error(t('admCommon.deleteFailed'));
     }
   };
 
@@ -195,15 +197,15 @@ export function BundlesManager() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h2 className="font-heading text-lg font-semibold">Bundle taisyklės</h2>
+        <h2 className="font-heading text-lg font-semibold">{t('admProducts.bundleTitle')}</h2>
         <div className="flex gap-2">
           <Button onClick={loadData} variant="outline" size="sm" disabled={loading}>
             <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
-            Atnaujinti
+            {t('admCommon.refresh')}
           </Button>
           <Button onClick={() => { resetForm(); setIsCreating(true); }} size="sm">
             <Plus className="w-4 h-4 mr-2" />
-            Nauja taisyklė
+            {t('admProducts.bundleNew')}
           </Button>
         </div>
       </div>
@@ -215,10 +217,10 @@ export function BundlesManager() {
       ) : bundles.length === 0 ? (
         <div className="text-center py-12 bg-card border border-border rounded-xl">
           <Package className="w-12 h-12 text-muted-foreground/30 mx-auto mb-4" />
-          <p className="text-muted-foreground mb-4">Bundle taisyklių nėra</p>
+          <p className="text-muted-foreground mb-4">{t('admProducts.bundleEmpty')}</p>
           <Button onClick={() => { resetForm(); setIsCreating(true); }}>
             <Plus className="w-4 h-4 mr-2" />
-            Sukurti pirmą taisyklę
+            {t('admProducts.bundleCreateFirst')}
           </Button>
         </div>
       ) : (
@@ -226,10 +228,10 @@ export function BundlesManager() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Pavadinimas</TableHead>
-                <TableHead>Trigeris</TableHead>
-                <TableHead>Nuolaida</TableHead>
-                <TableHead>Būsena</TableHead>
+                <TableHead>{t('admCommon.name')}</TableHead>
+                <TableHead>{t('admProducts.bundleTrigger')}</TableHead>
+                <TableHead>{t('cart.discount')}</TableHead>
+                <TableHead>{t('admCommon.status')}</TableHead>
                 <TableHead></TableHead>
               </TableRow>
             </TableHeader>
@@ -251,13 +253,13 @@ export function BundlesManager() {
                     <TableCell>
                       <div className="text-sm">
                         {bundle.trigger_product_id && (
-                          <span>Perki: {triggerProduct?.title || 'Produktas'}</span>
+                          <span>{t('admProducts.bundleBuys', { title: triggerProduct?.title || t('admCommon.product') })}</span>
                         )}
                         {bundle.trigger_category && (
-                          <span>Kategorija: {bundle.trigger_category}</span>
+                          <span>{t('products.category')}: {bundle.trigger_category}</span>
                         )}
                         {bundle.trigger_min_qty > 1 && (
-                          <span className="text-muted-foreground"> (min. {bundle.trigger_min_qty})</span>
+                          <span className="text-muted-foreground"> {t('admProducts.bundleMinQty', { num: bundle.trigger_min_qty })}</span>
                         )}
                       </div>
                     </TableCell>
@@ -274,12 +276,12 @@ export function BundlesManager() {
                       </Badge>
                       <div className="text-xs text-muted-foreground mt-1">
                         {bundle.discount_product_id && discountProduct?.title}
-                        {bundle.discount_category && `Kategorija: ${bundle.discount_category}`}
+                        {bundle.discount_category && `${t('products.category')}: ${bundle.discount_category}`}
                       </div>
                     </TableCell>
                     <TableCell>
                       <Badge variant={bundle.active ? 'default' : 'secondary'}>
-                        {bundle.active ? 'Aktyvus' : 'Neaktyvus'}
+                        {bundle.active ? t('admCommon.active') : t('admCommon.inactive')}
                       </Badge>
                     </TableCell>
                     <TableCell>
@@ -304,34 +306,34 @@ export function BundlesManager() {
       <Dialog open={isCreating || !!editBundle} onOpenChange={() => { setIsCreating(false); setEditBundle(null); resetForm(); }}>
         <DialogContent className="max-w-lg">
           <DialogHeader>
-            <DialogTitle>{editBundle ? 'Redaguoti' : 'Nauja'} bundle taisyklė</DialogTitle>
+            <DialogTitle>{editBundle ? t('common.edit') : t('admProducts.bundleNewFem')} {t('admProducts.bundleRuleWord')}</DialogTitle>
             <DialogDescription>
-              Pvz.: "Perki variklio modelį → gauni priedą -20%"
+              {t('admProducts.bundleExample')}
             </DialogDescription>
           </DialogHeader>
 
           <div className="space-y-4 py-4">
             <div className="space-y-2">
-              <Label>Pavadinimas *</Label>
+              <Label>{t('admCommon.name')} *</Label>
               <Input
                 value={form.name}
                 onChange={(e) => setForm(f => ({ ...f, name: e.target.value }))}
-                placeholder="Pvz.: Variklis + priedas"
+                placeholder={t('admProducts.bundleNamePh')}
               />
             </div>
 
             <div className="space-y-2">
-              <Label>Aprašymas</Label>
+              <Label>{t('products.description')}</Label>
               <Textarea
                 value={form.description}
                 onChange={(e) => setForm(f => ({ ...f, description: e.target.value }))}
-                placeholder="Trumpas aprašymas klientui..."
+                placeholder={t('admProducts.bundleDescPh')}
                 rows={2}
               />
             </div>
 
             <div className="p-4 bg-muted/50 rounded-lg space-y-4">
-              <h4 className="font-medium text-sm">Trigeris (kai perka)</h4>
+              <h4 className="font-medium text-sm">{t('admProducts.bundleTriggerWhen')}</h4>
               
               <div className="flex gap-4">
                 <label className="flex items-center gap-2">
@@ -340,7 +342,7 @@ export function BundlesManager() {
                     checked={form.trigger_type === 'product'}
                     onChange={() => setForm(f => ({ ...f, trigger_type: 'product' }))}
                   />
-                  Produktas
+                  {t('admCommon.product')}
                 </label>
                 <label className="flex items-center gap-2">
                   <input
@@ -348,14 +350,14 @@ export function BundlesManager() {
                     checked={form.trigger_type === 'category'}
                     onChange={() => setForm(f => ({ ...f, trigger_type: 'category' }))}
                   />
-                  Kategorija
+                  {t('products.category')}
                 </label>
               </div>
 
               {form.trigger_type === 'product' ? (
                 <Select value={form.trigger_product_id} onValueChange={(v) => setForm(f => ({ ...f, trigger_product_id: v }))}>
                   <SelectTrigger>
-                    <SelectValue placeholder="Pasirinkite produktą" />
+                    <SelectValue placeholder={t('admProducts.bundleSelectProduct')} />
                   </SelectTrigger>
                   <SelectContent>
                     {products.map(p => (
@@ -366,7 +368,7 @@ export function BundlesManager() {
               ) : (
                 <Select value={form.trigger_category} onValueChange={(v) => setForm(f => ({ ...f, trigger_category: v }))}>
                   <SelectTrigger>
-                    <SelectValue placeholder="Pasirinkite kategoriją" />
+                    <SelectValue placeholder={t('admProducts.bundleSelectCategory')} />
                   </SelectTrigger>
                   <SelectContent>
                     {categories.map(c => (
@@ -377,7 +379,7 @@ export function BundlesManager() {
               )}
 
               <div className="flex items-center gap-2">
-                <Label className="shrink-0">Min. kiekis:</Label>
+                <Label className="shrink-0">{t('admProducts.bundleMinQtyLabel')}</Label>
                 <Input
                   type="number"
                   min={1}
@@ -389,7 +391,7 @@ export function BundlesManager() {
             </div>
 
             <div className="p-4 bg-accent/10 rounded-lg space-y-4">
-              <h4 className="font-medium text-sm">Nuolaida (kam taikoma)</h4>
+              <h4 className="font-medium text-sm">{t('admProducts.bundleDiscountFor')}</h4>
               
               <div className="flex gap-4">
                 <label className="flex items-center gap-2">
@@ -398,7 +400,7 @@ export function BundlesManager() {
                     checked={form.discount_target_type === 'product'}
                     onChange={() => setForm(f => ({ ...f, discount_target_type: 'product' }))}
                   />
-                  Produktas
+                  {t('admCommon.product')}
                 </label>
                 <label className="flex items-center gap-2">
                   <input
@@ -406,14 +408,14 @@ export function BundlesManager() {
                     checked={form.discount_target_type === 'category'}
                     onChange={() => setForm(f => ({ ...f, discount_target_type: 'category' }))}
                   />
-                  Kategorija
+                  {t('products.category')}
                 </label>
               </div>
 
               {form.discount_target_type === 'product' ? (
                 <Select value={form.discount_product_id} onValueChange={(v) => setForm(f => ({ ...f, discount_product_id: v }))}>
                   <SelectTrigger>
-                    <SelectValue placeholder="Pasirinkite produktą" />
+                    <SelectValue placeholder={t('admProducts.bundleSelectProduct')} />
                   </SelectTrigger>
                   <SelectContent>
                     {products.map(p => (
@@ -424,7 +426,7 @@ export function BundlesManager() {
               ) : (
                 <Select value={form.discount_category} onValueChange={(v) => setForm(f => ({ ...f, discount_category: v }))}>
                   <SelectTrigger>
-                    <SelectValue placeholder="Pasirinkite kategoriją" />
+                    <SelectValue placeholder={t('admProducts.bundleSelectCategory')} />
                   </SelectTrigger>
                   <SelectContent>
                     {categories.map(c => (
@@ -440,8 +442,8 @@ export function BundlesManager() {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="percent">Procentai</SelectItem>
-                    <SelectItem value="fixed">Fiksuota suma</SelectItem>
+                    <SelectItem value="percent">{t('admProducts.bundlePercent')}</SelectItem>
+                    <SelectItem value="fixed">{t('admProducts.bundleFixed')}</SelectItem>
                   </SelectContent>
                 </Select>
                 <div className="flex items-center gap-1">
@@ -462,16 +464,16 @@ export function BundlesManager() {
                 checked={form.active}
                 onCheckedChange={(checked) => setForm(f => ({ ...f, active: checked }))}
               />
-              <Label>Aktyvus</Label>
+              <Label>{t('admCommon.active')}</Label>
             </div>
           </div>
 
           <div className="flex gap-3">
             <Button variant="outline" className="flex-1" onClick={() => { setIsCreating(false); setEditBundle(null); resetForm(); }}>
-              Atšaukti
+              {t('common.cancel')}
             </Button>
             <Button className="flex-1" onClick={handleSave}>
-              Išsaugoti
+              {t('common.save')}
             </Button>
           </div>
         </DialogContent>

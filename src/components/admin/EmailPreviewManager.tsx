@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
@@ -7,14 +8,14 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
 const EMAIL_TYPES = [
-  { value: "deposit_confirmed", label: "Užsakymo patvirtinimas (depozitas)" },
-  { value: "balance_request", label: "Likučio apmokėjimo prašymas" },
-  { value: "balance_paid", label: "Likutis apmokėtas" },
-  { value: "shipped", label: "Siunta išsiųsta" },
-  { value: "gift_card", label: "Dovanų kuponas" },
-  { value: "verification_code", label: "El. pašto patvirtinimas" },
-  { value: "welcome", label: "Sveikinimo laiškas" },
-  { value: "password_reset", label: "Slaptažodžio atkūrimas" },
+  { value: "deposit_confirmed", label: "admContent.emailTypeDeposit" },
+  { value: "balance_request", label: "admContent.emailTypeBalanceReq" },
+  { value: "balance_paid", label: "admContent.emailTypeBalancePaid" },
+  { value: "shipped", label: "admContent.emailTypeShipped" },
+  { value: "gift_card", label: "admContent.emailTypeGiftCard" },
+  { value: "verification_code", label: "admContent.emailTypeVerify" },
+  { value: "welcome", label: "admContent.emailTypeWelcome" },
+  { value: "password_reset", label: "admContent.emailTypeReset" },
 ];
 
 const MOCK_DATA: Record<string, any> = {
@@ -82,6 +83,7 @@ const MOCK_DATA: Record<string, any> = {
 };
 
 export function EmailPreviewManager() {
+  const { t } = useTranslation();
   const [selectedType, setSelectedType] = useState<string>("");
   const [htmlContent, setHtmlContent] = useState<string>("");
   const [loading, setLoading] = useState(false);
@@ -99,12 +101,12 @@ export function EmailPreviewManager() {
       if (data?.html) {
         setHtmlContent(data.html);
       } else if (data?.fallback) {
-        setHtmlContent(data.html || "<p>Šablonas sugeneruotas, bet Resend nėra sukonfigūruotas.</p>");
+        setHtmlContent(data.html || t("admContent.emailNoResendHtml"));
       } else {
-        toast.error("Nepavyko gauti HTML");
+        toast.error(t("admContent.emailHtmlError"));
       }
     } catch (e: any) {
-      toast.error("Klaida: " + (e.message || "Nepavyko užkrauti"));
+      toast.error(t("admCommon.errorMsg", { msg: e.message || t("admCommon.loadFailed") }));
     } finally {
       setLoading(false);
     }
@@ -115,27 +117,27 @@ export function EmailPreviewManager() {
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Eye className="w-5 h-5" />
-          El. pašto šablonų peržiūra
+          {t("admContent.emailTitle")}
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="flex gap-3 items-end">
           <div className="flex-1">
-            <label className="text-sm font-medium mb-1.5 block">Šablono tipas</label>
+            <label className="text-sm font-medium mb-1.5 block">{t("admContent.emailType")}</label>
             <Select value={selectedType} onValueChange={setSelectedType}>
               <SelectTrigger>
-                <SelectValue placeholder="Pasirinkite šabloną..." />
+                <SelectValue placeholder={t("admContent.emailSelectPh")} />
               </SelectTrigger>
               <SelectContent>
-                {EMAIL_TYPES.map((t) => (
-                  <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>
+                {EMAIL_TYPES.map((et) => (
+                  <SelectItem key={et.value} value={et.value}>{t(et.label)}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
           </div>
           <Button onClick={loadPreview} disabled={!selectedType || loading}>
             <RefreshCw className={`w-4 h-4 mr-2 ${loading ? "animate-spin" : ""}`} />
-            Peržiūrėti
+            {t("admCommon.preview")}
           </Button>
         </div>
 
@@ -145,7 +147,7 @@ export function EmailPreviewManager() {
               srcDoc={htmlContent}
               className="w-full border-0"
               style={{ minHeight: 700 }}
-              title="Email preview"
+              title={t("admContent.emailIframeTitle")}
               sandbox="allow-same-origin"
             />
           </div>

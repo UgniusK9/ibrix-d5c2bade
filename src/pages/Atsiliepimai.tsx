@@ -14,8 +14,9 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select';
 import { format } from 'date-fns';
-import { lt } from 'date-fns/locale';
+import { lt, enUS } from 'date-fns/locale';
 import { useAuth } from '@/contexts/AuthContext';
+import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 
 interface Review {
@@ -46,6 +47,8 @@ export default function Atsiliepimai() {
   const [averageRating, setAverageRating] = useState<number | null>(null);
   const [products, setProducts] = useState<Product[]>([]);
   const { user } = useAuth();
+  const { t, i18n } = useTranslation();
+  const dateLocale = i18n.language === 'en' ? enUS : lt;
 
   // Form state
   const [showForm, setShowForm] = useState(false);
@@ -168,7 +171,7 @@ export default function Atsiliepimai() {
     const file = e.target.files?.[0];
     if (file) {
       if (file.size > 5 * 1024 * 1024) {
-        toast.error('Nuotrauka per didelė. Maksimalus dydis 5MB');
+        toast.error(t('reviews.photoTooLarge'));
         return;
       }
       setImageFile(file);
@@ -192,17 +195,17 @@ export default function Atsiliepimai() {
     e.preventDefault();
     
     if (!user) {
-      toast.error('Turite būti prisijungę');
+      toast.error(t('reviews.mustBeLoggedIn'));
       return;
     }
 
     if (!selectedProductId) {
-      toast.error('Pasirinkite produktą');
+      toast.error(t('reviews.selectProductError'));
       return;
     }
 
     if (rating === 0) {
-      toast.error('Pasirinkite įvertinimą');
+      toast.error(t('reviews.selectRatingError'));
       return;
     }
 
@@ -245,7 +248,7 @@ export default function Atsiliepimai() {
 
       if (error) throw error;
 
-      toast.success('Atsiliepimas išsiųstas patvirtinimui');
+      toast.success(t('reviews.reviewSubmitted'));
       
       // Reset form
       setShowForm(false);
@@ -257,7 +260,7 @@ export default function Atsiliepimai() {
       setImagePreview(null);
     } catch (e: any) {
       console.error('Failed to submit review:', e);
-      toast.error(e.message || 'Nepavyko išsiųsti atsiliepimo');
+      toast.error(e.message || t('reviews.submitError'));
     } finally {
       setSubmitting(false);
     }
@@ -291,16 +294,16 @@ export default function Atsiliepimai() {
   return (
     <PageLayout>
       <SEOHead
-        title="Klientų atsiliepimai | LEGO rinkiniai"
-        description="Sužinokite, ką mūsų klientai sako apie LEGO rinkinius. Tikri atsiliepimai iš patvirtintų pirkėjų."
+        title={t('pgReviewsPg.seoTitle')}
+        description={t('pgReviewsPg.seoDesc')}
       />
 
       <div className="container mx-auto px-4 py-8">
         <div className="flex items-center justify-between mb-8">
-          <h1 className="text-3xl font-bold">Klientų atsiliepimai</h1>
+          <h1 className="text-3xl font-bold">{t('reviews.title')}</h1>
           {user && !showForm && products.length > 0 && (
             <Button onClick={() => setShowForm(true)}>
-              Rašyti atsiliepimą
+              {t('reviews.writeReview')}
             </Button>
           )}
         </div>
@@ -310,8 +313,7 @@ export default function Atsiliepimai() {
           <Card className="mb-8">
             <CardContent className="py-6 text-center">
               <p className="text-muted-foreground">
-                Norėdami parašyti atsiliepimą, pirmiausia turite įsigyti produktą. 
-                Jei jau esate užsakę, laukite kol užsakymas bus apmokėtas.
+                {t('pgReviewsPg.noProductsHint')}
               </p>
             </CardContent>
           </Card>
@@ -323,17 +325,17 @@ export default function Atsiliepimai() {
             <CardContent className="pt-6">
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="flex items-center justify-between">
-                  <h2 className="text-xl font-semibold">Naujas atsiliepimas</h2>
+                  <h2 className="text-xl font-semibold">{t('reviews.newReview')}</h2>
                   <Button type="button" variant="ghost" size="sm" onClick={() => setShowForm(false)}>
                     <X className="h-4 w-4" />
                   </Button>
                 </div>
 
                 <div>
-                  <Label>Produktas *</Label>
+                  <Label>{t('reviews.product')} *</Label>
                   <Select value={selectedProductId} onValueChange={setSelectedProductId}>
                     <SelectTrigger>
-                      <SelectValue placeholder="Pasirinkite produktą" />
+                      <SelectValue placeholder={t('reviews.selectProduct')} />
                     </SelectTrigger>
                     <SelectContent>
                       {products.map((product) => (
@@ -346,43 +348,43 @@ export default function Atsiliepimai() {
                 </div>
 
                 <div>
-                  <Label>Įvertinimas *</Label>
+                  <Label>{t('reviews.rating')} *</Label>
                   <div className="mt-1">
                     {renderStars(rating, true)}
                   </div>
                 </div>
 
                 <div>
-                  <Label htmlFor="title">Pavadinimas</Label>
+                  <Label htmlFor="title">{t('reviews.reviewTitle')}</Label>
                   <Input
                     id="title"
                     value={title}
                     onChange={(e) => setTitle(e.target.value)}
-                    placeholder="Trumpas atsiliepimo pavadinimas"
+                    placeholder={t('reviews.reviewTitlePlaceholder')}
                     maxLength={100}
                   />
                 </div>
 
                 <div>
-                  <Label htmlFor="content">Atsiliepimas</Label>
+                  <Label htmlFor="content">{t('reviews.reviewContent')}</Label>
                   <Textarea
                     id="content"
                     value={content}
                     onChange={(e) => setContent(e.target.value)}
-                    placeholder="Papasakokite apie savo patirtį..."
+                    placeholder={t('reviews.reviewContentPlaceholder')}
                     rows={4}
                     maxLength={1000}
                   />
                 </div>
 
                 <div>
-                  <Label>Nuotrauka (neprivaloma)</Label>
+                  <Label>{t('reviews.photo')}</Label>
                   <div className="mt-2">
                     {imagePreview ? (
                       <div className="relative inline-block">
                         <img
                           src={imagePreview}
-                          alt="Preview"
+                          alt={t('pgReviewsPg.previewAlt')}
                           className="w-32 h-32 object-cover rounded-lg"
                         />
                         <Button
@@ -402,7 +404,7 @@ export default function Atsiliepimai() {
                         onClick={() => fileInputRef.current?.click()}
                       >
                         <Upload className="h-4 w-4 mr-2" />
-                        Įkelti nuotrauką
+                        {t('reviews.uploadPhoto')}
                       </Button>
                     )}
                     <input
@@ -417,10 +419,10 @@ export default function Atsiliepimai() {
 
                 <div className="flex gap-2 pt-4">
                   <Button type="submit" disabled={submitting}>
-                    {submitting ? 'Siunčiama...' : 'Išsiųsti atsiliepimą'}
+                    {submitting ? t('common.sending') : t('reviews.submitReview')}
                   </Button>
                   <Button type="button" variant="outline" onClick={() => setShowForm(false)}>
-                    Atšaukti
+                    {t('common.cancel')}
                   </Button>
                 </div>
               </form>
@@ -432,7 +434,7 @@ export default function Atsiliepimai() {
           <Card className="mb-8">
             <CardContent className="py-6 text-center">
               <p className="text-muted-foreground">
-                <a href="/auth" className="text-primary hover:underline">Prisijunkite</a>, kad galėtumėte parašyti atsiliepimą
+                <a href="/auth" className="text-primary hover:underline">{t('pgReviewsPg.loginLink')}</a>{t('pgReviewsPg.loginSuffix')}
               </p>
             </CardContent>
           </Card>
@@ -448,7 +450,7 @@ export default function Atsiliepimai() {
           <Card>
             <CardContent className="py-12 text-center">
               <Star className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-              <p className="text-muted-foreground">Kol kas nėra atsiliepimų</p>
+              <p className="text-muted-foreground">{t('reviews.noReviews')}</p>
             </CardContent>
           </Card>
         ) : (
@@ -463,7 +465,7 @@ export default function Atsiliepimai() {
                       {renderStars(Math.round(averageRating || 0))}
                     </div>
                     <p className="text-sm text-muted-foreground">
-                      {reviews.length} {reviews.length === 1 ? 'atsiliepimas' : 'atsiliepimai'}
+                      {reviews.length} {reviews.length === 1 ? t('reviews.reviewsSingle') : t('reviews.reviewsPlural')}
                     </p>
                   </div>
 
@@ -501,7 +503,7 @@ export default function Atsiliepimai() {
                           {renderStars(review.rating)}
                           {review.verified_purchase && (
                             <Badge variant="secondary" className="text-xs">
-                              Patvirtintas pirkėjas
+                              {t('reviews.verifiedBuyer')}
                             </Badge>
                           )}
                         </div>
@@ -510,7 +512,7 @@ export default function Atsiliepimai() {
                         )}
                       </div>
                       <span className="text-sm text-muted-foreground whitespace-nowrap">
-                        {format(new Date(review.created_at), 'yyyy-MM-dd', { locale: lt })}
+                        {format(new Date(review.created_at), 'yyyy-MM-dd', { locale: dateLocale })}
                       </span>
                     </div>
 
@@ -522,7 +524,7 @@ export default function Atsiliepimai() {
                       <div className="mb-3">
                         <img
                           src={review.image_url}
-                          alt="Atsiliepimo nuotrauka"
+                          alt={t('reviews.reviewPhoto')}
                           className="w-32 h-32 object-cover rounded-lg cursor-pointer hover:opacity-90 transition-opacity"
                           onClick={() => window.open(review.image_url!, '_blank')}
                         />
@@ -540,11 +542,11 @@ export default function Atsiliepimai() {
 
                     {review.admin_reply && (
                       <div className="mt-4 p-3 bg-muted rounded-lg">
-                        <p className="text-sm font-medium mb-1">Atsakymas:</p>
+                        <p className="text-sm font-medium mb-1">{t('reviews.adminReply')}</p>
                         <p className="text-sm text-muted-foreground">{review.admin_reply}</p>
                         {review.admin_reply_at && (
                           <p className="text-xs text-muted-foreground mt-1">
-                            {format(new Date(review.admin_reply_at), 'yyyy-MM-dd HH:mm', { locale: lt })}
+                            {format(new Date(review.admin_reply_at), 'yyyy-MM-dd HH:mm', { locale: dateLocale })}
                           </p>
                         )}
                       </div>

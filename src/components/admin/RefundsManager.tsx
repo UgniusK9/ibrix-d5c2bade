@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
 import { supabase } from '@/integrations/supabase/client';
+import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import {
   Dialog,
@@ -44,6 +45,7 @@ interface Refund {
 }
 
 export function RefundsManager() {
+  const { t } = useTranslation();
   const [refunds, setRefunds] = useState<Refund[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedRefund, setSelectedRefund] = useState<Refund | null>(null);
@@ -71,7 +73,7 @@ export function RefundsManager() {
       setRefunds(data || []);
     } catch (error: any) {
       console.error('Error loading refunds:', error);
-      toast.error('Klaida kraunant grąžinimus');
+      toast.error(t('admRefunds.refLoadError'));
     } finally {
       setLoading(false);
     }
@@ -97,7 +99,7 @@ export function RefundsManager() {
 
         if (error) throw error;
         
-        toast.success(`Grąžinimas apdorotas: ${data.stripeRefundId || 'OK'}`);
+        toast.success(t('admRefunds.refProcessed', { id: data.stripeRefundId || 'OK' }));
       } else {
         // Just update status to rejected
         const { error } = await supabase
@@ -111,7 +113,7 @@ export function RefundsManager() {
 
         if (error) throw error;
         
-        toast.success('Grąžinimas atmestas');
+        toast.success(t('admRefunds.refRejected'));
       }
 
       setConfirmAction(null);
@@ -120,7 +122,7 @@ export function RefundsManager() {
       loadRefunds();
     } catch (error: any) {
       console.error('Error processing refund:', error);
-      toast.error(error.message || 'Klaida apdorojant grąžinimą');
+      toast.error(error.message || t('admRefunds.refProcessError'));
     } finally {
       setProcessingId(null);
     }
@@ -128,11 +130,11 @@ export function RefundsManager() {
 
   const getStatusBadge = (status: string) => {
     const config: Record<string, { label: string; className: string }> = {
-      'requested': { label: 'Laukia', className: 'bg-yellow-500/10 text-yellow-600' },
-      'approved': { label: 'Patvirtintas', className: 'bg-blue-500/10 text-blue-600' },
-      'rejected': { label: 'Atmestas', className: 'bg-destructive/10 text-destructive' },
-      'processing': { label: 'Apdorojamas', className: 'bg-purple-500/10 text-purple-600' },
-      'refunded': { label: 'Grąžinta', className: 'bg-green-500/10 text-green-600' },
+      'requested': { label: t('admProducts.photoWaiting'), className: 'bg-yellow-500/10 text-yellow-600' },
+      'approved': { label: t('admRefunds.refApproved'), className: 'bg-blue-500/10 text-blue-600' },
+      'rejected': { label: t('admRefunds.refDenied'), className: 'bg-destructive/10 text-destructive' },
+      'processing': { label: t('admRefunds.refProcessing'), className: 'bg-purple-500/10 text-purple-600' },
+      'refunded': { label: t('admRefunds.refRefunded'), className: 'bg-green-500/10 text-green-600' },
     };
     const c = config[status] || config['requested'];
     return <Badge variant="outline" className={c.className}>{c.label}</Badge>;
@@ -149,16 +151,16 @@ export function RefundsManager() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h2 className="text-lg font-semibold">Grąžinimai</h2>
+        <h2 className="text-lg font-semibold">{t('admAnalytics.chartsRefunds')}</h2>
         <Button variant="outline" size="sm" onClick={loadRefunds}>
           <RefreshCw className="w-4 h-4 mr-2" />
-          Atnaujinti
+          {t('admCommon.refresh')}
         </Button>
       </div>
 
       {refunds.length === 0 ? (
         <div className="text-center py-12 text-muted-foreground">
-          Grąžinimų prašymų nėra
+          {t('admRefunds.refEmpty')}
         </div>
       ) : (
         <div className="space-y-3">
@@ -181,12 +183,12 @@ export function RefundsManager() {
               </div>
 
               <div className="text-sm space-y-1 mb-3">
-                <p><span className="text-muted-foreground">Priežastis:</span> {refund.reason}</p>
+                <p><span className="text-muted-foreground">{t('admRefunds.refReason')}</span> {refund.reason}</p>
                 {refund.customer_notes && (
-                  <p><span className="text-muted-foreground">Pastabos:</span> {refund.customer_notes}</p>
+                  <p><span className="text-muted-foreground">{t('admOrders.ordNotes')}:</span> {refund.customer_notes}</p>
                 )}
                 <p className="text-xs text-muted-foreground">
-                  Prašyta: {new Date(refund.requested_at).toLocaleString('lt-LT')}
+                  {t('admRefunds.refRequested', { date: new Date(refund.requested_at).toLocaleString('lt-LT') })}
                 </p>
               </div>
 
@@ -202,7 +204,7 @@ export function RefundsManager() {
                     }}
                   >
                     <X className="w-4 h-4 mr-1" />
-                    Atmesti
+                    {t('admRefunds.refReject')}
                   </Button>
                   <Button
                     size="sm"
@@ -212,7 +214,7 @@ export function RefundsManager() {
                     }}
                   >
                     <Check className="w-4 h-4 mr-1" />
-                    Patvirtinti ir grąžinti
+                    {t('admRefunds.refApprove')}
                   </Button>
                 </div>
               )}
@@ -233,23 +235,22 @@ export function RefundsManager() {
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>
-              {confirmAction?.action === 'approve' ? 'Patvirtinti grąžinimą?' : 'Atmesti grąžinimą?'}
+              {confirmAction?.action === 'approve' ? t('admRefunds.refConfirmApprove') : t('admRefunds.refConfirmReject')}
             </AlertDialogTitle>
             <AlertDialogDescription>
               {confirmAction?.action === 'approve' ? (
                 <>
-                  Suma <strong>{confirmAction.refund.amount_eur.toFixed(2)}€</strong> bus grąžinta per Stripe.
-                  Šis veiksmas negrįžtamas.
+                  {t('common.amount')} <strong>{confirmAction.refund.amount_eur.toFixed(2)}€</strong> {t('admRefunds.refApproveStripe')}
                 </>
               ) : (
-                'Klientas bus informuotas, kad grąžinimas atmestas.'
+                t('admRefunds.refRejectInfo')
               )}
             </AlertDialogDescription>
           </AlertDialogHeader>
           
           <div className="py-2">
             <Textarea
-              placeholder="Admin pastabos (neprivaloma)"
+              placeholder={t('admRefunds.refNotesPh')}
               value={adminNotes}
               onChange={(e) => setAdminNotes(e.target.value)}
               rows={2}
@@ -257,7 +258,7 @@ export function RefundsManager() {
           </div>
 
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={!!processingId}>Atšaukti</AlertDialogCancel>
+            <AlertDialogCancel disabled={!!processingId}>{t('common.cancel')}</AlertDialogCancel>
             <AlertDialogAction
               onClick={() => confirmAction && handleProcess(confirmAction.refund, confirmAction.action)}
               disabled={!!processingId}
@@ -266,9 +267,9 @@ export function RefundsManager() {
               {processingId ? (
                 <Loader2 className="w-4 h-4 animate-spin" />
               ) : confirmAction?.action === 'approve' ? (
-                'Grąžinti pinigus'
+                t('admRefunds.refRefundMoney')
               ) : (
-                'Atmesti'
+                t('admRefunds.refReject')
               )}
             </AlertDialogAction>
           </AlertDialogFooter>

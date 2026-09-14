@@ -2,12 +2,14 @@ import { useEffect, useState } from 'react';
 import { Heart, Loader2, Package, Trash2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
+import { useTranslation } from 'react-i18next';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { formatPrice, getProductImage, Product, getEtaString } from '@/hooks/useProducts';
 import { toast } from 'sonner';
 
 export function WishlistSection() {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
@@ -57,10 +59,10 @@ export function WishlistSection() {
       if (error) throw error;
 
       setProducts(prev => prev.filter(p => p.id !== productId));
-      toast.success('Produktas pašalintas iš norų sąrašo');
+      toast.success(t('wishlist.removed'));
     } catch (e) {
       console.error('Failed to remove from wishlist:', e);
-      toast.error('Nepavyko pašalinti produkto');
+      toast.error(t('wishlist.removeFailed'));
     }
   };
 
@@ -76,15 +78,15 @@ export function WishlistSection() {
     <div className="bg-card border border-border rounded-xl p-6">
       <h3 className="font-heading font-semibold text-lg flex items-center gap-2 mb-4">
         <Heart className="w-5 h-5 text-primary" />
-        Norų sąrašas
+        {t('wishlist.title')}
       </h3>
 
       {products.length === 0 ? (
         <div className="text-center py-8">
           <Heart className="w-12 h-12 text-muted-foreground/30 mx-auto mb-4" />
-          <p className="text-muted-foreground mb-4">Jūsų norų sąrašas tuščias</p>
+          <p className="text-muted-foreground mb-4">{t('wishlist.empty')}</p>
           <Button asChild variant="outline">
-            <Link to="/produktai/visi">Peržiūrėti konstruktorius</Link>
+            <Link to="/produktai/visi">{t('wishlist.browse')}</Link>
           </Button>
         </div>
       ) : (

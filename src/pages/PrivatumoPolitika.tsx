@@ -1,10 +1,12 @@
 import { PageLayout } from "@/components/layout/PageLayout";
 import { RouteSEO } from "@/components/seo/RouteSEO";
 import { Link } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { useCookieConsentStore } from "@/stores/cookieConsentStore";
 import { COMPANY, companyLine } from "@/config/company";
 
 export default function PrivatumoPolitika() {
+  const { t } = useTranslation();
   const { openModal } = useCookieConsentStore();
   const mailto = `mailto:${COMPANY.email}`;
   const h2 = "text-2xl font-heading font-semibold text-foreground mt-8 mb-4";
@@ -15,286 +17,218 @@ export default function PrivatumoPolitika() {
       <section className="py-16 md:py-24">
         <div className="container max-w-3xl">
           <h1 className="font-heading text-4xl font-bold mb-2">
-            Privatumo apsaugos taisyklės
+            {t("legPrivacy.title")}
           </h1>
           <p className="text-sm text-muted-foreground mb-10">
-            Atnaujinta {COMPANY.updated}
+            {t("legPrivacy.updated", { date: COMPANY.updated })}
           </p>
 
           <div className="prose prose-lg max-w-none text-muted-foreground space-y-8">
             <p className="lead text-foreground/80">
-              Šios privatumo apsaugos taisyklės paaiškina, kokius asmens duomenis renka
-              elektroninė parduotuvė {COMPANY.site}, kokiu tikslu ir teisiniu pagrindu juos
-              tvarko, kam perduoda, kiek laiko saugo ir kokias teises turite jūs.
+              {t("legPrivacy.lead", { site: COMPANY.site })}
             </p>
 
             <section>
-              <h2 className={h2}>1. Bendrosios nuostatos</h2>
-              <p>
-                1.1. Elektroninė parduotuvė {COMPANY.site} (toliau – Parduotuvė) priklauso ir yra
-                administruojama {companyLine()} (toliau – IBRIX arba Duomenų valdytojas).
-              </p>
-              <p>
-                1.2. Parduotuvėje prekiaujama MOULD KING ir kitų gamintojų konstruktoriais bei su
-                jais susijusiomis prekėmis. Dalis prekių parduodama išankstinio užsakymo
-                (pre-order) būdu, todėl kai kurie duomenys tvarkomi ilgesnį laiką nei įprastame
-                pirkime – tai paaiškinta 9 skyriuje.
-              </p>
-              <p>
-                1.3. Šios taisyklės taikomos visiems Parduotuvės lankytojams – tiek
-                užsiregistravusiems, tiek naršantiems be paskyros (toliau – Lankytojas).
-              </p>
-              <p>
-                1.4. Asmens duomenys tvarkomi vadovaujantis Europos Parlamento ir Tarybos
-                reglamentu (ES) 2016/679 (Bendrasis duomenų apsaugos reglamentas, toliau – BDAR),
-                Lietuvos Respublikos asmens duomenų teisinės apsaugos įstatymu ir Lietuvos
-                Respublikos elektroninių ryšių įstatymu.
-              </p>
-              <p>
-                1.5. Naudodamasis Parduotuve Lankytojas patvirtina, kad su šiomis taisyklėmis
-                susipažino. Su jomis nesutinkantis asmuo Parduotuve naudotis negali.
-              </p>
-              <p>
-                1.6. IBRIX turi teisę šias taisykles keisti. Pakeitimai įsigalioja juos paskelbus
-                Parduotuvėje. Jeigu pakeitimai esminiai, apie juos pranešame el. paštu
-                registruotiems Lankytojams.
-              </p>
+              <h2 className={h2}>{t("legPrivacy.general.title")}</h2>
+              <p>{t("legPrivacy.general.p1", { site: COMPANY.site, company: companyLine() })}</p>
+              <p>{t("legPrivacy.general.p2")}</p>
+              <p>{t("legPrivacy.general.p3")}</p>
+              <p>{t("legPrivacy.general.p4")}</p>
+              <p>{t("legPrivacy.general.p5")}</p>
+              <p>{t("legPrivacy.general.p6")}</p>
             </section>
 
             <section>
-              <h2 className={h2}>2. Duomenų valdytojas ir kontaktai</h2>
-              <p>2.1. Duomenų valdytojas:</p>
+              <h2 className={h2}>{t("legPrivacy.controller.title")}</h2>
+              <p>{t("legPrivacy.controller.intro")}</p>
               <p>
                 {COMPANY.legalName}
                 <br />
-                Juridinio asmens kodas: {COMPANY.regCode}
+                {t("legPrivacy.controller.codeLabel")} {COMPANY.regCode}
                 {COMPANY.vatCode ? (
                   <>
                     <br />
-                    PVM mokėtojo kodas: {COMPANY.vatCode}
+                    {t("legPrivacy.controller.vatLabel")} {COMPANY.vatCode}
                   </>
                 ) : null}
                 <br />
-                Buveinės adresas: {COMPANY.address}, {COMPANY.country}
+                {t("legPrivacy.controller.addressLabel")} {COMPANY.address}, {COMPANY.country}
                 <br />
-                El. paštas:{" "}
+                {t("legPrivacy.controller.emailLabel")}{" "}
                 <a href={mailto} className="text-accent hover:underline">
                   {COMPANY.email}
                 </a>
               </p>
+              <p>{t("legPrivacy.controller.dpo")}</p>
+            </section>
+
+            <section>
+              <h2 className={h2}>{t("legPrivacy.collected.title")}</h2>
               <p>
-                2.2. Duomenų apsaugos pareigūnas nėra paskirtas, nes IBRIX veikla neatitinka BDAR
-                37 straipsnyje nustatytų kriterijų. Visais duomenų apsaugos klausimais kreipkitės
-                aukščiau nurodytu el. paštu.
+                {t("legPrivacy.collected.regNum")} <strong className="text-foreground">{t("legPrivacy.collected.regLabel")}</strong>{" "}
+                {t("legPrivacy.collected.regText")}
+              </p>
+              <p>
+                {t("legPrivacy.collected.orderNum")} <strong className="text-foreground">{t("legPrivacy.collected.orderLabel")}</strong>{" "}
+                {t("legPrivacy.collected.orderText")}
+              </p>
+              <p>
+                {t("legPrivacy.collected.invoiceNum")} <strong className="text-foreground">{t("legPrivacy.collected.invoiceLabel")}</strong>{" "}
+                {t("legPrivacy.collected.invoiceText")}
+              </p>
+              <p>
+                {t("legPrivacy.collected.paymentNum")} <strong className="text-foreground">{t("legPrivacy.collected.paymentLabel")}</strong>{" "}
+                {t("legPrivacy.collected.paymentPre", { processor: COMPANY.paymentProcessor })}{" "}
+                <strong className="text-foreground">{t("legPrivacy.collected.paymentEm")}</strong>
+                {t("legPrivacy.collected.paymentPost")}
+              </p>
+              <p>
+                {t("legPrivacy.collected.deliveryNum")} <strong className="text-foreground">{t("legPrivacy.collected.deliveryLabel")}</strong>{" "}
+                {t("legPrivacy.collected.deliveryText")}
+              </p>
+              <p>
+                {t("legPrivacy.collected.cartNum")} <strong className="text-foreground">{t("legPrivacy.collected.cartLabel")}</strong>{" "}
+                {t("legPrivacy.collected.cartText")}
+              </p>
+              <p>
+                {t("legPrivacy.collected.creditsNum")}{" "}
+                <strong className="text-foreground">{t("legPrivacy.collected.creditsLabel")}</strong>{" "}
+                {t("legPrivacy.collected.creditsText")}
+              </p>
+              <p>
+                {t("legPrivacy.collected.reviewsNum")} <strong className="text-foreground">{t("legPrivacy.collected.reviewsLabel")}</strong>{" "}
+                {t("legPrivacy.collected.reviewsText")}
+              </p>
+              <p>
+                {t("legPrivacy.collected.requestsNum")}{" "}
+                <strong className="text-foreground">{t("legPrivacy.collected.requestsLabel")}</strong>{" "}
+                {t("legPrivacy.collected.requestsText")}
+              </p>
+              <p>
+                {t("legPrivacy.collected.newsletterNum")} <strong className="text-foreground">{t("legPrivacy.collected.newsletterLabel")}</strong>{" "}
+                {t("legPrivacy.collected.newsletterText")}
+              </p>
+              <p>
+                {t("legPrivacy.collected.technicalNum")} <strong className="text-foreground">{t("legPrivacy.collected.technicalLabel")}</strong>{" "}
+                {t("legPrivacy.collected.technicalText")}
+              </p>
+              <p>
+                {t("legPrivacy.collected.specialNum")} {t("legPrivacy.collected.specialPre")}{" "}
+                <strong className="text-foreground">{t("legPrivacy.collected.specialEm")}</strong>{" "}
+                {t("legPrivacy.collected.specialPost")}
               </p>
             </section>
 
             <section>
-              <h2 className={h2}>3. Kokius duomenis renkame</h2>
-              <p>
-                3.1. <strong className="text-foreground">Registracijos duomenys.</strong> Kuriant
-                paskyrą renkame vardą, pavardę, el. pašto adresą, telefono numerį ir slaptažodį.
-                Slaptažodis saugomas tik šifruota (maišos funkcijos) forma – jo nematome nei mes,
-                nei niekas kitas.
-              </p>
-              <p>
-                3.2. <strong className="text-foreground">Užsakymo duomenys.</strong> Pateikiant
-                užsakymą renkame vardą, pavardę, el. paštą, telefono numerį, pasirinktą paštomatą
-                arba pristatymo adresą, užsakytas prekes, sumas, nuolaidos kodą ir užsakymo
-                pastabas.
-              </p>
-              <p>
-                3.3. <strong className="text-foreground">Sąskaitos faktūros duomenys.</strong>{" "}
-                Pageidaujant sąskaitos juridiniam asmeniui – įmonės pavadinimą, įmonės kodą, PVM
-                mokėtojo kodą ir adresą.
-              </p>
-              <p>
-                3.4. <strong className="text-foreground">Mokėjimo duomenys.</strong> Mokėjimus
-                vykdo {COMPANY.paymentProcessor}. Banko kortelės numerio, galiojimo datos ar CVV
-                kodo IBRIX <strong className="text-foreground">nemato ir nesaugo</strong>. Matome
-                tik mokėjimo faktą, sumą, valiutą, pasirinktą banką ir mokėjimo būseną.
-              </p>
-              <p>
-                3.5. <strong className="text-foreground">Pristatymo duomenys.</strong> Siuntos
-                numeris, kurjerio pateikta siuntos būsena ir pristatymo įvykiai.
-              </p>
-              <p>
-                3.6. <strong className="text-foreground">Krepšelio duomenys.</strong> Į krepšelį
-                įdėtos prekės ir krepšelio turinys – įskaitant nebaigtus užsakymus, kad galėtume
-                priminti apie paliktą krepšelį, jeigu tam davėte sutikimą.
-              </p>
-              <p>
-                3.7.{" "}
-                <strong className="text-foreground">Kreditų ir dovanų kuponų duomenys.</strong>{" "}
-                Kreditų likutis, jų panaudojimo istorija, įsigyti ar panaudoti dovanų kuponai.
-              </p>
-              <p>
-                3.8. <strong className="text-foreground">Atsiliepimai.</strong> Paskelbtas
-                atsiliepimo tekstas, vertinimas ir vardas, kurį pasirinkote rodyti. Atsiliepimai
-                yra vieši.
-              </p>
-              <p>
-                3.9. <strong className="text-foreground">Užklausos ir susirašinėjimas.</strong>{" "}
-                Kontaktinės formos, trūkstamų detalių prašymai (rinkinio ir detalės numeriai),
-                pranešimai apie prekės atsiradimą sandėlyje bei visas su tuo susijęs
-                susirašinėjimas.
-              </p>
-              <p>
-                3.10. <strong className="text-foreground">Naujienlaiškio duomenys.</strong> El.
-                pašto adresas ir prenumeratos būsena, jeigu užsiprenumeravote.
-              </p>
-              <p>
-                3.11. <strong className="text-foreground">Techniniai duomenys.</strong> IP adreso
-                santrumpa, naršyklės ir įrenginio tipas, apsilankymo laikas, peržiūrėti puslapiai,
-                nukreipiantis šaltinis ir kampanijos žymos (UTM). Šie duomenys renkami tik gavus
-                jūsų sutikimą analitikai.
-              </p>
-              <p>
-                3.12. IBRIX <strong className="text-foreground">nerenka</strong> specialių
-                kategorijų asmens duomenų (sveikatos, religinių ar politinių pažiūrų, biometrinių
-                duomenų) ir neprašo asmens kodo, išskyrus atvejus, kai jis privalomas juridinio
-                asmens sąskaitai faktūrai išrašyti.
-              </p>
-            </section>
-
-            <section>
-              <h2 className={h2}>4. Teisiniai duomenų tvarkymo pagrindai</h2>
-              <p>
-                4.1. Kiekvienam tvarkymo tikslui taikomas konkretus BDAR 6 straipsnio pagrindas:
-              </p>
+              <h2 className={h2}>{t("legPrivacy.legalBasis.title")}</h2>
+              <p>{t("legPrivacy.legalBasis.intro")}</p>
               <ul className="list-disc list-inside space-y-2 mt-4">
                 <li>
-                  <strong className="text-foreground">Sutarties vykdymas</strong> (6 str. 1 d. b
-                  p.) – užsakymo apdorojimas, apmokėjimas, pristatymas, garantija, grąžinimai,
-                  paskyros administravimas.
+                  <strong className="text-foreground">{t("legPrivacy.legalBasis.contractLabel")}</strong>{" "}
+                  {t("legPrivacy.legalBasis.contractText")}
                 </li>
                 <li>
-                  <strong className="text-foreground">Teisinė prievolė</strong> (6 str. 1 d. c p.)
-                  – apskaita, sąskaitų faktūrų išrašymas ir saugojimas, mokesčių reikalavimai.
+                  <strong className="text-foreground">{t("legPrivacy.legalBasis.obligationLabel")}</strong>{" "}
+                  {t("legPrivacy.legalBasis.obligationText")}
                 </li>
                 <li>
-                  <strong className="text-foreground">Sutikimas</strong> (6 str. 1 d. a p.) –
-                  naujienlaiškis, analitikos ir rinkodaros slapukai, priminimai apie paliktą
-                  krepšelį. Sutikimą galima bet kada atšaukti.
+                  <strong className="text-foreground">{t("legPrivacy.legalBasis.consentLabel")}</strong>{" "}
+                  {t("legPrivacy.legalBasis.consentText")}
                 </li>
                 <li>
-                  <strong className="text-foreground">Teisėtas interesas</strong> (6 str. 1 d. f
-                  p.) – Parduotuvės saugumas, sukčiavimo prevencija, pretenzijų administravimas ir
-                  paslaugos kokybės gerinimas.
+                  <strong className="text-foreground">{t("legPrivacy.legalBasis.interestLabel")}</strong>{" "}
+                  {t("legPrivacy.legalBasis.interestText")}
                 </li>
               </ul>
-              <p className="mt-4">
-                4.2. Sutikimo atšaukimas neturi įtakos iki atšaukimo atlikto tvarkymo teisėtumui.
-              </p>
-              <p>
-                4.3. Duomenų pateikimas užsakymui yra būtinas sutarties sudarymo reikalavimas – be
-                jų užsakymo įvykdyti negalime. Naujienlaiškio duomenys pateikiami savanoriškai.
-              </p>
+              <p className="mt-4">{t("legPrivacy.legalBasis.noteWithdraw")}</p>
+              <p>{t("legPrivacy.legalBasis.noteRequired")}</p>
             </section>
 
             <section>
-              <h2 className={h2}>5. Kam naudojame duomenis</h2>
+              <h2 className={h2}>{t("legPrivacy.purposes.title")}</h2>
               <ul className="list-disc list-inside space-y-2">
-                <li>Užsakymams priimti, apdoroti, apmokėti ir pristatyti.</li>
-                <li>
-                  Išankstiniams (pre-order) užsakymams administruoti – informuoti apie laukimo
-                  terminą ir pakviesti sumokėti likutį prieš išsiuntimą.
-                </li>
-                <li>Sąskaitoms faktūroms išrašyti ir apskaitai tvarkyti.</li>
-                <li>Garantiniams klausimams, grąžinimams ir pretenzijoms nagrinėti.</li>
-                <li>Trūkstamoms detalėms nemokamai atsiųsti.</li>
-                <li>Klientų aptarnavimui ir atsakymams į užklausas.</li>
-                <li>Kreditams ir dovanų kuponams administruoti.</li>
-                <li>Naujienlaiškiui siųsti – tik su sutikimu.</li>
-                <li>Parduotuvės veikimui, saugumui ir sukčiavimo prevencijai užtikrinti.</li>
-                <li>Svetainės naudojimui analizuoti – tik su sutikimu.</li>
+                <li>{t("legPrivacy.purposes.item1")}</li>
+                <li>{t("legPrivacy.purposes.item2")}</li>
+                <li>{t("legPrivacy.purposes.item3")}</li>
+                <li>{t("legPrivacy.purposes.item4")}</li>
+                <li>{t("legPrivacy.purposes.item5")}</li>
+                <li>{t("legPrivacy.purposes.item6")}</li>
+                <li>{t("legPrivacy.purposes.item7")}</li>
+                <li>{t("legPrivacy.purposes.item8")}</li>
+                <li>{t("legPrivacy.purposes.item9")}</li>
+                <li>{t("legPrivacy.purposes.item10")}</li>
               </ul>
               <p className="mt-4">
-                5.1. IBRIX <strong className="text-foreground">nepriima</strong> automatizuotų
-                sprendimų, sukeliančių teisines pasekmes, ir nevykdo profiliavimo, kuris darytų
-                reikšmingą poveikį Lankytojui.
+                {t("legPrivacy.purposes.noAutoNum")} {t("legPrivacy.purposes.noAutoPre")}{" "}
+                <strong className="text-foreground">{t("legPrivacy.purposes.noAutoEm")}</strong>{" "}
+                {t("legPrivacy.purposes.noAutoPost")}
               </p>
               <p>
-                5.2. IBRIX <strong className="text-foreground">neparduoda</strong> ir jokia forma
-                neperleidžia asmens duomenų tretiesiems asmenims reklamos tikslais.
+                {t("legPrivacy.purposes.noSaleNum")} {t("legPrivacy.purposes.noSalePre")}{" "}
+                <strong className="text-foreground">{t("legPrivacy.purposes.noSaleEm")}</strong>{" "}
+                {t("legPrivacy.purposes.noSalePost")}
               </p>
             </section>
 
             <section>
-              <h2 className={h2}>6. Duomenų gavėjai</h2>
-              <p>
-                6.1. Duomenis perduodame tik tiek, kiek būtina paslaugai suteikti. Duomenų
-                tvarkytojai veikia pagal sudarytas duomenų tvarkymo sutartis:
-              </p>
+              <h2 className={h2}>{t("legPrivacy.recipients.title")}</h2>
+              <p>{t("legPrivacy.recipients.intro")}</p>
               <ul className="list-disc list-inside space-y-2 mt-4">
                 <li>
-                  <strong className="text-foreground">{COMPANY.paymentProcessor}</strong> –
-                  mokėjimų vykdymas (Lietuva, ES).
+                  <strong className="text-foreground">{COMPANY.paymentProcessor}</strong> –{" "}
+                  {t("legPrivacy.recipients.payseraText")}
                 </li>
                 <li>
-                  <strong className="text-foreground">Omniva, LP Express, DPD</strong> – siuntų
-                  pristatymas. Perduodame vardą, pavardę, telefoną ir paštomato ar adreso duomenis.
+                  <strong className="text-foreground">Omniva, LP Express, DPD</strong> –{" "}
+                  {t("legPrivacy.recipients.carriersText")}
                 </li>
                 <li>
-                  <strong className="text-foreground">Supabase</strong> – duomenų bazės ir
-                  autentifikacijos paslaugos, serveriai ES.
+                  <strong className="text-foreground">Supabase</strong> –{" "}
+                  {t("legPrivacy.recipients.supabaseText")}
                 </li>
                 <li>
-                  <strong className="text-foreground">Vercel</strong> – svetainės talpinimas ir
-                  turinio pristatymo tinklas.
+                  <strong className="text-foreground">Vercel</strong> –{" "}
+                  {t("legPrivacy.recipients.vercelText")}
                 </li>
                 <li>
-                  <strong className="text-foreground">Resend</strong> – operacinių ir informacinių
-                  el. laiškų siuntimas.
+                  <strong className="text-foreground">Resend</strong> –{" "}
+                  {t("legPrivacy.recipients.resendText")}
                 </li>
                 <li>
-                  <strong className="text-foreground">Cloudflare Turnstile</strong> – formų apsauga
-                  nuo automatizuoto piktnaudžiavimo.
+                  <strong className="text-foreground">Cloudflare Turnstile</strong> –{" "}
+                  {t("legPrivacy.recipients.turnstileText")}
                 </li>
                 <li>
-                  <strong className="text-foreground">Google Analytics</strong> – svetainės
-                  analitika, tik su sutikimu.
+                  <strong className="text-foreground">Google Analytics</strong> –{" "}
+                  {t("legPrivacy.recipients.analyticsText")}
                 </li>
                 <li>
-                  <strong className="text-foreground">Meta, TikTok</strong> – rinkodaros efektyvumo
-                  matavimas, tik su sutikimu rinkodarai.
+                  <strong className="text-foreground">Meta, TikTok</strong> –{" "}
+                  {t("legPrivacy.recipients.marketingText")}
                 </li>
               </ul>
-              <p className="mt-4">
-                6.2. Duomenys taip pat gali būti perduoti buhalterinės apskaitos, teisinių ar audito
-                paslaugų teikėjams bei valstybės institucijoms, kai to reikalauja teisės aktai.
-              </p>
-              <p>
-                6.3. Dalis paslaugų teikėjų (pvz., Google, Meta, TikTok, Cloudflare) gali tvarkyti
-                duomenis už Europos ekonominės erdvės ribų. Tokie perdavimai vykdomi remiantis
-                Europos Komisijos standartinėmis sutarčių sąlygomis arba tinkamumo sprendimais.
-              </p>
+              <p className="mt-4">{t("legPrivacy.recipients.noteProviders")}</p>
+              <p>{t("legPrivacy.recipients.noteThirdCountries")}</p>
             </section>
 
             <section>
-              <h2 className={h2}>7. Slapukai</h2>
+              <h2 className={h2}>{t("legPrivacy.cookiesInfo.title")}</h2>
+              <p>{t("legPrivacy.cookiesInfo.p1")}</p>
               <p>
-                7.1. Slapukai – nedideli tekstiniai failai, įrašomi į jūsų įrenginį. Naudojame
-                keturias slapukų grupes: būtinuosius, funkcinius, analitinius ir rinkodaros.
+                {t("legPrivacy.cookiesInfo.p2num")}{" "}
+                <strong className="text-foreground">{t("legPrivacy.cookiesInfo.p2label")}</strong>{" "}
+                {t("legPrivacy.cookiesInfo.p2text")}
               </p>
               <p>
-                7.2. <strong className="text-foreground">Būtinieji</strong> slapukai reikalingi
-                Parduotuvei veikti – krepšeliui, prisijungimui ir saugumui. Jie įrašomi be
-                sutikimo, nes be jų paslauga neveiktų.
+                {t("legPrivacy.cookiesInfo.p3pre")}{" "}
+                <strong className="text-foreground">{t("legPrivacy.cookiesInfo.p3em")}</strong>
+                {t("legPrivacy.cookiesInfo.p3post")}
               </p>
+              <p>{t("legPrivacy.cookiesInfo.p4")}</p>
               <p>
-                7.3. Analitiniai ir rinkodaros slapukai įrašomi{" "}
-                <strong className="text-foreground">tik gavus jūsų sutikimą</strong>. Kol sutikimo
-                nėra, Google Analytics, Meta ir TikTok scenarijai net neįkeliami.
-              </p>
-              <p>
-                7.4. Sutikimą galite bet kada pakeisti arba atšaukti. Atšaukus sutikimą, atitinkami
-                slapukai ištrinami.
-              </p>
-              <p>
-                7.5. Išsamų slapukų sąrašą rasite{" "}
+                {t("legPrivacy.cookiesInfo.p5pre")}{" "}
                 <Link to="/slapukai" className="text-accent hover:underline">
-                  Slapukų politikoje
+                  {t("legPrivacy.cookiesInfo.p5link")}
                 </Link>
                 .
               </p>
@@ -302,123 +236,109 @@ export default function PrivatumoPolitika() {
                 onClick={openModal}
                 className="mt-4 inline-flex items-center px-4 py-2 rounded-lg bg-muted text-foreground font-medium hover:bg-muted/80 transition-colors"
               >
-                Keisti slapukų nustatymus
+                {t("legPrivacy.cookiesInfo.button")}
               </button>
             </section>
 
             <section>
-              <h2 className={h2}>8. Rinkodaros pranešimai</h2>
+              <h2 className={h2}>{t("legPrivacy.marketing.title")}</h2>
               <p>
-                8.1. Naujienlaiškius ir pasiūlymus siunčiame tik turėdami jūsų sutikimą. Kiekviename
-                laiške yra atsisakymo nuoroda, o atsisakyti galite ir parašę{" "}
+                {t("legPrivacy.marketing.pre")}{" "}
                 <a href={mailto} className="text-accent hover:underline">
                   {COMPANY.email}
                 </a>
                 .
               </p>
-              <p>
-                8.2. Su konkrečiu užsakymu susiję laiškai – patvirtinimas, išsiuntimo pranešimas,
-                kvietimas sumokėti likutį už pre-order prekę – siunčiami visada. Tai sutarties
-                vykdymas, o ne rinkodara.
-              </p>
+              <p>{t("legPrivacy.marketing.orderMail")}</p>
             </section>
 
             <section>
-              <h2 className={h2}>9. Kiek laiko saugome duomenis</h2>
+              <h2 className={h2}>{t("legPrivacy.retention.title")}</h2>
               <ul className="list-disc list-inside space-y-2">
                 <li>
-                  <strong className="text-foreground">Užsakymų ir apskaitos duomenys</strong> – 10
-                  metų nuo ūkinės operacijos, kaip reikalauja apskaitą reglamentuojantys teisės
-                  aktai.
+                  <strong className="text-foreground">{t("legPrivacy.retention.ordersLabel")}</strong> –{" "}
+                  {t("legPrivacy.retention.ordersText")}
                 </li>
                 <li>
-                  <strong className="text-foreground">Paskyros duomenys</strong> – kol paskyra
-                  aktyvi. Ištrynus paskyrą duomenys pašalinami per 30 dienų, išskyrus tuos, kuriuos
-                  privalome saugoti pagal teisės aktus.
+                  <strong className="text-foreground">{t("legPrivacy.retention.accountLabel")}</strong> –{" "}
+                  {t("legPrivacy.retention.accountText")}
                 </li>
                 <li>
-                  <strong className="text-foreground">Pre-order užsakymų duomenys</strong> – kol
-                  užsakymas įvykdomas arba atšaukiamas, vėliau taikomas bendras 10 metų terminas.
+                  <strong className="text-foreground">{t("legPrivacy.retention.preorderLabel")}</strong> –{" "}
+                  {t("legPrivacy.retention.preorderText")}
                 </li>
                 <li>
-                  <strong className="text-foreground">Krepšelio duomenys</strong> – 30 dienų nuo
-                  paskutinio veiksmo.
+                  <strong className="text-foreground">{t("legPrivacy.retention.cartLabel")}</strong> –{" "}
+                  {t("legPrivacy.retention.cartText")}
                 </li>
                 <li>
-                  <strong className="text-foreground">Garantiniai ir grąžinimo duomenys</strong> – 2
-                  metai nuo prekės pristatymo.
+                  <strong className="text-foreground">{t("legPrivacy.retention.warrantyLabel")}</strong> –{" "}
+                  {t("legPrivacy.retention.warrantyText")}
                 </li>
                 <li>
-                  <strong className="text-foreground">Užklausos ir susirašinėjimas</strong> – 2
-                  metai nuo paskutinio pranešimo.
+                  <strong className="text-foreground">{t("legPrivacy.retention.inquiriesLabel")}</strong> –{" "}
+                  {t("legPrivacy.retention.inquiriesText")}
                 </li>
                 <li>
-                  <strong className="text-foreground">Naujienlaiškio duomenys</strong> – kol
-                  atšaukiate prenumeratą.
+                  <strong className="text-foreground">{t("legPrivacy.retention.newsletterLabel")}</strong> –{" "}
+                  {t("legPrivacy.retention.newsletterText")}
                 </li>
                 <li>
-                  <strong className="text-foreground">Slapukų sutikimas</strong> – 1 metai.
+                  <strong className="text-foreground">{t("legPrivacy.retention.consentLabel")}</strong> –{" "}
+                  {t("legPrivacy.retention.consentText")}
                 </li>
                 <li>
-                  <strong className="text-foreground">Analitikos duomenys</strong> – iki 26 mėnesių.
+                  <strong className="text-foreground">{t("legPrivacy.retention.analyticsLabel")}</strong> –{" "}
+                  {t("legPrivacy.retention.analyticsText")}
                 </li>
               </ul>
-              <p className="mt-4">
-                9.1. Pasibaigus terminui duomenys ištrinami arba nuasmeninami taip, kad konkretaus
-                asmens nebebūtų galima nustatyti.
-              </p>
+              <p className="mt-4">{t("legPrivacy.retention.note")}</p>
             </section>
 
             <section>
-              <h2 className={h2}>10. Jūsų teisės</h2>
-              <p>10.1. Pagal BDAR turite šias teises:</p>
+              <h2 className={h2}>{t("legPrivacy.rights.title")}</h2>
+              <p>{t("legPrivacy.rights.intro")}</p>
               <ul className="list-disc list-inside space-y-2 mt-4">
                 <li>
-                  <strong className="text-foreground">Susipažinti</strong> su tvarkomais savo
-                  duomenimis ir gauti jų kopiją.
+                  <strong className="text-foreground">{t("legPrivacy.rights.accessLabel")}</strong>{" "}
+                  {t("legPrivacy.rights.accessText")}
                 </li>
                 <li>
-                  <strong className="text-foreground">Ištaisyti</strong> netikslius ar papildyti
-                  neišsamius duomenis.
+                  <strong className="text-foreground">{t("legPrivacy.rights.rectifyLabel")}</strong>{" "}
+                  {t("legPrivacy.rights.rectifyText")}
                 </li>
                 <li>
-                  <strong className="text-foreground">Ištrinti</strong> duomenis („teisė būti
-                  pamirštam"), kai jie nebereikalingi tikslui, dėl kurio buvo surinkti.
+                  <strong className="text-foreground">{t("legPrivacy.rights.eraseLabel")}</strong>{" "}
+                  {t("legPrivacy.rights.eraseText")}
                 </li>
                 <li>
-                  <strong className="text-foreground">Apriboti</strong> duomenų tvarkymą.
+                  <strong className="text-foreground">{t("legPrivacy.rights.restrictLabel")}</strong>{" "}
+                  {t("legPrivacy.rights.restrictText")}
                 </li>
                 <li>
-                  <strong className="text-foreground">Perkelti</strong> duomenis – gauti juos
-                  susistemintu, kompiuterio skaitomu formatu.
+                  <strong className="text-foreground">{t("legPrivacy.rights.portabilityLabel")}</strong>{" "}
+                  {t("legPrivacy.rights.portabilityText")}
                 </li>
                 <li>
-                  <strong className="text-foreground">Nesutikti</strong> su tvarkymu, grindžiamu
-                  teisėtu interesu.
+                  <strong className="text-foreground">{t("legPrivacy.rights.objectLabel")}</strong>{" "}
+                  {t("legPrivacy.rights.objectText")}
                 </li>
                 <li>
-                  <strong className="text-foreground">Atšaukti sutikimą</strong> bet kuriuo metu.
+                  <strong className="text-foreground">{t("legPrivacy.rights.withdrawLabel")}</strong>{" "}
+                  {t("legPrivacy.rights.withdrawText")}
                 </li>
               </ul>
               <p className="mt-4">
-                10.2. Prašymą pateikite el. paštu{" "}
+                {t("legPrivacy.rights.requestPre")}{" "}
                 <a href={mailto} className="text-accent hover:underline">
                   {COMPANY.email}
                 </a>
-                . Atsakome ne vėliau kaip per 30 kalendorinių dienų. Sudėtingais atvejais šis
-                terminas gali būti pratęstas dar dviem mėnesiams jus informavus.
+                {t("legPrivacy.rights.requestPost")}
               </p>
+              <p>{t("legPrivacy.rights.identity")}</p>
+              <p>{t("legPrivacy.rights.eraseLimit")}</p>
               <p>
-                10.3. Siekdami apsaugoti jūsų duomenis, galime paprašyti patvirtinti tapatybę –
-                pavyzdžiui, pateikti prašymą iš to paties el. pašto, kuris nurodytas paskyroje.
-              </p>
-              <p>
-                10.4. Teisė ištrinti duomenis nėra absoliuti. Užsakymų ir apskaitos duomenų
-                negalime ištrinti nepasibaigus teisės aktų nustatytam saugojimo terminui.
-              </p>
-              <p>
-                10.5. Manydami, kad jūsų teisės pažeistos, turite teisę pateikti skundą Valstybinei
-                duomenų apsaugos inspekcijai (
+                {t("legPrivacy.rights.complaintPre")}{" "}
                 <a
                   href="https://vdai.lrv.lt"
                   target="_blank"
@@ -426,88 +346,51 @@ export default function PrivatumoPolitika() {
                   className="text-accent hover:underline"
                 >
                   vdai.lrv.lt
-                </a>
-                ). Prieš tai kviečiame kreiptis tiesiogiai į mus – dažniausiai klausimą pavyksta
-                išspręsti greičiau.
+                </a>{" "}
+                {t("legPrivacy.rights.complaintPost")}
               </p>
             </section>
 
             <section>
-              <h2 className={h2}>11. Duomenų saugumo priemonės</h2>
-              <p>11.1. Taikome technines ir organizacines priemones, proporcingas rizikai:</p>
+              <h2 className={h2}>{t("legPrivacy.security.title")}</h2>
+              <p>{t("legPrivacy.security.intro")}</p>
               <ul className="list-disc list-inside space-y-2 mt-4">
-                <li>Visas duomenų perdavimas šifruojamas SSL/TLS protokolu.</li>
-                <li>Slaptažodžiai saugomi tik vienkryptės maišos funkcijos forma.</li>
-                <li>
-                  Mokėjimo kortelių duomenys tvarkomi tik PCI DSS sertifikuoto mokėjimų partnerio
-                  aplinkoje – į mūsų sistemas jie nepatenka.
-                </li>
-                <li>
-                  Prieigą prie duomenų turi tik įgalioti asmenys, taikoma eilučių lygio prieigos
-                  kontrolė duomenų bazėje.
-                </li>
-                <li>Vykdomas prieigos ir veiksmų registravimas.</li>
+                <li>{t("legPrivacy.security.item1")}</li>
+                <li>{t("legPrivacy.security.item2")}</li>
+                <li>{t("legPrivacy.security.item3")}</li>
+                <li>{t("legPrivacy.security.item4")}</li>
+                <li>{t("legPrivacy.security.item5")}</li>
               </ul>
-              <p className="mt-4">
-                11.2. Prašome saugoti savo prisijungimo duomenis ir jų niekam neatskleisti.
-                Naudodamiesi viešai prieinamu kompiuteriu, baigę darbą atsijunkite.
-              </p>
-              <p>
-                11.3. IBRIX niekada neprašo atsiųsti slaptažodžio, banko kortelės numerio ar
-                internetinės bankininkystės kodų el. paštu ar telefonu. Gavę tokį prašymą – tai
-                sukčiavimas; praneškite mums.
-              </p>
-              <p>
-                11.4. Nors taikome visas pagrįstas apsaugos priemones, duomenų perdavimas internetu
-                niekada nėra visiškai saugus, todėl absoliutaus saugumo garantuoti negalime.
-              </p>
-              <p>
-                11.5. Nustatę asmens duomenų saugumo pažeidimą, galintį kelti didelę riziką jūsų
-                teisėms, informuosime jus ir Valstybinę duomenų apsaugos inspekciją per 72 valandas,
-                kaip numato BDAR.
-              </p>
+              <p className="mt-4">{t("legPrivacy.security.creds")}</p>
+              <p>{t("legPrivacy.security.phishing")}</p>
+              <p>{t("legPrivacy.security.noGuarantee")}</p>
+              <p>{t("legPrivacy.security.breach")}</p>
             </section>
 
             <section>
-              <h2 className={h2}>12. Nepilnamečių duomenys</h2>
-              <p>
-                12.1. Parduotuvėje parduodami konstruktoriai dažnai skirti vaikams, tačiau pirkti
-                gali tik veiksnūs asmenys. Nepilnamečiai nuo 14 iki 18 metų gali pirkti tik turėdami
-                tėvų ar globėjų sutikimą.
-              </p>
-              <p>
-                12.2. Sąmoningai nerenkame jaunesnių nei 14 metų asmenų duomenų. Sužinoję, kad tokie
-                duomenys buvo pateikti be tėvų sutikimo, juos nedelsdami ištriname.
-              </p>
-              <p>
-                12.3. Tėvai ar globėjai, pastebėję, kad jų vaikas pateikė mums duomenis, gali
-                kreiptis nurodytu el. paštu ir prašyti juos ištrinti.
-              </p>
+              <h2 className={h2}>{t("legPrivacy.minors.title")}</h2>
+              <p>{t("legPrivacy.minors.p1")}</p>
+              <p>{t("legPrivacy.minors.p2")}</p>
+              <p>{t("legPrivacy.minors.p3")}</p>
             </section>
 
             <section>
-              <h2 className={h2}>13. Baigiamosios nuostatos</h2>
-              <p>13.1. Šioms taisyklėms taikoma Lietuvos Respublikos teisė.</p>
+              <h2 className={h2}>{t("legPrivacy.final.title")}</h2>
+              <p>{t("legPrivacy.final.p1")}</p>
+              <p>{t("legPrivacy.final.p2")}</p>
+              <p>{t("legPrivacy.final.p3")}</p>
               <p>
-                13.2. Parduotuvėje gali būti nuorodų į kitų asmenų svetaines. IBRIX neatsako už tų
-                svetainių privatumo praktiką – susipažinkite su jų taisyklėmis atskirai.
-              </p>
-              <p>
-                13.3. Jeigu kuri nors šių taisyklių nuostata pripažįstama negaliojančia, tai neturi
-                įtakos likusių nuostatų galiojimui.
-              </p>
-              <p>
-                13.4. Klausimus dėl šių taisyklių siųskite{" "}
+                {t("legPrivacy.final.pre")}{" "}
                 <a href={mailto} className="text-accent hover:underline">
                   {COMPANY.email}
                 </a>
-                . Taip pat skaitykite{" "}
+                {t("legPrivacy.final.mid")}{" "}
                 <Link to="/taisykles" className="text-accent hover:underline">
-                  Taisykles
+                  {t("legPrivacy.final.termsLink")}
                 </Link>{" "}
-                ir{" "}
+                {t("legPrivacy.final.and")}{" "}
                 <Link to="/slapukai" className="text-accent hover:underline">
-                  Slapukų politiką
+                  {t("legPrivacy.final.cookiesLink")}
                 </Link>
                 .
               </p>

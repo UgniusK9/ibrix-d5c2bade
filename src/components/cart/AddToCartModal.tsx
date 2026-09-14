@@ -111,7 +111,7 @@ export function AddToCartModal({ isOpen, onClose, item }: AddToCartModalProps) {
                 )}
               </div>
               <div className="flex items-center justify-between mt-3">
-                <span className="text-sm text-muted-foreground">Kiekis: {item.quantity}</span>
+                <span className="text-sm text-muted-foreground">{t('cart.quantity')}: {item.quantity}</span>
                 <span className="font-heading font-bold text-lg">{formatCartPrice(item.price * item.quantity)}</span>
               </div>
             </div>
@@ -119,7 +119,7 @@ export function AddToCartModal({ isOpen, onClose, item }: AddToCartModalProps) {
 
           {/* Cart summary */}
           <div className="flex items-center justify-between p-4 bg-muted/50 rounded-xl">
-            <span className="text-sm text-muted-foreground">Krepšelio suma:</span>
+            <span className="text-sm text-muted-foreground">{t('cart.totalLabel')}</span>
             <span className="font-heading font-bold text-xl">{formatCartPrice(cartTotal)}</span>
           </div>
 
@@ -149,7 +149,7 @@ export function AddToCartModal({ isOpen, onClose, item }: AddToCartModalProps) {
               <div>
                 <div className="flex items-center gap-2 mb-4">
                   <Sparkles className="w-4 h-4 text-accent" />
-                  <p className="text-sm font-heading font-semibold">Dažnai perkama kartu</p>
+                  <p className="text-sm font-heading font-semibold">{t('cart.frequentlyBought')}</p>
                 </div>
                 <div className="grid grid-cols-3 gap-3">
                   {recommendations.map((product) => (

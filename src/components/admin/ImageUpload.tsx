@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { supabase } from '@/integrations/supabase/client';
+import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 
 interface ImageUploadProps {
@@ -13,7 +14,8 @@ interface ImageUploadProps {
   label?: string;
 }
 
-export function ImageUpload({ value, onChange, folder = 'general', label = 'Nuotrauka' }: ImageUploadProps) {
+export function ImageUpload({ value, onChange, folder = 'general', label }: ImageUploadProps) {
+  const { t } = useTranslation();
   const [uploading, setUploading] = useState(false);
   const [urlMode, setUrlMode] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -24,13 +26,13 @@ export function ImageUpload({ value, onChange, folder = 'general', label = 'Nuot
 
     // Validate file type
     if (!file.type.startsWith('image/')) {
-      toast.error('Pasirinkite nuotraukos failą');
+      toast.error(t('admCommon.uploadPickFile'));
       return;
     }
 
     // Max 5MB
     if (file.size > 5 * 1024 * 1024) {
-      toast.error('Nuotrauka per didelė (max 5MB)');
+      toast.error(t('admCommon.uploadTooLarge'));
       return;
     }
 
@@ -55,10 +57,10 @@ export function ImageUpload({ value, onChange, folder = 'general', label = 'Nuot
         .getPublicUrl(data.path);
 
       onChange(urlData.publicUrl);
-      toast.success('Nuotrauka įkelta');
+      toast.success(t('admCommon.uploadDone'));
     } catch (e: any) {
       console.error('Upload error:', e);
-      toast.error(e.message || 'Nepavyko įkelti nuotraukos');
+      toast.error(e.message || t('admCommon.uploadError'));
     } finally {
       setUploading(false);
     }
@@ -74,7 +76,7 @@ export function ImageUpload({ value, onChange, folder = 'general', label = 'Nuot
   return (
     <div className="space-y-2">
       <div className="flex items-center justify-between">
-        <Label>{label}</Label>
+        <Label>{label || t('admCommon.photoLabel')}</Label>
         <Button
           type="button"
           variant="ghost"
@@ -82,7 +84,7 @@ export function ImageUpload({ value, onChange, folder = 'general', label = 'Nuot
           className="text-xs h-6"
           onClick={() => setUrlMode(!urlMode)}
         >
-          {urlMode ? 'Įkelti failą' : 'Įvesti URL'}
+          {urlMode ? t('admCommon.uploadFile') : t('admCommon.uploadUrlMode')}
         </Button>
       </div>
 
@@ -107,7 +109,7 @@ export function ImageUpload({ value, onChange, folder = 'general', label = 'Nuot
             <div className="relative inline-block">
               <img
                 src={value}
-                alt="Preview"
+                alt={t('admCommon.uploadPreviewAlt')}
                 className="w-24 h-24 object-cover rounded-lg border border-border"
                 onError={(e) => {
                   e.currentTarget.src = '/placeholder.svg';
@@ -133,12 +135,12 @@ export function ImageUpload({ value, onChange, folder = 'general', label = 'Nuot
               {uploading ? (
                 <>
                   <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
-                  <span className="text-xs text-muted-foreground">Įkeliama...</span>
+                  <span className="text-xs text-muted-foreground">{t('admCommon.uploadUploading')}</span>
                 </>
               ) : (
                 <>
                   <Upload className="w-6 h-6 text-muted-foreground" />
-                  <span className="text-xs text-muted-foreground">Pasirinkti nuotrauką</span>
+                  <span className="text-xs text-muted-foreground">{t('admCommon.uploadChoose')}</span>
                 </>
               )}
             </button>

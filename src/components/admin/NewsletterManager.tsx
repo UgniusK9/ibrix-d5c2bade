@@ -11,6 +11,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
+import { useTranslation } from 'react-i18next';
 
 interface Subscriber {
   id: string;
@@ -34,6 +35,7 @@ interface Campaign {
 
 // Subscriber Growth Chart Component
 function SubscriberGrowthChart({ subscribers }: { subscribers: Subscriber[] }) {
+  const { t } = useTranslation();
   const chartData = useMemo(() => {
     // Group subscribers by date
     const dateMap: Record<string, number> = {};
@@ -62,7 +64,7 @@ function SubscriberGrowthChart({ subscribers }: { subscribers: Subscriber[] }) {
     return (
       <div className="text-center py-8 text-muted-foreground">
         <TrendingUp className="w-12 h-12 mx-auto mb-2 opacity-50" />
-        <p>Nėra duomenų statistikai</p>
+        <p>{t('admContent.nlNoStats')}</p>
       </div>
     );
   }
@@ -71,11 +73,11 @@ function SubscriberGrowthChart({ subscribers }: { subscribers: Subscriber[] }) {
     <div className="space-y-6">
       <div className="grid grid-cols-2 gap-4">
         <div className="bg-muted/30 rounded-lg p-4">
-          <p className="text-sm text-muted-foreground mb-1">Iš viso prenumeratorių</p>
+          <p className="text-sm text-muted-foreground mb-1">{t('admContent.nlTotalSubs')}</p>
           <p className="text-2xl font-bold">{subscribers.filter(s => s.status === 'active').length}</p>
         </div>
         <div className="bg-muted/30 rounded-lg p-4">
-          <p className="text-sm text-muted-foreground mb-1">Naujų šį mėnesį</p>
+          <p className="text-sm text-muted-foreground mb-1">{t('admContent.nlNewThisMonth')}</p>
           <p className="text-2xl font-bold">
             {subscribers.filter(s => {
               const subDate = new Date(s.subscribed_at);
@@ -87,7 +89,7 @@ function SubscriberGrowthChart({ subscribers }: { subscribers: Subscriber[] }) {
       </div>
 
       <div className="bg-card border border-border rounded-xl p-4">
-        <h3 className="font-medium mb-4">Prenumeratorių augimas</h3>
+        <h3 className="font-medium mb-4">{t('admContent.nlGrowth')}</h3>
         <div className="h-64">
           <ResponsiveContainer width="100%" height="100%">
             <LineChart data={chartData}>
@@ -115,7 +117,7 @@ function SubscriberGrowthChart({ subscribers }: { subscribers: Subscriber[] }) {
                 stroke="hsl(var(--primary))" 
                 strokeWidth={2}
                 dot={{ fill: 'hsl(var(--primary))', strokeWidth: 0, r: 3 }}
-                name="Iš viso"
+                name={t('cart.total')}
               />
               <Line 
                 type="monotone" 
@@ -123,7 +125,7 @@ function SubscriberGrowthChart({ subscribers }: { subscribers: Subscriber[] }) {
                 stroke="hsl(var(--accent))" 
                 strokeWidth={2}
                 dot={{ fill: 'hsl(var(--accent))', strokeWidth: 0, r: 3 }}
-                name="Nauji"
+                name={t('admContent.nlNew')}
               />
             </LineChart>
           </ResponsiveContainer>
@@ -134,6 +136,7 @@ function SubscriberGrowthChart({ subscribers }: { subscribers: Subscriber[] }) {
 }
 
 export function NewsletterManager() {
+  const { t } = useTranslation();
   const [subscribers, setSubscribers] = useState<Subscriber[]>([]);
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const [loading, setLoading] = useState(true);
@@ -160,7 +163,7 @@ export function NewsletterManager() {
       setCampaigns(campsRes.data || []);
     } catch (e) {
       console.error('Failed to load newsletter data:', e);
-      toast.error('Nepavyko užkrauti duomenų');
+      toast.error(t('admContent.nlLoadError'));
     } finally {
       setLoading(false);
     }
@@ -174,7 +177,7 @@ export function NewsletterManager() {
 
   const handleCreateCampaign = async () => {
     if (!campaignForm.subject || !campaignForm.content) {
-      toast.error('Tema ir turinys yra privalomi');
+      toast.error(t('admContent.nlRequired'));
       return;
     }
 
@@ -191,18 +194,18 @@ export function NewsletterManager() {
 
       if (error) throw error;
 
-      toast.success('Kampanija sukurta');
+      toast.success(t('admContent.nlCreated'));
       setShowCampaignDialog(false);
       setCampaignForm({ subject: '', content: '' });
       loadData();
     } catch (e: any) {
       console.error('Failed to create campaign:', e);
-      toast.error(e.message || 'Nepavyko sukurti kampanijos');
+      toast.error(e.message || t('admContent.nlCreateError'));
     }
   };
 
   const handleSendCampaign = async (campaign: Campaign) => {
-    if (!confirm(`Ar tikrai norite išsiųsti kampaniją "${campaign.subject}" ${activeSubscribers.length} prenumeratoriams?`)) {
+    if (!confirm(t('admContent.nlSendConfirm', { subject: campaign.subject, num: activeSubscribers.length }))) {
       return;
     }
 
@@ -224,7 +227,7 @@ export function NewsletterManager() {
             body: {
               type: 'newsletter',
               email: subscriber.email,
-              firstName: subscriber.first_name || 'Prenumeratoriau',
+              firstName: subscriber.first_name || t('admContent.nlDefaultName'),
               subject: campaign.subject,
               content: campaign.content,
             },
@@ -249,11 +252,11 @@ export function NewsletterManager() {
         })
         .eq('id', campaign.id);
 
-      toast.success(`Kampanija išsiųsta: ${sentCount} sėkmingai, ${failedCount} nepavyko`);
+      toast.success(t('admContent.nlSentResult', { sent: sentCount, failed: failedCount }));
       loadData();
     } catch (e: any) {
       console.error('Failed to send campaign:', e);
-      toast.error(e.message || 'Nepavyko išsiųsti kampanijos');
+      toast.error(e.message || t('admContent.nlSendError'));
       
       await supabase
         .from('newsletter_campaigns')
@@ -265,7 +268,7 @@ export function NewsletterManager() {
   };
 
   const handleDeleteSubscriber = async (subscriber: Subscriber) => {
-    if (!confirm(`Ar tikrai norite pašalinti ${subscriber.email}?`)) return;
+    if (!confirm(t('admContent.nlRemoveConfirm', { email: subscriber.email }))) return;
 
     try {
       const { error } = await supabase
@@ -273,19 +276,19 @@ export function NewsletterManager() {
         .delete()
         .eq('id', subscriber.id);
       if (error) throw error;
-      toast.success('Prenumeratorius pašalintas');
+      toast.success(t('admContent.nlRemoved'));
       loadData();
     } catch (e: any) {
-      toast.error(e.message || 'Nepavyko pašalinti');
+      toast.error(e.message || t('admContent.nlRemoveError'));
     }
   };
 
   const getStatusBadge = (status: string) => {
     const variants: Record<string, { variant: 'default' | 'secondary' | 'destructive' | 'outline'; label: string }> = {
-      draft: { variant: 'secondary', label: 'Juodraštis' },
-      sending: { variant: 'outline', label: 'Siunčiama...' },
-      sent: { variant: 'default', label: 'Išsiųsta' },
-      failed: { variant: 'destructive', label: 'Nepavyko' },
+      draft: { variant: 'secondary', label: t('admContent.nlDraft') },
+      sending: { variant: 'outline', label: t('common.sending') },
+      sent: { variant: 'default', label: t('admContent.nlSent') },
+      failed: { variant: 'destructive', label: t('admContent.nlFailed') },
     };
     const config = variants[status] || { variant: 'secondary' as const, label: status };
     return <Badge variant={config.variant}>{config.label}</Badge>;
@@ -298,13 +301,13 @@ export function NewsletterManager() {
           <div>
             <CardTitle className="font-heading text-lg flex items-center gap-2">
               <Mail className="w-5 h-5" />
-              Naujienlaiškis
+              {t('admContent.nlTitle')}
             </CardTitle>
-            <CardDescription>Prenumeratoriai ir kampanijos</CardDescription>
+            <CardDescription>{t('admContent.nlSubtitle')}</CardDescription>
           </div>
           <Button onClick={loadData} variant="outline" size="sm" disabled={loading}>
             <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
-            Atnaujinti
+            {t('admCommon.refresh')}
           </Button>
         </div>
       </CardHeader>
@@ -313,15 +316,15 @@ export function NewsletterManager() {
           <TabsList className="mb-4">
             <TabsTrigger value="subscribers" className="gap-2">
               <Users className="w-4 h-4" />
-              Prenumeratoriai ({activeSubscribers.length})
+              {t('admContent.nlSubsTab', { num: activeSubscribers.length })}
             </TabsTrigger>
             <TabsTrigger value="campaigns" className="gap-2">
               <Send className="w-4 h-4" />
-              Kampanijos ({campaigns.length})
+              {t('admContent.nlCampsTab', { num: campaigns.length })}
             </TabsTrigger>
             <TabsTrigger value="analytics" className="gap-2">
               <TrendingUp className="w-4 h-4" />
-              Statistika
+              {t('admContent.nlStats')}
             </TabsTrigger>
           </TabsList>
 
@@ -333,7 +336,7 @@ export function NewsletterManager() {
             ) : subscribers.length === 0 ? (
               <div className="text-center py-8 text-muted-foreground">
                 <Users className="w-12 h-12 mx-auto mb-2 opacity-50" />
-                <p>Nėra prenumeratorių</p>
+                <p>{t('admContent.nlNoSubs')}</p>
               </div>
             ) : (
               <div className="space-y-2 max-h-96 overflow-y-auto">
@@ -346,14 +349,14 @@ export function NewsletterManager() {
                       <div className="flex items-center gap-2">
                         <span className="font-medium">{subscriber.email}</span>
                         <Badge variant={subscriber.status === 'active' ? 'default' : 'secondary'}>
-                          {subscriber.status === 'active' ? 'Aktyvus' : 'Atsisakė'}
+                          {subscriber.status === 'active' ? t('admCommon.active') : t('admContent.nlUnsubscribed')}
                         </Badge>
                       </div>
                       {subscriber.first_name && (
                         <p className="text-xs text-muted-foreground">{subscriber.first_name}</p>
                       )}
                       <p className="text-xs text-muted-foreground">
-                        Prenumeruoja nuo: {new Date(subscriber.subscribed_at).toLocaleDateString('lt-LT')}
+                        {t('admContent.nlSince', { date: new Date(subscriber.subscribed_at).toLocaleDateString('lt-LT') })}
                       </p>
                     </div>
                     <Button variant="ghost" size="sm" onClick={() => handleDeleteSubscriber(subscriber)}>
@@ -369,7 +372,7 @@ export function NewsletterManager() {
             <div className="mb-4">
               <Button onClick={() => setShowCampaignDialog(true)} size="sm">
                 <Plus className="w-4 h-4 mr-2" />
-                Nauja kampanija
+                {t('admContent.nlNewCampaign')}
               </Button>
             </div>
 
@@ -380,7 +383,7 @@ export function NewsletterManager() {
             ) : campaigns.length === 0 ? (
               <div className="text-center py-8 text-muted-foreground">
                 <Send className="w-12 h-12 mx-auto mb-2 opacity-50" />
-                <p>Nėra kampanijų</p>
+                <p>{t('admContent.nlNoCampaigns')}</p>
               </div>
             ) : (
               <div className="space-y-2">
@@ -395,13 +398,13 @@ export function NewsletterManager() {
                         {getStatusBadge(campaign.status)}
                       </div>
                       <p className="text-xs text-muted-foreground">
-                        Gavėjai: {campaign.recipients_count} | 
-                        Išsiųsta: {campaign.sent_count} | 
-                        Nepavyko: {campaign.failed_count}
+                        {t('admContent.nlRecipients')}: {campaign.recipients_count} | 
+                        {t('admContent.nlSent')}: {campaign.sent_count} | 
+                        {t('admContent.nlFailed')}: {campaign.failed_count}
                       </p>
                       {campaign.sent_at && (
                         <p className="text-xs text-muted-foreground">
-                          Išsiųsta: {new Date(campaign.sent_at).toLocaleString('lt-LT')}
+                          {t('admContent.nlSentAt', { date: new Date(campaign.sent_at).toLocaleString('lt-LT') })}
                         </p>
                       )}
                     </div>
@@ -417,7 +420,7 @@ export function NewsletterManager() {
                           disabled={sending || activeSubscribers.length === 0}
                         >
                           <Send className="w-4 h-4 mr-1" />
-                          Siųsti
+                          {t('admContent.nlSend')}
                         </Button>
                       )}
                     </div>
@@ -436,28 +439,28 @@ export function NewsletterManager() {
         <Dialog open={showCampaignDialog} onOpenChange={setShowCampaignDialog}>
           <DialogContent className="max-w-2xl">
             <DialogHeader>
-              <DialogTitle>Nauja kampanija</DialogTitle>
+              <DialogTitle>{t('admContent.nlNewCampaign')}</DialogTitle>
               <DialogDescription>
-                Bus išsiųsta {activeSubscribers.length} aktyviem prenumeratoriam
+                {t('admContent.nlWillSend', { num: activeSubscribers.length })}
               </DialogDescription>
             </DialogHeader>
 
             <div className="space-y-4">
               <div className="space-y-2">
-                <Label>Tema *</Label>
+                <Label>{t('admContent.nlSubject')} *</Label>
                 <Input
                   value={campaignForm.subject}
                   onChange={(e) => setCampaignForm({ ...campaignForm, subject: e.target.value })}
-                  placeholder="Naujienos iš IBRIX"
+                  placeholder={t('admContent.nlSubjectPh')}
                 />
               </div>
 
               <div className="space-y-2">
-                <Label>Turinys *</Label>
+                <Label>{t('admContent.nlContent')} *</Label>
                 <Textarea
                   value={campaignForm.content}
                   onChange={(e) => setCampaignForm({ ...campaignForm, content: e.target.value })}
-                  placeholder="Laiško turinys (palaiko Markdown)..."
+                  placeholder={t('admContent.nlContentPh')}
                   rows={10}
                 />
               </div>
@@ -465,10 +468,10 @@ export function NewsletterManager() {
 
             <DialogFooter>
               <Button variant="outline" onClick={() => setShowCampaignDialog(false)}>
-                Atšaukti
+                {t('common.cancel')}
               </Button>
               <Button onClick={handleCreateCampaign}>
-                Sukurti juodraštį
+                {t('admContent.nlCreateDraft')}
               </Button>
             </DialogFooter>
           </DialogContent>
@@ -480,7 +483,7 @@ export function NewsletterManager() {
             <DialogHeader>
               <DialogTitle>{previewCampaign?.subject}</DialogTitle>
               <DialogDescription>
-                Kampanijos peržiūra
+                {t('admContent.nlPreviewTitle')}
               </DialogDescription>
             </DialogHeader>
 
@@ -490,7 +493,7 @@ export function NewsletterManager() {
 
             <DialogFooter>
               <Button variant="outline" onClick={() => setPreviewCampaign(null)}>
-                Uždaryti
+                {t('common.close')}
               </Button>
             </DialogFooter>
           </DialogContent>

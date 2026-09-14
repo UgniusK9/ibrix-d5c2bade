@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { TrackingMap } from "@/components/tracking/TrackingMap";
 import { useAuth } from "@/contexts/AuthContext";
+import { useTranslation } from "react-i18next";
 
 interface ShipmentEvent {
   id: string;
@@ -77,6 +78,8 @@ export default function SiuntosSekimas() {
   const token = searchParams.get('token');
   const showDebug = searchParams.get('debug') === 'true';
   const { isAdmin } = useAuth();
+  const { t, i18n } = useTranslation();
+  const dateLocale = i18n.language === 'en' ? 'en-GB' : 'lt-LT';
   
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -86,7 +89,7 @@ export default function SiuntosSekimas() {
     const fetchTracking = async () => {
       // Token is required
       if (!token) {
-        setError("Nuoroda negalioja arba pasibaigė.");
+        setError(t("pgTrackPg.linkExpired"));
         setLoading(false);
         return;
       }
@@ -98,22 +101,23 @@ export default function SiuntosSekimas() {
         });
 
         if (fnError || !data?.success) {
-          setError(data?.error || "Nuoroda negalioja arba pasibaigė.");
+          setError(data?.error || t("pgTrackPg.linkExpired"));
         } else if (data.data) {
           setShipment(data.data);
         }
       } catch (e) {
-        setError("Klaida kraunant duomenis. Bandykite vėliau.");
+        setError(t("pgTrackPg.loadError"));
       } finally {
         setLoading(false);
       }
     };
 
     fetchTracking();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [orderId, token]);
 
   const formatDate = (date: string) => {
-    return new Date(date).toLocaleString('lt-LT', {
+    return new Date(date).toLocaleString(dateLocale, {
       year: 'numeric',
       month: '2-digit',
       day: '2-digit',
@@ -123,7 +127,7 @@ export default function SiuntosSekimas() {
   };
 
   const formatDateShort = (date: string) => {
-    return new Date(date).toLocaleDateString('lt-LT', {
+    return new Date(date).toLocaleDateString(dateLocale, {
       month: 'short',
       day: 'numeric',
     });
@@ -131,26 +135,26 @@ export default function SiuntosSekimas() {
 
   const getOrderStatusInfo = (status: string) => {
     const statuses: Record<string, { label: string; color: string }> = {
-      'created': { label: 'Sukurtas', color: 'bg-muted text-muted-foreground' },
-      'deposit_paid': { label: 'Depozitas sumokėtas', color: 'bg-green-500/10 text-green-600 border-green-500/30' },
-      'awaiting_balance': { label: 'Laukiama likučio', color: 'bg-yellow-500/10 text-yellow-600 border-yellow-500/30' },
-      'balance_paid': { label: 'Pilnai apmokėtas', color: 'bg-green-500/10 text-green-600 border-green-500/30' },
-      'packed': { label: 'Supakuota', color: 'bg-blue-500/10 text-blue-600 border-blue-500/30' },
-      'shipped': { label: 'Išsiųsta', color: 'bg-primary/10 text-primary border-primary/30' },
-      'delivered': { label: 'Pristatyta', color: 'bg-green-500/10 text-green-600 border-green-500/30' },
-      'cancelled': { label: 'Atšaukta', color: 'bg-destructive/10 text-destructive border-destructive/30' },
-      'refunded': { label: 'Grąžinta', color: 'bg-muted text-muted-foreground' },
+      'created': { label: t('order.created'), color: 'bg-muted text-muted-foreground' },
+      'deposit_paid': { label: t('tracking.depositPaid'), color: 'bg-green-500/10 text-green-600 border-green-500/30' },
+      'awaiting_balance': { label: t('pgTrackPg.statusAwaitingBalance'), color: 'bg-yellow-500/10 text-yellow-600 border-yellow-500/30' },
+      'balance_paid': { label: t('pgTrackPg.statusFullyPaid'), color: 'bg-green-500/10 text-green-600 border-green-500/30' },
+      'packed': { label: t('tracking.packed'), color: 'bg-blue-500/10 text-blue-600 border-blue-500/30' },
+      'shipped': { label: t('tracking.shipped'), color: 'bg-primary/10 text-primary border-primary/30' },
+      'delivered': { label: t('tracking.delivered'), color: 'bg-green-500/10 text-green-600 border-green-500/30' },
+      'cancelled': { label: t('order.cancelled'), color: 'bg-destructive/10 text-destructive border-destructive/30' },
+      'refunded': { label: t('order.refunded'), color: 'bg-muted text-muted-foreground' },
     };
     return statuses[status] || { label: status, color: 'bg-muted text-muted-foreground' };
   };
 
   const getShipmentStatusInfo = (status: string) => {
     const statuses: Record<string, { label: string; color: string }> = {
-      'pending': { label: 'Ruošiama', color: 'bg-yellow-500/10 text-yellow-600 border-yellow-500/30' },
-      'packed': { label: 'Supakuota', color: 'bg-blue-500/10 text-blue-600 border-blue-500/30' },
-      'shipped': { label: 'Išsiųsta', color: 'bg-primary/10 text-primary border-primary/30' },
-      'in_transit': { label: 'Kelyje', color: 'bg-primary/10 text-primary border-primary/30' },
-      'delivered': { label: 'Pristatyta', color: 'bg-green-500/10 text-green-600 border-green-500/30' },
+      'pending': { label: t('pgTrackPg.statusPreparing'), color: 'bg-yellow-500/10 text-yellow-600 border-yellow-500/30' },
+      'packed': { label: t('tracking.packed'), color: 'bg-blue-500/10 text-blue-600 border-blue-500/30' },
+      'shipped': { label: t('tracking.shipped'), color: 'bg-primary/10 text-primary border-primary/30' },
+      'in_transit': { label: t('tracking.inTransit'), color: 'bg-primary/10 text-primary border-primary/30' },
+      'delivered': { label: t('tracking.delivered'), color: 'bg-green-500/10 text-green-600 border-green-500/30' },
     };
     return statuses[status] || { label: status, color: 'bg-muted text-muted-foreground' };
   };
@@ -175,7 +179,7 @@ export default function SiuntosSekimas() {
     const isFullPayment = !shipment.preorder_flag || shipment.balance_eur === 0;
     steps.push({
       id: 'deposit',
-      label: isFullPayment ? 'Užsakymas apmokėtas' : 'Depozitas sumokėtas',
+      label: isFullPayment ? t('pgTrackPg.orderPaidLabel') : t('tracking.depositPaid'),
       date: shipment.deposit_paid_at,
       completed: !!shipment.deposit_paid_at,
       icon: CreditCard,
@@ -186,7 +190,7 @@ export default function SiuntosSekimas() {
     if (shipment.balance_eur > 0) {
       steps.push({
         id: 'balance',
-        label: shipment.balance_paid_at ? 'Likutis sumokėtas' : 'Laukiama likučio apmokėjimo',
+        label: shipment.balance_paid_at ? t('tracking.balancePaid') : t('tracking.awaitingBalancePayment'),
         date: shipment.balance_paid_at,
         completed: !!shipment.balance_paid_at,
         icon: DollarSign,
@@ -198,7 +202,7 @@ export default function SiuntosSekimas() {
     // Step 3: Packed
     steps.push({
       id: 'packed',
-      label: 'Supakuota',
+      label: t('tracking.packed'),
       date: shipment.packed_at,
       completed: !!shipment.packed_at,
       icon: Box,
@@ -207,7 +211,7 @@ export default function SiuntosSekimas() {
     // Step 4: Shipped
     steps.push({
       id: 'shipped',
-      label: 'Išsiųsta',
+      label: t('tracking.shipped'),
       date: shipment.shipped_at,
       completed: !!shipment.shipped_at,
       icon: Truck,
@@ -220,7 +224,7 @@ export default function SiuntosSekimas() {
       if (latestCarrierEvent.status_code !== 'delivered') {
         steps.push({
           id: 'in_transit',
-          label: latestCarrierEvent.description || 'Kelyje',
+          label: latestCarrierEvent.description || t('tracking.inTransit'),
           date: latestCarrierEvent.occurred_at,
           completed: true,
           icon: MapPin,
@@ -232,7 +236,7 @@ export default function SiuntosSekimas() {
     // Step 5: Delivered
     steps.push({
       id: 'delivered',
-      label: 'Pristatyta',
+      label: t('tracking.delivered'),
       date: shipment.delivered_at,
       completed: !!shipment.delivered_at,
       icon: Package,
@@ -246,7 +250,7 @@ export default function SiuntosSekimas() {
       <PageLayout>
         <div className="container py-20 text-center">
           <div className="animate-spin w-12 h-12 border-4 border-primary border-t-transparent rounded-full mx-auto mb-4" />
-          <p className="text-muted-foreground">Kraunama siuntos informacija...</p>
+          <p className="text-muted-foreground">{t('tracking.loading')}</p>
         </div>
       </PageLayout>
     );
@@ -260,9 +264,9 @@ export default function SiuntosSekimas() {
             <div className="w-20 h-20 rounded-full bg-destructive/10 flex items-center justify-center mx-auto mb-6">
               <AlertCircle className="w-10 h-10 text-destructive" />
             </div>
-            <h1 className="font-heading text-2xl font-bold mb-3">Nuoroda negalioja</h1>
+            <h1 className="font-heading text-2xl font-bold mb-3">{t('tracking.invalidLink')}</h1>
             <p className="text-muted-foreground">
-              {error || "Nuoroda negalioja arba pasibaigė. Jei turite klausimų, susisiekite su mumis."}
+              {error || t('tracking.invalidLinkDesc')}
             </p>
           </div>
         </div>
@@ -285,7 +289,7 @@ export default function SiuntosSekimas() {
             <div className="bg-card border border-border rounded-2xl p-6 md:p-8 shadow-premium">
               <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                 <div>
-                  <p className="text-sm text-muted-foreground mb-1">Užsakymas</p>
+                  <p className="text-sm text-muted-foreground mb-1">{t('tracking.order')}</p>
                   <h1 className="font-heading text-2xl md:text-3xl font-bold">
                     #{shipment.order_number}
                   </h1>
@@ -296,13 +300,13 @@ export default function SiuntosSekimas() {
                   </Badge>
                   {shipment.shipment_status !== 'pending' && (
                     <Badge variant="outline" className={`${shipmentStatusInfo.color} text-sm px-3 py-1`}>
-                      Siunta: {shipmentStatusInfo.label}
+                      {t('tracking.shipment')}: {shipmentStatusInfo.label}
                     </Badge>
                   )}
                 </div>
               </div>
               <p className="text-sm text-muted-foreground mt-4">
-                Paskutinis atnaujinimas: {formatDate(shipment.last_update)}
+                {t('tracking.lastUpdate')}: {formatDate(shipment.last_update)}
               </p>
 
               {/* Preorder ETA */}
@@ -310,9 +314,9 @@ export default function SiuntosSekimas() {
                 <div className="mt-4 p-3 bg-primary/5 rounded-lg border border-primary/20">
                   <p className="text-sm flex items-center gap-2">
                     <Clock className="w-4 h-4 text-primary" />
-                    <span className="text-muted-foreground">Numatomas atvykimas:</span>
+                    <span className="text-muted-foreground">{t('tracking.expectedDelivery')}:</span>
                     <span className="font-medium">
-                      {shipment.eta_weeks_min}–{shipment.eta_weeks_max || shipment.eta_weeks_min} savaičių
+                      {shipment.eta_weeks_min}–{shipment.eta_weeks_max || shipment.eta_weeks_min} {t('tracking.weeks')}
                     </span>
                   </p>
                 </div>
@@ -323,33 +327,33 @@ export default function SiuntosSekimas() {
             <div className="bg-card border border-border rounded-2xl p-6 md:p-8 shadow-premium">
               <h2 className="font-heading text-lg font-semibold mb-4 flex items-center gap-2">
                 <DollarSign className="w-5 h-5" />
-                Mokėjimo informacija
+                {t('tracking.paymentInfo')}
               </h2>
               <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                 <div className="p-3 bg-muted/30 rounded-lg">
-                  <p className="text-xs text-muted-foreground mb-1">{shipment.preorder_flag && shipment.balance_eur > 0 ? 'Depozitas' : 'Mokėjimas'}</p>
+                  <p className="text-xs text-muted-foreground mb-1">{shipment.preorder_flag && shipment.balance_eur > 0 ? t('tracking.deposit') : t('pgTrackPg.paymentLabel')}</p>
                   <p className="font-semibold text-green-600">{formatPrice(shipment.deposit_eur)}</p>
                   {shipment.deposit_paid_at ? (
-                    <p className="text-xs text-green-600 mt-1">✓ Sumokėtas</p>
+                    <p className="text-xs text-green-600 mt-1">✓ {t('tracking.paid')}</p>
                   ) : (
-                    <p className="text-xs text-yellow-600 mt-1">⏳ Laukiama</p>
+                    <p className="text-xs text-yellow-600 mt-1">⏳ {t('pgTrackPg.pendingShort')}</p>
                   )}
                 </div>
                 <div className="p-3 bg-muted/30 rounded-lg">
-                  <p className="text-xs text-muted-foreground mb-1">Likutis</p>
+                  <p className="text-xs text-muted-foreground mb-1">{t('tracking.balance')}</p>
                   <p className={`font-semibold ${shipment.balance_paid_at ? 'text-green-600' : 'text-yellow-600'}`}>
                     {formatPrice(shipment.balance_eur)}
                   </p>
                   {shipment.balance_paid_at ? (
-                    <p className="text-xs text-green-600 mt-1">✓ Sumokėtas</p>
+                    <p className="text-xs text-green-600 mt-1">✓ {t('tracking.paid')}</p>
                   ) : shipment.order_status === 'awaiting_balance' ? (
-                    <p className="text-xs text-yellow-600 mt-1">⏳ Laukiama apmokėjimo</p>
+                    <p className="text-xs text-yellow-600 mt-1">⏳ {t('tracking.awaitingPayment')}</p>
                   ) : (
-                    <p className="text-xs text-muted-foreground mt-1">Bus prašoma vėliau</p>
+                    <p className="text-xs text-muted-foreground mt-1">{t('tracking.willBeRequestedLater')}</p>
                   )}
                 </div>
                 <div className="p-3 bg-muted/30 rounded-lg col-span-2 md:col-span-1">
-                  <p className="text-xs text-muted-foreground mb-1">Iš viso</p>
+                  <p className="text-xs text-muted-foreground mb-1">{t('tracking.total')}</p>
                   <p className="font-semibold text-lg">{formatPrice(shipment.total_eur)}</p>
                 </div>
               </div>
@@ -357,7 +361,7 @@ export default function SiuntosSekimas() {
 
             {/* Timeline */}
             <div className="bg-card border border-border rounded-2xl p-6 md:p-8 shadow-premium">
-              <h2 className="font-heading text-lg font-semibold mb-6">Užsakymo kelias</h2>
+              <h2 className="font-heading text-lg font-semibold mb-6">{t('tracking.orderTimeline')}</h2>
               
               <div className="relative">
                 <div className="absolute left-5 top-0 bottom-0 w-0.5 bg-border" />
@@ -429,7 +433,7 @@ export default function SiuntosSekimas() {
           <div className="lg:sticky lg:top-24 space-y-6">
             {/* Order Items */}
             <div className="bg-card border border-border rounded-2xl p-6 shadow-premium">
-              <h3 className="font-heading font-semibold mb-4">Užsakymo prekės</h3>
+              <h3 className="font-heading font-semibold mb-4">{t('tracking.orderItems')}</h3>
               <div className="space-y-3">
                 {shipment.items.map((item, index) => (
                   <div key={index} className="flex justify-between py-2 border-b border-border last:border-0">
@@ -446,7 +450,7 @@ export default function SiuntosSekimas() {
               
               <div className="mt-4 pt-4 border-t border-border">
                 <div className="flex justify-between font-bold">
-                  <span>Iš viso</span>
+                  <span>{t('tracking.total')}</span>
                   <span>{formatPrice(shipment.total_eur)}</span>
                 </div>
               </div>
@@ -455,17 +459,17 @@ export default function SiuntosSekimas() {
             {/* Shipment Details */}
             {(shipment.carrier_code || shipment.tracking_number) && (
               <div className="bg-card border border-border rounded-2xl p-6 shadow-premium">
-                <h3 className="font-heading font-semibold mb-4">Siuntos detalės</h3>
+                <h3 className="font-heading font-semibold mb-4">{t('pgTrackPg.shipmentDetails')}</h3>
                 <div className="space-y-2">
                   {carrierName && (
                     <div className="flex justify-between text-sm">
-                      <span className="text-muted-foreground">Vežėjas</span>
+                      <span className="text-muted-foreground">{t('tracking.carrier')}</span>
                       <span className="font-medium">{carrierName}</span>
                     </div>
                   )}
                   {shipment.tracking_number && (
                     <div className="flex justify-between text-sm">
-                      <span className="text-muted-foreground">Sekimo nr.</span>
+                      <span className="text-muted-foreground">{t('pgTrackPg.trackingNumberShort')}</span>
                       <span className="font-mono">{shipment.tracking_number}</span>
                     </div>
                   )}

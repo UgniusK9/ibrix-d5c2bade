@@ -12,15 +12,17 @@ import { z } from 'zod';
 import { Link } from 'react-router-dom';
 import { Turnstile, type TurnstileInstance } from '@marsidev/react-turnstile';
 import { TURNSTILE_SITE_KEY } from '@/config/turnstile';
-
-const emailSchema = z.string().email('Neteisingas el. pašto formatas');
-const passwordSchema = z.string().min(6, 'Slaptažodis turi būti bent 6 simbolių');
+import { useTranslation } from 'react-i18next';
 
 type Step = 'email' | 'email-sent' | 'new-password' | 'success';
 
 export default function ResetPassword() {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const { updatePassword, isLoading } = useAuth();
+
+  const emailSchema = z.string().email(t('auth.invalidEmail'));
+  const passwordSchema = z.string().min(6, t('auth.passwordTooShort'));
   
   const [step, setStep] = useState<Step>('email');
   const [captchaToken, setCaptchaToken] = useState<string | null>(null);
@@ -55,7 +57,7 @@ export default function ResetPassword() {
         
         if (error) {
           console.error('[ResetPassword] Error setting session:', error);
-          toast.error('Nuoroda nebegalioja arba yra neteisinga. Bandykite iš naujo.');
+          toast.error(t('pgResetPw.linkInvalid'));
           // Clear the hash and stay on email step
           window.history.replaceState(null, '', window.location.pathname);
         } else if (data.session) {
@@ -82,6 +84,7 @@ export default function ResetPassword() {
     });
 
     return () => subscription.unsubscribe();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const validateEmail = () => {
@@ -103,7 +106,7 @@ export default function ResetPassword() {
     }
 
     if (password !== confirmPassword) {
-      newErrors.confirm = 'Slaptažodžiai nesutampa';
+      newErrors.confirm = t('auth.passwordMismatch');
     }
 
     setErrors(newErrors);
@@ -124,7 +127,7 @@ export default function ResetPassword() {
       
       if (response.error) {
         console.error('[ResetPassword] Error:', response.error);
-        toast.error('Nepavyko išsiųsti nuorodos. Bandykite dar kartą.');
+        toast.error(t('pgResetPw.sendLinkFailed'));
         setCaptchaToken(null);
         turnstileRef.current?.reset();
       } else {
@@ -132,7 +135,7 @@ export default function ResetPassword() {
       }
     } catch (e) {
       console.error('[ResetPassword] Exception:', e);
-      toast.error('Įvyko klaida. Bandykite dar kartą.');
+      toast.error(t('pgResetPw.genericError'));
     } finally {
       setLoading(false);
     }
@@ -149,15 +152,15 @@ export default function ResetPassword() {
       
       if (error) {
         console.error('[ResetPassword] Update password error:', error);
-        toast.error('Nepavyko pakeisti slaptažodžio. Bandykite dar kartą.');
+        toast.error(t('auth.failedToChangePassword'));
       } else {
         setStep('success');
-        toast.success('Slaptažodis sėkmingai pakeistas!');
+        toast.success(t('auth.passwordChanged'));
         setTimeout(() => navigate('/'), 2000);
       }
     } catch (e) {
       console.error('[ResetPassword] Exception:', e);
-      toast.error('Įvyko klaida. Bandykite dar kartą.');
+      toast.error(t('pgResetPw.genericError'));
     } finally {
       setLoading(false);
     }
@@ -184,10 +187,10 @@ export default function ResetPassword() {
                 <CheckCircle2 className="w-7 h-7 text-success" />
               </div>
               <h1 className="font-heading text-xl font-bold mb-2">
-                Slaptažodis pakeistas!
+                {t('pgResetPw.successTitle')}
               </h1>
               <p className="text-sm text-muted-foreground">
-                Nukreipiame į pagrindinį puslapį...
+                {t('auth.redirecting')}
               </p>
             </div>
           </div>
@@ -207,18 +210,18 @@ export default function ResetPassword() {
                 <Mail className="w-7 h-7 text-primary" />
               </div>
               <h1 className="font-heading text-xl font-bold mb-2">
-                Patikrinkite el. paštą
+                {t('auth.checkEmail')}
               </h1>
               <p className="text-sm text-muted-foreground mb-4">
-                Išsiuntėme slaptažodžio atkūrimo nuorodą į <strong>{email}</strong>
+                {t('pgResetPw.linkSentTo')} <strong>{email}</strong>
               </p>
               <p className="text-xs text-muted-foreground mb-6">
-                Jei negavote laiško, patikrinkite šlamšto (spam) aplanką.
+                {t('pgResetPw.checkSpam')}
               </p>
               <Link to="/auth">
                 <Button variant="outline" className="w-full">
                   <ArrowLeft className="w-4 h-4 mr-2" />
-                  Grįžti į prisijungimą
+                  {t('auth.backToLogin')}
                 </Button>
               </Link>
             </div>
@@ -239,15 +242,15 @@ export default function ResetPassword() {
                 <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-3">
                   <Lock className="w-6 h-6 text-primary" />
                 </div>
-                <h1 className="font-heading text-xl font-bold">Naujas slaptažodis</h1>
+                <h1 className="font-heading text-xl font-bold">{t('auth.newPassword')}</h1>
                 <p className="text-sm text-muted-foreground mt-1">
-                  Įveskite naują slaptažodį
+                  {t('auth.enterNewPassword')}
                 </p>
               </div>
 
               <form onSubmit={handlePasswordSubmit} className="space-y-4">
                 <div>
-                  <Label htmlFor="password" className="text-sm">Naujas slaptažodis</Label>
+                  <Label htmlFor="password" className="text-sm">{t('auth.newPassword')}</Label>
                   <div className="relative mt-1.5">
                     <Input
                       id="password"
@@ -275,7 +278,7 @@ export default function ResetPassword() {
                 </div>
 
                 <div>
-                  <Label htmlFor="confirm" className="text-sm">Pakartokite slaptažodį</Label>
+                  <Label htmlFor="confirm" className="text-sm">{t('auth.repeatPassword')}</Label>
                   <Input
                     id="confirm"
                     type="password"
@@ -297,10 +300,10 @@ export default function ResetPassword() {
                   {loading ? (
                     <>
                       <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                      Keičiama...
+                      {t('auth.changing')}
                     </>
                   ) : (
-                    'Pakeisti slaptažodį'
+                    t('auth.changePassword')
                   )}
                 </Button>
               </form>
@@ -321,19 +324,19 @@ export default function ResetPassword() {
               <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-3">
                 <Mail className="w-6 h-6 text-primary" />
               </div>
-              <h1 className="font-heading text-xl font-bold">Pamiršote slaptažodį?</h1>
+              <h1 className="font-heading text-xl font-bold">{t('auth.forgotPassword')}</h1>
               <p className="text-sm text-muted-foreground mt-1">
-                Įveskite savo el. pašto adresą ir mes atsiųsime atkūrimo nuorodą
+                {t('pgResetPw.emailIntro')}
               </p>
             </div>
 
             <form onSubmit={handleEmailSubmit} className="space-y-4">
               <div>
-                <Label htmlFor="email" className="text-sm">El. paštas</Label>
+                <Label htmlFor="email" className="text-sm">{t('auth.email')}</Label>
                 <Input
                   id="email"
                   type="email"
-                  placeholder="jusu@pastas.lt"
+                  placeholder={t('pgResetPw.emailPlaceholder')}
                   value={email}
                   onChange={(e) => {
                     setEmail(e.target.value);
@@ -361,17 +364,17 @@ export default function ResetPassword() {
                 {loading ? (
                   <>
                     <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    Siunčiama...
+                    {t('auth.sending')}
                   </>
                 ) : (
-                  'Siųsti atkūrimo nuorodą'
+                  t('auth.sendResetLink')
                 )}
               </Button>
 
               <Link to="/auth" className="block">
                 <Button variant="ghost" className="w-full text-muted-foreground">
                   <ArrowLeft className="w-4 h-4 mr-2" />
-                  Grįžti į prisijungimą
+                  {t('auth.backToLogin')}
                 </Button>
               </Link>
             </form>

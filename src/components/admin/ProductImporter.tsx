@@ -13,6 +13,7 @@ import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription,
 } from '@/components/ui/dialog';
 import { supabase } from '@/integrations/supabase/client';
+import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 
 type Category = 'engines' | 'cars' | 'flowers' | 'other';
@@ -99,6 +100,7 @@ const detectCategory = (p: {
 };
 
 export function ProductImporter() {
+  const { t } = useTranslation();
   const [urls, setUrls] = useState('');
   const [scraping, setScraping] = useState(false);
   const [rate, setRate] = useState('1'); // USD → EUR multiplier applied when scraping
@@ -119,7 +121,7 @@ export function ProductImporter() {
       .filter((u) => u.length > 0);
 
     if (urlList.length === 0) {
-      toast.error('Įveskite bent vieną nuorodą');
+      toast.error(t('admProducts.photoEnterUrl'));
       return;
     }
 
@@ -173,8 +175,8 @@ export function ProductImporter() {
         while (remaining > 0) {
           setScrapeStatus(
             isCollection
-              ? `Nuskaitoma kolekcija: ${ok} / ${targetLimit}`
-              : 'Nuskaitomas produktas...',
+              ? t('admProducts.impScrapingColl', { ok, total: targetLimit })
+              : t('admProducts.photoScrapingOne'),
           );
 
           // Retry the same page a few times on transient upstream throttles (503/429).
@@ -185,16 +187,16 @@ export function ProductImporter() {
               body: { url, translate, limit: Math.min(batchLimit, remaining), page },
             });
             if (!res.error && res.data?.success) { data = res.data; break; }
-            lastErr = res.error || new Error(res.data?.error || 'Nepavyko nuskaityti');
+            lastErr = res.error || new Error(res.data?.error || t('admProducts.impScrapeError'));
             const msg = String(lastErr?.message || '');
             const transient = /503|429|laikinai|per daug/i.test(msg);
             if (!transient) break;
-            setScrapeStatus(`Šaltinis užimtas, bandome dar kartą (${attempt + 1}/4)...`);
+            setScrapeStatus(t('admProducts.impSourceBusy', { num: attempt + 1 }));
             await new Promise((r) => setTimeout(r, 3000 * (attempt + 1)));
           }
           if (!data) {
             console.warn('Skipping page', page, 'for', url, lastErr);
-            toast.error(`Praleista puslapis ${page}: ${lastErr?.message || 'klaida'}`);
+            toast.error(t('admProducts.impSkippedPage', { page, msg: lastErr?.message || t('admProducts.impGenericError') }));
             page += 1;
             continue;
           }
@@ -214,7 +216,7 @@ export function ProductImporter() {
         }
       } catch (e: any) {
         console.error('Scrape failed for', url, e);
-        toast.error(`Nepavyko: ${url} – ${e.message}`);
+        toast.error(t('admProducts.photoScrapeFail', { url, msg: e.message }));
       }
     }
 
@@ -222,7 +224,7 @@ export function ProductImporter() {
     setScraping(false);
     setScrapeStatus('');
     if (ok > 0) {
-      toast.success(`Nuskaityta ${ok} produkt${ok === 1 ? 'as' : 'ai'}`);
+      toast.success(ok === 1 ? t('admProducts.impScrapedOne', { num: ok }) : t('admProducts.impScrapedMany', { num: ok }));
       setUrls('');
     }
   };
@@ -247,11 +249,11 @@ export function ProductImporter() {
     const deposit = Number.parseFloat(d.deposit_eur);
 
     if (!d.title.trim() || !d.sku.trim() || !d.slug.trim()) {
-      toast.error('Užpildykite pavadinimą, SKU ir slug');
+      toast.error(t('admProducts.impFillRequired'));
       return;
     }
     if (!Number.isFinite(price) || price <= 0) {
-      toast.error('Neteisinga kaina');
+      toast.error(t('admProducts.impBadPrice'));
       return;
     }
 
@@ -277,12 +279,12 @@ export function ProductImporter() {
         },
       });
       if (error) throw error;
-      if (!data?.success) throw new Error(data?.error || 'Klaida');
-      toast.success(`Sukurta: ${d.title}`);
+      if (!data?.success) throw new Error(data?.error || t('common.error'));
+      toast.success(t('admProducts.impCreated', { title: d.title }));
       removeDraft(idx);
     } catch (e: any) {
       console.error(e);
-      toast.error(`Nepavyko išsaugoti: ${e.message}`);
+      toast.error(t('admProducts.impSaveFail', { msg: e.message }));
     } finally {
       setSavingIdx(null);
     }
@@ -349,7 +351,7 @@ export function ProductImporter() {
       const price = Number.parseFloat(d.price_eur);
       const deposit = Number.parseFloat(d.deposit_eur);
 
-      setBulkStatus(`Įkeliama ${i + 1} / ${drafts.length}: ${d.title}`);
+      setBulkStatus(t('admProducts.impUploading', { num: i + 1, total: drafts.length, title: d.title }));
 
       if (!d.title.trim() || !d.sku.trim() || !d.slug.trim() || !Number.isFinite(price) || price <= 0) {
         failed++;
@@ -378,7 +380,7 @@ export function ProductImporter() {
           },
         });
         if (error) throw error;
-        if (!data?.success) throw new Error(data?.error || 'Klaida');
+        if (!data?.success) throw new Error(data?.error || t('common.error'));
         success++;
       } catch (e: any) {
         console.error('Bulk save failed for', d.title, e);
@@ -392,8 +394,8 @@ export function ProductImporter() {
     setBulkStatus('');
     setBulkOpen(false);
     setInStockSkus('');
-    if (success > 0) toast.success(`Įkelta ${success} produkt${success === 1 ? 'as' : 'ai'}`);
-    if (failed > 0) toast.error(`Nepavyko įkelti: ${failed}`);
+    if (success > 0) toast.success(success === 1 ? t('admProducts.impUploadedOne', { num: success }) : t('admProducts.impUploadedMany', { num: success }));
+    if (failed > 0) toast.error(t('admProducts.impBulkFail', { num: failed }));
   };
 
   return (
@@ -402,12 +404,12 @@ export function ProductImporter() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Download className="w-5 h-5 text-primary" />
-            Importuoti produktus iš MouldKing
+            {t('admProducts.impTitle')}
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="urls">Nuorodos (po vieną eilutėje)</Label>
+            <Label htmlFor="urls">{t('admProducts.impLinksLabel')}</Label>
             <Textarea
               id="urls"
               placeholder={'https://mouldkingcorp.com/collections/technic-vehicles\nhttps://mouldkingcorp.com/products/10250-lfa-v10-engine-model-building-set'}
@@ -417,13 +419,13 @@ export function ProductImporter() {
               className="font-mono text-sm"
             />
             <p className="text-xs text-muted-foreground">
-              Palaikomos „Shopify" tipo parduotuvių nuorodos: atskiro produkto (/products/...) arba visos kolekcijos (/collections/...).
+              {t('admProducts.impLinksHint')}
             </p>
           </div>
 
           <div className="flex flex-wrap items-end gap-4">
             <div className="space-y-2">
-              <Label htmlFor="rate">USD → EUR kursas</Label>
+              <Label htmlFor="rate">{t('admProducts.impRateLabel')}</Label>
               <Input
                 id="rate"
                 type="number"
@@ -435,7 +437,7 @@ export function ProductImporter() {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="limit">Maks. iš kolekcijos</Label>
+              <Label htmlFor="limit">{t('admProducts.impLimitLabel')}</Label>
               <Input
                 id="limit"
                 type="number"
@@ -448,7 +450,7 @@ export function ProductImporter() {
             </div>
             <div className="flex items-center gap-2 h-10">
               <Switch id="translate" checked={translate} onCheckedChange={setTranslate} />
-              <Label htmlFor="translate" className="cursor-pointer">Versti į lietuvių k.</Label>
+              <Label htmlFor="translate" className="cursor-pointer">{t('admProducts.impTranslateLabel')}</Label>
             </div>
             <Button onClick={handleScrape} disabled={scraping}>
               {scraping ? (
@@ -456,7 +458,7 @@ export function ProductImporter() {
               ) : (
                 <Download className="w-4 h-4 mr-2" />
               )}
-              Nuskaityti
+              {t('admProducts.impScrapeBtn')}
             </Button>
           </div>
           {scrapeStatus && (
@@ -464,7 +466,7 @@ export function ProductImporter() {
           )}
           {translate && (
             <p className="text-xs text-muted-foreground">
-              Vertimas atliekamas mažais paketais, todėl didelės kolekcijos importuojamos stabiliai be užklausos laiko limito.
+              {t('admProducts.impTranslateHint')}
             </p>
           )}
         </CardContent>
@@ -473,17 +475,17 @@ export function ProductImporter() {
       {drafts.length > 0 && (
         <div className="space-y-4">
           <div className="flex items-center justify-between">
-            <h3 className="text-lg font-semibold">Peržiūra ({drafts.length})</h3>
+            <h3 className="text-lg font-semibold">{t('admProducts.impPreview', { num: drafts.length })}</h3>
             <Button onClick={() => setBulkOpen(true)} disabled={bulkUploading}>
               <Save className="w-4 h-4 mr-2" />
-              Įkelti visus ({drafts.length})
+              {t('admProducts.impUploadAll', { num: drafts.length })}
             </Button>
           </div>
           {drafts.map((d, idx) => (
             <Card key={`${d.source_url}-${idx}`}>
               <CardHeader className="flex flex-row items-center justify-between space-y-0">
                 <div className="min-w-0">
-                  <CardTitle className="text-base truncate">{d.title || 'Be pavadinimo'}</CardTitle>
+                  <CardTitle className="text-base truncate">{d.title || t('admProducts.impUntitled')}</CardTitle>
                   <a
                     href={d.source_url}
                     target="_blank"
@@ -494,7 +496,7 @@ export function ProductImporter() {
                     {d.source_url}
                   </a>
                   <p className="text-xs text-muted-foreground mt-1">
-                    Šaltinio kaina: {d.source_price} {d.source_currency}
+                    {t('admProducts.impSourcePrice', { price: d.source_price, currency: d.source_currency })}
                   </p>
                 </div>
                 <Button variant="ghost" size="icon" onClick={() => removeDraft(idx)}>
@@ -504,7 +506,7 @@ export function ProductImporter() {
               <CardContent className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <div className="space-y-1">
-                    <Label>Pavadinimas</Label>
+                    <Label>{t('admCommon.name')}</Label>
                     <Input value={d.title} onChange={(e) => updateDraft(idx, { title: e.target.value })} />
                   </div>
                   <div className="space-y-1">
@@ -516,19 +518,19 @@ export function ProductImporter() {
                     <Input value={d.slug} onChange={(e) => updateDraft(idx, { slug: e.target.value })} />
                   </div>
                   <div className="space-y-1">
-                    <Label>Kategorija</Label>
+                    <Label>{t('products.category')}</Label>
                     <Select value={d.category} onValueChange={(v) => updateDraft(idx, { category: v as Category })}>
                       <SelectTrigger><SelectValue /></SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="engines">Varikliai</SelectItem>
-                        <SelectItem value="cars">Automobiliai</SelectItem>
-                        <SelectItem value="flowers">Gėlės</SelectItem>
-                        <SelectItem value="other">Kita</SelectItem>
+                        <SelectItem value="engines">{t('products.engines')}</SelectItem>
+                        <SelectItem value="cars">{t('products.cars')}</SelectItem>
+                        <SelectItem value="flowers">{t('admProducts.impCatFlowers')}</SelectItem>
+                        <SelectItem value="other">{t('products.other')}</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
                   <div className="space-y-1">
-                    <Label>Kaina (€)</Label>
+                    <Label>{t('admProducts.impPriceLabel')}</Label>
                     <Input
                       type="number"
                       step="0.01"
@@ -537,7 +539,7 @@ export function ProductImporter() {
                     />
                   </div>
                   <div className="space-y-1">
-                    <Label>Užstatas (€)</Label>
+                    <Label>{t('admProducts.impDepositLabel')}</Label>
                     <Input
                       type="number"
                       step="0.01"
@@ -546,20 +548,20 @@ export function ProductImporter() {
                     />
                   </div>
                   <div className="space-y-1 md:col-span-2">
-                    <Label>Sandėlio būsena</Label>
+                    <Label>{t('admProducts.impStockLabel')}</Label>
                     <Select value={d.stock_status} onValueChange={(v) => updateDraft(idx, { stock_status: v as StockStatus })}>
                       <SelectTrigger><SelectValue /></SelectTrigger>
                       <SelectContent>
                         <SelectItem value="preorder">Pre-order</SelectItem>
-                        <SelectItem value="in_stock">Sandėlyje</SelectItem>
-                        <SelectItem value="out_of_stock">Išparduota</SelectItem>
+                        <SelectItem value="in_stock">{t('products.inStockLabel')}</SelectItem>
+                        <SelectItem value="out_of_stock">{t('products.outOfStock')}</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
                 </div>
 
                 <div className="space-y-1">
-                  <Label>Trumpas aprašymas</Label>
+                  <Label>{t('admProducts.impShortDesc')}</Label>
                   <Textarea
                     value={d.short_desc}
                     onChange={(e) => updateDraft(idx, { short_desc: e.target.value })}
@@ -567,7 +569,7 @@ export function ProductImporter() {
                   />
                 </div>
                 <div className="space-y-1">
-                  <Label>Aprašymas</Label>
+                  <Label>{t('products.description')}</Label>
                   <Textarea
                     value={d.description}
                     onChange={(e) => updateDraft(idx, { description: e.target.value })}
@@ -576,7 +578,7 @@ export function ProductImporter() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label>Nuotraukos ({d.images.length})</Label>
+                  <Label>{t('admProducts.impPhotos', { num: d.images.length })}</Label>
                   <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-2">
                     {d.images.map((src, imgIdx) => (
                       <div key={imgIdx} className="relative group rounded-lg overflow-hidden border bg-muted">
@@ -585,18 +587,18 @@ export function ProductImporter() {
                           type="button"
                           onClick={() => removeImage(idx, imgIdx)}
                           className="absolute top-1 right-1 bg-black/60 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition"
-                          aria-label="Pašalinti"
+                          aria-label={t('common.remove')}
                         >
                           <X className="w-3 h-3" />
                         </button>
                       </div>
                     ))}
                     {d.images.length === 0 && (
-                      <p className="text-xs text-muted-foreground col-span-full">Nuotraukų nerasta</p>
+                      <p className="text-xs text-muted-foreground col-span-full">{t('admProducts.impNoPhotos')}</p>
                     )}
                   </div>
                   <p className="text-xs text-muted-foreground">
-                    Pastaba: nuotraukos importuojamos kaip nuorodos į šaltinio serverį. Norėdami perkelti į savo saugyklą, po sukūrimo redaguokite produktą.
+                    {t('admProducts.impPhotosNote')}
                   </p>
                 </div>
 
@@ -607,7 +609,7 @@ export function ProductImporter() {
                     ) : (
                       <Save className="w-4 h-4 mr-2" />
                     )}
-                    Sukurti produktą
+                    {t('admProducts.impCreateProduct')}
                   </Button>
                 </div>
               </CardContent>
@@ -619,14 +621,13 @@ export function ProductImporter() {
       <Dialog open={bulkOpen} onOpenChange={(o) => !bulkUploading && setBulkOpen(o)}>
         <DialogContent className="max-w-2xl">
           <DialogHeader>
-            <DialogTitle>Turimi produktai</DialogTitle>
+            <DialogTitle>{t('admProducts.impInStockTitle')}</DialogTitle>
             <DialogDescription>
-              Įrašykite SKU numerius (pvz. 10224) tų produktų, kuriuos turite sandėlyje.
-              Atskirkite tarpais, kableliais arba naujomis eilutėmis. Jų būsena bus „Sandėlyje", visų kitų — „Pre-order".
+              {t('admProducts.impInStockDesc')}
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-2">
-            <Label htmlFor="in-stock-skus">Turimų produktų SKU</Label>
+            <Label htmlFor="in-stock-skus">{t('admProducts.impInStockSkus')}</Label>
             <Textarea
               id="in-stock-skus"
               value={inStockSkus}
@@ -637,32 +638,32 @@ export function ProductImporter() {
               disabled={bulkUploading}
             />
             <p className="text-xs text-muted-foreground">
-              Palikite tuščią, jei visi produktai yra pre-order. SKU turi turėti bent 3 skaitmenis.
+              {t('admProducts.impInStockHint')}
             </p>
           </div>
           {inStockSkus.trim() && (
             <div className="rounded-md border p-3 space-y-1 text-sm">
               <div className="flex flex-wrap gap-x-4 gap-y-1">
                 <span>
-                  Aptikta SKU: <strong>{parsedInStock.valid.length}</strong>
+                  {t('admProducts.impDetectedSku')} <strong>{parsedInStock.valid.length}</strong>
                 </span>
                 <span className="text-green-600">
-                  Sutampa su importuotais: <strong>{parsedInStock.matched.length}</strong>
+                  {t('admProducts.impMatched')} <strong>{parsedInStock.matched.length}</strong>
                 </span>
                 {parsedInStock.unmatched.length > 0 && (
                   <span className="text-amber-600">
-                    Nerasta importuotų tarpe: <strong>{parsedInStock.unmatched.length}</strong>
+                    {t('admProducts.impUnmatched')} <strong>{parsedInStock.unmatched.length}</strong>
                   </span>
                 )}
                 {parsedInStock.invalid.length > 0 && (
                   <span className="text-destructive">
-                    Neteisingas formatas: <strong>{parsedInStock.invalid.length}</strong>
+                    {t('admProducts.impInvalidFmt')} <strong>{parsedInStock.invalid.length}</strong>
                   </span>
                 )}
               </div>
               {parsedInStock.unmatched.length > 0 && (
                 <details className="text-xs text-muted-foreground">
-                  <summary className="cursor-pointer">Rodyti nesutampančias ({parsedInStock.unmatched.length})</summary>
+                  <summary className="cursor-pointer">{t('admProducts.impShowMismatched', { num: parsedInStock.unmatched.length })}</summary>
                   <ul className="mt-1 list-disc pl-5 break-all">
                     {parsedInStock.unmatched.slice(0, 20).map((u) => (
                       <li key={u}>{u}</li>
@@ -673,7 +674,7 @@ export function ProductImporter() {
               )}
               {parsedInStock.invalid.length > 0 && (
                 <details className="text-xs text-muted-foreground">
-                  <summary className="cursor-pointer">Rodyti neteisingas ({parsedInStock.invalid.length})</summary>
+                  <summary className="cursor-pointer">{t('admProducts.impShowInvalid', { num: parsedInStock.invalid.length })}</summary>
                   <ul className="mt-1 list-disc pl-5 break-all">
                     {parsedInStock.invalid.slice(0, 20).map((u, i) => (
                       <li key={`${u}-${i}`}>{u}</li>
@@ -687,17 +688,17 @@ export function ProductImporter() {
           {bulkStatus && <p className="text-sm text-muted-foreground">{bulkStatus}</p>}
           <DialogFooter>
             <Button variant="outline" onClick={() => setBulkOpen(false)} disabled={bulkUploading}>
-              Atšaukti
+              {t('common.cancel')}
             </Button>
             <Button
               onClick={() => {
                 if (parsedInStock.invalid.length > 0) {
-                  toast.error(`Yra ${parsedInStock.invalid.length} neteisingo formato įrašų. Patikrinkite SKU.`);
+                  toast.error(t('admProducts.impInvalidEntries', { num: parsedInStock.invalid.length }));
                   return;
                 }
                 if (parsedInStock.unmatched.length > 0) {
                   const ok = window.confirm(
-                    `${parsedInStock.unmatched.length} SKU nesutampa su importuotais produktais ir bus ignoruota(-i). Tęsti?`,
+                    t('admProducts.impMismatchConfirm', { num: parsedInStock.unmatched.length }),
                   );
                   if (!ok) return;
                 }
@@ -710,7 +711,7 @@ export function ProductImporter() {
               ) : (
                 <Save className="w-4 h-4 mr-2" />
               )}
-              Įkelti {drafts.length} produkt{drafts.length === 1 ? 'ą' : 'us'}
+              {drafts.length === 1 ? t('admProducts.impUploadOne', { num: drafts.length }) : t('admProducts.impUploadMany', { num: drafts.length })}
             </Button>
           </DialogFooter>
         </DialogContent>

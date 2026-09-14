@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { supabase } from '@/integrations/supabase/client';
+import { useTranslation } from 'react-i18next';
 import {
   LineChart,
   Line,
@@ -38,6 +39,7 @@ const formatPrice = (value: number) => {
 };
 
 export function AnalyticsCharts() {
+  const { t } = useTranslation();
   const [loading, setLoading] = useState(true);
   const [period, setPeriod] = useState<'7d' | '30d' | '90d' | '365d'>('30d');
   const [chartData, setChartData] = useState<DailyData[]>([]);
@@ -141,8 +143,8 @@ export function AnalyticsCharts() {
       {/* Header */}
       <div className="flex flex-col md:flex-row gap-4 items-start md:items-center justify-between">
         <div>
-          <h3 className="font-heading text-lg font-semibold">Grafikai</h3>
-          <p className="text-sm text-muted-foreground">Pajamų ir užsakymų tendencijos</p>
+          <h3 className="font-heading text-lg font-semibold">{t('admAnalytics.chartsTitle')}</h3>
+          <p className="text-sm text-muted-foreground">{t('admAnalytics.chartsSubtitle')}</p>
         </div>
         
         <div className="flex gap-2">
@@ -151,10 +153,10 @@ export function AnalyticsCharts() {
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="7d">7 dienos</SelectItem>
-              <SelectItem value="30d">30 dienų</SelectItem>
-              <SelectItem value="90d">90 dienų</SelectItem>
-              <SelectItem value="365d">1 metai</SelectItem>
+              <SelectItem value="7d">{t('admAnalytics.charts7d')}</SelectItem>
+              <SelectItem value="30d">{t('admAnalytics.charts30d')}</SelectItem>
+              <SelectItem value="90d">{t('admAnalytics.charts90d')}</SelectItem>
+              <SelectItem value="365d">{t('admAnalytics.charts365d')}</SelectItem>
             </SelectContent>
           </Select>
           
@@ -176,7 +178,7 @@ export function AnalyticsCharts() {
               <CardHeader className="pb-2">
                 <CardDescription className="flex items-center gap-2">
                   <DollarSign className="w-4 h-4" />
-                  Pajamos (neto)
+                  {t('admAnalytics.chartsRevenueNet')}
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -188,7 +190,7 @@ export function AnalyticsCharts() {
               <CardHeader className="pb-2">
                 <CardDescription className="flex items-center gap-2">
                   <ShoppingCart className="w-4 h-4" />
-                  Užsakymai
+                  {t('account.orders')}
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -200,7 +202,7 @@ export function AnalyticsCharts() {
               <CardHeader className="pb-2">
                 <CardDescription className="flex items-center gap-2">
                   <TrendingUp className="w-4 h-4" />
-                  Depozitai / Likučiai
+                  {t('admAnalytics.chartsDepBal')}
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -216,7 +218,7 @@ export function AnalyticsCharts() {
               <CardHeader className="pb-2">
                 <CardDescription className="flex items-center gap-2">
                   <RotateCcw className="w-4 h-4" />
-                  Grąžinimai
+                  {t('admAnalytics.chartsRefunds')}
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -228,8 +230,8 @@ export function AnalyticsCharts() {
           {/* Revenue Chart */}
           <Card>
             <CardHeader>
-              <CardTitle className="font-heading text-lg">Pajamos pagal dieną</CardTitle>
-              <CardDescription>Depozitai, likučiai ir grąžinimai</CardDescription>
+              <CardTitle className="font-heading text-lg">{t('admAnalytics.chartsRevenueByDay')}</CardTitle>
+              <CardDescription>{t('admAnalytics.chartsRevenueDesc')}</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="h-80">
@@ -260,7 +262,7 @@ export function AnalyticsCharts() {
                     <Area 
                       type="monotone" 
                       dataKey="deposits" 
-                      name="Depozitai"
+                      name={t('admAnalytics.chartsDeposits')}
                       stackId="1"
                       stroke="hsl(142 76% 36%)" 
                       fill="hsl(142 76% 36% / 0.3)" 
@@ -268,7 +270,7 @@ export function AnalyticsCharts() {
                     <Area 
                       type="monotone" 
                       dataKey="balances" 
-                      name="Likučiai"
+                      name={t('admAnalytics.chartsBalances')}
                       stackId="1"
                       stroke="hsl(217 91% 60%)" 
                       fill="hsl(217 91% 60% / 0.3)" 
@@ -276,7 +278,7 @@ export function AnalyticsCharts() {
                     <Area 
                       type="monotone" 
                       dataKey="refunds" 
-                      name="Grąžinimai"
+                      name={t('admAnalytics.chartsRefunds')}
                       stroke="hsl(0 84% 60%)" 
                       fill="hsl(0 84% 60% / 0.3)" 
                     />
@@ -289,8 +291,8 @@ export function AnalyticsCharts() {
           {/* Orders Chart */}
           <Card>
             <CardHeader>
-              <CardTitle className="font-heading text-lg">Užsakymai pagal dieną</CardTitle>
-              <CardDescription>Naujų užsakymų skaičius</CardDescription>
+              <CardTitle className="font-heading text-lg">{t('admAnalytics.chartsOrdersByDay')}</CardTitle>
+              <CardDescription>{t('admAnalytics.chartsOrdersDesc')}</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="h-64">
@@ -307,7 +309,7 @@ export function AnalyticsCharts() {
                       allowDecimals={false}
                     />
                     <Tooltip 
-                      formatter={(value: number) => [value, 'Užsakymai']}
+                      formatter={(value: number) => [value, t('account.orders')]}
                       labelFormatter={(label) => new Date(label).toLocaleDateString('lt-LT')}
                       contentStyle={{ 
                         backgroundColor: 'hsl(var(--background))',
@@ -317,7 +319,7 @@ export function AnalyticsCharts() {
                     />
                     <Bar 
                       dataKey="orders" 
-                      name="Užsakymai"
+                      name={t('account.orders')}
                       fill="hsl(var(--primary))" 
                       radius={[4, 4, 0, 0]}
                     />

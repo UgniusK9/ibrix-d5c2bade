@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
+import i18n from '@/i18n/config';
 
 export interface ProductReview {
   id: string;
@@ -102,7 +103,7 @@ export function useProductReviews(productId: string) {
 
   const submitReview = async (rating: number, title: string, content: string) => {
     if (!user || !productId) {
-      toast.error('Turite būti prisijungę');
+      toast.error(i18n.t('reviews.loginToReview'));
       return false;
     }
 
@@ -121,12 +122,12 @@ export function useProductReviews(productId: string) {
 
       if (error) throw error;
 
-      toast.success('Atsiliepimas išsiųstas patvirtinimui');
+      toast.success(i18n.t('reviews.reviewSubmitted'));
       setCanReview(false);
       return true;
     } catch (e: any) {
       console.error('Failed to submit review:', e);
-      toast.error(e.message || 'Nepavyko išsiųsti atsiliepimo');
+      toast.error(e.message || i18n.t('reviews.submitError'));
       return false;
     }
   };

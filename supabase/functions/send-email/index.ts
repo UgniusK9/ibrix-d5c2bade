@@ -15,6 +15,99 @@ const log = (requestId: string, step: string, details?: any) => {
 };
 
 // =====================================================================
+// LANGUAGE SUPPORT (lt default, en on demand)
+// =====================================================================
+// Callers pass `lang: 'lt' | 'en'` alongside the other template fields
+// (inside the nested `data` object when one is used, otherwise top-level).
+// Anything missing/other than 'en' falls back to Lithuanian, and the
+// Lithuanian strings below are byte-identical to the original hardcoded copy.
+type EmailLang = 'lt' | 'en';
+
+function getLang(data: any): EmailLang {
+  const raw = data?.lang ?? data?.data?.lang;
+  return raw === 'en' ? 'en' : 'lt';
+}
+
+// Shared dictionary for recurring user-facing labels (info-table labels,
+// section titles, totals rows, buttons, footer). Longer sentences live as
+// per-template `en ? ... : ...` conditionals next to the Lithuanian original.
+function strings(lang: EmailLang): Record<string, string> {
+  const en = lang === 'en';
+  return {
+    orderNo: en ? 'Order no.' : 'Užsakymo nr.',
+    date: en ? 'Date' : 'Data',
+    email: en ? 'Email' : 'El. paštas',
+    total: en ? 'Total' : 'Viso',
+    payment: en ? 'Payment' : 'Mokėjimas',
+    balanceDue: en ? 'Balance due' : 'Liko apmokėti',
+    paid: en ? 'Paid' : 'Apmokėta',
+    status: en ? 'Status' : 'Statusas',
+    carrier: en ? 'Carrier' : 'Vežėjas',
+    trackingNo: en ? 'Tracking no.' : 'Sekimo nr.',
+    order: en ? 'Order' : 'Užsakymas',
+    customer: en ? 'Customer' : 'Klientas',
+    type: en ? 'Type' : 'Tipas',
+    recipient: en ? 'Recipient' : 'Gavėjas',
+    value: en ? 'Value' : 'Vertė',
+    code: en ? 'Code' : 'Kodas',
+    account: en ? 'Account' : 'Paskyra',
+    validFor: en ? 'Valid for' : 'Galioja',
+    name: en ? 'Name' : 'Vardas',
+    nickname: en ? 'Nickname' : 'Slapyvardis',
+    topic: en ? 'Subject' : 'Tema',
+    replyWithin: en ? 'Reply within' : 'Atsakysime per',
+    newEmail: en ? 'New email' : 'Naujas el. paštas',
+    product: en ? 'Product' : 'Produktas',
+    item: en ? 'Item' : 'Prekė',
+    products: en ? 'Products' : 'Prekės',
+    qty: en ? 'Qty' : 'Kiek.',
+    qtyWord: en ? 'Qty' : 'Kiekis',
+    exVat: en ? 'Ex VAT' : 'Be PVM',
+    inclVat: en ? 'Incl. VAT' : 'Su PVM',
+    subtotal: en ? 'Subtotal' : 'Suma',
+    delivery: en ? 'Delivery' : 'Pristatymas',
+    free: en ? 'Free' : 'Nemokamas',
+    discount: en ? 'Discount' : 'Nuolaida',
+    paymentMethod: en ? 'Payment method' : 'Mokėjimo būdas',
+    totalInclVat: en ? 'Total (incl. VAT)' : 'Viso (su PVM)',
+    depositPaid: en ? 'Deposit paid' : 'Sumokėtas depozitas',
+    subtotalExVat: en ? 'Subtotal ex VAT:' : 'Suma be PVM:',
+    vatRate: en ? 'VAT (21%):' : 'PVM (21%):',
+    totalColon: en ? 'Total:' : 'Viso:',
+    buyer: en ? 'Customer' : 'Pirkėjas',
+    contacts: en ? 'Contacts' : 'Kontaktai',
+    message: en ? 'Message' : 'Pranešimas',
+    yourMessage: en ? 'Your message' : 'Jūsų žinutė',
+    messageShort: en ? 'Message' : 'Žinutė',
+    orderDetails: en ? 'Order details' : 'Užsakymo informacija',
+    howToRedeem: en ? 'How to redeem' : 'Kaip panaudoti',
+    whatYouCanDo: en ? 'What you can do' : 'Ką galite daryti',
+    questions: en ? 'Questions?' : 'Klausimai?',
+    rights: en ? 'All rights reserved.' : 'Visos teisės saugomos.',
+    privacy: en ? 'Privacy policy' : 'Privatumo politika',
+    cookies: en ? 'Cookie policy' : 'Slapukai',
+    help: en ? 'Help' : 'Pagalba',
+    ctaTrackOrder: en ? 'Track your order' : 'Sekti užsakymą',
+    ctaTrackParcel: en ? 'Track parcel' : 'Sekti siuntą',
+    ctaPayNow: en ? 'Pay now' : 'Apmokėti dabar',
+    ctaActivate: en ? 'Activate gift card' : 'Aktyvuoti kuponą',
+    ctaOpenAdmin: en ? 'Open admin' : 'Atidaryti admin',
+    ctaContinue: en ? 'Continue conversation' : 'Tęsti pokalbį',
+    ctaOpenConvo: en ? 'Open conversation' : 'Atidaryti pokalbį',
+    ctaViewConvo: en ? 'View conversation' : 'Peržiūrėti pokalbį',
+    ctaReset: en ? 'Reset password' : 'Atkurti slaptažodį',
+    ctaConfirmEmail: en ? 'Confirm email' : 'Patvirtinti el. paštą',
+    ctaBrowse: en ? 'Start browsing' : 'Pradėti naršyti',
+    notSpecified: en ? 'Not specified' : 'Nenurodyta',
+    courier: en ? 'Courier' : 'Kurjeris',
+    courierHome: en ? 'Courier to your door' : 'Kurjeris į namus',
+    deliveryFallback: en ? 'Delivery' : 'Pristatymas',
+    deposit: en ? 'Deposit' : 'Depozitas',
+    fullPayment: en ? 'Full payment' : 'Pilnas mokėjimas',
+  };
+}
+
+// =====================================================================
 // UNIFIED EMAIL DESIGN SYSTEM
 // =====================================================================
 // Style tokens — used across ALL templates to keep a consistent brand look.
@@ -50,25 +143,26 @@ function getEmailHeader(): string {
   `;
 }
 
-function getEmailFooter(): string {
+function getEmailFooter(lang: EmailLang = 'lt'): string {
+  const s = strings(lang);
   return `
     <tr>
       <td style="padding:32px 40px;background:${COLOR_ACCENT};border-top:1px solid ${COLOR_BORDER};text-align:center;">
         <p style="margin:0 0 8px;font-size:13px;color:${COLOR_TEXT};font-weight:600;letter-spacing:0.5px;">IBRIX</p>
         <p style="margin:0 0 16px;font-size:12px;color:${COLOR_MUTED};line-height:1.6;">
-          Klausimai? <a href="mailto:pagalba@ibrix.lt" style="color:${COLOR_TEXT};text-decoration:underline;">pagalba@ibrix.lt</a>
+          ${s.questions} <a href="mailto:pagalba@ibrix.lt" style="color:${COLOR_TEXT};text-decoration:underline;">pagalba@ibrix.lt</a>
           &nbsp;·&nbsp;
           <a href="${BASE_URL}" style="color:${COLOR_TEXT};text-decoration:underline;">ibrix.lt</a>
         </p>
         <p style="margin:0;font-size:11px;color:${COLOR_MUTED};letter-spacing:0.3px;">
-          © ${currentYear()} IBRIX. Visos teisės saugomos.
+          © ${currentYear()} IBRIX. ${s.rights}
         </p>
         <p style="margin:8px 0 0;font-size:11px;color:${COLOR_MUTED};">
-          <a href="${BASE_URL}/privatumo-politika" style="color:${COLOR_MUTED};text-decoration:underline;">Privatumo politika</a>
+          <a href="${BASE_URL}/privatumo-politika" style="color:${COLOR_MUTED};text-decoration:underline;">${s.privacy}</a>
           <span style="padding:0 6px;">·</span>
-          <a href="${BASE_URL}/slapukai-politika" style="color:${COLOR_MUTED};text-decoration:underline;">Slapukai</a>
+          <a href="${BASE_URL}/slapukai-politika" style="color:${COLOR_MUTED};text-decoration:underline;">${s.cookies}</a>
           <span style="padding:0 6px;">·</span>
-          <a href="${BASE_URL}/pagalba" style="color:${COLOR_MUTED};text-decoration:underline;">Pagalba</a>
+          <a href="${BASE_URL}/pagalba" style="color:${COLOR_MUTED};text-decoration:underline;">${s.help}</a>
         </p>
       </td>
     </tr>
@@ -80,11 +174,11 @@ interface WrapOptions {
   preheader?: string;
 }
 
-function getEmailWrapper(content: string, options: WrapOptions = {}): string {
+function getEmailWrapper(content: string, options: WrapOptions = {}, lang: EmailLang = 'lt'): string {
   const title = options.title || 'IBRIX';
   const preheader = options.preheader || '';
   return `<!DOCTYPE html>
-<html lang="lt">
+<html lang="${lang}">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -103,7 +197,7 @@ function getEmailWrapper(content: string, options: WrapOptions = {}): string {
               ${content}
             </td>
           </tr>
-          ${getEmailFooter()}
+          ${getEmailFooter(lang)}
         </table>
       </td>
     </tr>
@@ -215,6 +309,10 @@ function getDepositConfirmedEmail(data: any): { subject: string; html: string } 
     createdAt,
   } = data;
 
+  const lang = getLang(data);
+  const en = lang === 'en';
+  const s = strings(lang);
+
   const trackingUrl = trackingToken
     ? `${BASE_URL}/siuntos-sekimas/${orderNumber}?token=${trackingToken}`
     : `${BASE_URL}/uzsakymas?order_number=${orderNumber}`;
@@ -227,9 +325,9 @@ function getDepositConfirmedEmail(data: any): { subject: string; html: string } 
     const qty = item.quantity || 1;
     const unitPrice = Number(item.unit_price_eur || item.unitPriceEur || 0);
     const lineTotal = unitPrice * qty;
-    const title = item.title_snapshot || item.title || 'Prekė';
+    const title = item.title_snapshot || item.title || (en ? 'Product' : 'Prekė');
     const sku = item.sku_snapshot || item.sku || '';
-    const detailLine = sku ? `SKU: ${sku} · Kiekis: ${qty}` : `Kiekis: ${qty}`;
+    const detailLine = sku ? `SKU: ${sku} · ${s.qtyWord}: ${qty}` : `${s.qtyWord}: ${qty}`;
     return `
       <tr>
         <td style="padding:16px 0;border-bottom:1px solid ${COLOR_BORDER};vertical-align:top;">
@@ -247,17 +345,17 @@ function getDepositConfirmedEmail(data: any): { subject: string; html: string } 
   const discount = Number(discountEur || 0);
   const grandTotal = Number(totalEur) || (subtotal + shipping - discount);
 
-  const shippingLabel = getShippingMethodLabel(shippingMethod);
-  const shippingAddrLine = formatShippingAddress(shippingAddress);
+  const shippingLabel = getShippingMethodLabel(shippingMethod, lang);
+  const shippingAddrLine = formatShippingAddress(shippingAddress, lang);
   const buyerName = `${firstName || ''} ${lastName || ''}`.trim();
 
   // Info table cells (top — like FOTO 1)
   const infoCells: InfoCell[] = [
-    { label: 'Užsakymo nr.', value: orderNumber || '—' },
-    { label: 'Data', value: orderDate },
-    { label: 'El. paštas', value: email || '—' },
-    { label: 'Viso', value: `${grandTotal.toFixed(2)}€` },
-    { label: 'Mokėjimas', value: paymentMethod || 'Online' },
+    { label: s.orderNo, value: orderNumber || '—' },
+    { label: s.date, value: orderDate },
+    { label: s.email, value: email || '—' },
+    { label: s.total, value: `${grandTotal.toFixed(2)}€` },
+    { label: s.payment, value: paymentMethod || 'Online' },
   ];
 
   // Buyer block
@@ -265,7 +363,7 @@ function getDepositConfirmedEmail(data: any): { subject: string; html: string } 
     <p style="margin:0;font-weight:600;">${buyerName}</p>
     ${email ? `<p style="margin:0;color:${COLOR_MUTED};font-size:13px;">${email}</p>` : ''}
     ${wantsInvoice && invoiceCompanyName ? `<p style="margin:8px 0 0;">${invoiceCompanyName}</p>` : ''}
-    ${wantsInvoice && invoiceVatCode ? `<p style="margin:0;color:${COLOR_MUTED};font-size:13px;">PVM: ${invoiceVatCode}</p>` : ''}
+    ${wantsInvoice && invoiceVatCode ? `<p style="margin:0;color:${COLOR_MUTED};font-size:13px;">${en ? 'VAT' : 'PVM'}: ${invoiceVatCode}</p>` : ''}
     ${wantsInvoice && invoiceAddress ? `<p style="margin:0;color:${COLOR_MUTED};font-size:13px;">${invoiceAddress}</p>` : ''}
   `;
 
@@ -296,17 +394,17 @@ function getDepositConfirmedEmail(data: any): { subject: string; html: string } 
   }).join('');
 
   const content = `
-    ${getHeroBlock('Užsakymas gautas', 'Dėkojame, ' + (firstName || '') + '!', 'Jūsų užsakymas sėkmingai priimtas. Žemiau rasite visą informaciją.')}
+    ${getHeroBlock(en ? 'Order received' : 'Užsakymas gautas', (en ? 'Thank you, ' : 'Dėkojame, ') + (firstName || '') + '!', en ? 'Your order has been placed successfully. You will find all the details below.' : 'Jūsų užsakymas sėkmingai priimtas. Žemiau rasite visą informaciją.')}
 
     ${getInfoTable(infoCells)}
 
     <div style="margin-bottom:32px;">
-      ${getSectionTitle('Užsakymo informacija')}
+      ${getSectionTitle(s.orderDetails)}
       <table width="100%" cellpadding="0" cellspacing="0" border="0">
         <thead>
           <tr>
-            <th style="padding:0 0 12px;text-align:left;font-size:11px;color:${COLOR_MUTED};font-weight:600;text-transform:uppercase;letter-spacing:1px;border-bottom:2px solid ${COLOR_TEXT};">Produktas</th>
-            <th style="padding:0 0 12px;text-align:right;font-size:11px;color:${COLOR_MUTED};font-weight:600;text-transform:uppercase;letter-spacing:1px;border-bottom:2px solid ${COLOR_TEXT};">Viso</th>
+            <th style="padding:0 0 12px;text-align:left;font-size:11px;color:${COLOR_MUTED};font-weight:600;text-transform:uppercase;letter-spacing:1px;border-bottom:2px solid ${COLOR_TEXT};">${s.product}</th>
+            <th style="padding:0 0 12px;text-align:right;font-size:11px;color:${COLOR_MUTED};font-weight:600;text-transform:uppercase;letter-spacing:1px;border-bottom:2px solid ${COLOR_TEXT};">${s.total}</th>
           </tr>
         </thead>
         <tbody>
@@ -316,34 +414,34 @@ function getDepositConfirmedEmail(data: any): { subject: string; html: string } 
 
       <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-top:16px;">
         <tr>
-          <td style="padding:6px 0;font-size:13px;color:${COLOR_MUTED};">Suma</td>
+          <td style="padding:6px 0;font-size:13px;color:${COLOR_MUTED};">${s.subtotal}</td>
           <td style="padding:6px 0;font-size:13px;color:${COLOR_TEXT};text-align:right;">${subtotal.toFixed(2)}€</td>
         </tr>
         <tr>
-          <td style="padding:6px 0;font-size:13px;color:${COLOR_MUTED};">Pristatymas (${shippingLabel})</td>
-          <td style="padding:6px 0;font-size:13px;color:${COLOR_TEXT};text-align:right;">${shipping > 0 ? shipping.toFixed(2) + '€' : 'Nemokamas'}</td>
+          <td style="padding:6px 0;font-size:13px;color:${COLOR_MUTED};">${s.delivery} (${shippingLabel})</td>
+          <td style="padding:6px 0;font-size:13px;color:${COLOR_TEXT};text-align:right;">${shipping > 0 ? shipping.toFixed(2) + '€' : s.free}</td>
         </tr>
         ${discount > 0 ? `
           <tr>
-            <td style="padding:6px 0;font-size:13px;color:${COLOR_MUTED};">Nuolaida</td>
+            <td style="padding:6px 0;font-size:13px;color:${COLOR_MUTED};">${s.discount}</td>
             <td style="padding:6px 0;font-size:13px;color:${COLOR_TEXT};text-align:right;">−${discount.toFixed(2)}€</td>
           </tr>
         ` : ''}
         <tr>
-          <td style="padding:6px 0;font-size:13px;color:${COLOR_MUTED};">Mokėjimo būdas</td>
+          <td style="padding:6px 0;font-size:13px;color:${COLOR_MUTED};">${s.paymentMethod}</td>
           <td style="padding:6px 0;font-size:13px;color:${COLOR_TEXT};text-align:right;">${paymentMethod || 'Online'}</td>
         </tr>
         <tr>
-          <td style="padding:14px 0 6px;border-top:2px solid ${COLOR_TEXT};font-size:16px;color:${COLOR_TEXT};font-weight:700;">Viso (su PVM)</td>
+          <td style="padding:14px 0 6px;border-top:2px solid ${COLOR_TEXT};font-size:16px;color:${COLOR_TEXT};font-weight:700;">${s.totalInclVat}</td>
           <td style="padding:14px 0 6px;border-top:2px solid ${COLOR_TEXT};font-size:16px;color:${COLOR_TEXT};font-weight:700;text-align:right;">${grandTotal.toFixed(2)}€</td>
         </tr>
         ${!isFullPayment ? `
           <tr>
-            <td style="padding:6px 0;font-size:13px;color:${COLOR_MUTED};">Sumokėtas depozitas</td>
+            <td style="padding:6px 0;font-size:13px;color:${COLOR_MUTED};">${s.depositPaid}</td>
             <td style="padding:6px 0;font-size:13px;color:${COLOR_TEXT};text-align:right;">${Number(depositEur).toFixed(2)}€</td>
           </tr>
           <tr>
-            <td style="padding:6px 0;font-size:13px;color:${COLOR_MUTED};">Liks apmokėti</td>
+            <td style="padding:6px 0;font-size:13px;color:${COLOR_MUTED};">${s.balanceDue}</td>
             <td style="padding:6px 0;font-size:13px;color:${COLOR_TEXT};font-weight:600;text-align:right;">${Number(balanceEur).toFixed(2)}€</td>
           </tr>
         ` : ''}
@@ -351,23 +449,23 @@ function getDepositConfirmedEmail(data: any): { subject: string; html: string } 
 
       ${hasPreorder && etaWeeksMin && etaWeeksMax ? `
         <p style="margin:16px 0 0;padding:12px 16px;background:${COLOR_ACCENT};font-size:13px;color:${COLOR_TEXT};">
-          <strong>Numatomas pristatymas:</strong> ${etaWeeksMin}–${etaWeeksMax} sav. Likučio apmokėjimo nuorodą atsiųsime kai užsakymas bus paruoštas.
+          <strong>${en ? 'Estimated delivery:' : 'Numatomas pristatymas:'}</strong> ${etaWeeksMin}–${etaWeeksMax} ${en ? 'weeks. We will send the balance payment link once your order is ready.' : 'sav. Likučio apmokėjimo nuorodą atsiųsime kai užsakymas bus paruoštas.'}
         </p>
       ` : ''}
     </div>
 
-    ${getAddressBlock('Pirkėjas', buyerBlock, 'Pristatymas', shippingBlock)}
+    ${getAddressBlock(s.buyer, buyerBlock, s.delivery, shippingBlock)}
 
     <div style="text-align:center;margin:40px 0 8px;">
-      ${getCtaButton('Sekti užsakymą', trackingUrl)}
+      ${getCtaButton(s.ctaTrackOrder, trackingUrl)}
     </div>
 
     <div style="margin-top:48px;padding-top:32px;border-top:2px solid ${COLOR_TEXT};">
       <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:20px;">
         <tr>
           <td>
-            <p style="margin:0;font-size:18px;font-weight:800;color:${COLOR_TEXT};letter-spacing:1px;">PVM SĄSKAITA FAKTŪRA</p>
-            <p style="margin:4px 0 0;font-size:12px;color:${COLOR_MUTED};">Nr. ${invoiceNumber || 'Generuojama'} · Data: ${orderDate}</p>
+            <p style="margin:0;font-size:18px;font-weight:800;color:${COLOR_TEXT};letter-spacing:1px;">${en ? 'VAT INVOICE' : 'PVM SĄSKAITA FAKTŪRA'}</p>
+            <p style="margin:4px 0 0;font-size:12px;color:${COLOR_MUTED};">${en ? 'No.' : 'Nr.'} ${invoiceNumber || (en ? 'Pending' : 'Generuojama')} · ${en ? 'Date' : 'Data'}: ${orderDate}</p>
           </td>
           <td style="text-align:right;vertical-align:top;">
             <p style="margin:0;font-size:14px;font-weight:700;color:${COLOR_TEXT};">IBRIX</p>
@@ -379,11 +477,11 @@ function getDepositConfirmedEmail(data: any): { subject: string; html: string } 
       <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:20px;border:1px solid ${COLOR_BORDER};">
         <thead>
           <tr style="background:${COLOR_ACCENT};">
-            <th style="padding:10px 12px;text-align:left;font-size:10px;color:${COLOR_MUTED};font-weight:700;text-transform:uppercase;letter-spacing:1px;">Prekė</th>
+            <th style="padding:10px 12px;text-align:left;font-size:10px;color:${COLOR_MUTED};font-weight:700;text-transform:uppercase;letter-spacing:1px;">${s.item}</th>
             <th style="padding:10px 12px;text-align:center;font-size:10px;color:${COLOR_MUTED};font-weight:700;text-transform:uppercase;letter-spacing:1px;">SKU</th>
-            <th style="padding:10px 12px;text-align:center;font-size:10px;color:${COLOR_MUTED};font-weight:700;text-transform:uppercase;letter-spacing:1px;">Kiek.</th>
-            <th style="padding:10px 12px;text-align:right;font-size:10px;color:${COLOR_MUTED};font-weight:700;text-transform:uppercase;letter-spacing:1px;">Be PVM</th>
-            <th style="padding:10px 12px;text-align:right;font-size:10px;color:${COLOR_MUTED};font-weight:700;text-transform:uppercase;letter-spacing:1px;">Su PVM</th>
+            <th style="padding:10px 12px;text-align:center;font-size:10px;color:${COLOR_MUTED};font-weight:700;text-transform:uppercase;letter-spacing:1px;">${s.qty}</th>
+            <th style="padding:10px 12px;text-align:right;font-size:10px;color:${COLOR_MUTED};font-weight:700;text-transform:uppercase;letter-spacing:1px;">${s.exVat}</th>
+            <th style="padding:10px 12px;text-align:right;font-size:10px;color:${COLOR_MUTED};font-weight:700;text-transform:uppercase;letter-spacing:1px;">${s.inclVat}</th>
           </tr>
         </thead>
         <tbody>${invoiceItemsRows}</tbody>
@@ -395,15 +493,15 @@ function getDepositConfirmedEmail(data: any): { subject: string; html: string } 
           <td style="width:280px;">
             <table width="100%" cellpadding="0" cellspacing="0" border="0">
               <tr>
-                <td style="padding:6px 0;font-size:12px;color:${COLOR_MUTED};">Suma be PVM:</td>
+                <td style="padding:6px 0;font-size:12px;color:${COLOR_MUTED};">${s.subtotalExVat}</td>
                 <td style="padding:6px 0;font-size:12px;color:${COLOR_TEXT};text-align:right;">${netTotal.toFixed(2)}€</td>
               </tr>
               <tr>
-                <td style="padding:6px 0;font-size:12px;color:${COLOR_MUTED};">PVM (21%):</td>
+                <td style="padding:6px 0;font-size:12px;color:${COLOR_MUTED};">${s.vatRate}</td>
                 <td style="padding:6px 0;font-size:12px;color:${COLOR_TEXT};text-align:right;">${vatAmount.toFixed(2)}€</td>
               </tr>
               <tr>
-                <td style="padding:10px 0;border-top:2px solid ${COLOR_TEXT};font-size:14px;color:${COLOR_TEXT};font-weight:700;">Viso:</td>
+                <td style="padding:10px 0;border-top:2px solid ${COLOR_TEXT};font-size:14px;color:${COLOR_TEXT};font-weight:700;">${s.totalColon}</td>
                 <td style="padding:10px 0;border-top:2px solid ${COLOR_TEXT};font-size:14px;color:${COLOR_TEXT};font-weight:700;text-align:right;">${grandTotal.toFixed(2)}€</td>
               </tr>
             </table>
@@ -412,31 +510,34 @@ function getDepositConfirmedEmail(data: any): { subject: string; html: string } 
       </table>
 
       <p style="margin:24px 0 0;font-size:11px;color:${COLOR_MUTED};text-align:center;">
-        Ši sąskaita faktūra yra automatiškai sugeneruota ir galioja be parašo.
+        ${en ? 'This invoice was generated automatically and is valid without a signature.' : 'Ši sąskaita faktūra yra automatiškai sugeneruota ir galioja be parašo.'}
       </p>
     </div>
   `;
 
   return {
     subject: isFullPayment
-      ? `Užsakymas ${orderNumber} — patvirtintas`
-      : `Užsakymas ${orderNumber} — depozitas gautas`,
+      ? (en ? `Order ${orderNumber} — confirmed` : `Užsakymas ${orderNumber} — patvirtintas`)
+      : (en ? `Order ${orderNumber} — deposit received` : `Užsakymas ${orderNumber} — depozitas gautas`),
     html: getEmailWrapper(content, {
-      title: `Užsakymas ${orderNumber}`,
-      preheader: `Ačiū ${firstName || ''}! Užsakymas ${orderNumber} priimtas. Viso: ${grandTotal.toFixed(2)}€`,
-    }),
+      title: en ? `Order ${orderNumber}` : `Užsakymas ${orderNumber}`,
+      preheader: en ? `Thank you, ${firstName || ''}! Order ${orderNumber} received. Total: ${grandTotal.toFixed(2)}€` : `Ačiū ${firstName || ''}! Užsakymas ${orderNumber} priimtas. Viso: ${grandTotal.toFixed(2)}€`,
+    }, lang),
   };
 }
 
 function getBalanceRequestEmail(data: any): { subject: string; html: string } {
   const { firstName, orderNumber, balanceEur, paymentUrl, customMessage } = data;
+  const lang = getLang(data);
+  const en = lang === 'en';
+  const s = strings(lang);
 
   const content = `
-    ${getHeroBlock('Likučio apmokėjimas', 'Jūsų užsakymas paruoštas', `Sveiki, ${firstName}. Liko apmokėti likutį, kad pradėtumėme siuntimą.`)}
+    ${getHeroBlock(en ? 'Balance payment' : 'Likučio apmokėjimas', en ? 'Your order is ready' : 'Jūsų užsakymas paruoštas', (en ? `Hello, ${firstName}. One last step — pay the remaining balance so we can ship your order.` : `Sveiki, ${firstName}. Liko apmokėti likutį, kad pradėtumėme siuntimą.`))}
 
     ${getInfoTable([
-      { label: 'Užsakymo nr.', value: orderNumber },
-      { label: 'Liko apmokėti', value: `${Number(balanceEur).toFixed(2)}€` },
+      { label: s.orderNo, value: orderNumber },
+      { label: s.balanceDue, value: `${Number(balanceEur).toFixed(2)}€` },
     ])}
 
     ${customMessage ? `
@@ -446,112 +547,130 @@ function getBalanceRequestEmail(data: any): { subject: string; html: string } {
     ` : ''}
 
     <div style="text-align:center;margin:40px 0;">
-      ${getCtaButton('Apmokėti dabar', paymentUrl)}
-      <p style="margin:16px 0 0;font-size:12px;color:${COLOR_MUTED};">Apmokėjus iškart pradėsime ruošti siuntą.</p>
+      ${getCtaButton(s.ctaPayNow, paymentUrl)}
+      <p style="margin:16px 0 0;font-size:12px;color:${COLOR_MUTED};">${en ? 'We will start preparing your parcel as soon as the payment arrives.' : 'Apmokėjus iškart pradėsime ruošti siuntą.'}</p>
     </div>
   `;
 
   return {
-    subject: `Užsakymas ${orderNumber} — liko apmokėti ${Number(balanceEur).toFixed(2)}€`,
+    subject: en ? `Order ${orderNumber} — ${Number(balanceEur).toFixed(2)}€ balance due` : `Užsakymas ${orderNumber} — liko apmokėti ${Number(balanceEur).toFixed(2)}€`,
     html: getEmailWrapper(content, {
-      title: `Likučio apmokėjimas ${orderNumber}`,
-      preheader: `Liko apmokėti ${Number(balanceEur).toFixed(2)}€ už užsakymą ${orderNumber}`,
-    }),
+      title: en ? `Balance payment ${orderNumber}` : `Likučio apmokėjimas ${orderNumber}`,
+      preheader: en ? `${Number(balanceEur).toFixed(2)}€ balance due for order ${orderNumber}` : `Liko apmokėti ${Number(balanceEur).toFixed(2)}€ už užsakymą ${orderNumber}`,
+    }, lang),
   };
 }
 
 function getBalancePaidEmail(data: any): { subject: string; html: string } {
   const { firstName, orderNumber, amountEur } = data;
+  const lang = getLang(data);
+  const en = lang === 'en';
+  const s = strings(lang);
 
   const content = `
-    ${getHeroBlock('Mokėjimas gautas', `Ačiū, ${firstName}!`, 'Jūsų likučio apmokėjimas sėkmingai priimtas.')}
+    ${getHeroBlock(en ? 'Payment received' : 'Mokėjimas gautas', (en ? `Thank you, ${firstName}!` : `Ačiū, ${firstName}!`), en ? 'Your balance payment has been received.' : 'Jūsų likučio apmokėjimas sėkmingai priimtas.')}
 
     ${getInfoTable([
-      { label: 'Užsakymo nr.', value: orderNumber },
-      { label: 'Apmokėta', value: `${Number(amountEur).toFixed(2)}€` },
-      { label: 'Statusas', value: 'Apmokėta' },
+      { label: s.orderNo, value: orderNumber },
+      { label: s.paid, value: `${Number(amountEur).toFixed(2)}€` },
+      { label: s.status, value: s.paid },
     ])}
 
     <div style="padding:20px;background:${COLOR_ACCENT};text-align:center;margin-bottom:32px;">
       <p style="margin:0;font-size:14px;color:${COLOR_TEXT};line-height:1.6;">
-        Pradedame ruošti jūsų siuntą. Kai išsiųsime, gausite sekimo numerį el. paštu.
+        ${en ? 'We are now preparing your parcel. Once it ships, you will receive the tracking number by email.' : 'Pradedame ruošti jūsų siuntą. Kai išsiųsime, gausite sekimo numerį el. paštu.'}
       </p>
     </div>
   `;
 
   return {
-    subject: `Užsakymas ${orderNumber} — mokėjimas gautas`,
+    subject: en ? `Order ${orderNumber} — payment received` : `Užsakymas ${orderNumber} — mokėjimas gautas`,
     html: getEmailWrapper(content, {
-      title: `Mokėjimas gautas ${orderNumber}`,
-      preheader: `${Number(amountEur).toFixed(2)}€ apmokėta. Pradedame siuntimą.`,
-    }),
+      title: en ? `Payment received ${orderNumber}` : `Mokėjimas gautas ${orderNumber}`,
+      preheader: en ? `${Number(amountEur).toFixed(2)}€ paid. We are preparing your shipment.` : `${Number(amountEur).toFixed(2)}€ apmokėta. Pradedame siuntimą.`,
+    }, lang),
   };
 }
 
 function getShippedEmail(data: any): { subject: string; html: string } {
   const { firstName, orderNumber, trackingNumber, carrierName, trackingUrl } = data;
+  const lang = getLang(data);
+  const en = lang === 'en';
+  const s = strings(lang);
+  const carrier = carrierName || s.courier;
 
   const content = `
-    ${getHeroBlock('Siunta išsiųsta', 'Jūsų užsakymas pakeliui', `Sveiki${firstName ? ', ' + firstName : ''}. Užsakymas ${orderNumber} jau išsiųstas.`)}
+    ${getHeroBlock(en ? 'Parcel shipped' : 'Siunta išsiųsta', en ? 'Your order is on its way' : 'Jūsų užsakymas pakeliui', (en ? `Hello${firstName ? ', ' + firstName : ''}. Order ${orderNumber} has been shipped.` : `Sveiki${firstName ? ', ' + firstName : ''}. Užsakymas ${orderNumber} jau išsiųstas.`))}
 
     ${getInfoTable([
-      { label: 'Užsakymo nr.', value: orderNumber },
-      { label: 'Vežėjas', value: carrierName || 'Kurjeris' },
-      { label: 'Sekimo nr.', value: trackingNumber || '—' },
+      { label: s.orderNo, value: orderNumber },
+      { label: s.carrier, value: carrier },
+      { label: s.trackingNo, value: trackingNumber || '—' },
     ])}
 
     <div style="text-align:center;margin:40px 0;">
-      ${getCtaButton('Sekti siuntą', trackingUrl)}
+      ${getCtaButton(s.ctaTrackParcel, trackingUrl)}
     </div>
   `;
 
   return {
-    subject: `Užsakymas ${orderNumber} — išsiųsta`,
+    subject: en ? `Order ${orderNumber} — shipped` : `Užsakymas ${orderNumber} — išsiųsta`,
     html: getEmailWrapper(content, {
-      title: `Siunta išsiųsta ${orderNumber}`,
-      preheader: `Vežėjas: ${carrierName || 'Kurjeris'} · Sekimo nr.: ${trackingNumber || ''}`,
-    }),
+      title: en ? `Parcel shipped ${orderNumber}` : `Siunta išsiųsta ${orderNumber}`,
+      preheader: en ? `Carrier: ${carrier} · Tracking no.: ${trackingNumber || ''}` : `Vežėjas: ${carrier} · Sekimo nr.: ${trackingNumber || ''}`,
+    }, lang),
   };
 }
 
 function getSupportRequestEmail(data: any): { subject: string; html: string } {
   const { orderNumber, requestType, message, userEmail } = data.data || data;
+  const lang = getLang(data);
+  const en = lang === 'en';
+  const s = strings(lang);
 
-  const requestTypeLabels: Record<string, string> = {
+  const requestTypeLabels: Record<string, string> = en ? {
+    'return': 'Product return',
+    'missing_parts': 'Missing parts',
+    'other': 'Other',
+  } : {
     'return': 'Prekės grąžinimas',
     'missing_parts': 'Trūkstamos detalės',
     'other': 'Kita informacija',
   };
 
   const content = `
-    ${getHeroBlock('Klientų aptarnavimas', 'Nauja kliento užklausa', `Tipas: ${requestTypeLabels[requestType] || requestType}`)}
+    ${getHeroBlock(en ? 'Customer support' : 'Klientų aptarnavimas', en ? 'New customer request' : 'Nauja kliento užklausa', `${en ? 'Type' : 'Tipas'}: ${requestTypeLabels[requestType] || requestType}`)}
 
     ${getInfoTable([
-      { label: 'Užsakymas', value: orderNumber },
-      { label: 'Klientas', value: userEmail },
-      { label: 'Tipas', value: requestTypeLabels[requestType] || requestType },
+      { label: s.order, value: orderNumber },
+      { label: s.customer, value: userEmail },
+      { label: s.type, value: requestTypeLabels[requestType] || requestType },
     ])}
 
     <div>
-      ${getSectionTitle('Pranešimas')}
+      ${getSectionTitle(s.message)}
       <div style="padding:20px;background:${COLOR_ACCENT};font-size:14px;color:${COLOR_TEXT};line-height:1.6;white-space:pre-wrap;">${message}</div>
     </div>
   `;
 
   return {
-    subject: `[SUPPORT] Užsakymas ${orderNumber} — ${requestTypeLabels[requestType] || requestType}`,
-    html: getEmailWrapper(content, { title: 'Nauja užklausa' }),
+    subject: en ? `[SUPPORT] Order ${orderNumber} — ${requestTypeLabels[requestType] || requestType}` : `[SUPPORT] Užsakymas ${orderNumber} — ${requestTypeLabels[requestType] || requestType}`,
+    html: getEmailWrapper(content, { title: en ? 'New request' : 'Nauja užklausa' }, lang),
   };
 }
 
 function getGiftCardEmail(data: any): { subject: string; html: string } {
   const { recipientName, senderName, code, amount, personalMessage } = data;
+  const lang = getLang(data);
+  const en = lang === 'en';
+  const s = strings(lang);
+  const sender = senderName || (en ? 'A friend' : 'Draugas');
 
   const content = `
-    ${getHeroBlock('Dovanų kuponas', `Sveiki, ${recipientName}!`, `${senderName || 'Draugas'} atsiuntė jums IBRIX dovanų kuponą.`)}
+    ${getHeroBlock(en ? 'Gift card' : 'Dovanų kuponas', (en ? `Hello, ${recipientName}!` : `Sveiki, ${recipientName}!`), en ? `${sender} sent you an IBRIX gift card.` : `${sender} atsiuntė jums IBRIX dovanų kuponą.`)}
 
     <div style="background:${COLOR_BRAND};padding:40px 24px;text-align:center;margin-bottom:32px;">
-      <p style="margin:0 0 8px;font-size:11px;color:#999999;text-transform:uppercase;letter-spacing:2px;">Kupono vertė</p>
+      <p style="margin:0 0 8px;font-size:11px;color:#999999;text-transform:uppercase;letter-spacing:2px;">${en ? 'Gift card value' : 'Kupono vertė'}</p>
       <p style="margin:0 0 24px;font-size:48px;font-weight:800;color:#ffffff;letter-spacing:-1px;">${amount}€</p>
       <div style="background:rgba(255,255,255,0.1);padding:14px 20px;display:inline-block;">
         <p style="margin:0;font-family:'Courier New',monospace;font-size:20px;color:#ffffff;letter-spacing:3px;font-weight:700;">${code}</p>
@@ -561,72 +680,79 @@ function getGiftCardEmail(data: any): { subject: string; html: string } {
     ${personalMessage ? `
       <div style="margin-bottom:32px;padding:20px;background:${COLOR_ACCENT};border-left:3px solid ${COLOR_TEXT};">
         <p style="margin:0;font-size:14px;color:${COLOR_TEXT};font-style:italic;line-height:1.6;">"${personalMessage}"</p>
-        <p style="margin:8px 0 0;font-size:12px;color:${COLOR_MUTED};">— ${senderName || 'Draugas'}</p>
+        <p style="margin:8px 0 0;font-size:12px;color:${COLOR_MUTED};">— ${sender}</p>
       </div>
     ` : ''}
 
     <div style="margin-bottom:32px;">
-      ${getSectionTitle('Kaip panaudoti')}
+      ${getSectionTitle(s.howToRedeem)}
       <ol style="margin:0;padding-left:20px;font-size:14px;color:${COLOR_TEXT};line-height:1.8;">
-        <li>Prisijunkite prie <a href="${BASE_URL}/auth" style="color:${COLOR_LINK};">ibrix.lt</a></li>
-        <li>Eikite į „Mano paskyra" → „Aktyvuoti dovanų kuponą"</li>
-        <li>Įveskite kodą: <strong>${code}</strong></li>
+        <li>${en ? 'Log in at' : 'Prisijunkite prie'} <a href="${BASE_URL}/auth" style="color:${COLOR_LINK};">ibrix.lt</a></li>
+        <li>${en ? 'Go to "My account" → "Activate gift card"' : 'Eikite į „Mano paskyra" → „Aktyvuoti dovanų kuponą"'}</li>
+        <li>${en ? 'Enter the code:' : 'Įveskite kodą:'} <strong>${code}</strong></li>
       </ol>
     </div>
 
     <div style="text-align:center;margin:40px 0;">
-      ${getCtaButton('Aktyvuoti kuponą', `${BASE_URL}/auth`)}
+      ${getCtaButton(s.ctaActivate, `${BASE_URL}/auth`)}
     </div>
   `;
 
   return {
-    subject: `${senderName || 'Draugas'} atsiuntė jums ${amount}€ IBRIX kuponą`,
+    subject: en ? `${sender} sent you a ${amount}€ IBRIX gift card` : `${sender} atsiuntė jums ${amount}€ IBRIX kuponą`,
     html: getEmailWrapper(content, {
-      title: 'IBRIX dovanų kuponas',
-      preheader: `${amount}€ kuponas · Kodas: ${code}`,
-    }),
+      title: en ? 'IBRIX gift card' : 'IBRIX dovanų kuponas',
+      preheader: en ? `${amount}€ gift card · Code: ${code}` : `${amount}€ kuponas · Kodas: ${code}`,
+    }, lang),
   };
 }
 
 function getGiftCardConfirmationEmail(data: any): { subject: string; html: string } {
   const { recipientName, amount, code } = data;
+  const lang = getLang(data);
+  const en = lang === 'en';
+  const s = strings(lang);
 
   const content = `
-    ${getHeroBlock('Pirkimas patvirtintas', 'Dovanų kuponas išsiųstas', 'Jūsų pirktas kuponas sėkmingai pasiekė gavėją.')}
+    ${getHeroBlock(en ? 'Purchase confirmed' : 'Pirkimas patvirtintas', en ? 'Gift card sent' : 'Dovanų kuponas išsiųstas', en ? 'Your gift card has reached its recipient.' : 'Jūsų pirktas kuponas sėkmingai pasiekė gavėją.')}
 
     ${getInfoTable([
-      { label: 'Gavėjas', value: recipientName },
-      { label: 'Vertė', value: `${amount}€` },
-      { label: 'Kodas', value: code },
+      { label: s.recipient, value: recipientName },
+      { label: s.value, value: `${amount}€` },
+      { label: s.code, value: code },
     ])}
 
     <p style="margin:0;text-align:center;font-size:14px;color:${COLOR_MUTED};">
-      Gavėjas gavo el. laišką su kuponu ir aktyvavimo instrukcijomis.
+      ${en ? 'The recipient has received an email with the gift card and activation instructions.' : 'Gavėjas gavo el. laišką su kuponu ir aktyvavimo instrukcijomis.'}
     </p>
   `;
 
   return {
-    subject: `Dovanų kuponas ${amount}€ — pirkimas patvirtintas`,
-    html: getEmailWrapper(content, { title: 'Kuponas išsiųstas' }),
+    subject: en ? `Gift card ${amount}€ — purchase confirmed` : `Dovanų kuponas ${amount}€ — pirkimas patvirtintas`,
+    html: getEmailWrapper(content, { title: en ? 'Gift card sent' : 'Kuponas išsiųstas' }, lang),
   };
 }
 
 function getNewsletterEmail(data: any): { subject: string; html: string } {
   const { firstName, subject, content } = data;
+  const lang = getLang(data);
+  const en = lang === 'en';
 
   const htmlContent = content
     .split('\n\n')
     .map((p: string) => `<p style="margin:0 0 16px;font-size:14px;color:${COLOR_TEXT};line-height:1.7;">${p}</p>`)
     .join('');
 
+  // Note: subject/content are admin-authored campaign copy and are sent
+  // as-is; only the template chrome (eyebrow/greeting) follows `lang`.
   const emailContent = `
-    ${getHeroBlock('Naujienlaiškis', `Sveiki, ${firstName}!`)}
+    ${getHeroBlock(en ? 'Newsletter' : 'Naujienlaiškis', en ? `Hello, ${firstName}!` : `Sveiki, ${firstName}!`)}
     <div>${htmlContent}</div>
   `;
 
   return {
     subject,
-    html: getEmailWrapper(emailContent, { title: subject }),
+    html: getEmailWrapper(emailContent, { title: subject }, lang),
   };
 }
 
@@ -637,6 +763,10 @@ function getAdminOrderNotificationEmail(data: any): { subject: string; html: str
     depositEur, balanceEur, shippingMethod, shippingAddress,
     paymentMethod, hasPreorder, etaWeeksMin, etaWeeksMax,
   } = data;
+
+  const lang = getLang(data);
+  const en = lang === 'en';
+  const s = strings(lang);
 
   const itemsRows = (items || []).map((item: any) => `
     <tr>
@@ -650,18 +780,18 @@ function getAdminOrderNotificationEmail(data: any): { subject: string; html: str
   `).join('');
 
   const content = `
-    ${getHeroBlock('Admin · Naujas užsakymas', orderNumber, `${customerName} · ${hasPreorder ? 'Depozitas' : 'Pilnas mokėjimas'}: ${Number(depositEur).toFixed(2)}€`)}
+    ${getHeroBlock(en ? 'Admin · New order' : 'Admin · Naujas užsakymas', orderNumber, `${customerName} · ${hasPreorder ? s.deposit : s.fullPayment}: ${Number(depositEur).toFixed(2)}€`)}
 
     ${getInfoTable([
-      { label: 'Užsakymas', value: orderNumber },
-      { label: 'Klientas', value: customerName },
-      { label: 'Apmokėta', value: `${Number(depositEur).toFixed(2)}€` },
-      { label: 'Viso', value: `${Number(totalEur).toFixed(2)}€` },
-      { label: 'Mokėjimas', value: paymentMethod || 'Online' },
+      { label: s.order, value: orderNumber },
+      { label: s.customer, value: customerName },
+      { label: s.paid, value: `${Number(depositEur).toFixed(2)}€` },
+      { label: s.total, value: `${Number(totalEur).toFixed(2)}€` },
+      { label: s.payment, value: paymentMethod || 'Online' },
     ])}
 
     <div style="margin-bottom:32px;">
-      ${getSectionTitle('Kontaktai')}
+      ${getSectionTitle(s.contacts)}
       <p style="margin:0;font-size:14px;color:${COLOR_TEXT};line-height:1.7;">
         <a href="mailto:${customerEmail}" style="color:${COLOR_LINK};">${customerEmail}</a>
         ${customerPhone ? `<br><a href="tel:${customerPhone}" style="color:${COLOR_LINK};">${customerPhone}</a>` : ''}
@@ -669,13 +799,13 @@ function getAdminOrderNotificationEmail(data: any): { subject: string; html: str
     </div>
 
     <div style="margin-bottom:32px;">
-      ${getSectionTitle('Prekės')}
+      ${getSectionTitle(s.products)}
       <table width="100%" cellpadding="0" cellspacing="0" border="0">
         <thead>
           <tr>
-            <th style="padding:0 8px 10px;text-align:left;font-size:11px;color:${COLOR_MUTED};text-transform:uppercase;letter-spacing:1px;border-bottom:2px solid ${COLOR_TEXT};">Prekė</th>
-            <th style="padding:0 8px 10px;text-align:center;font-size:11px;color:${COLOR_MUTED};text-transform:uppercase;letter-spacing:1px;border-bottom:2px solid ${COLOR_TEXT};">Kiek.</th>
-            <th style="padding:0 8px 10px;text-align:right;font-size:11px;color:${COLOR_MUTED};text-transform:uppercase;letter-spacing:1px;border-bottom:2px solid ${COLOR_TEXT};">Suma</th>
+            <th style="padding:0 8px 10px;text-align:left;font-size:11px;color:${COLOR_MUTED};text-transform:uppercase;letter-spacing:1px;border-bottom:2px solid ${COLOR_TEXT};">${s.item}</th>
+            <th style="padding:0 8px 10px;text-align:center;font-size:11px;color:${COLOR_MUTED};text-transform:uppercase;letter-spacing:1px;border-bottom:2px solid ${COLOR_TEXT};">${s.qty}</th>
+            <th style="padding:0 8px 10px;text-align:right;font-size:11px;color:${COLOR_MUTED};text-transform:uppercase;letter-spacing:1px;border-bottom:2px solid ${COLOR_TEXT};">${s.total}</th>
           </tr>
         </thead>
         <tbody>${itemsRows}</tbody>
@@ -683,234 +813,255 @@ function getAdminOrderNotificationEmail(data: any): { subject: string; html: str
     </div>
 
     <div style="margin-bottom:32px;">
-      ${getSectionTitle('Pristatymas')}
+      ${getSectionTitle(s.delivery)}
       <p style="margin:0;font-size:14px;color:${COLOR_TEXT};line-height:1.6;">
-        ${getShippingMethodLabel(shippingMethod)}<br>
-        <span style="color:${COLOR_MUTED};">${formatShippingAddress(shippingAddress)}</span>
+        ${getShippingMethodLabel(shippingMethod, lang)}<br>
+        <span style="color:${COLOR_MUTED};">${formatShippingAddress(shippingAddress, lang)}</span>
       </p>
-      ${hasPreorder && etaWeeksMin && etaWeeksMax ? `<p style="margin:8px 0 0;padding:10px;background:${COLOR_ACCENT};font-size:13px;">ETA: ${etaWeeksMin}–${etaWeeksMax} sav.</p>` : ''}
+      ${hasPreorder && etaWeeksMin && etaWeeksMax ? `<p style="margin:8px 0 0;padding:10px;background:${COLOR_ACCENT};font-size:13px;">ETA: ${etaWeeksMin}–${etaWeeksMax} ${en ? 'wks.' : 'sav.'}</p>` : ''}
     </div>
 
     <div style="text-align:center;margin:40px 0;">
-      ${getCtaButton('Atidaryti admin', `${BASE_URL}/admin`)}
+      ${getCtaButton(s.ctaOpenAdmin, `${BASE_URL}/admin`)}
     </div>
   `;
 
   return {
-    subject: `Naujas užsakymas ${orderNumber} — ${Number(depositEur).toFixed(2)}€`,
-    html: getEmailWrapper(content, { title: `Naujas užsakymas ${orderNumber}` }),
+    subject: en ? `New order ${orderNumber} — ${Number(depositEur).toFixed(2)}€` : `Naujas užsakymas ${orderNumber} — ${Number(depositEur).toFixed(2)}€`,
+    html: getEmailWrapper(content, { title: en ? `New order ${orderNumber}` : `Naujas užsakymas ${orderNumber}` }, lang),
   };
 }
 
 function getInquiryReplyEmail(data: any): { subject: string; html: string } {
   const { customerName, replyMessage, conversationUrl, originalTopic } = data;
+  const lang = getLang(data);
+  const en = lang === 'en';
+  const s = strings(lang);
 
   const content = `
-    ${getHeroBlock('Atsakymas į užklausą', `Sveiki, ${customerName}!`, `Atsakėme į jūsų užklausą: ${originalTopic}`)}
+    ${getHeroBlock(en ? 'Reply to your inquiry' : 'Atsakymas į užklausą', (en ? `Hello, ${customerName}!` : `Sveiki, ${customerName}!`), (en ? `We have replied to your inquiry: ${originalTopic}` : `Atsakėme į jūsų užklausą: ${originalTopic}`))}
 
     <div style="margin-bottom:32px;padding:20px;background:${COLOR_ACCENT};border-left:3px solid ${COLOR_TEXT};">
       <p style="margin:0;font-size:14px;color:${COLOR_TEXT};line-height:1.7;white-space:pre-wrap;">${replyMessage}</p>
     </div>
 
     <div style="text-align:center;margin:40px 0;">
-      ${getCtaButton('Tęsti pokalbį', conversationUrl)}
+      ${getCtaButton(s.ctaContinue, conversationUrl)}
     </div>
   `;
 
   return {
-    subject: `Atsakymas į jūsų užklausą — ${originalTopic}`,
-    html: getEmailWrapper(content, { title: 'Atsakymas į užklausą' }),
+    subject: en ? `Reply to your inquiry — ${originalTopic}` : `Atsakymas į jūsų užklausą — ${originalTopic}`,
+    html: getEmailWrapper(content, { title: en ? 'Reply to inquiry' : 'Atsakymas į užklausą' }, lang),
   };
 }
 
 function getAdminInquiryNotificationEmail(data: any): { subject: string; html: string } {
   const { customerName, customerEmail, topic, message, conversationUrl } = data;
+  const lang = getLang(data);
+  const en = lang === 'en';
+  const s = strings(lang);
 
   const content = `
-    ${getHeroBlock('Admin · Naujas atsakymas', customerName, topic)}
+    ${getHeroBlock(en ? 'Admin · New reply' : 'Admin · Naujas atsakymas', customerName, topic)}
 
     ${getInfoTable([
-      { label: 'Klientas', value: customerName },
-      { label: 'El. paštas', value: customerEmail },
-      { label: 'Tema', value: topic },
+      { label: s.customer, value: customerName },
+      { label: s.email, value: customerEmail },
+      { label: s.topic, value: topic },
     ])}
 
     <div style="margin-bottom:32px;">
-      ${getSectionTitle('Žinutė')}
+      ${getSectionTitle(s.messageShort)}
       <div style="padding:20px;background:${COLOR_ACCENT};font-size:14px;color:${COLOR_TEXT};line-height:1.6;white-space:pre-wrap;">${message}</div>
     </div>
 
     <div style="text-align:center;margin:40px 0;">
-      ${getCtaButton('Atidaryti pokalbį', conversationUrl)}
+      ${getCtaButton(s.ctaOpenConvo, conversationUrl)}
     </div>
   `;
 
   return {
-    subject: `Naujas atsakymas nuo ${customerName} — ${topic}`,
-    html: getEmailWrapper(content, { title: 'Naujas atsakymas' }),
+    subject: en ? `New reply from ${customerName} — ${topic}` : `Naujas atsakymas nuo ${customerName} — ${topic}`,
+    html: getEmailWrapper(content, { title: en ? 'New reply' : 'Naujas atsakymas' }, lang),
   };
 }
 
 function getInquiryReceivedEmail(data: any): { subject: string; html: string } {
   const { firstName, topic, message, orderNumber, conversationToken } = data;
+  const lang = getLang(data);
+  const en = lang === 'en';
+  const s = strings(lang);
   const conversationUrl = conversationToken ? `${BASE_URL}/pokalbis/${conversationToken}` : BASE_URL;
 
   const content = `
-    ${getHeroBlock('Užklausa gauta', `Ačiū, ${firstName}!`, 'Gavome jūsų žinutę ir greitai atsakysime.')}
+    ${getHeroBlock(en ? 'Inquiry received' : 'Užklausa gauta', (en ? `Thank you, ${firstName}!` : `Ačiū, ${firstName}!`), en ? 'We have received your message and will reply soon.' : 'Gavome jūsų žinutę ir greitai atsakysime.')}
 
     ${getInfoTable([
-      { label: 'Tema', value: topic },
-      ...(orderNumber ? [{ label: 'Užsakymas', value: orderNumber }] : []),
-      { label: 'Atsakysime per', value: '24 val.' },
+      { label: s.topic, value: topic },
+      ...(orderNumber ? [{ label: s.order, value: orderNumber }] : []),
+      { label: s.replyWithin, value: en ? '24 hrs' : '24 val.' },
     ])}
 
     <div style="margin-bottom:32px;">
-      ${getSectionTitle('Jūsų žinutė')}
+      ${getSectionTitle(s.yourMessage)}
       <div style="padding:20px;background:${COLOR_ACCENT};font-size:14px;color:${COLOR_TEXT};line-height:1.6;white-space:pre-wrap;">${message}</div>
     </div>
 
     ${conversationToken ? `
       <div style="text-align:center;margin:40px 0;">
-        ${getCtaButton('Peržiūrėti pokalbį', conversationUrl)}
+        ${getCtaButton(s.ctaViewConvo, conversationUrl)}
       </div>
     ` : ''}
   `;
 
   return {
-    subject: `Gavome jūsų užklausą — ${topic}`,
-    html: getEmailWrapper(content, { title: 'Užklausa gauta' }),
+    subject: en ? `We have received your inquiry — ${topic}` : `Gavome jūsų užklausą — ${topic}`,
+    html: getEmailWrapper(content, { title: en ? 'Inquiry received' : 'Užklausa gauta' }, lang),
   };
 }
 
 function getPasswordResetEmail(data: any): { subject: string; html: string } {
   const { email, resetUrl, firstName } = data;
+  const lang = getLang(data);
+  const en = lang === 'en';
+  const s = strings(lang);
 
   const content = `
-    ${getHeroBlock('Slaptažodžio atkūrimas', 'Atkurti slaptažodį', `Sveiki${firstName ? ', ' + firstName : ''}. Gavome prašymą atkurti jūsų IBRIX paskyros slaptažodį.`)}
+    ${getHeroBlock(en ? 'Password reset' : 'Slaptažodžio atkūrimas', en ? 'Reset password' : 'Atkurti slaptažodį', (en ? `Hello${firstName ? ', ' + firstName : ''}. We received a request to reset your IBRIX account password.` : `Sveiki${firstName ? ', ' + firstName : ''}. Gavome prašymą atkurti jūsų IBRIX paskyros slaptažodį.`))}
 
     ${getInfoTable([
-      { label: 'Paskyra', value: email },
-      { label: 'Galioja', value: '1 val.' },
+      { label: s.account, value: email },
+      { label: s.validFor, value: en ? '1 hr' : '1 val.' },
     ])}
 
     <div style="text-align:center;margin:40px 0;">
-      ${getCtaButton('Atkurti slaptažodį', resetUrl)}
+      ${getCtaButton(s.ctaReset, resetUrl)}
       <p style="margin:16px 0 0;font-size:12px;color:${COLOR_MUTED};">
-        Jei mygtukas neveikia, nukopijuokite šią nuorodą:<br>
+        ${en ? 'If the button does not work, copy this link:' : 'Jei mygtukas neveikia, nukopijuokite šią nuorodą:'}<br>
         <a href="${resetUrl}" style="color:${COLOR_LINK};word-break:break-all;">${resetUrl}</a>
       </p>
     </div>
 
     <div style="padding:16px;background:${COLOR_ACCENT};font-size:13px;color:${COLOR_MUTED};line-height:1.6;text-align:center;">
-      Jei neprašėte atkurti slaptažodžio, ignoruokite šį laišką. Jūsų paskyra išliks saugi.
+      ${en ? 'If you did not request a password reset, ignore this email. Your account will remain safe.' : 'Jei neprašėte atkurti slaptažodžio, ignoruokite šį laišką. Jūsų paskyra išliks saugi.'}
     </div>
   `;
 
   return {
-    subject: 'IBRIX — slaptažodžio atkūrimas',
+    subject: en ? 'IBRIX — password reset' : 'IBRIX — slaptažodžio atkūrimas',
     html: getEmailWrapper(content, {
-      title: 'Slaptažodžio atkūrimas',
-      preheader: 'Atkurkite IBRIX slaptažodį per 1 val.',
-    }),
+      title: en ? 'Password reset' : 'Slaptažodžio atkūrimas',
+      preheader: en ? 'Reset your IBRIX password within 1 hr.' : 'Atkurkite IBRIX slaptažodį per 1 val.',
+    }, lang),
   };
 }
 
 function getVerificationCodeEmail(data: any): { subject: string; html: string } {
   const { firstName, code, email } = data;
+  const lang = getLang(data);
+  const en = lang === 'en';
+  const s = strings(lang);
 
   const content = `
-    ${getHeroBlock('Patvirtinimas', `Sveiki${firstName ? ', ' + firstName : ''}!`, 'Įveskite šį kodą norėdami patvirtinti savo el. paštą.')}
+    ${getHeroBlock(en ? 'Verification' : 'Patvirtinimas', (en ? `Hello${firstName ? ', ' + firstName : ''}!` : `Sveiki${firstName ? ', ' + firstName : ''}!`), en ? 'Enter this code to verify your email.' : 'Įveskite šį kodą norėdami patvirtinti savo el. paštą.')}
 
     <div style="text-align:center;padding:32px 24px;background:${COLOR_ACCENT};margin-bottom:32px;">
-      <p style="margin:0 0 12px;font-size:11px;color:${COLOR_MUTED};text-transform:uppercase;letter-spacing:2px;font-weight:600;">Jūsų kodas</p>
+      <p style="margin:0 0 12px;font-size:11px;color:${COLOR_MUTED};text-transform:uppercase;letter-spacing:2px;font-weight:600;">${en ? 'Your code' : 'Jūsų kodas'}</p>
       <p style="margin:0;font-family:'Courier New',monospace;font-size:42px;font-weight:800;color:${COLOR_TEXT};letter-spacing:12px;">${code}</p>
     </div>
 
     ${getInfoTable([
-      ...(email ? [{ label: 'Paskyra', value: email }] : []),
-      { label: 'Galioja', value: '15 min.' },
+      ...(email ? [{ label: s.account, value: email }] : []),
+      { label: s.validFor, value: en ? '15 min' : '15 min.' },
     ])}
 
     <div style="padding:16px;background:${COLOR_ACCENT};font-size:13px;color:${COLOR_MUTED};line-height:1.6;text-align:center;">
-      Jei neprašėte šio kodo, ignoruokite šį laišką.
+      ${en ? 'If you did not request this code, ignore this email.' : 'Jei neprašėte šio kodo, ignoruokite šį laišką.'}
     </div>
   `;
 
   return {
-    subject: `IBRIX — patvirtinimo kodas ${code}`,
+    subject: en ? `IBRIX — verification code ${code}` : `IBRIX — patvirtinimo kodas ${code}`,
     html: getEmailWrapper(content, {
-      title: 'Patvirtinimo kodas',
-      preheader: `Jūsų patvirtinimo kodas: ${code}`,
-    }),
+      title: en ? 'Verification code' : 'Patvirtinimo kodas',
+      preheader: en ? `Your verification code: ${code}` : `Jūsų patvirtinimo kodas: ${code}`,
+    }, lang),
   };
 }
 
 function getWelcomeEmail(data: any): { subject: string; html: string } {
   const { firstName, lastName, email, username } = data;
+  const lang = getLang(data);
+  const en = lang === 'en';
+  const s = strings(lang);
 
   const content = `
-    ${getHeroBlock('Sveiki atvykę!', `Sveiki, ${firstName}!`, 'Jūsų IBRIX paskyra sėkmingai sukurta.')}
+    ${getHeroBlock(en ? 'Welcome!' : 'Sveiki atvykę!', (en ? `Hello, ${firstName}!` : `Sveiki, ${firstName}!`), en ? 'Your IBRIX account has been created.' : 'Jūsų IBRIX paskyra sėkmingai sukurta.')}
 
     ${getInfoTable([
-      { label: 'Vardas', value: `${firstName || ''} ${lastName || ''}`.trim() || '—' },
-      { label: 'El. paštas', value: email || '—' },
-      ...(username ? [{ label: 'Slapyvardis', value: username }] : []),
+      { label: s.name, value: `${firstName || ''} ${lastName || ''}`.trim() || '—' },
+      { label: s.email, value: email || '—' },
+      ...(username ? [{ label: s.nickname, value: username }] : []),
     ])}
 
     <div style="margin-bottom:32px;">
-      ${getSectionTitle('Ką galite daryti')}
+      ${getSectionTitle(s.whatYouCanDo)}
       <ul style="margin:0;padding-left:20px;font-size:14px;color:${COLOR_TEXT};line-height:1.8;">
-        <li>Naršyti pilną <a href="${BASE_URL}/produktai" style="color:${COLOR_LINK};">konstruktorių katalogą</a></li>
-        <li>Rinkti lojalumo taškus už kiekvieną pirkinį</li>
-        <li>Gauti išankstinę prieigą prie naujų rinkinių</li>
-        <li>Tvarkyti savo kolekciją <a href="${BASE_URL}/account" style="color:${COLOR_LINK};">savo paskyroje</a></li>
+        <li>${en ? 'Browse the full' : 'Naršyti pilną'} <a href="${BASE_URL}/produktai" style="color:${COLOR_LINK};">${en ? 'building-set catalogue' : 'konstruktorių katalogą'}</a></li>
+        <li>${en ? 'Collect loyalty points with every purchase' : 'Rinkti lojalumo taškus už kiekvieną pirkinį'}</li>
+        <li>${en ? 'Get early access to new sets' : 'Gauti išankstinę prieigą prie naujų rinkinių'}</li>
+        <li>${en ? 'Manage your collection' : 'Tvarkyti savo kolekciją'} <a href="${BASE_URL}/account" style="color:${COLOR_LINK};">${en ? 'in your account' : 'savo paskyroje'}</a></li>
       </ul>
     </div>
 
     <div style="text-align:center;margin:40px 0;">
-      ${getCtaButton('Pradėti naršyti', `${BASE_URL}/produktai`)}
+      ${getCtaButton(s.ctaBrowse, `${BASE_URL}/produktai`)}
     </div>
   `;
 
   return {
-    subject: 'Sveiki atvykę į IBRIX!',
+    subject: en ? 'Welcome to IBRIX!' : 'Sveiki atvykę į IBRIX!',
     html: getEmailWrapper(content, {
-      title: 'Sveiki atvykę į IBRIX',
-      preheader: 'Jūsų IBRIX paskyra sėkmingai sukurta.',
-    }),
+      title: en ? 'Welcome to IBRIX' : 'Sveiki atvykę į IBRIX',
+      preheader: en ? 'Your IBRIX account has been created.' : 'Jūsų IBRIX paskyra sėkmingai sukurta.',
+    }, lang),
   };
 }
 
 function getEmailChangeEmail(data: any): { subject: string; html: string } {
   const { firstName, confirmUrl, newEmail } = data;
+  const lang = getLang(data);
+  const en = lang === 'en';
+  const s = strings(lang);
 
   const content = `
-    ${getHeroBlock('El. pašto keitimas', 'Patvirtinkite naują el. paštą', `Sveiki${firstName ? ', ' + firstName : ''}. Jūs paprašėte pakeisti savo IBRIX paskyros el. paštą.`)}
+    ${getHeroBlock(en ? 'Email change' : 'El. pašto keitimas', en ? 'Confirm your new email' : 'Patvirtinkite naują el. paštą', (en ? `Hello${firstName ? ', ' + firstName : ''}. You requested to change your IBRIX account email.` : `Sveiki${firstName ? ', ' + firstName : ''}. Jūs paprašėte pakeisti savo IBRIX paskyros el. paštą.`))}
 
     ${getInfoTable([
-      { label: 'Naujas el. paštas', value: newEmail },
-      { label: 'Galioja', value: '24 val.' },
+      { label: s.newEmail, value: newEmail },
+      { label: s.validFor, value: en ? '24 hrs' : '24 val.' },
     ])}
 
     <div style="text-align:center;margin:40px 0;">
-      ${getCtaButton('Patvirtinti el. paštą', confirmUrl)}
+      ${getCtaButton(s.ctaConfirmEmail, confirmUrl)}
       <p style="margin:16px 0 0;font-size:12px;color:${COLOR_MUTED};">
-        Jei mygtukas neveikia, nukopijuokite šią nuorodą:<br>
+        ${en ? 'If the button does not work, copy this link:' : 'Jei mygtukas neveikia, nukopijuokite šią nuorodą:'}<br>
         <a href="${confirmUrl}" style="color:${COLOR_LINK};word-break:break-all;">${confirmUrl}</a>
       </p>
     </div>
 
     <div style="padding:16px;background:${COLOR_ACCENT};font-size:13px;color:${COLOR_MUTED};line-height:1.6;text-align:center;">
-      Jei neprašėte pakeisti el. pašto, ignoruokite šį laišką.
+      ${en ? 'If you did not request an email change, ignore this email.' : 'Jei neprašėte pakeisti el. pašto, ignoruokite šį laišką.'}
     </div>
   `;
 
   return {
-    subject: 'IBRIX — patvirtinkite naują el. paštą',
+    subject: en ? 'IBRIX — confirm your new email' : 'IBRIX — patvirtinkite naują el. paštą',
     html: getEmailWrapper(content, {
-      title: 'Patvirtinkite el. paštą',
-      preheader: `Patvirtinkite naują el. paštą: ${newEmail}`,
-    }),
+      title: en ? 'Confirm your email' : 'Patvirtinkite el. paštą',
+      preheader: en ? `Confirm your new email: ${newEmail}` : `Patvirtinkite naują el. paštą: ${newEmail}`,
+    }, lang),
   };
 }
 
@@ -918,26 +1069,28 @@ function getEmailChangeEmail(data: any): { subject: string; html: string } {
 // HELPERS
 // =====================================================================
 
-function getShippingMethodLabel(method: string): string {
+function getShippingMethodLabel(method: string, lang: EmailLang = 'lt'): string {
+  const en = lang === 'en';
   const labels: Record<string, string> = {
-    'omniva_locker': 'Omniva paštomatas',
-    'lp_express_locker': 'LP Express paštomatas',
-    'dpd_locker': 'DPD paštomatas',
-    'venipak_locker': 'Venipak paštomatas',
-    'courier': 'Kurjeris į namus',
+    'omniva_locker': en ? 'Omniva parcel locker' : 'Omniva paštomatas',
+    'lp_express_locker': en ? 'LP Express parcel locker' : 'LP Express paštomatas',
+    'dpd_locker': en ? 'DPD parcel locker' : 'DPD paštomatas',
+    'venipak_locker': en ? 'Venipak parcel locker' : 'Venipak paštomatas',
+    'courier': en ? 'Courier to your door' : 'Kurjeris į namus',
   };
-  return labels[method] || method || 'Pristatymas';
+  return labels[method] || method || (en ? 'Delivery' : 'Pristatymas');
 }
 
-function formatShippingAddress(address: any): string {
-  if (!address) return 'Nenurodyta';
+function formatShippingAddress(address: any, lang: EmailLang = 'lt'): string {
+  const notSpecified = lang === 'en' ? 'Not specified' : 'Nenurodyta';
+  if (!address) return notSpecified;
   if (address.lockerAddress) {
     return `${address.lockerName || ''}${address.lockerName ? ', ' : ''}${address.lockerAddress}`;
   }
   if (address.street) {
     return `${address.street}, ${address.city || ''} ${address.postalCode || ''}`.trim();
   }
-  return 'Nenurodyta';
+  return notSpecified;
 }
 
 // =====================================================================

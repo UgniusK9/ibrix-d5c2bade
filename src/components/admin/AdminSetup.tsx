@@ -15,6 +15,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
 import { useAuth } from '@/contexts/AuthContext';
+import { useTranslation } from 'react-i18next';
 
 interface AdminSetupProps {
   webhookHealth?: {
@@ -28,6 +29,7 @@ interface AdminSetupProps {
 
 export function AdminSetup({ webhookHealth }: AdminSetupProps) {
   const { user } = useAuth();
+  const { t } = useTranslation();
   const [expandedSection, setExpandedSection] = useState<string | null>('stripe');
 
   const projectId = import.meta.env.VITE_SUPABASE_PROJECT_ID || 'xutfxycojeydcgrpsrsy';
@@ -39,7 +41,7 @@ export function AdminSetup({ webhookHealth }: AdminSetupProps) {
 
   const copyToClipboard = (text: string, label: string) => {
     navigator.clipboard.writeText(text);
-    toast.success(`${label} nukopijuota!`);
+    toast.success(t('admDash.setupCopied', { label }));
   };
 
   const toggleSection = (section: string) => {
@@ -66,12 +68,12 @@ export function AdminSetup({ webhookHealth }: AdminSetupProps) {
             </div>
             <div className="text-left">
               <p className="font-semibold">Stripe Webhook</p>
-              <p className="text-sm text-muted-foreground">Mokėjimų apdorojimas</p>
+              <p className="text-sm text-muted-foreground">{t('admDash.setupStripeDesc')}</p>
             </div>
           </div>
           <div className="flex items-center gap-2">
             <Badge variant={stripeConfigured ? 'default' : 'secondary'}>
-              {stripeConfigured ? 'Sukonfigūruota' : 'Reikia nustatyti'}
+              {stripeConfigured ? t('admDash.setupConfigured') : t('admDash.setupNeedsSetup')}
             </Badge>
             {expandedSection === 'stripe' ? (
               <ChevronUp className="w-5 h-5 text-muted-foreground" />
@@ -85,7 +87,7 @@ export function AdminSetup({ webhookHealth }: AdminSetupProps) {
           <div className="p-4 pt-0 border-t border-border space-y-4">
             <div className="bg-muted/50 rounded-lg p-4 space-y-3">
               <div>
-                <p className="text-sm font-medium mb-2">1. Webhook URL (nukopijuoti):</p>
+                <p className="text-sm font-medium mb-2">{t('admDash.setupStepCopyUrl')}</p>
                 <div className="flex gap-2">
                   <code className="flex-1 bg-background border border-border rounded px-3 py-2 text-xs font-mono truncate">
                     {webhookUrl}
@@ -101,7 +103,7 @@ export function AdminSetup({ webhookHealth }: AdminSetupProps) {
               </div>
 
               <div>
-                <p className="text-sm font-medium mb-2">2. Reikalingi įvykiai (Events):</p>
+                <p className="text-sm font-medium mb-2">{t('admDash.setupEventsTitle')}</p>
                 <div className="flex flex-wrap gap-2">
                   {['checkout.session.completed', 'checkout.session.expired', 'payment_intent.payment_failed', 'charge.refunded'].map((event) => (
                     <code key={event} className="bg-background border border-border rounded px-2 py-1 text-xs font-mono">
@@ -112,10 +114,10 @@ export function AdminSetup({ webhookHealth }: AdminSetupProps) {
               </div>
 
               <div>
-                <p className="text-sm font-medium mb-2">3. Po sukūrimo:</p>
+                <p className="text-sm font-medium mb-2">{t('admDash.setupAfterCreate')}</p>
                 <ul className="text-sm text-muted-foreground space-y-1 ml-4 list-disc">
-                  <li>Nukopijuokite <strong>Signing Secret</strong> (prasideda <code>whsec_</code>)</li>
-                  <li>Įdėkite į Lovable Secrets kaip <code>STRIPE_WEBHOOK_SECRET</code></li>
+                  <li>{t('admDash.setupCopyStart')} <strong>Signing Secret</strong> ({t('admDash.setupStartsWith')} <code>whsec_</code>)</li>
+                  <li>{t('admDash.setupPasteSecret')} <code>STRIPE_WEBHOOK_SECRET</code></li>
                 </ul>
               </div>
             </div>
@@ -126,7 +128,7 @@ export function AdminSetup({ webhookHealth }: AdminSetupProps) {
               onClick={() => window.open('https://dashboard.stripe.com/webhooks', '_blank')}
             >
               <ExternalLink className="w-4 h-4 mr-2" />
-              Atidaryti Stripe Webhooks
+              {t('admDash.setupOpenStripe')}
             </Button>
           </div>
         )}
@@ -146,12 +148,12 @@ export function AdminSetup({ webhookHealth }: AdminSetupProps) {
             </div>
             <div className="text-left">
               <p className="font-semibold">Resend Email</p>
-              <p className="text-sm text-muted-foreground">Transakcijų laiškai</p>
+              <p className="text-sm text-muted-foreground">{t('admDash.setupResendDesc')}</p>
             </div>
           </div>
           <div className="flex items-center gap-2">
             <Badge variant={resendConfigured ? 'default' : 'secondary'}>
-              {resendConfigured ? 'API raktas yra' : 'Reikia nustatyti'}
+              {resendConfigured ? t('admDash.setupApiKeyPresent') : t('admDash.setupNeedsSetup')}
             </Badge>
             {expandedSection === 'resend' ? (
               <ChevronUp className="w-5 h-5 text-muted-foreground" />
@@ -167,7 +169,7 @@ export function AdminSetup({ webhookHealth }: AdminSetupProps) {
               <div>
                 <p className="text-sm font-medium mb-2">Domain: ibrix.lt</p>
                 <p className="text-sm text-muted-foreground">
-                  Pridėkite šiuos DNS įrašus:
+                  {t('admDash.setupAddDns')}
                 </p>
               </div>
 
@@ -175,9 +177,9 @@ export function AdminSetup({ webhookHealth }: AdminSetupProps) {
                 <table className="w-full text-xs">
                   <thead>
                     <tr className="border-b border-border">
-                      <th className="text-left py-2 pr-4 font-medium">Tipas</th>
-                      <th className="text-left py-2 pr-4 font-medium">Vardas</th>
-                      <th className="text-left py-2 font-medium">Reikšmė</th>
+                      <th className="text-left py-2 pr-4 font-medium">{t('admCommon.type')}</th>
+                      <th className="text-left py-2 pr-4 font-medium">{t('admDash.setupDnsName')}</th>
+                      <th className="text-left py-2 font-medium">{t('admProducts.offerValue')}</th>
                     </tr>
                   </thead>
                   <tbody className="font-mono">
@@ -189,12 +191,12 @@ export function AdminSetup({ webhookHealth }: AdminSetupProps) {
                     <tr className="border-b border-border">
                       <td className="py-2 pr-4">CNAME</td>
                       <td className="py-2 pr-4">resend._domainkey</td>
-                      <td className="py-2">[iš Resend dashboard]</td>
+                      <td className="py-2">{t('admDash.setupFromResend')}</td>
                     </tr>
                     <tr>
                       <td className="py-2 pr-4">CNAME</td>
                       <td className="py-2 pr-4">bounce</td>
-                      <td className="py-2">[iš Resend dashboard]</td>
+                      <td className="py-2">{t('admDash.setupFromResend')}</td>
                     </tr>
                   </tbody>
                 </table>
@@ -203,7 +205,7 @@ export function AdminSetup({ webhookHealth }: AdminSetupProps) {
               <div className="flex items-start gap-2 text-sm">
                 <AlertCircle className="w-4 h-4 text-yellow-500 mt-0.5 shrink-0" />
                 <p className="text-muted-foreground">
-                  Kol domenas neverifikuotas, laiškai siunčiami iš <code>onboarding@resend.dev</code> (fallback režimas).
+                  {t('admDash.setupUnverifiedStart')} <code>onboarding@resend.dev</code> {t('admDash.setupFallbackMode')}
                 </p>
               </div>
             </div>
@@ -214,7 +216,7 @@ export function AdminSetup({ webhookHealth }: AdminSetupProps) {
               onClick={() => window.open('https://resend.com/domains', '_blank')}
             >
               <ExternalLink className="w-4 h-4 mr-2" />
-              Atidaryti Resend Domains
+              {t('admDash.setupOpenResend')}
             </Button>
           </div>
         )}
@@ -231,12 +233,12 @@ export function AdminSetup({ webhookHealth }: AdminSetupProps) {
               <Shield className="w-5 h-5 text-primary" />
             </div>
             <div className="text-left">
-              <p className="font-semibold">Admin Teisės</p>
-              <p className="text-sm text-muted-foreground">Suteikti administratoriaus rolę</p>
+              <p className="font-semibold">{t('admDash.setupAdminRights')}</p>
+              <p className="text-sm text-muted-foreground">{t('admDash.setupGrantRole')}</p>
             </div>
           </div>
           <div className="flex items-center gap-2">
-            <Badge>Rankinis veiksmas</Badge>
+            <Badge>{t('admDash.setupManualAction')}</Badge>
             {expandedSection === 'admin' ? (
               <ChevronUp className="w-5 h-5 text-muted-foreground" />
             ) : (
@@ -251,13 +253,12 @@ export function AdminSetup({ webhookHealth }: AdminSetupProps) {
               <div className="flex items-start gap-2">
                 <AlertCircle className="w-4 h-4 text-yellow-500 mt-0.5 shrink-0" />
                 <p className="text-sm text-muted-foreground">
-                  <strong>Saugumo priežastimis</strong> admin rolė suteikiama tik per SQL komandą, 
-                  kurią gali vykdyti tik duomenų bazės savininkas.
+                  <strong>{t('admDash.setupSecurityReasons')}</strong> {t('admDash.setupSqlOnly')}
                 </p>
               </div>
 
               <div>
-                <p className="text-sm font-medium mb-2">SQL komanda (nukopijuoti):</p>
+                <p className="text-sm font-medium mb-2">{t('admDash.setupSqlTitle')}</p>
                 <div className="flex gap-2">
                   <code className="flex-1 bg-background border border-border rounded px-3 py-2 text-xs font-mono overflow-x-auto">
                     {adminSqlCommand}
@@ -265,7 +266,7 @@ export function AdminSetup({ webhookHealth }: AdminSetupProps) {
                   <Button 
                     size="sm" 
                     variant="outline"
-                    onClick={() => copyToClipboard(adminSqlCommand, 'SQL komanda')}
+                    onClick={() => copyToClipboard(adminSqlCommand, t('admDash.setupSqlLabel'))}
                   >
                     <Copy className="w-4 h-4" />
                   </Button>
@@ -273,13 +274,13 @@ export function AdminSetup({ webhookHealth }: AdminSetupProps) {
               </div>
 
               <div>
-                <p className="text-sm font-medium mb-2">Kaip vykdyti:</p>
+                <p className="text-sm font-medium mb-2">{t('admDash.setupHowTo')}</p>
                 <ol className="text-sm text-muted-foreground space-y-1 ml-4 list-decimal">
-                  <li>Atidarykite Supabase SQL Editor</li>
-                  <li>Įklijuokite aukščiau esančią SQL komandą</li>
-                  <li>Pakeiskite el. paštą į savo</li>
-                  <li>Paleiskite komandą (Run)</li>
-                  <li>Atnaujinkite šį puslapį</li>
+                  <li>{t('admDash.setupStepOpenEditor')}</li>
+                  <li>{t('admDash.setupStepPaste')}</li>
+                  <li>{t('admDash.setupStepChangeEmail')}</li>
+                  <li>{t('admDash.setupStepRun')}</li>
+                  <li>{t('admDash.setupStepRefresh')}</li>
                 </ol>
               </div>
             </div>
@@ -289,7 +290,7 @@ export function AdminSetup({ webhookHealth }: AdminSetupProps) {
 
       {/* Quick Status */}
       <div className="bg-muted/30 border border-border rounded-xl p-4">
-        <p className="text-sm font-medium mb-3">Greita būsena:</p>
+        <p className="text-sm font-medium mb-3">{t('admDash.setupQuickStatus')}</p>
         <div className="grid grid-cols-3 gap-4">
           <div className="text-center">
             {stripeConfigured ? (

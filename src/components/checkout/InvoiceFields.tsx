@@ -1,4 +1,5 @@
 import { UseFormRegister, FieldErrors } from 'react-hook-form';
+import { useTranslation } from 'react-i18next';
 import { Building2 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -17,12 +18,13 @@ export function InvoiceFields({
   wantsInvoice, 
   onWantsInvoiceChange 
 }: InvoiceFieldsProps) {
+  const { t } = useTranslation();
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <Label htmlFor="wantsInvoice" className="flex items-center gap-2 cursor-pointer">
           <Building2 className="w-4 h-4" />
-          Noriu sąskaitos faktūros (B2B)
+          {t('coInvoice.want')}
         </Label>
         <Switch
           id="wantsInvoice"
@@ -34,11 +36,11 @@ export function InvoiceFields({
       {wantsInvoice && (
         <div className="space-y-4 p-4 bg-muted/50 rounded-lg border border-border">
           <div>
-            <Label htmlFor="invoiceCompanyName">Įmonės pavadinimas *</Label>
+            <Label htmlFor="invoiceCompanyName">{t('checkout.companyName')} *</Label>
             <Input 
               {...register('invoiceCompanyName')} 
               id="invoiceCompanyName" 
-              placeholder="UAB Pavyzdys"
+              placeholder={t('coInvoice.companyPh')}
             />
             {errors.invoiceCompanyName && (
               <p className="text-destructive text-sm mt-1">
@@ -48,11 +50,11 @@ export function InvoiceFields({
           </div>
           
           <div>
-            <Label htmlFor="invoiceVatCode">Įmonės kodas / PVM kodas</Label>
+            <Label htmlFor="invoiceVatCode">{t('coInvoice.vat')}</Label>
             <Input 
               {...register('invoiceVatCode')} 
               id="invoiceVatCode" 
-              placeholder="123456789 arba LT123456789"
+              placeholder={t('coInvoice.vatPh')}
             />
             {errors.invoiceVatCode && (
               <p className="text-destructive text-sm mt-1">
@@ -62,11 +64,11 @@ export function InvoiceFields({
           </div>
           
           <div>
-            <Label htmlFor="invoiceAddress">Įmonės adresas *</Label>
+            <Label htmlFor="invoiceAddress">{t('coInvoice.address')} *</Label>
             <Input 
               {...register('invoiceAddress')} 
               id="invoiceAddress" 
-              placeholder="Gatvė 1, Miestas, LT-00000"
+              placeholder={t('coInvoice.addressPh')}
             />
             {errors.invoiceAddress && (
               <p className="text-destructive text-sm mt-1">

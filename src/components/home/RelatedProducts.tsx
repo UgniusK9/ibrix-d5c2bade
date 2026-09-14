@@ -1,4 +1,5 @@
 import { useProducts, type Product } from '@/hooks/useProducts';
+import { useTranslation } from 'react-i18next';
 import { ProductCard } from '@/components/products/ProductCard';
 import { Loader2 } from 'lucide-react';
 
@@ -16,6 +17,7 @@ function getTagOverlapScore(productTags: string[], currentTags: string[]): numbe
 }
 
 export function RelatedProducts({ currentProductId, category, categoryId, tags = [] }: RelatedProductsProps) {
+  const { t } = useTranslation();
   const { data: products, isLoading } = useProducts();
 
   if (isLoading) {
@@ -55,7 +57,7 @@ export function RelatedProducts({ currentProductId, category, categoryId, tags =
   return (
     <section className="py-12 border-t border-border">
       <div className="container">
-        <h2 className="font-heading text-2xl font-bold mb-8">Panašūs produktai</h2>
+        <h2 className="font-heading text-2xl font-bold mb-8">{t('products.relatedProducts')}</h2>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
           {relatedProducts.map((product) => (
             <ProductCard key={product.id} product={product} />

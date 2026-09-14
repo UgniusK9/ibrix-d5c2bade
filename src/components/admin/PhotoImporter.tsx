@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { supabase } from '@/integrations/supabase/client';
+import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 
 interface ScrapedProduct {
@@ -25,6 +26,7 @@ interface PhotoRow {
 }
 
 export function PhotoImporter() {
+  const { t } = useTranslation();
   const [urls, setUrls] = useState('');
   const [scraping, setScraping] = useState(false);
   const [scrapeStatus, setScrapeStatus] = useState('');
@@ -34,7 +36,7 @@ export function PhotoImporter() {
   const handleScrape = async () => {
     const urlList = urls.split(/\r?\n/).map((u) => u.trim()).filter((u) => u.length > 0);
     if (urlList.length === 0) {
-      toast.error('Įveskite bent vieną nuorodą');
+      toast.error(t('admProducts.photoEnterUrl'));
       return;
     }
 
@@ -49,7 +51,7 @@ export function PhotoImporter() {
 
         while (true) {
           setScrapeStatus(
-            isCollection ? `Nuskaitoma... ${collected.length} produktų` : 'Nuskaitomas produktas...',
+            isCollection ? t('admProducts.photoScrapingCount', { num: collected.length }) : t('admProducts.photoScrapingOne'),
           );
 
           let data: any = null;
@@ -80,15 +82,15 @@ export function PhotoImporter() {
           page = Number(data.nextPage) || page + 1;
         }
       } catch (e: any) {
-        toast.error(`Nepavyko: ${url} – ${e.message}`);
+        toast.error(t('admProducts.photoScrapeFail', { url, msg: e.message }));
       }
     }
 
-    setScrapeStatus('Ieškoma duomenų bazėje...');
+    setScrapeStatus(t('admProducts.photoSearchingDb'));
 
     const skus = collected.map((p) => p.sku).filter(Boolean);
     if (skus.length === 0) {
-      toast.error('Nerasta jokių produktų su SKU');
+      toast.error(t('admProducts.photoNoSku'));
       setScraping(false);
       setScrapeStatus('');
       return;
@@ -100,7 +102,7 @@ export function PhotoImporter() {
       .in('sku', skus);
 
     if (error) {
-      toast.error(`DB klaida: ${error.message}`);
+      toast.error(t('admProducts.photoDbError', { msg: error.message }));
       setScraping(false);
       setScrapeStatus('');
       return;
@@ -138,7 +140,7 @@ export function PhotoImporter() {
     const matched = newRows.filter((r) => r.status === 'pending').length;
     const notFound = newRows.filter((r) => r.status === 'not_found').length;
     if (matched > 0 || notFound > 0) {
-      toast.success(`${matched} produktų paruošta atnaujinti${notFound > 0 ? `, ${notFound} nerasta DB` : ''}`);
+      toast.success(t('admProducts.photoReady', { num: matched }) + (notFound > 0 ? t('admProducts.photoNotFoundSuffix', { num: notFound }) : ''));
     }
   };
 
@@ -154,7 +156,7 @@ export function PhotoImporter() {
       .eq('id', row.dbProductId);
 
     if (error) {
-      toast.error(`Klaida (${row.sku}): ${error.message}`);
+      toast.error(t('admProducts.photoRowError', { sku: row.sku, msg: error.message }));
       setRows((prev) => prev.map((r, i) => (i === idx ? { ...r, status: 'pending' as const } : r)));
     } else {
       setRows((prev) =>
@@ -173,7 +175,7 @@ export function PhotoImporter() {
       await applyRow(i);
     }
     setApplyingAll(false);
-    toast.success('Visos nuotraukos atnaujintos');
+    toast.success(t('admProducts.photoAllDone'));
   };
 
   const pendingCount = rows.filter((r) => r.status === 'pending').length;
@@ -183,14 +185,14 @@ export function PhotoImporter() {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-2xl font-bold">Importuoti nuotraukas</h2>
+        <h2 className="text-2xl font-bold">{t('admProducts.photoTitle')}</h2>
         <p className="text-muted-foreground mt-1">
-          Įveskite MouldKing katalogo arba produkto nuorodas. Sistema suranda produktus pagal SKU ir atnaujina nuotraukas.
+          {t('admProducts.photoDesc')}
         </p>
       </div>
 
       <div className="space-y-3">
-        <Label>MouldKing nuorodos (po vieną eilutėje)</Label>
+        <Label>{t('admProducts.photoLinksLabel')}</Label>
         <Textarea
           value={urls}
           onChange={(e) => setUrls(e.target.value)}
@@ -204,12 +206,12 @@ export function PhotoImporter() {
           {scraping ? (
             <>
               <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-              {scrapeStatus || 'Nuskaitoma...'}
+              {scrapeStatus || t('admProducts.photoScraping')}
             </>
           ) : (
             <>
               <Camera className="w-4 h-4 mr-2" />
-              Nuskaityti nuotraukas
+              {t('admProducts.photoScrapeBtn')}
             </>
           )}
         </Button>
@@ -219,9 +221,9 @@ export function PhotoImporter() {
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <p className="text-sm text-muted-foreground">
-              {pendingCount > 0 && <span>{pendingCount} laukia · </span>}
-              {appliedCount > 0 && <span className="text-green-600">{appliedCount} atnaujinta · </span>}
-              {notFoundCount > 0 && <span className="text-destructive">{notFoundCount} nerasta</span>}
+              {pendingCount > 0 && <span>{t('admProducts.photoPending', { num: pendingCount })}</span>}
+              {appliedCount > 0 && <span className="text-green-600">{t('admProducts.photoAppliedCount', { num: appliedCount })}</span>}
+              {notFoundCount > 0 && <span className="text-destructive">{t('admProducts.photoNotFoundCount', { num: notFoundCount })}</span>}
             </p>
             {pendingCount > 0 && (
               <Button onClick={applyAll} disabled={applyingAll} size="sm">
@@ -230,7 +232,7 @@ export function PhotoImporter() {
                 ) : (
                   <RefreshCw className="w-4 h-4 mr-2" />
                 )}
-                Atnaujinti visus ({pendingCount})
+                {t('admProducts.photoApplyAll', { num: pendingCount })}
               </Button>
             )}
           </div>
@@ -240,11 +242,11 @@ export function PhotoImporter() {
               <thead>
                 <tr className="border-b bg-muted/50">
                   <th className="text-left p-3 font-medium">SKU</th>
-                  <th className="text-left p-3 font-medium">Produktas DB</th>
-                  <th className="text-left p-3 font-medium">Rasta nuotr.</th>
-                  <th className="text-left p-3 font-medium">Dabar DB</th>
-                  <th className="text-left p-3 font-medium">Statusas</th>
-                  <th className="text-right p-3 font-medium">Veiksmas</th>
+                  <th className="text-left p-3 font-medium">{t('admProducts.photoDbProduct')}</th>
+                  <th className="text-left p-3 font-medium">{t('admProducts.photoFoundImgs')}</th>
+                  <th className="text-left p-3 font-medium">{t('admProducts.photoNowDb')}</th>
+                  <th className="text-left p-3 font-medium">{t('admCommon.statusLabel')}</th>
+                  <th className="text-right p-3 font-medium">{t('admProducts.photoAction')}</th>
                 </tr>
               </thead>
               <tbody>
@@ -274,25 +276,25 @@ export function PhotoImporter() {
                     <td className="p-3">
                       {row.status === 'not_found' && (
                         <span className="text-destructive flex items-center gap-1">
-                          <XCircle className="w-4 h-4" /> Nerasta
+                          <XCircle className="w-4 h-4" /> {t('admProducts.photoNotFound')}
                         </span>
                       )}
                       {row.status === 'pending' && (
-                        <span className="text-muted-foreground">Laukia</span>
+                        <span className="text-muted-foreground">{t('admProducts.photoWaiting')}</span>
                       )}
                       {row.status === 'applying' && (
                         <Loader2 className="w-4 h-4 animate-spin" />
                       )}
                       {row.status === 'applied' && (
                         <span className="text-green-600 flex items-center gap-1">
-                          <CheckCircle className="w-4 h-4" /> Atnaujinta
+                          <CheckCircle className="w-4 h-4" /> {t('admContent.galleryUpdated')}
                         </span>
                       )}
                     </td>
                     <td className="p-3 text-right">
                       {row.status === 'pending' && (
                         <Button size="sm" variant="outline" onClick={() => applyRow(idx)}>
-                          Pritaikyti
+                          {t('admProducts.photoApply')}
                         </Button>
                       )}
                     </td>

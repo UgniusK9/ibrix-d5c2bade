@@ -15,40 +15,42 @@ import {
 } from "@/components/ui/select";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-
-const contactInfo = [
-  {
-    icon: Mail,
-    title: "El. paštas",
-    value: "support@ibrix.lt",
-    href: "mailto:support@ibrix.lt",
-  },
-  {
-    icon: MapPin,
-    title: "Miestas",
-    value: "Vilnius, Lietuva",
-    href: null,
-  },
-  {
-    icon: Clock,
-    title: "Darbo laikas",
-    value: "I-V 10:00-18:00",
-    href: null,
-  },
-];
-
-const topics = [
-  { value: "uzsakymas", label: "Klausimas apie užsakymą" },
-  { value: "preorder", label: "Pre-order informacija" },
-  { value: "trukstamos", label: "Trūkstamos detalės" },
-  { value: "grazinimai", label: "Grąžinimai ir keitimai" },
-  { value: "kita", label: "Kita" },
-];
+import { useTranslation } from "react-i18next";
 
 export default function Kontaktai() {
+  const { t } = useTranslation();
   const [submitted, setSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);
   const [selectedTopic, setSelectedTopic] = useState("");
+
+  const contactInfo = [
+    {
+      icon: Mail,
+      title: t("contact.email"),
+      value: "support@ibrix.lt",
+      href: "mailto:support@ibrix.lt",
+    },
+    {
+      icon: MapPin,
+      title: t("contact.city"),
+      value: t("footer.address"),
+      href: null,
+    },
+    {
+      icon: Clock,
+      title: t("contact.workingHours"),
+      value: t("contact.workingHoursValue"),
+      href: null,
+    },
+  ];
+
+  const topics = [
+    { value: "uzsakymas", label: t("contact.topicOrder") },
+    { value: "preorder", label: t("contact.topicPreorder") },
+    { value: "trukstamos", label: t("contact.topicMissing") },
+    { value: "grazinimai", label: t("contact.topicReturns") },
+    { value: "kita", label: t("contact.topicOther") },
+  ];
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -63,7 +65,7 @@ export default function Kontaktai() {
     try {
       // Validate that topic is selected
       if (!selectedTopic) {
-        toast.error("Pasirinkite temą");
+        toast.error(t("contact.formTopicPlaceholder"));
         setLoading(false);
         return;
       }
@@ -78,7 +80,7 @@ export default function Kontaktai() {
 
       if (error) {
         console.error("Database insert error:", error);
-        throw new Error(error.message || "Nepavyko išsaugoti žinutės");
+        throw new Error(error.message || t("pgContactPg.saveFailed"));
       }
 
       // Send auto-reply email (don't fail the whole submission if email fails)
@@ -90,7 +92,7 @@ export default function Kontaktai() {
             data: {
               email,
               firstName: name,
-              topic: topics.find(t => t.value === selectedTopic)?.label || selectedTopic,
+              topic: topics.find((top) => top.value === selectedTopic)?.label || selectedTopic,
               message,
               orderNumber: order || null,
               conversationToken: inquiryData?.conversation_token,
@@ -103,14 +105,14 @@ export default function Kontaktai() {
       }
 
       setSubmitted(true);
-      toast.success("Žinutė išsiųsta!", {
-        description: "Atsakysime per 24 valandas",
+      toast.success(t("contact.messageSent"), {
+        description: t("contact.messageSentDesc"),
         position: "top-center",
       });
     } catch (error: any) {
       console.error("Error submitting inquiry:", error);
-      toast.error("Klaida siunčiant žinutę", {
-        description: error.message || "Bandykite dar kartą vėliau",
+      toast.error(t("pgContactPg.sendErrorTitle"), {
+        description: error.message || t("pgContactPg.retryLater"),
       });
     }
 
@@ -126,10 +128,10 @@ export default function Kontaktai() {
             {/* Header */}
             <div className="text-center mb-12">
               <h1 className="font-heading text-4xl md:text-5xl font-bold mb-4">
-                Kontaktai
+                {t("contact.title")}
               </h1>
               <p className="text-lg text-muted-foreground max-w-xl mx-auto">
-                Turite klausimų? Susisiekite su mumis – paprastai atsakome per 24 valandas
+                {t("contact.subtitle")}
               </p>
             </div>
 
@@ -137,7 +139,7 @@ export default function Kontaktai() {
               {/* Contact Info */}
               <div className="lg:col-span-2 space-y-6">
                 <h2 className="font-heading text-xl font-semibold mb-4">
-                  Kontaktinė informacija
+                  {t("contact.contactInfo")}
                 </h2>
                 
                 {contactInfo.map((item) => (
@@ -163,8 +165,7 @@ export default function Kontaktai() {
 
                 <div className="pt-6 border-t border-border">
                   <p className="text-sm text-muted-foreground">
-                    Atsakome į visus klausimus lietuviškai. Vidutinis atsakymo laikas – 
-                    iki 24 valandų darbo dienomis.
+                    {t("contact.responseNote")}
                   </p>
                 </div>
               </div>
@@ -178,44 +179,44 @@ export default function Kontaktai() {
                         <CheckCircle2 className="w-8 h-8 text-success" />
                       </div>
                       <h3 className="font-heading text-xl font-semibold mb-2">
-                        Žinutė išsiųsta!
+                        {t("contact.messageSent")}
                       </h3>
                       <p className="text-muted-foreground mb-6">
-                        Dėkojame už jūsų žinutę. Atsakysime kuo greičiau.
+                        {t("contact.thankYou")}
                       </p>
                       <Button variant="outline" onClick={() => setSubmitted(false)}>
-                        Siųsti dar vieną žinutę
+                        {t("contact.sendAnother")}
                       </Button>
                     </div>
                   ) : (
                     <form onSubmit={handleSubmit} className="space-y-6">
                       <div className="grid sm:grid-cols-2 gap-4">
                         <div className="space-y-2">
-                          <Label htmlFor="name">Vardas</Label>
+                          <Label htmlFor="name">{t("contact.formName")}</Label>
                           <Input 
                             id="name" 
                             name="name"
-                            placeholder="Jūsų vardas" 
+                            placeholder={t("contact.formNamePlaceholder")} 
                             required 
                           />
                         </div>
                         <div className="space-y-2">
-                          <Label htmlFor="email">El. paštas</Label>
+                          <Label htmlFor="email">{t("contact.formEmail")}</Label>
                           <Input 
                             id="email" 
                             name="email"
                             type="email" 
-                            placeholder="jusu@email.lt" 
+                            placeholder={t("contact.formEmailPlaceholder")} 
                             required 
                           />
                         </div>
                       </div>
 
                       <div className="space-y-2">
-                        <Label htmlFor="topic">Tema</Label>
+                        <Label htmlFor="topic">{t("contact.formTopic")}</Label>
                         <Select name="topic" required value={selectedTopic} onValueChange={setSelectedTopic}>
                           <SelectTrigger>
-                            <SelectValue placeholder="Pasirinkite temą" />
+                            <SelectValue placeholder={t("contact.formTopicPlaceholder")} />
                           </SelectTrigger>
                           <SelectContent>
                             {topics.map((topic) => (
@@ -228,20 +229,20 @@ export default function Kontaktai() {
                       </div>
 
                       <div className="space-y-2">
-                        <Label htmlFor="order">Užsakymo nr. (nebūtina)</Label>
+                        <Label htmlFor="order">{t("contact.formOrderNumber")}</Label>
                         <Input 
                           id="order" 
                           name="order"
-                          placeholder="Pvz. #12345" 
+                          placeholder={t("contact.formOrderNumberPlaceholder")} 
                         />
                       </div>
 
                       <div className="space-y-2">
-                        <Label htmlFor="message">Žinutė</Label>
+                        <Label htmlFor="message">{t("contact.formMessage")}</Label>
                         <Textarea 
                           id="message" 
                           name="message"
-                          placeholder="Kaip galime padėti?" 
+                          placeholder={t("contact.formMessagePlaceholder")} 
                           rows={5}
                           required 
                         />
@@ -249,11 +250,11 @@ export default function Kontaktai() {
 
                       <Button type="submit" className="w-full" disabled={loading}>
                         {loading ? (
-                          "Siunčiama..."
+                          t("common.sending")
                         ) : (
                           <>
                             <Send className="w-4 h-4 mr-2" />
-                            Siųsti žinutę
+                            {t("contact.sendMessage")}
                           </>
                         )}
                       </Button>

@@ -142,7 +142,7 @@ export default function Account() {
         {/* Header */}
         <div className="mb-8">
           <h1 className="font-heading text-3xl md:text-4xl font-bold">{t('account.title')}</h1>
-          <p className="text-muted-foreground mt-2">Valdykite savo paskyrą ir stebėkite užsakymus</p>
+          <p className="text-muted-foreground mt-2">{t('pgAccountX.subtitle')}</p>
         </div>
         
         <div className="grid md:grid-cols-2 gap-5">
@@ -166,11 +166,11 @@ export default function Account() {
                     <p className="text-sm text-muted-foreground">@{userProfile.username}</p>
                   )}
                   <Link to="/account/settings" className="text-sm text-primary hover:underline mt-1 inline-block">
-                    Redaguoti profilį →
+                    {t('pgAccountX.editProfile')}
                   </Link>
                 </div>
                 <div className="sm:text-right">
-                  <p className="text-sm text-muted-foreground mb-1">Jūsų kreditai</p>
+                  <p className="text-sm text-muted-foreground mb-1">{t('pgAccountX.yourCredits')}</p>
                   <p className="text-3xl font-bold font-heading text-primary">{formatPrice(wallet?.balance_eur || 0)}</p>
                 </div>
               </div>
@@ -186,7 +186,7 @@ export default function Account() {
                 </div>
                 <div className="flex-1">
                   <p className="text-2xl font-bold">{buildersCount}</p>
-                  <p className="text-sm text-muted-foreground">Mano konstruktoriai</p>
+                  <p className="text-sm text-muted-foreground">{t('pgAccountX.myBuilders')}</p>
                 </div>
                 <Button asChild variant="ghost" size="icon">
                   <Link to="/account/my-builders">
@@ -205,7 +205,7 @@ export default function Account() {
                 </div>
                 <div className="flex-1">
                   <p className="text-2xl font-bold">{wishlistCount}</p>
-                  <p className="text-sm text-muted-foreground">Norų sąraše</p>
+                  <p className="text-sm text-muted-foreground">{t('pgAccountX.wishlistLabel')}</p>
                 </div>
                 <Button asChild variant="ghost" size="icon">
                   <Link to="/wishlist">
@@ -224,16 +224,16 @@ export default function Account() {
                   <Sparkles className="w-6 h-6 text-accent" />
                 </div>
                 <div className="flex-1">
-                  <h3 className="font-heading font-bold text-lg mb-1">Uždirbkite kreditus</h3>
+                  <h3 className="font-heading font-bold text-lg mb-1">{t('pgAccountX.earnTitle')}</h3>
                   <p className="text-sm text-muted-foreground mb-4">
-                    Gaukite 3% kreditų nuo kiekvieno pirkinio ir naudokite juos sekančiam užsakymui.
+                    {t('pgAccountX.earnDesc')}
                   </p>
                   <div className="flex gap-2">
                     <Button asChild size="sm">
-                      <Link to="/account/credits">Sužinoti daugiau</Link>
+                      <Link to="/account/credits">{t('common.learnMore')}</Link>
                     </Button>
                     <Button asChild variant="outline" size="sm">
-                      <Link to="/dovanu-kuponai">Dovanų kuponai</Link>
+                      <Link to="/dovanu-kuponai">{t('nav.giftCards')}</Link>
                     </Button>
                   </div>
                 </div>
@@ -247,7 +247,7 @@ export default function Account() {
               <CardContent className="p-6">
                 <h3 className="font-heading font-bold text-lg mb-4 flex items-center gap-2">
                   <Tag className="w-5 h-5 text-primary" />
-                  Jūsų pasiūlymai
+                  {t('pgAccountX.offersTitle')}
                 </h3>
                 <div className="space-y-3">
                   {offers.slice(0, 2).map((offer) => (
@@ -272,12 +272,12 @@ export default function Account() {
                     <Star className="w-6 h-6 text-accent" />
                   </div>
                   <div>
-                    <h3 className="font-heading font-bold text-lg mb-1">Apdovanojimai</h3>
+                    <h3 className="font-heading font-bold text-lg mb-1">{t('pgAccountX.rewardsTitle')}</h3>
                     <p className="text-sm text-muted-foreground mb-3">
-                      Pirkite daugiau ir gaukite specialius pasiūlymus!
+                      {t('pgAccountX.rewardsDesc')}
                     </p>
                     <Button asChild variant="outline" size="sm">
-                      <Link to="/account/credits">Peržiūrėti</Link>
+                      <Link to="/account/credits">{t('pgAccountX.viewBtn')}</Link>
                     </Button>
                   </div>
                 </div>
@@ -298,7 +298,7 @@ export default function Account() {
                   <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
                     <Package className="w-5 h-5 text-primary" />
                   </div>
-                  <span className="font-medium">Mano užsakymai</span>
+                  <span className="font-medium">{t('account.myOrders')}</span>
                 </div>
                 <ChevronRight className="w-5 h-5 text-muted-foreground" />
               </Link>
@@ -310,7 +310,7 @@ export default function Account() {
                   <div className="w-10 h-10 rounded-lg bg-accent/10 flex items-center justify-center">
                     <Award className="w-5 h-5 text-accent" />
                   </div>
-                  <span className="font-medium">Kreditai ir apdovanojimai</span>
+                  <span className="font-medium">{t('pgAccountX.creditsRewards')}</span>
                 </div>
                 <ChevronRight className="w-5 h-5 text-muted-foreground" />
               </Link>
@@ -322,7 +322,7 @@ export default function Account() {
                   <div className="w-10 h-10 rounded-lg bg-destructive/10 flex items-center justify-center">
                     <Heart className="w-5 h-5 text-destructive" />
                   </div>
-                  <span className="font-medium">Norų sąrašas</span>
+                  <span className="font-medium">{t('account.wishlist')}</span>
                 </div>
                 <ChevronRight className="w-5 h-5 text-muted-foreground" />
               </Link>
@@ -334,7 +334,7 @@ export default function Account() {
                   <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
                     <Puzzle className="w-5 h-5 text-primary" />
                   </div>
-                  <span className="font-medium">Mano konstruktoriai</span>
+                  <span className="font-medium">{t('pgAccountX.myBuilders')}</span>
                 </div>
                 <ChevronRight className="w-5 h-5 text-muted-foreground" />
               </Link>
@@ -346,7 +346,7 @@ export default function Account() {
                   <div className="w-10 h-10 rounded-lg bg-muted flex items-center justify-center">
                     <Settings className="w-5 h-5 text-muted-foreground" />
                   </div>
-                  <span className="font-medium">Nustatymai</span>
+                  <span className="font-medium">{t('account.settings')}</span>
                 </div>
                 <ChevronRight className="w-5 h-5 text-muted-foreground" />
               </Link>
@@ -358,7 +358,7 @@ export default function Account() {
             <CardContent className="p-6">
               <h3 className="font-heading font-bold text-lg mb-4 flex items-center gap-2">
                 <HelpCircle className="w-5 h-5" />
-                Reikia pagalbos?
+                {t('pgAccountX.helpTitle')}
               </h3>
               <div className="grid grid-cols-2 gap-3">
                 <Link 
@@ -366,28 +366,28 @@ export default function Account() {
                   className="flex items-center gap-2 p-3 rounded-xl bg-secondary/50 hover:bg-secondary transition-colors text-sm font-medium"
                 >
                   <Truck className="w-4 h-4 text-muted-foreground" />
-                  Pristatymas
+                  {t('nav.delivery')}
                 </Link>
                 <Link 
                   to="/pagalba" 
                   className="flex items-center gap-2 p-3 rounded-xl bg-secondary/50 hover:bg-secondary transition-colors text-sm font-medium"
                 >
                   <BookOpen className="w-4 h-4 text-muted-foreground" />
-                  D.U.K.
+                  {t('pgAccountX.faqLink')}
                 </Link>
                 <Link 
                   to="/kontaktai" 
                   className="flex items-center gap-2 p-3 rounded-xl bg-secondary/50 hover:bg-secondary transition-colors text-sm font-medium"
                 >
                   <MessageSquare className="w-4 h-4 text-muted-foreground" />
-                  Susisiekite
+                  {t('account.contactUs')}
                 </Link>
                 <Link 
                   to="/grazinimai" 
                   className="flex items-center gap-2 p-3 rounded-xl bg-secondary/50 hover:bg-secondary transition-colors text-sm font-medium"
                 >
                   <Package className="w-4 h-4 text-muted-foreground" />
-                  Grąžinimai
+                  {t('account.returns')}
                 </Link>
               </div>
             </CardContent>

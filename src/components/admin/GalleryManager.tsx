@@ -10,6 +10,7 @@ import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { ImageUpload } from './ImageUpload';
+import { useTranslation } from 'react-i18next';
 
 interface GalleryItem {
   id: string;
@@ -32,6 +33,7 @@ const EMPTY = {
 };
 
 export function GalleryManager() {
+  const { t } = useTranslation();
   const [items, setItems] = useState<GalleryItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [showDialog, setShowDialog] = useState(false);
@@ -49,7 +51,7 @@ export function GalleryManager() {
       setItems(data || []);
     } catch (e) {
       console.error('Gallery load error:', e);
-      toast.error('Nepavyko įkelti galerijos');
+      toast.error(t('admContent.galleryLoadError'));
     } finally {
       setLoading(false);
     }
@@ -80,7 +82,7 @@ export function GalleryManager() {
 
   const save = async () => {
     if (!formData.image_url) {
-      toast.error('Įkelkite nuotrauką');
+      toast.error(t('admContent.galleryUploadFirst'));
       return;
     }
     const payload = {
@@ -97,25 +99,25 @@ export function GalleryManager() {
         ? await supabase.from('gallery_items').update(payload).eq('id', editing.id)
         : await supabase.from('gallery_items').insert(payload);
       if (error) throw error;
-      toast.success(editing ? 'Atnaujinta' : 'Pridėta');
+      toast.success(editing ? t('admContent.galleryUpdated') : t('admContent.galleryAdded'));
       setShowDialog(false);
       load();
     } catch (e) {
       console.error('Gallery save error:', e);
-      toast.error('Nepavyko išsaugoti');
+      toast.error(t('admCommon.saveFailed'));
     }
   };
 
   const remove = async (item: GalleryItem) => {
-    if (!confirm('Ištrinti šią nuotrauką iš galerijos?')) return;
+    if (!confirm(t('admContent.galleryDeleteConfirm'))) return;
     try {
       const { error } = await supabase.from('gallery_items').delete().eq('id', item.id);
       if (error) throw error;
-      toast.success('Ištrinta');
+      toast.success(t('admContent.galleryDeleted'));
       load();
     } catch (e) {
       console.error('Gallery delete error:', e);
-      toast.error('Nepavyko ištrinti');
+      toast.error(t('admCommon.deleteFailed'));
     }
   };
 
@@ -129,7 +131,7 @@ export function GalleryManager() {
       load();
     } catch (e) {
       console.error('Gallery toggle error:', e);
-      toast.error('Nepavyko pakeisti');
+      toast.error(t('admContent.galleryToggleError'));
     }
   };
 
@@ -144,7 +146,7 @@ export function GalleryManager() {
       load();
     } catch (e) {
       console.error('Gallery reorder error:', e);
-      toast.error('Nepavyko perkelti');
+      toast.error(t('admContent.galleryMoveError'));
     }
   };
 
@@ -155,10 +157,9 @@ export function GalleryManager() {
       <CardHeader>
         <div className="flex items-start justify-between gap-4 flex-wrap">
           <div>
-            <CardTitle>Pagrindinio puslapio galerija</CardTitle>
+            <CardTitle>{t('admContent.galleryTitle')}</CardTitle>
             <CardDescription>
-              Nuotraukos rodomos skiltyje „Mūsų konstruktoriai“, prieš „Rask tobulą rinkinį“.
-              Pirmoji aktyvi nuotrauka rodoma kaip didelė, kitos keturios – mažesnės. Rodomos daugiausiai 5.
+              {t('admContent.galleryDesc')}
             </CardDescription>
           </div>
           <div className="flex gap-2">
@@ -167,7 +168,7 @@ export function GalleryManager() {
             </Button>
             <Button size="sm" onClick={openNew}>
               <Plus className="w-4 h-4 mr-1" />
-              Pridėti
+              {t('common.add')}
             </Button>
           </div>
         </div>
@@ -176,12 +177,12 @@ export function GalleryManager() {
       <CardContent>
         {visible === 0 && (
           <p className="text-sm text-muted-foreground mb-4">
-            Kol nėra nė vienos aktyvios nuotraukos, sekcija svetainėje nerodoma.
+            {t('admContent.galleryNoActive')}
           </p>
         )}
 
         {items.length === 0 && !loading ? (
-          <p className="text-sm text-muted-foreground py-6 text-center">Galerija tuščia.</p>
+          <p className="text-sm text-muted-foreground py-6 text-center">{t('admContent.galleryEmpty')}</p>
         ) : (
           <div className="space-y-2">
             {items.map((item, i) => (
@@ -196,10 +197,10 @@ export function GalleryManager() {
                 />
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2 flex-wrap">
-                    <span className="font-medium truncate">{item.title || '(be pavadinimo)'}</span>
-                    {i === 0 && item.active && <Badge variant="secondary">Didelė</Badge>}
-                    {!item.active && <Badge variant="outline">Paslėpta</Badge>}
-                    {i >= 5 && <Badge variant="outline">Nerodoma (virš 5)</Badge>}
+                    <span className="font-medium truncate">{item.title || t('admContent.galleryUntitled')}</span>
+                    {i === 0 && item.active && <Badge variant="secondary">{t('admContent.galleryBig')}</Badge>}
+                    {!item.active && <Badge variant="outline">{t('admContent.galleryHidden')}</Badge>}
+                    {i >= 5 && <Badge variant="outline">{t('admContent.galleryOverLimit')}</Badge>}
                   </div>
                   {item.subtitle && (
                     <p className="text-xs text-muted-foreground truncate">{item.subtitle}</p>
@@ -239,9 +240,9 @@ export function GalleryManager() {
       <Dialog open={showDialog} onOpenChange={setShowDialog}>
         <DialogContent className="max-w-lg">
           <DialogHeader>
-            <DialogTitle>{editing ? 'Redaguoti nuotrauką' : 'Pridėti nuotrauką'}</DialogTitle>
+            <DialogTitle>{editing ? t('admContent.galleryEdit') : t('admContent.galleryAdd')}</DialogTitle>
             <DialogDescription>
-              Geriausiai tinka horizontalios arba kvadratinės nuotraukos, bent 1200 px pločio.
+              {t('admContent.galleryHint')}
             </DialogDescription>
           </DialogHeader>
 
@@ -250,31 +251,31 @@ export function GalleryManager() {
               value={formData.image_url}
               onChange={(url) => setFormData({ ...formData, image_url: url })}
               folder="galerija"
-              label="Nuotrauka"
+              label={t('admCommon.photoLabel')}
             />
 
             <div>
-              <Label htmlFor="g-title">Pavadinimas</Label>
+              <Label htmlFor="g-title">{t('admCommon.name')}</Label>
               <Input
                 id="g-title"
                 value={formData.title}
                 onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                placeholder="pvz. Red Rose Bouquet"
+                placeholder={t('admContent.galleryTitlePh')}
               />
             </div>
 
             <div>
-              <Label htmlFor="g-subtitle">Paaiškinimas</Label>
+              <Label htmlFor="g-subtitle">{t('admContent.galleryCaption')}</Label>
               <Input
                 id="g-subtitle"
                 value={formData.subtitle}
                 onChange={(e) => setFormData({ ...formData, subtitle: e.target.value })}
-                placeholder="pvz. 894 detalės · surinkta per 3 val."
+                placeholder={t('admContent.gallerySubtitlePh')}
               />
             </div>
 
             <div>
-              <Label htmlFor="g-link">Nuoroda</Label>
+              <Label htmlFor="g-link">{t('admContent.galleryLink')}</Label>
               <Input
                 id="g-link"
                 value={formData.link_url}
@@ -282,12 +283,12 @@ export function GalleryManager() {
                 placeholder="/produktas/24130-red-rose-babys-breath-bouquet-building-set"
               />
               <p className="text-xs text-muted-foreground mt-1">
-                Palikus tuščią, plytelė nebus paspaudžiama.
+                {t('admContent.galleryLinkHint')}
               </p>
             </div>
 
             <div className="flex items-center justify-between">
-              <Label htmlFor="g-active">Rodoma svetainėje</Label>
+              <Label htmlFor="g-active">{t('admContent.galleryVisible')}</Label>
               <Switch
                 id="g-active"
                 checked={formData.active}
@@ -298,9 +299,9 @@ export function GalleryManager() {
 
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowDialog(false)}>
-              Atšaukti
+              {t('common.cancel')}
             </Button>
-            <Button onClick={save}>Išsaugoti</Button>
+            <Button onClick={save}>{t('common.save')}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

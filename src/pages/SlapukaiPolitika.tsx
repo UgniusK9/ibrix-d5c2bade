@@ -1,6 +1,7 @@
 import { PageLayout } from "@/components/layout/PageLayout";
 import { RouteSEO } from "@/components/seo/RouteSEO";
 import { Link } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { useCookieConsentStore } from "@/stores/cookieConsentStore";
 import { COMPANY } from "@/config/company";
 
@@ -19,119 +20,17 @@ interface CookieRow {
   duration: string;
 }
 
-const NECESSARY: CookieRow[] = [
-  {
-    name: "ibrix_cookie_consent",
-    provider: "IBRIX",
-    purpose: "Įsimena jūsų slapukų pasirinkimą, kad nebūtų klausiama kaskart",
-    duration: "1 metai",
-  },
-  {
-    name: "sb-*-auth-token",
-    provider: "Supabase",
-    purpose: "Palaiko prisijungimo sesiją prie paskyros",
-    duration: "Sesija / iki atsijungimo",
-  },
-  {
-    name: "cf_clearance, __cf_bm",
-    provider: "Cloudflare",
-    purpose: "Turnstile apsauga nuo automatizuoto piktnaudžiavimo formose",
-    duration: "iki 30 min.",
-  },
-];
-
-const FUNCTIONAL: CookieRow[] = [
-  {
-    name: "ibrix_cart (localStorage)",
-    provider: "IBRIX",
-    purpose: "Išsaugo krepšelio turinį, kad neišnyktų perkraunant puslapį",
-    duration: "Iki išvalymo",
-  },
-  {
-    name: "theme (localStorage)",
-    provider: "IBRIX",
-    purpose: "Įsimena šviesią ar tamsią temą",
-    duration: "Iki išvalymo",
-  },
-];
-
-const ANALYTICS: CookieRow[] = [
-  {
-    name: "_ga",
-    provider: "Google Analytics",
-    purpose: "Atskiria unikalius lankytojus",
-    duration: "2 metai",
-  },
-  {
-    name: "_ga_*",
-    provider: "Google Analytics",
-    purpose: "Palaiko seanso būseną",
-    duration: "2 metai",
-  },
-  {
-    name: "_gid",
-    provider: "Google Analytics",
-    purpose: "Atskiria lankytojus per parą",
-    duration: "24 val.",
-  },
-  {
-    name: "_gat",
-    provider: "Google Analytics",
-    purpose: "Riboja užklausų dažnį",
-    duration: "1 min.",
-  },
-  {
-    name: "ibrix_utm_params (localStorage)",
-    provider: "IBRIX",
-    purpose:
-      "Įsimena, iš kurios kampanijos atėjote, kad žinotume, kuri reklama veikia",
-    duration: "Iki išvalymo",
-  },
-];
-
-const MARKETING: CookieRow[] = [
-  {
-    name: "_fbp",
-    provider: "Meta",
-    purpose: "Matuoja reklamos efektyvumą ir sudaro auditorijas",
-    duration: "3 mėn.",
-  },
-  {
-    name: "_fbc",
-    provider: "Meta",
-    purpose: "Įsimena paspaudimą ant reklamos",
-    duration: "3 mėn.",
-  },
-  {
-    name: "fr",
-    provider: "Meta",
-    purpose: "Reklamos pateikimas ir matavimas",
-    duration: "3 mėn.",
-  },
-  {
-    name: "_gcl_au",
-    provider: "Google Ads",
-    purpose: "Susieja apsilankymą su reklamos paspaudimu (konversijų matavimas)",
-    duration: "90 d.",
-  },
-  {
-    name: "_ttp",
-    provider: "TikTok",
-    purpose: "Matuoja TikTok reklamos efektyvumą",
-    duration: "13 mėn.",
-  },
-];
-
 function CookieTable({ rows }: { rows: CookieRow[] }) {
+  const { t } = useTranslation();
   return (
     <div className="overflow-x-auto not-prose my-4">
       <table className="w-full text-sm border-collapse">
         <thead>
           <tr className="border-b border-border">
-            <th className="text-left py-2 pr-4 font-medium text-foreground">Pavadinimas</th>
-            <th className="text-left py-2 pr-4 font-medium text-foreground">Teikėjas</th>
-            <th className="text-left py-2 pr-4 font-medium text-foreground">Paskirtis</th>
-            <th className="text-left py-2 font-medium text-foreground whitespace-nowrap">Galiojimas</th>
+            <th className="text-left py-2 pr-4 font-medium text-foreground">{t("legCookies.thead.name")}</th>
+            <th className="text-left py-2 pr-4 font-medium text-foreground">{t("legCookies.thead.provider")}</th>
+            <th className="text-left py-2 pr-4 font-medium text-foreground">{t("legCookies.thead.purpose")}</th>
+            <th className="text-left py-2 font-medium text-foreground whitespace-nowrap">{t("legCookies.thead.duration")}</th>
           </tr>
         </thead>
         <tbody>
@@ -150,117 +49,198 @@ function CookieTable({ rows }: { rows: CookieRow[] }) {
 }
 
 export default function SlapukaiPolitika() {
+  const { t } = useTranslation();
   const { openModal } = useCookieConsentStore();
   const h2 = "text-2xl font-heading font-semibold text-foreground mt-8 mb-4";
+
+  const NECESSARY: CookieRow[] = [
+    {
+      name: "ibrix_cookie_consent",
+      provider: "IBRIX",
+      purpose: t("legCookies.necessary.p1"),
+      duration: t("legCookies.necessary.d1"),
+    },
+    {
+      name: "sb-*-auth-token",
+      provider: "Supabase",
+      purpose: t("legCookies.necessary.p2"),
+      duration: t("legCookies.necessary.d2"),
+    },
+    {
+      name: "cf_clearance, __cf_bm",
+      provider: "Cloudflare",
+      purpose: t("legCookies.necessary.p3"),
+      duration: t("legCookies.necessary.d3"),
+    },
+  ];
+
+  const FUNCTIONAL: CookieRow[] = [
+    {
+      name: "ibrix_cart (localStorage)",
+      provider: "IBRIX",
+      purpose: t("legCookies.functional.p1"),
+      duration: t("legCookies.functional.d1"),
+    },
+    {
+      name: "theme (localStorage)",
+      provider: "IBRIX",
+      purpose: t("legCookies.functional.p2"),
+      duration: t("legCookies.functional.d2"),
+    },
+  ];
+
+  const ANALYTICS: CookieRow[] = [
+    {
+      name: "_ga",
+      provider: "Google Analytics",
+      purpose: t("legCookies.analytics.p1"),
+      duration: t("legCookies.analytics.d1"),
+    },
+    {
+      name: "_ga_*",
+      provider: "Google Analytics",
+      purpose: t("legCookies.analytics.p2"),
+      duration: t("legCookies.analytics.d2"),
+    },
+    {
+      name: "_gid",
+      provider: "Google Analytics",
+      purpose: t("legCookies.analytics.p3"),
+      duration: t("legCookies.analytics.d3"),
+    },
+    {
+      name: "_gat",
+      provider: "Google Analytics",
+      purpose: t("legCookies.analytics.p4"),
+      duration: t("legCookies.analytics.d4"),
+    },
+    {
+      name: "ibrix_utm_params (localStorage)",
+      provider: "IBRIX",
+      purpose: t("legCookies.analytics.p5"),
+      duration: t("legCookies.analytics.d5"),
+    },
+  ];
+
+  const MARKETING: CookieRow[] = [
+    {
+      name: "_fbp",
+      provider: "Meta",
+      purpose: t("legCookies.marketing.p1"),
+      duration: t("legCookies.marketing.d1"),
+    },
+    {
+      name: "_fbc",
+      provider: "Meta",
+      purpose: t("legCookies.marketing.p2"),
+      duration: t("legCookies.marketing.d2"),
+    },
+    {
+      name: "fr",
+      provider: "Meta",
+      purpose: t("legCookies.marketing.p3"),
+      duration: t("legCookies.marketing.d3"),
+    },
+    {
+      name: "_gcl_au",
+      provider: "Google Ads",
+      purpose: t("legCookies.marketing.p4"),
+      duration: t("legCookies.marketing.d4"),
+    },
+    {
+      name: "_ttp",
+      provider: "TikTok",
+      purpose: t("legCookies.marketing.p5"),
+      duration: t("legCookies.marketing.d5"),
+    },
+  ];
 
   return (
     <PageLayout>
       <RouteSEO />
       <section className="py-16 md:py-24">
         <div className="container max-w-3xl">
-          <h1 className="font-heading text-4xl font-bold mb-2">Slapukų politika</h1>
+          <h1 className="font-heading text-4xl font-bold mb-2">{t("legCookies.title")}</h1>
           <p className="text-sm text-muted-foreground mb-10">
-            Atnaujinta {COMPANY.updated}
+            {t("legCookies.updated", { date: COMPANY.updated })}
           </p>
 
           <div className="prose prose-lg max-w-none text-muted-foreground space-y-8">
             <p className="lead text-foreground/80">
-              Ši politika paaiškina, kokius slapukus ir panašias technologijas naudoja{" "}
-              {COMPANY.site}, kam jie reikalingi, kiek galioja ir kaip pakeisti savo
-              pasirinkimą.
+              {t("legCookies.lead", { site: COMPANY.site })}
             </p>
 
             <section>
-              <h2 className={h2}>1. Kas yra slapukai</h2>
+              <h2 className={h2}>{t("legCookies.what.title")}</h2>
+              <p>{t("legCookies.what.p1")}</p>
               <p>
-                1.1. Slapukai (angl. cookies) – nedideli tekstiniai failai, kuriuos svetainė
-                įrašo į jūsų įrenginį. Jie leidžia atpažinti naršyklę ir prisiminti jūsų
-                veiksmus tarp apsilankymų.
+                {t("legCookies.what.p2pre")} <strong>localStorage</strong> {t("legCookies.what.p2mid")}{" "}
+                <strong>sessionStorage</strong>
+                {t("legCookies.what.p2post")}
               </p>
               <p>
-                1.2. Naudojame ir panašias technologijas – <strong>localStorage</strong> bei{" "}
-                <strong>sessionStorage</strong>. Techniškai tai ne slapukai, bet duomenys
-                taip pat saugomi jūsų įrenginyje, todėl jiems taikome tas pačias taisykles ir
-                nurodome juos šioje politikoje.
-              </p>
-              <p>
-                1.3. Slapukai skirstomi į <strong>savus</strong> (įrašomus {COMPANY.site}) ir{" "}
-                <strong>trečiųjų šalių</strong> (įrašomus Google, Meta, TikTok ar Cloudflare).
+                {t("legCookies.what.p3pre")} <strong>{t("legCookies.what.p3own")}</strong>{" "}
+                {t("legCookies.what.p3mid", { site: COMPANY.site })}{" "}
+                <strong>{t("legCookies.what.p3third")}</strong> {t("legCookies.what.p3post")}
               </p>
             </section>
 
             <section>
-              <h2 className={h2}>2. Būtinieji slapukai</h2>
+              <h2 className={h2}>{t("legCookies.essential.title")}</h2>
               <p>
-                2.1. Reikalingi svetainei veikti – krepšeliui, prisijungimui ir apsaugai nuo
-                piktnaudžiavimo. Be jų parduotuvė neveiktų, todėl jie įrašomi{" "}
-                <strong>be atskiro sutikimo</strong>, kaip leidžia teisės aktai.
+                {t("legCookies.essential.pre")} <strong>{t("legCookies.essential.em")}</strong>
+                {t("legCookies.essential.post")}
               </p>
               <CookieTable rows={NECESSARY} />
             </section>
 
             <section>
-              <h2 className={h2}>3. Funkciniai slapukai</h2>
-              <p>
-                3.1. Įsimena jūsų pasirinkimus ir daro naudojimąsi patogesnį. Juos išjungus
-                svetainė veiks, bet kaskart teks rinktis iš naujo.
-              </p>
+              <h2 className={h2}>{t("legCookies.functionalSec.title")}</h2>
+              <p>{t("legCookies.functionalSec.p1")}</p>
               <CookieTable rows={FUNCTIONAL} />
             </section>
 
             <section>
-              <h2 className={h2}>4. Analitikos slapukai</h2>
+              <h2 className={h2}>{t("legCookies.analyticsSec.title")}</h2>
+              <p>{t("legCookies.analyticsSec.p1")}</p>
               <p>
-                4.1. Padeda suprasti, kaip lankytojai naudojasi svetaine – kurie puslapiai
-                populiarūs, kur žmonės pasimeta. Duomenys naudojami apibendrintai.
-              </p>
-              <p>
-                4.2. Įrašomi <strong>tik gavus jūsų sutikimą</strong>. Kol sutikimo nėra,
-                Google Analytics scenarijus net neįkeliamas.
+                {t("legCookies.analyticsSec.pre")} <strong>{t("legCookies.analyticsSec.em")}</strong>
+                {t("legCookies.analyticsSec.post")}
               </p>
               <CookieTable rows={ANALYTICS} />
             </section>
 
             <section>
-              <h2 className={h2}>5. Rinkodaros slapukai</h2>
+              <h2 className={h2}>{t("legCookies.marketingSec.title")}</h2>
+              <p>{t("legCookies.marketingSec.p1")}</p>
               <p>
-                5.1. Leidžia matuoti reklamos efektyvumą ir rodyti aktualesnę reklamą
-                socialiniuose tinkluose bei paieškoje.
-              </p>
-              <p>
-                5.2. Įrašomi <strong>tik gavus jūsų sutikimą rinkodarai</strong>. Atsisakius –
-                Meta, TikTok ir Google Ads scenarijai neįkeliami.
+                {t("legCookies.marketingSec.pre")} <strong>{t("legCookies.marketingSec.em")}</strong>
+                {t("legCookies.marketingSec.post")}
               </p>
               <CookieTable rows={MARKETING} />
               <p className="mt-4">
-                5.3. Dalis šių teikėjų gali tvarkyti duomenis už Europos ekonominės erdvės
-                ribų. Plačiau –{" "}
+                {t("legCookies.marketingSec.pre3")}{" "}
                 <Link to="/privatumo-politika" className="text-accent hover:underline">
-                  Privatumo apsaugos taisyklių
+                  {t("legCookies.marketingSec.link")}
                 </Link>{" "}
-                6 skyriuje.
+                {t("legCookies.marketingSec.post3")}
               </p>
             </section>
 
             <section>
-              <h2 className={h2}>6. Kaip pakeisti savo pasirinkimą</h2>
-              <p>
-                6.1. Sutikimą galite bet kada pakeisti arba atšaukti – mygtukas žemiau.
-                Atšaukus sutikimą, atitinkami slapukai ištrinami, o scenarijai nebeįkeliami.
-              </p>
+              <h2 className={h2}>{t("legCookies.choice.title")}</h2>
+              <p>{t("legCookies.choice.p1")}</p>
               <button
                 onClick={openModal}
                 className="mt-2 inline-flex items-center px-4 py-2 rounded-lg bg-muted text-foreground font-medium hover:bg-muted/80 transition-colors not-prose"
               >
-                Keisti slapukų nustatymus
+                {t("legCookies.choice.button")}
               </button>
               <p className="mt-6">
-                6.2. Slapukus galite valdyti ir naršyklės nustatymuose – ten juos peržiūrėti,
-                ištrinti ar užblokuoti. Atkreipkite dėmesį: užblokavus <em>visus</em> slapukus,
-                įskaitant būtinuosius, krepšelis ir prisijungimas nustos veikti.
+                {t("legCookies.choice.pre2")} <em>{t("legCookies.choice.em2")}</em> {t("legCookies.choice.post2")}
               </p>
               <p>
-                6.3. Naršyklių instrukcijos:{" "}
+                {t("legCookies.choice.browsers")}{" "}
                 <a href="https://support.google.com/chrome/answer/95647" target="_blank" rel="noopener noreferrer" className="text-accent hover:underline">Chrome</a>,{" "}
                 <a href="https://support.mozilla.org/kb/slapukai-informacija-kuria-svetaines-issaugo-jusu" target="_blank" rel="noopener noreferrer" className="text-accent hover:underline">Firefox</a>,{" "}
                 <a href="https://support.apple.com/lt-lt/guide/safari/sfri11471/mac" target="_blank" rel="noopener noreferrer" className="text-accent hover:underline">Safari</a>,{" "}
@@ -269,23 +249,20 @@ export default function SlapukaiPolitika() {
             </section>
 
             <section>
-              <h2 className={h2}>7. Politikos pakeitimai</h2>
+              <h2 className={h2}>{t("legCookies.changes.title")}</h2>
+              <p>{t("legCookies.changes.p1")}</p>
               <p>
-                7.1. Pridėjus ar pašalinus įrankį, ši politika atnaujinama. Data viršuje rodo
-                paskutinį pakeitimą.
-              </p>
-              <p>
-                7.2. Klausimus siųskite{" "}
+                {t("legCookies.changes.pre")}{" "}
                 <a href={`mailto:${COMPANY.email}`} className="text-accent hover:underline">
                   {COMPANY.email}
                 </a>
-                . Taip pat skaitykite{" "}
+                {t("legCookies.changes.mid")}{" "}
                 <Link to="/privatumo-politika" className="text-accent hover:underline">
-                  Privatumo apsaugos taisykles
+                  {t("legCookies.changes.privacyLink")}
                 </Link>{" "}
-                ir{" "}
+                {t("legCookies.changes.and")}{" "}
                 <Link to="/taisykles" className="text-accent hover:underline">
-                  Taisykles
+                  {t("legCookies.changes.termsLink")}
                 </Link>
                 .
               </p>

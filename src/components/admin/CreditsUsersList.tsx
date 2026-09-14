@@ -115,21 +115,21 @@ export function CreditsUsersList() {
         <div className="bg-gradient-to-br from-primary/10 to-primary/5 border border-primary/20 rounded-xl p-4">
           <div className="flex items-center gap-3 mb-2">
             <Users className="w-5 h-5 text-primary" />
-            <span className="text-sm text-muted-foreground">Vartotojų su kreditais</span>
+            <span className="text-sm text-muted-foreground">{t('admCredits.usersWithCredits')}</span>
           </div>
           <p className="text-2xl font-bold">{usersWithCredits}</p>
         </div>
         <div className="bg-gradient-to-br from-green-500/10 to-green-500/5 border border-green-500/20 rounded-xl p-4">
           <div className="flex items-center gap-3 mb-2">
             <Wallet className="w-5 h-5 text-green-600" />
-            <span className="text-sm text-muted-foreground">Bendras balansas</span>
+            <span className="text-sm text-muted-foreground">{t('admCredits.totalBalance')}</span>
           </div>
           <p className="text-2xl font-bold text-green-600">{formatPrice(totalBalance)}</p>
         </div>
         <div className="bg-gradient-to-br from-muted to-muted/50 border border-border rounded-xl p-4">
           <div className="flex items-center gap-3 mb-2">
             <Users className="w-5 h-5 text-muted-foreground" />
-            <span className="text-sm text-muted-foreground">Iš viso vartotojų</span>
+            <span className="text-sm text-muted-foreground">{t('admCredits.totalUsers')}</span>
           </div>
           <p className="text-2xl font-bold">{users.length}</p>
         </div>
@@ -140,7 +140,7 @@ export function CreditsUsersList() {
         <div className="relative flex-1 max-w-sm">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <Input
-            placeholder="Ieškoti pagal el. paštą ar vardą..."
+            placeholder={t('admCredits.searchPh')}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="pl-9"
@@ -148,7 +148,7 @@ export function CreditsUsersList() {
         </div>
         <Button variant="outline" onClick={toggleSort} className="gap-2">
           <ArrowUpDown className="w-4 h-4" />
-          {sortDirection === 'desc' ? 'Didžiausi viršuje' : 'Mažiausi viršuje'}
+          {sortDirection === 'desc' ? t('admCredits.sortDesc') : t('admCredits.sortAsc')}
         </Button>
       </div>
 
@@ -157,11 +157,11 @@ export function CreditsUsersList() {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Vartotojas</TableHead>
-              <TableHead>El. paštas</TableHead>
+              <TableHead>{t('admCommon.user')}</TableHead>
+              <TableHead>{t('admCommon.email')}</TableHead>
               <TableHead className="text-right">
                 <Button variant="ghost" size="sm" onClick={toggleSort} className="gap-1 -mr-2">
-                  Balansas
+                  {t('account.balance')}
                   <ArrowUpDown className="w-3 h-3" />
                 </Button>
               </TableHead>
@@ -171,7 +171,7 @@ export function CreditsUsersList() {
             {sortedUsers.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={3} className="text-center py-8 text-muted-foreground">
-                  {search ? 'Nerasta vartotojų pagal paiešką' : 'Nėra vartotojų'}
+                  {search ? t('admCredits.noSearchResults') : t('admCredits.noUsers')}
                 </TableCell>
               </TableRow>
             ) : (
@@ -186,7 +186,7 @@ export function CreditsUsersList() {
                         {user.first_name || user.last_name ? (
                           <p className="font-medium">{user.first_name} {user.last_name}</p>
                         ) : (
-                          <p className="text-muted-foreground text-sm">Vardas nenustatytas</p>
+                          <p className="text-muted-foreground text-sm">{t('admCredits.noNameSet')}</p>
                         )}
                       </div>
                     </div>

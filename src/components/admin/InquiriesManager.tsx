@@ -34,6 +34,7 @@ import { Trash2, MessageSquare, Send, RefreshCw, Clock, User, Filter, Circle, Ch
 import { format } from "date-fns";
 import { lt } from "date-fns/locale";
 import { useNotificationSound } from "@/hooks/useNotificationSound";
+import { useTranslation } from "react-i18next";
 
 interface Inquiry {
   id: string;
@@ -57,20 +58,21 @@ interface InquiryMessage {
 }
 
 const topicLabels: Record<string, string> = {
-  uzsakymas: "Klausimas apie užsakymą",
-  preorder: "Pre-order informacija",
-  trukstamos: "Trūkstamos detalės",
-  grazinimai: "Grąžinimai ir keitimai",
-  kita: "Kita",
+  uzsakymas: "admUsers.inqTopicOrder",
+  preorder: "admUsers.inqTopicPreorder",
+  trukstamos: "products.missingParts",
+  grazinimai: "admUsers.inqTopicReturns",
+  kita: "products.other",
 };
 
 const statusLabels: Record<string, { label: string; variant: "default" | "secondary" | "destructive" | "outline" }> = {
-  new: { label: "Naujas", variant: "destructive" },
-  in_progress: { label: "Vykdomas", variant: "default" },
-  resolved: { label: "Išspręstas", variant: "secondary" },
+  new: { label: "admUsers.inqNew", variant: "destructive" },
+  in_progress: { label: "admUsers.inqInProgress", variant: "default" },
+  resolved: { label: "admUsers.inqResolved", variant: "secondary" },
 };
 
 export function InquiriesManager() {
+  const { t } = useTranslation();
   const { play } = useNotificationSound();
 
   const [inquiries, setInquiries] = useState<Inquiry[]>([]);
@@ -94,7 +96,7 @@ export function InquiriesManager() {
 
     if (error) {
       console.error("Error fetching inquiries:", error);
-      toast.error("Nepavyko gauti užklausų");
+      toast.error(t("admUsers.inqLoadError"));
     } else {
       setInquiries(data || []);
     }
@@ -167,7 +169,7 @@ export function InquiriesManager() {
             if (payload.eventType === 'INSERT') {
               setInquiries(prev => [payload.new as Inquiry, ...prev]);
               play({ frequency: 784, durationMs: 160 });
-              toast.info("Nauja užklausa!", { description: (payload.new as Inquiry).name });
+              toast.info(t("admUsers.inqNewToast"), { description: (payload.new as Inquiry).name });
             } else if (payload.eventType === 'UPDATE') {
               setInquiries(prev => 
                 prev.map(i => i.id === (payload.new as Inquiry).id ? payload.new as Inquiry : i)
@@ -184,10 +186,10 @@ export function InquiriesManager() {
             const newMessage = payload.new as InquiryMessage;
             if (newMessage.sender_type === 'customer') {
               play({ frequency: 988, durationMs: 140 });
-              toast.info("Naujas kliento atsakymas!", {
-                description: "Klientas atsakė į užklausą",
+              toast.info(t("admUsers.inqNewReply"), {
+                description: t("admUsers.inqReplyDesc"),
                 action: {
-                  label: "Peržiūrėti",
+                  label: t("admCommon.preview"),
                   onClick: () => {
                     const inquiry = inquiries.find(i => i.id === newMessage.inquiry_id);
                     if (inquiry) handleOpenInquiry(inquiry);
@@ -262,15 +264,15 @@ export function InquiriesManager() {
           customerName: selectedInquiry.name,
           replyMessage: replyMessage.trim(),
           conversationUrl,
-          originalTopic: topicLabels[selectedInquiry.topic] || selectedInquiry.topic,
+          originalTopic: topicLabels[selectedInquiry.topic] ? t(topicLabels[selectedInquiry.topic]) : selectedInquiry.topic,
         },
       });
 
       if (emailError) {
         console.error("Email error:", emailError);
-        toast.warning("Žinutė išsaugota, bet el. laiškas neišsiųstas");
+        toast.warning(t("admUsers.inqSavedNoEmail"));
       } else {
-        toast.success("Atsakymas išsiųstas!");
+        toast.success(t("admUsers.inqReplySent"));
       }
 
       // Refresh messages and unread counts
@@ -285,7 +287,7 @@ export function InquiriesManager() {
 
     } catch (error) {
       console.error("Error sending reply:", error);
-      toast.error("Nepavyko išsiūsti atsakymo");
+      toast.error(t("admUsers.inqReplyError"));
     }
 
     setSendingReply(false);
@@ -300,7 +302,7 @@ export function InquiriesManager() {
       .eq("id", inquiryId);
 
     if (error) {
-      toast.error("Nepavyko pakeisti statuso");
+      toast.error(t("admUsers.inqStatusError"));
     } else {
       // If marking as resolved, add a system message
       if (newStatus === "resolved" && inquiry) {
@@ -309,7 +311,7 @@ export function InquiriesManager() {
           .insert({
             inquiry_id: inquiryId,
             sender_type: "system",
-            message: "✅ Ši užklausa buvo išspręsta. Jei turite papildomų klausimų, drąsiai atidarykite naują užklausą arba parašykite mums.",
+            message: t("admUsers.inqResolvedSysMsg"),
           });
       }
       
@@ -321,7 +323,7 @@ export function InquiriesManager() {
         // Refresh messages if dialog is open
         await fetchMessages(inquiryId);
       }
-      toast.success("Statusas pakeistas");
+      toast.success(t("admUsers.inqStatusChanged"));
     }
   };
 
@@ -337,9 +339,9 @@ export function InquiriesManager() {
 
     if (error) {
       console.error("Error deleting inquiry:", error);
-      toast.error("Nepavyko ištrinti");
+      toast.error(t("admCommon.deleteFailed"));
     } else {
-      toast.success("Užklausa ištrinta");
+      toast.success(t("admUsers.inqDeleted"));
       setInquiries(prev => prev.filter(i => i.id !== deleteInquiry.id));
     }
 
@@ -360,36 +362,36 @@ export function InquiriesManager() {
       <div className="flex items-center justify-between flex-wrap gap-4">
         <div>
           <div className="flex items-center gap-2">
-            <h2 className="text-xl font-semibold">Užklausos</h2>
+            <h2 className="text-xl font-semibold">{t("admUsers.inqTitle")}</h2>
             {totalUnread > 0 && (
               <Badge variant="destructive" className="rounded-full px-2 py-0.5 text-xs">
-                {totalUnread} neperskaitytų
+                {t("admUsers.inqUnread", { num: totalUnread })}
               </Badge>
             )}
           </div>
           <p className="text-sm text-muted-foreground">
-            {newCount > 0 && <span className="text-destructive font-medium">{newCount} naujos</span>}
+            {newCount > 0 && <span className="text-destructive font-medium">{t("admUsers.inqNewCount", { num: newCount })}</span>}
             {newCount > 0 && inProgressCount > 0 && " · "}
-            {inProgressCount > 0 && <span>{inProgressCount} vykdomos</span>}
-            {newCount === 0 && inProgressCount === 0 && "Visos užklausos išspręstos"}
+            {inProgressCount > 0 && <span>{t("admUsers.inqInProgressCount", { num: inProgressCount })}</span>}
+            {newCount === 0 && inProgressCount === 0 && t("admUsers.inqAllResolved")}
           </p>
         </div>
         <div className="flex items-center gap-2">
           <Select value={statusFilter} onValueChange={setStatusFilter}>
             <SelectTrigger className="w-[160px]">
               <Filter className="w-4 h-4 mr-2" />
-              <SelectValue placeholder="Filtruoti" />
+              <SelectValue placeholder={t("common.filter")} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">Visos</SelectItem>
-              <SelectItem value="new">Naujos</SelectItem>
-              <SelectItem value="in_progress">Vykdomos</SelectItem>
-              <SelectItem value="resolved">Išspręstos</SelectItem>
+              <SelectItem value="all">{t("admUsers.inqAll")}</SelectItem>
+              <SelectItem value="new">{t("admUsers.inqNewPlural")}</SelectItem>
+              <SelectItem value="in_progress">{t("admUsers.inqInProgressPlural")}</SelectItem>
+              <SelectItem value="resolved">{t("admUsers.inqResolvedPlural")}</SelectItem>
             </SelectContent>
           </Select>
           <Button variant="outline" size="sm" onClick={fetchInquiries} disabled={loading}>
             <RefreshCw className={`w-4 h-4 mr-2 ${loading ? "animate-spin" : ""}`} />
-            Atnaujinti
+            {t("admCommon.refresh")}
           </Button>
         </div>
       </div>
@@ -407,7 +409,7 @@ export function InquiriesManager() {
         <Card className="p-8 text-center">
           <MessageSquare className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
           <p className="text-muted-foreground">
-            {statusFilter === "all" ? "Nėra užklausų" : "Nėra užklausų su šiuo statusu"}
+            {statusFilter === "all" ? t("admUsers.inqEmpty") : t("admUsers.inqEmptyFiltered")}
           </p>
         </Card>
       ) : (
@@ -425,17 +427,17 @@ export function InquiriesManager() {
                   <div className="flex items-center gap-2 mb-1">
                     <span className="font-medium truncate">{inquiry.name}</span>
                     <Badge variant={statusLabels[inquiry.status]?.variant || "outline"}>
-                      {statusLabels[inquiry.status]?.label || inquiry.status}
+                      {statusLabels[inquiry.status] ? t(statusLabels[inquiry.status].label) : inquiry.status}
                     </Badge>
                     {unreadCounts[inquiry.id] && (
                       <Badge variant="default" className="rounded-full px-2 py-0.5 text-xs">
-                        {unreadCounts[inquiry.id]} nauja
+                        {t("admUsers.inqNewBadge", { num: unreadCounts[inquiry.id] })}
                       </Badge>
                     )}
                   </div>
                   <p className="text-sm text-muted-foreground truncate">{inquiry.email}</p>
                   <div className="flex items-center gap-3 mt-2 text-xs text-muted-foreground">
-                    <span>{topicLabels[inquiry.topic] || inquiry.topic}</span>
+                    <span>{topicLabels[inquiry.topic] ? t(topicLabels[inquiry.topic]) : inquiry.topic}</span>
                     {inquiry.order_number && (
                       <span className="font-mono">{inquiry.order_number}</span>
                     )}
@@ -477,21 +479,21 @@ export function InquiriesManager() {
               {/* Contact Info & Status Control */}
               <div className="grid grid-cols-2 gap-4 text-sm">
                 <div>
-                  <Label className="text-muted-foreground">El. paštas</Label>
+                  <Label className="text-muted-foreground">{t("admCommon.email")}</Label>
                   <p className="font-medium">{selectedInquiry.email}</p>
                 </div>
                 <div>
-                  <Label className="text-muted-foreground">Tema</Label>
-                  <p className="font-medium">{topicLabels[selectedInquiry.topic] || selectedInquiry.topic}</p>
+                  <Label className="text-muted-foreground">{t("admContent.nlSubject")}</Label>
+                  <p className="font-medium">{topicLabels[selectedInquiry.topic] ? t(topicLabels[selectedInquiry.topic]) : selectedInquiry.topic}</p>
                 </div>
                 {selectedInquiry.order_number && (
                   <div>
-                    <Label className="text-muted-foreground">Užsakymo nr.</Label>
+                    <Label className="text-muted-foreground">{t("admOrders.ordCsvNo")}</Label>
                     <p className="font-mono font-medium">{selectedInquiry.order_number}</p>
                   </div>
                 )}
                 <div>
-                  <Label className="text-muted-foreground">Data</Label>
+                  <Label className="text-muted-foreground">{t("admCommon.date")}</Label>
                   <p className="font-medium">
                     {format(new Date(selectedInquiry.created_at), "yyyy-MM-dd HH:mm", { locale: lt })}
                   </p>
@@ -500,7 +502,7 @@ export function InquiriesManager() {
 
               {/* Status Selector */}
               <div className="flex items-center gap-3 p-3 bg-muted/30 rounded-lg">
-                <Label className="text-muted-foreground whitespace-nowrap">Statusas:</Label>
+                <Label className="text-muted-foreground whitespace-nowrap">{t("admUsers.inqStatusLabel")}</Label>
                 <div className="flex gap-2">
                   <Button
                     size="sm"
@@ -509,7 +511,7 @@ export function InquiriesManager() {
                     className="gap-1"
                   >
                     <Circle className="w-3 h-3" />
-                    Vykdomas
+                    {t("admUsers.inqInProgress")}
                   </Button>
                   <Button
                     size="sm"
@@ -518,21 +520,21 @@ export function InquiriesManager() {
                     className="gap-1"
                   >
                     <CheckCircle2 className="w-3 h-3" />
-                    Išspręstas
+                    {t("admUsers.inqResolved")}
                   </Button>
                 </div>
               </div>
 
               {/* Original Message */}
               <div className="bg-muted/50 rounded-lg p-4">
-                <Label className="text-muted-foreground text-xs mb-1 block">Originali žinutė</Label>
+                <Label className="text-muted-foreground text-xs mb-1 block">{t("admUsers.inqOriginalMsg")}</Label>
                 <p className="whitespace-pre-wrap">{selectedInquiry.message}</p>
               </div>
 
               {/* Conversation */}
               {messages.length > 0 && (
                 <div className="space-y-3">
-                  <Label className="text-muted-foreground">Pokalbio istorija</Label>
+                  <Label className="text-muted-foreground">{t("admUsers.inqHistory")}</Label>
                   {messages.map(msg => (
                     <div
                       key={msg.id}
@@ -544,7 +546,7 @@ export function InquiriesManager() {
                     >
                       <div className="flex items-center gap-2 text-xs text-muted-foreground mb-1">
                         <span className="font-medium">
-                          {msg.sender_type === "admin" ? "Jūs" : selectedInquiry.name}
+                          {msg.sender_type === "admin" ? t("admUsers.inqYou") : selectedInquiry.name}
                         </span>
                         <span>{format(new Date(msg.created_at), "MMM d, HH:mm", { locale: lt })}</span>
                       </div>
@@ -556,9 +558,9 @@ export function InquiriesManager() {
 
               {/* Reply Form with typing indicator */}
               <div className="space-y-2">
-                <Label>Atsakyti</Label>
+                <Label>{t("admUsers.inqReply")}</Label>
                 <Textarea
-                  placeholder="Rašykite atsakymą..."
+                  placeholder={t("admUsers.inqReplyPh")}
                   value={replyMessage}
                   onChange={(e) => {
                     setReplyMessage(e.target.value);
@@ -593,15 +595,15 @@ export function InquiriesManager() {
 
           <DialogFooter>
             <Button variant="outline" onClick={() => setSelectedInquiry(null)}>
-              Uždaryti
+              {t("common.close")}
             </Button>
             <Button onClick={handleSendReply} disabled={!replyMessage.trim() || sendingReply}>
               {sendingReply ? (
-                "Siunčiama..."
+                t("common.sending")
               ) : (
                 <>
                   <Send className="w-4 h-4 mr-2" />
-                  Siųsti atsakymą
+                  {t("admUsers.inqSendReply")}
                 </>
               )}
             </Button>
@@ -613,15 +615,15 @@ export function InquiriesManager() {
       <AlertDialog open={!!deleteInquiry} onOpenChange={() => setDeleteInquiry(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Ištrinti užklausą?</AlertDialogTitle>
+            <AlertDialogTitle>{t("admUsers.inqDeleteTitle")}</AlertDialogTitle>
             <AlertDialogDescription>
-              Ši užklausa ir visa pokalbio istorija bus ištrinta negrįžtamai.
+              {t("admUsers.inqDeleteDesc")}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Atšaukti</AlertDialogCancel>
+            <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
             <AlertDialogAction onClick={handleDelete} disabled={deleting}>
-              {deleting ? "Trinama..." : "Ištrinti"}
+              {deleting ? t("admUsers.inqDeleting") : t("common.delete")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

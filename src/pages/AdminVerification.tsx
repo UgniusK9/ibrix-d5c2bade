@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { useTranslation } from "react-i18next";
 import { 
   CheckCircle2, 
   XCircle, 
@@ -49,6 +50,7 @@ interface WebhookHealthResponse {
 
 export default function AdminVerification() {
   const { isAdmin, user } = useAuth();
+  const { t } = useTranslation();
   const [searchParams] = useSearchParams();
   const showDebug = searchParams.get('debug') === 'true';
   
@@ -71,30 +73,30 @@ export default function AdminVerification() {
       setWhoami(data);
       if (data?.isAdmin) {
         newResults.push({
-          name: 'Admin Autentifikacija',
+          name: t('admVerify.verAuthName'),
           status: 'pass',
-          message: `Prisijungta kaip admin: ${data.user?.email}`,
+          message: t('admVerify.verAuthPass', { email: data.user?.email }),
           details: data
         });
       } else if (data?.authenticated) {
         newResults.push({
-          name: 'Admin Autentifikacija',
+          name: t('admVerify.verAuthName'),
           status: 'fail',
-          message: `Prisijungta, bet NE admin. Rolė: ${data.role}`,
+          message: t('admVerify.verAuthNotAdmin', { role: data.role }),
           details: data
         });
       } else {
         newResults.push({
-          name: 'Admin Autentifikacija',
+          name: t('admVerify.verAuthName'),
           status: 'fail',
-          message: 'Neprisijungta',
+          message: t('admVerify.verNotLogged'),
         });
       }
     } catch (e: any) {
       newResults.push({
-        name: 'Admin Autentifikacija',
+        name: t('admVerify.verAuthName'),
         status: 'fail',
-        message: `Whoami klaida: ${e.message}`,
+        message: t('admVerify.verWhoamiError', { msg: e.message }),
       });
     }
 
@@ -112,18 +114,18 @@ export default function AdminVerification() {
         healthData.config.webhook_secret_configured;
       
       newResults.push({
-        name: 'Stripe Webhook Konfigūracija',
+        name: t('admVerify.verStripeName'),
         status: allConfigured ? 'pass' : 'warn',
         message: allConfigured 
-          ? 'Visi Stripe raktai sukonfigūruoti' 
-          : 'Trūksta Stripe konfigūracijos',
+          ? t('admVerify.verStripeOk') 
+          : t('admVerify.verStripeMissing'),
         details: healthData.config
       });
     } catch (e: any) {
       newResults.push({
-        name: 'Stripe Webhook Konfigūracija',
+        name: t('admVerify.verStripeName'),
         status: 'fail',
-        message: `Health check klaida: ${e.message}`,
+        message: t('admVerify.verHealthError', { msg: e.message }),
       });
     }
 
@@ -137,16 +139,16 @@ export default function AdminVerification() {
       
       const orderCount = ordersData?.orders?.length || 0;
       newResults.push({
-        name: 'Užsakymų lentelė',
+        name: t('admVerify.verOrdersName'),
         status: 'pass',
-        message: `Rasta ${orderCount} užsakymų`,
+        message: t('admVerify.verOrdersFound', { num: orderCount }),
         details: { count: orderCount }
       });
     } catch (e: any) {
       newResults.push({
-        name: 'Užsakymų lentelė',
+        name: t('admVerify.verOrdersName'),
         status: 'fail',
-        message: `Admin API klaida: ${e.message}`,
+        message: t('admVerify.verAdminApiError', { msg: e.message }),
       });
     }
 
@@ -161,16 +163,16 @@ export default function AdminVerification() {
       if (error) throw error;
       
       newResults.push({
-        name: 'Produktų lentelė',
+        name: t('admVerify.verProductsName'),
         status: products && products.length > 0 ? 'pass' : 'warn',
-        message: `Rasta ${products?.length || 0} aktyvių produktų`,
+        message: t('admVerify.verProductsFound', { num: products?.length || 0 }),
         details: products
       });
     } catch (e: any) {
       newResults.push({
-        name: 'Produktų lentelė',
+        name: t('admVerify.verProductsName'),
         status: 'fail',
-        message: `Produktų užklausa nepavyko: ${e.message}`,
+        message: t('admVerify.verProductsError', { msg: e.message }),
       });
     }
 
@@ -183,16 +185,16 @@ export default function AdminVerification() {
       if (error) throw error;
       
       newResults.push({
-        name: 'Vartotojų lentelė',
+        name: t('admVerify.verUsersName'),
         status: 'pass',
-        message: `Rasta ${count || 0} vartotojų`,
+        message: t('admVerify.verUsersFound', { num: count || 0 }),
         details: { count }
       });
     } catch (e: any) {
       newResults.push({
-        name: 'Vartotojų lentelė',
+        name: t('admVerify.verUsersName'),
         status: 'fail',
-        message: `Vartotojų užklausa nepavyko: ${e.message}`,
+        message: t('admVerify.verUsersError', { msg: e.message }),
       });
     }
 
@@ -205,16 +207,16 @@ export default function AdminVerification() {
       if (error) throw error;
       
       newResults.push({
-        name: 'Webhook Events (Idempotencija)',
+        name: t('admVerify.verWebhookEventsName'),
         status: 'pass',
-        message: `Idempotencijos lentelė egzistuoja su ${count || 0} įvykių`,
+        message: t('admVerify.verIdemExists', { num: count || 0 }),
         details: { count }
       });
     } catch (e: any) {
       newResults.push({
-        name: 'Webhook Events (Idempotencija)',
+        name: t('admVerify.verWebhookEventsName'),
         status: 'fail',
-        message: `Webhook events užklausa nepavyko: ${e.message}`,
+        message: t('admVerify.verWebhookEventsError', { msg: e.message }),
       });
     }
 
@@ -226,30 +228,30 @@ export default function AdminVerification() {
         .limit(1);
       
       if (error && error.message.includes('column')) {
-        throw new Error('stripe_event_id stulpelio nėra');
+        throw new Error(t('admVerify.verNoColumn'));
       }
       
       newResults.push({
-        name: 'Mokėjimų Idempotencija',
+        name: t('admVerify.verPayIdemName'),
         status: 'pass',
-        message: 'stripe_event_id stulpelis egzistuoja payments lentelėje',
+        message: t('admVerify.verColumnExists'),
       });
     } catch (e: any) {
       newResults.push({
-        name: 'Mokėjimų Idempotencija',
+        name: t('admVerify.verPayIdemName'),
         status: 'fail',
-        message: `Mokėjimų idempotencija: ${e.message}`,
+        message: t('admVerify.verPayIdemError', { msg: e.message }),
       });
     }
 
     // 8. Check email config
     const resendConfigured = webhookHealth?.config?.resend_configured;
     newResults.push({
-      name: 'El. paštas (Resend)',
+      name: t('admVerify.verEmailName'),
       status: resendConfigured ? 'pass' : 'warn',
       message: resendConfigured 
-        ? 'RESEND_API_KEY sukonfigūruotas' 
-        : 'RESEND_API_KEY nesukonfigūruotas - laiškai bus tik loginami',
+        ? t('admVerify.verResendOk') 
+        : t('admVerify.verResendMissing'),
     });
 
     setResults(newResults);
@@ -264,50 +266,13 @@ export default function AdminVerification() {
 
   const copyWebhookUrl = () => {
     navigator.clipboard.writeText(webhookUrl);
-    toast.success('Webhook URL nukopijuotas!');
+    toast.success(t('admVerify.verUrlCopied'));
   };
 
   const copyVerificationQueries = () => {
-    const queries = `-- VERIFICATION QUERIES - Paleiskite Supabase SQL Editor
-
--- 1. Užsakymų skaičius ir naujausi užsakymai
-SELECT COUNT(*) as total_orders FROM orders;
-SELECT id, order_number, status, deposit_total_eur, balance_total_eur, created_at 
-FROM orders 
-ORDER BY created_at DESC 
-LIMIT 5;
-
--- 2. Mokėjimų skaičius pagal tipą
-SELECT type, status, COUNT(*) as count, SUM(amount_eur) as total_eur 
-FROM payments 
-GROUP BY type, status;
-
--- 3. Shipments
-SELECT id, order_id, status, tracking_token, created_at 
-FROM shipments 
-ORDER BY created_at DESC 
-LIMIT 5;
-
--- 4. Webhook events (idempotencija)
-SELECT stripe_event_id, event_type, processed_at 
-FROM webhook_events 
-ORDER BY created_at DESC 
-LIMIT 10;
-
--- 5. Analytics events
-SELECT name, COUNT(*) as count 
-FROM events 
-WHERE name IN ('deposit_paid', 'balance_paid', 'balance_requested', 'purchase', 'order_created')
-GROUP BY name;
-
--- 6. Vartotojai ir admin
-SELECT id, email, role, created_at 
-FROM users 
-ORDER BY created_at DESC
-LIMIT 10;
-`;
+    const queries = t('admVerify.verSqlQueries');
     navigator.clipboard.writeText(queries);
-    toast.success('SQL užklausos nukopijuotos!');
+    toast.success(t('admVerify.verSqlCopied'));
   };
 
   if (!isAdmin && user) {
@@ -315,8 +280,8 @@ LIMIT 10;
       <PageLayout>
         <div className="container py-20 text-center">
           <Shield className="w-16 h-16 text-destructive mx-auto mb-4" />
-          <h1 className="text-2xl font-bold mb-2">Prieiga uždrausta</h1>
-          <p className="text-muted-foreground">Reikalinga administratoriaus prieiga.</p>
+          <h1 className="text-2xl font-bold mb-2">{t("admVerify.verDenied")}</h1>
+          <p className="text-muted-foreground">{t("admVerify.verDeniedDesc")}</p>
         </div>
       </PageLayout>
     );
@@ -327,8 +292,8 @@ LIMIT 10;
       <PageLayout>
         <div className="container py-20 text-center">
           <User className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
-          <h1 className="text-2xl font-bold mb-2">Reikalinga autentifikacija</h1>
-          <p className="text-muted-foreground">Prisijunkite, kad pasiektumėte patikros įrankius.</p>
+          <h1 className="text-2xl font-bold mb-2">{t("admVerify.verAuthRequired")}</h1>
+          <p className="text-muted-foreground">{t("admVerify.verAuthRequiredDesc")}</p>
         </div>
       </PageLayout>
     );
@@ -356,21 +321,21 @@ LIMIT 10;
               <Button asChild variant="ghost" size="sm">
                 <Link to="/admin">
                   <ArrowLeft className="w-4 h-4 mr-2" />
-                  Atgal
+                  {t("common.back")}
                 </Link>
               </Button>
             </div>
-            <h1 className="font-heading text-3xl font-bold">Sistemos Patikra</h1>
-            <p className="text-muted-foreground">Production readiness tikrinimas</p>
+            <h1 className="font-heading text-3xl font-bold">{t("admVerify.verTitle")}</h1>
+            <p className="text-muted-foreground">{t("admVerify.verSubtitle")}</p>
           </div>
           <div className="flex gap-2">
             <Button onClick={copyVerificationQueries} variant="outline" size="sm">
               <Copy className="w-4 h-4 mr-2" />
-              SQL Užklausos
+              {t("admVerify.verSqlBtn")}
             </Button>
             <Button onClick={runVerification} disabled={loading}>
               <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
-              Tikrinti
+              {t("admVerify.verRun")}
             </Button>
           </div>
         </div>
@@ -380,15 +345,15 @@ LIMIT 10;
           <div className="grid grid-cols-3 gap-4 mb-8">
             <div className="bg-green-500/10 border border-green-500/30 rounded-xl p-4 text-center">
               <p className="text-3xl font-bold text-green-600">{passCount}</p>
-              <p className="text-sm text-muted-foreground">Praėjo</p>
+              <p className="text-sm text-muted-foreground">{t("admVerify.verPassed")}</p>
             </div>
             <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-xl p-4 text-center">
               <p className="text-3xl font-bold text-yellow-600">{warnCount}</p>
-              <p className="text-sm text-muted-foreground">Įspėjimai</p>
+              <p className="text-sm text-muted-foreground">{t("admVerify.verWarnings")}</p>
             </div>
             <div className="bg-destructive/10 border border-destructive/30 rounded-xl p-4 text-center">
               <p className="text-3xl font-bold text-destructive">{failCount}</p>
-              <p className="text-sm text-muted-foreground">Nepavyko</p>
+              <p className="text-sm text-muted-foreground">{t("admContent.nlFailed")}</p>
             </div>
           </div>
         )}
@@ -396,18 +361,18 @@ LIMIT 10;
         {/* Results */}
         <div className="bg-card border border-border rounded-xl overflow-hidden mb-8">
           <div className="p-4 border-b border-border bg-muted/30">
-            <h2 className="font-semibold">Patikros Rezultatai</h2>
+            <h2 className="font-semibold">{t("admVerify.verResults")}</h2>
           </div>
           <div className="divide-y divide-border">
             {loading && results.length === 0 ? (
               <div className="p-8 text-center">
                 <RefreshCw className="w-8 h-8 animate-spin mx-auto text-muted-foreground" />
-                <p className="text-muted-foreground mt-2">Vykdoma patikra...</p>
+                <p className="text-muted-foreground mt-2">{t("admVerify.verRunning")}</p>
               </div>
             ) : results.length === 0 ? (
               <div className="p-8 text-center">
                 <Database className="w-8 h-8 mx-auto text-muted-foreground" />
-                <p className="text-muted-foreground mt-2">Spauskite "Tikrinti" sistemai patikrinti</p>
+                <p className="text-muted-foreground mt-2">{t("admVerify.verRunHint", { action: t("admVerify.verRun") })}</p>
               </div>
             ) : (
               results.map((result, index) => (
@@ -423,7 +388,7 @@ LIMIT 10;
                     )}
                   </div>
                   <Badge variant={result.status === 'pass' ? 'default' : result.status === 'warn' ? 'secondary' : 'destructive'}>
-                    {result.status === 'pass' ? 'PRAĖJO' : result.status === 'warn' ? 'ĮSPĖJIMAS' : 'NEPAVYKO'}
+                    {result.status === 'pass' ? t('admVerify.verBadgePass') : result.status === 'warn' ? t('admVerify.verBadgeWarn') : t('admVerify.verBadgeFail')}
                   </Badge>
                 </div>
               ))
@@ -433,7 +398,7 @@ LIMIT 10;
 
         {/* Quick Actions */}
         <div className="bg-card border border-border rounded-xl p-6 mb-8">
-          <h2 className="font-heading text-xl font-semibold mb-4">Greiti Veiksmai</h2>
+          <h2 className="font-heading text-xl font-semibold mb-4">{t("admVerify.verQuickActions")}</h2>
           
           <div className="space-y-4">
             <div className="flex items-center justify-between p-4 bg-muted/30 rounded-lg">
@@ -466,7 +431,7 @@ LIMIT 10;
 
         {/* Required Stripe Events */}
         <div className="bg-card border border-border rounded-xl p-6 mb-8">
-          <h2 className="font-heading text-xl font-semibold mb-4">Reikalingi Stripe Įvykiai</h2>
+          <h2 className="font-heading text-xl font-semibold mb-4">{t("admVerify.verStripeEvents")}</h2>
           <div className="flex flex-wrap gap-2">
             {['checkout.session.completed', 'checkout.session.expired', 'payment_intent.payment_failed', 'charge.refunded'].map((event) => (
               <code key={event} className="bg-muted border border-border rounded px-3 py-1.5 text-sm font-mono">
@@ -479,16 +444,16 @@ LIMIT 10;
         {/* Debug Panel */}
         {showDebug && (
           <div className="bg-muted/30 border border-border rounded-xl p-6">
-            <h2 className="font-heading text-xl font-semibold mb-4">Debug Data</h2>
+            <h2 className="font-heading text-xl font-semibold mb-4">{t("admVerify.verDebugData")}</h2>
             <div className="space-y-4">
               <div>
-                <p className="font-medium mb-2">Whoami Response:</p>
+                <p className="font-medium mb-2">{t("admVerify.verWhoamiLabel")}</p>
                 <pre className="text-xs bg-background p-3 rounded overflow-x-auto">
                   {JSON.stringify(whoami, null, 2)}
                 </pre>
               </div>
               <div>
-                <p className="font-medium mb-2">Webhook Health:</p>
+                <p className="font-medium mb-2">{t("admVerify.verWebhookHealthLabel")}</p>
                 <pre className="text-xs bg-background p-3 rounded overflow-x-auto">
                   {JSON.stringify(webhookHealth, null, 2)}
                 </pre>

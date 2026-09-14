@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Bell, Check, Loader2 } from "lucide-react";
@@ -11,6 +12,7 @@ interface StockNotificationFormProps {
 }
 
 export function StockNotificationForm({ productId }: StockNotificationFormProps) {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const [email, setEmail] = useState(user?.email || "");
   const [loading, setLoading] = useState(false);
@@ -20,7 +22,7 @@ export function StockNotificationForm({ productId }: StockNotificationFormProps)
     e.preventDefault();
     
     if (!email) {
-      toast.error("Įveskite el. pašto adresą");
+      toast.error(t('stock.enterEmail'));
       return;
     }
 
@@ -36,20 +38,20 @@ export function StockNotificationForm({ productId }: StockNotificationFormProps)
 
       if (error) {
         if (error.code === '23505') {
-          toast.info("Jau prenumeruojate šio produkto pranešimus");
+          toast.info(t('stock.alreadySubscribed'));
           setSubscribed(true);
         } else {
           throw error;
         }
       } else {
         setSubscribed(true);
-        toast.success("Pranešimas užregistruotas", {
-          description: "Informuosime, kai produktas bus sandėlyje",
+        toast.success(t('stock.subscribed'), {
+          description: t('stock.subscribedDesc'),
         });
       }
     } catch (error) {
       console.error('Failed to subscribe:', error);
-      toast.error("Nepavyko užsiregistruoti pranešimui");
+      toast.error(t('stock.subscribeFailed'));
     } finally {
       setLoading(false);
     }
@@ -59,7 +61,7 @@ export function StockNotificationForm({ productId }: StockNotificationFormProps)
     return (
       <div className="flex items-center gap-2 text-success bg-success/10 rounded-lg p-3">
         <Check className="w-4 h-4" />
-        <span className="text-sm font-medium">Pranešimas užregistruotas</span>
+        <span className="text-sm font-medium">{t('stock.subscribed')}</span>
       </div>
     );
   }
@@ -68,12 +70,12 @@ export function StockNotificationForm({ productId }: StockNotificationFormProps)
     <form onSubmit={handleSubscribe} className="space-y-2">
       <p className="text-sm text-muted-foreground flex items-center gap-2">
         <Bell className="w-4 h-4" />
-        Gauti pranešimą, kai bus sandėlyje
+        {t('stock.notifyMe')}
       </p>
       <div className="flex gap-2">
         <Input
           type="email"
-          placeholder="jusu@email.lt"
+          placeholder={t('stock.emailPlaceholder')}
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           className="flex-1"
@@ -83,7 +85,7 @@ export function StockNotificationForm({ productId }: StockNotificationFormProps)
           {loading ? (
             <Loader2 className="w-4 h-4 animate-spin" />
           ) : (
-            "Pranešti"
+            t('stock.notify')
           )}
         </Button>
       </div>

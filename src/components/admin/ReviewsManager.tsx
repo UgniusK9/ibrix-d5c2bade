@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
 import { supabase } from '@/integrations/supabase/client';
+import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
@@ -38,6 +39,7 @@ interface Review {
 }
 
 export function ReviewsManager() {
+  const { t } = useTranslation();
   const [reviews, setReviews] = useState<Review[]>([]);
   const [loading, setLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState<string>('pending');
@@ -78,7 +80,7 @@ export function ReviewsManager() {
       setReviews(data || []);
     } catch (e) {
       console.error('Failed to load reviews:', e);
-      toast.error('Nepavyko užkrauti atsiliepimų');
+      toast.error(t('admReviews.revLoadError'));
     } finally {
       setLoading(false);
     }
@@ -96,11 +98,11 @@ export function ReviewsManager() {
         .eq('id', reviewId);
 
       if (error) throw error;
-      toast.success(status === 'approved' ? 'Atsiliepimas patvirtintas' : 'Atsiliepimas atmestas');
+      toast.success(status === 'approved' ? t('admReviews.revApproved') : t('admReviews.revRejected'));
       loadReviews();
     } catch (e) {
       console.error('Failed to update review:', e);
-      toast.error('Nepavyko atnaujinti atsiliepimo');
+      toast.error(t('admReviews.revUpdateError'));
     }
   };
 
@@ -125,12 +127,12 @@ export function ReviewsManager() {
         .eq('id', selectedReview.id);
 
       if (error) throw error;
-      toast.success('Atsakymas išsaugotas');
+      toast.success(t('admReviews.revReplySaved'));
       setReplyDialogOpen(false);
       loadReviews();
     } catch (e) {
       console.error('Failed to save reply:', e);
-      toast.error('Nepavyko išsaugoti atsakymo');
+      toast.error(t('admReviews.revReplyError'));
     } finally {
       setReplying(false);
     }
@@ -160,12 +162,12 @@ export function ReviewsManager() {
         .eq('id', reviewToDelete.id);
 
       if (error) throw error;
-      toast.success('Atsiliepimas ištrintas');
+      toast.success(t('admReviews.revDeleted'));
       setDeleteDialogOpen(false);
       loadReviews();
     } catch (e) {
       console.error('Failed to delete review:', e);
-      toast.error('Nepavyko ištrinti atsiliepimo');
+      toast.error(t('admReviews.revDeleteError'));
     } finally {
       setDeleting(false);
     }
@@ -186,9 +188,9 @@ export function ReviewsManager() {
 
   const getStatusBadge = (status: string) => {
     const config: Record<string, { label: string; className: string }> = {
-      'pending': { label: 'Laukia', className: 'bg-yellow-500/10 text-yellow-600' },
-      'approved': { label: 'Patvirtintas', className: 'bg-green-500/10 text-green-600' },
-      'rejected': { label: 'Atmestas', className: 'bg-red-500/10 text-red-600' },
+      'pending': { label: t('admProducts.photoWaiting'), className: 'bg-yellow-500/10 text-yellow-600' },
+      'approved': { label: t('admRefunds.refApproved'), className: 'bg-green-500/10 text-green-600' },
+      'rejected': { label: t('admRefunds.refDenied'), className: 'bg-red-500/10 text-red-600' },
     };
     const c = config[status] || config['pending'];
     return <Badge variant="outline" className={c.className}>{c.label}</Badge>;
@@ -200,34 +202,34 @@ export function ReviewsManager() {
         <div className="flex gap-2 items-center">
           <Select value={statusFilter} onValueChange={setStatusFilter}>
             <SelectTrigger className="w-40">
-              <SelectValue placeholder="Statusas" />
+              <SelectValue placeholder={t('admCommon.statusLabel')} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">Visi</SelectItem>
-              <SelectItem value="pending">Laukiantys</SelectItem>
-              <SelectItem value="approved">Patvirtinti</SelectItem>
-              <SelectItem value="rejected">Atmesti</SelectItem>
+              <SelectItem value="all">{t('common.all')}</SelectItem>
+              <SelectItem value="pending">{t('admReviews.revPending')}</SelectItem>
+              <SelectItem value="approved">{t('admReviews.revApprovedPlural')}</SelectItem>
+              <SelectItem value="rejected">{t('admReviews.revRejectedPlural')}</SelectItem>
             </SelectContent>
           </Select>
         </div>
 
         <Button onClick={loadReviews} variant="outline" size="sm" disabled={loading}>
           <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
-          Atnaujinti
+          {t('admCommon.refresh')}
         </Button>
       </div>
 
       {loading ? (
         <div className="text-center py-12">
           <RefreshCw className="w-8 h-8 animate-spin mx-auto text-muted-foreground" />
-          <p className="text-muted-foreground mt-2">Kraunama...</p>
+          <p className="text-muted-foreground mt-2">{t('common.loading')}</p>
         </div>
       ) : reviews.length === 0 ? (
         <div className="text-center py-12">
           <MessageSquare className="w-16 h-16 text-muted-foreground/30 mx-auto mb-4" />
-          <h2 className="font-heading text-xl font-semibold mb-2">Nėra atsiliepimų</h2>
+          <h2 className="font-heading text-xl font-semibold mb-2">{t('admReviews.revEmpty')}</h2>
           <p className="text-muted-foreground">
-            {statusFilter === 'pending' ? 'Nėra laukiančių atsiliepimų' : 'Nerasta atsiliepimų'}
+            {statusFilter === 'pending' ? t('admReviews.revEmptyPending') : t('admReviews.revNoResults')}
           </p>
         </div>
       ) : (
@@ -235,24 +237,24 @@ export function ReviewsManager() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Produktas</TableHead>
-                <TableHead>Vartotojas</TableHead>
-                <TableHead>Įvertinimas</TableHead>
-                <TableHead>Turinys</TableHead>
-                <TableHead>Nuotrauka</TableHead>
-                <TableHead>Data</TableHead>
-                <TableHead>Statusas</TableHead>
-                <TableHead>Veiksmai</TableHead>
+                <TableHead>{t('admCommon.product')}</TableHead>
+                <TableHead>{t('admCommon.user')}</TableHead>
+                <TableHead>{t('admReviews.revRating')}</TableHead>
+                <TableHead>{t('admContent.nlContent')}</TableHead>
+                <TableHead>{t('admCommon.photoLabel')}</TableHead>
+                <TableHead>{t('admCommon.date')}</TableHead>
+                <TableHead>{t('admCommon.statusLabel')}</TableHead>
+                <TableHead>{t('admCommon.actions')}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {reviews.map((review) => (
                 <TableRow key={review.id}>
                   <TableCell className="font-medium max-w-[120px] truncate">
-                    {review.product?.title || 'Nežinomas'}
+                    {review.product?.title || t('admReviews.revUnknown')}
                   </TableCell>
                   <TableCell className="text-sm text-muted-foreground max-w-[120px] truncate">
-                    {review.user?.email || 'Nežinomas'}
+                    {review.user?.email || t('admReviews.revUnknown')}
                   </TableCell>
                   <TableCell>{renderStars(review.rating)}</TableCell>
                   <TableCell className="max-w-[200px]">
@@ -261,7 +263,7 @@ export function ReviewsManager() {
                       <p className="text-sm text-muted-foreground line-clamp-2">{review.content}</p>
                     )}
                     {review.admin_reply && (
-                      <p className="text-xs text-primary mt-1">✓ Atsakyta</p>
+                      <p className="text-xs text-primary mt-1">{t('admReviews.revReplied')}</p>
                     )}
                   </TableCell>
                   <TableCell>
@@ -293,7 +295,7 @@ export function ReviewsManager() {
                             variant="ghost"
                             className="text-green-600 hover:text-green-700 hover:bg-green-50"
                             onClick={() => updateStatus(review.id, 'approved')}
-                            title="Patvirtinti"
+                            title={t('common.confirm')}
                           >
                             <Check className="w-4 h-4" />
                           </Button>
@@ -302,7 +304,7 @@ export function ReviewsManager() {
                             variant="ghost"
                             className="text-orange-600 hover:text-orange-700 hover:bg-orange-50"
                             onClick={() => updateStatus(review.id, 'rejected')}
-                            title="Atmesti"
+                            title={t('admRefunds.refReject')}
                           >
                             <X className="w-4 h-4" />
                           </Button>
@@ -312,7 +314,7 @@ export function ReviewsManager() {
                         size="sm"
                         variant="ghost"
                         onClick={() => handleOpenReplyDialog(review)}
-                        title="Atsakyti"
+                        title={t('admUsers.inqReply')}
                       >
                         <Reply className="w-4 h-4" />
                       </Button>
@@ -321,7 +323,7 @@ export function ReviewsManager() {
                         variant="ghost"
                         className="text-red-600 hover:text-red-700 hover:bg-red-50"
                         onClick={() => handleOpenDeleteDialog(review)}
-                        title="Ištrinti"
+                        title={t('common.delete')}
                       >
                         <Trash2 className="w-4 h-4" />
                       </Button>
@@ -338,7 +340,7 @@ export function ReviewsManager() {
       <Dialog open={replyDialogOpen} onOpenChange={setReplyDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Atsakyti į atsiliepimą</DialogTitle>
+            <DialogTitle>{t('admReviews.revReplyTitle')}</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
             {selectedReview && (
@@ -360,16 +362,16 @@ export function ReviewsManager() {
             <Textarea
               value={replyText}
               onChange={(e) => setReplyText(e.target.value)}
-              placeholder="Jūsų atsakymas..."
+              placeholder={t('admReviews.revReplyPh')}
               rows={4}
             />
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setReplyDialogOpen(false)}>
-              Atšaukti
+              {t('common.cancel')}
             </Button>
             <Button onClick={handleSubmitReply} disabled={replying}>
-              {replying ? 'Saugoma...' : 'Išsaugoti'}
+              {replying ? t('admCommon.saving') : t('common.save')}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -379,19 +381,19 @@ export function ReviewsManager() {
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Ištrinti atsiliepimą?</AlertDialogTitle>
+            <AlertDialogTitle>{t('admReviews.revDeleteTitle')}</AlertDialogTitle>
             <AlertDialogDescription>
-              Šis veiksmas negrįžtamas. Atsiliepimas bus visam laikui ištrintas.
+              {t('admReviews.revDeleteDesc')}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Atšaukti</AlertDialogCancel>
+            <AlertDialogCancel>{t('common.cancel')}</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleDeleteReview}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
               disabled={deleting}
             >
-              {deleting ? 'Trinama...' : 'Ištrinti'}
+              {deleting ? t('admUsers.inqDeleting') : t('common.delete')}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -401,12 +403,12 @@ export function ReviewsManager() {
       <Dialog open={imagePreviewOpen} onOpenChange={setImagePreviewOpen}>
         <DialogContent className="max-w-2xl">
           <DialogHeader>
-            <DialogTitle>Atsiliepimo nuotrauka</DialogTitle>
+            <DialogTitle>{t('admReviews.revPhotoTitle')}</DialogTitle>
           </DialogHeader>
           {previewImageUrl && (
             <img
               src={previewImageUrl}
-              alt="Atsiliepimo nuotrauka"
+              alt={t('admReviews.revPhotoTitle')}
               className="w-full max-h-[70vh] object-contain rounded-lg"
             />
           )}

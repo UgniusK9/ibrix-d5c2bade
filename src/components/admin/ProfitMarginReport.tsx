@@ -4,6 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { supabase } from '@/integrations/supabase/client';
+import { useTranslation } from 'react-i18next';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 
 interface Product {
@@ -25,6 +26,7 @@ const formatPrice = (amount: number) => {
 };
 
 export function ProfitMarginReport() {
+  const { t } = useTranslation();
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -125,7 +127,7 @@ export function ProfitMarginReport() {
                 <Package className="w-5 h-5 text-blue-600" />
               </div>
               <div>
-                <p className="text-sm text-muted-foreground">Konstruktoriai</p>
+                <p className="text-sm text-muted-foreground">{t('admAnalytics.profitProducts')}</p>
                 <p className="text-2xl font-bold">{totals.productCount}</p>
               </div>
             </div>
@@ -139,7 +141,7 @@ export function ProfitMarginReport() {
                 <DollarSign className="w-5 h-5 text-green-600" />
               </div>
               <div>
-                <p className="text-sm text-muted-foreground">Bendra pajamų suma</p>
+                <p className="text-sm text-muted-foreground">{t('admAnalytics.profitRevenue')}</p>
                 <p className="text-2xl font-bold">{formatPrice(totals.totalRevenue)}</p>
               </div>
             </div>
@@ -153,7 +155,7 @@ export function ProfitMarginReport() {
                 <TrendingUp className="w-5 h-5 text-emerald-600" />
               </div>
               <div>
-                <p className="text-sm text-muted-foreground">Bendras pelnas</p>
+                <p className="text-sm text-muted-foreground">{t('admAnalytics.profitTotal')}</p>
                 <p className="text-2xl font-bold text-green-600">{formatPrice(totals.totalProfit)}</p>
               </div>
             </div>
@@ -167,7 +169,7 @@ export function ProfitMarginReport() {
                 <Percent className="w-5 h-5 text-purple-600" />
               </div>
               <div>
-                <p className="text-sm text-muted-foreground">Vid. marža</p>
+                <p className="text-sm text-muted-foreground">{t('admAnalytics.profitAvgMargin')}</p>
                 <p className="text-2xl font-bold">{totals.avgMargin.toFixed(1)}%</p>
               </div>
             </div>
@@ -179,8 +181,8 @@ export function ProfitMarginReport() {
       {chartData.length > 0 && (
         <Card>
           <CardHeader>
-            <CardTitle className="text-lg">Top 10 pagal pelną</CardTitle>
-            <CardDescription>Pelningiausi konstruktoriai</CardDescription>
+            <CardTitle className="text-lg">{t('admAnalytics.profitTop10')}</CardTitle>
+            <CardDescription>{t('admAnalytics.profitTopDesc')}</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="h-[300px]">
@@ -190,7 +192,7 @@ export function ProfitMarginReport() {
                   <XAxis type="number" tickFormatter={(v) => `€${v}`} />
                   <YAxis type="category" dataKey="name" width={150} tick={{ fontSize: 12 }} />
                   <Tooltip 
-                    formatter={(value: number) => [formatPrice(value), 'Pelnas']}
+                    formatter={(value: number) => [formatPrice(value), t('admAnalytics.profitProfit')]}
                     labelStyle={{ fontWeight: 'bold' }}
                   />
                   <Bar dataKey="profit" radius={[0, 4, 4, 0]}>
@@ -211,9 +213,9 @@ export function ProfitMarginReport() {
       {/* Products Table */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-lg">Pelno ir maržos ataskaita</CardTitle>
+          <CardTitle className="text-lg">{t('admAnalytics.profitReport')}</CardTitle>
           <CardDescription>
-            Visi aktyvūs konstruktoriai ({totals.withCostCount} iš {totals.productCount} turi savikainą)
+            {t('admAnalytics.profitReportDesc', { withCost: totals.withCostCount, total: totals.productCount })}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -222,12 +224,12 @@ export function ProfitMarginReport() {
               <TableHeader>
                 <TableRow>
                   <TableHead>SKU</TableHead>
-                  <TableHead>Pavadinimas</TableHead>
-                  <TableHead className="text-right">Savikaina</TableHead>
-                  <TableHead className="text-right">Kaina</TableHead>
-                  <TableHead className="text-right">Akcijos kaina</TableHead>
-                  <TableHead className="text-right">Pelnas</TableHead>
-                  <TableHead className="text-right">Marža</TableHead>
+                  <TableHead>{t('admCommon.name')}</TableHead>
+                  <TableHead className="text-right">{t('admAnalytics.profitCost')}</TableHead>
+                  <TableHead className="text-right">{t('admProducts.pmPrice')}</TableHead>
+                  <TableHead className="text-right">{t('admAnalytics.profitSalePrice')}</TableHead>
+                  <TableHead className="text-right">{t('admAnalytics.profitProfit')}</TableHead>
+                  <TableHead className="text-right">{t('admAnalytics.profitMargin')}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>

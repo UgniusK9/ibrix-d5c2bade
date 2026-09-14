@@ -5,6 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { supabase } from '@/integrations/supabase/client';
+import { useTranslation } from 'react-i18next';
 import { ShipmentManager } from '@/components/admin/ShipmentManager';
 import { toast } from 'sonner';
 import {
@@ -99,6 +100,7 @@ const formatDate = (date: string) => {
 };
 
 export function OrdersManager() {
+  const { t } = useTranslation();
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
@@ -137,21 +139,21 @@ export function OrdersManager() {
 
   const exportToCSV = () => {
     const headers = [
-      'Užsakymo nr.',
-      'Statusas',
-      'Vardas',
-      'Pavardė',
-      'El. paštas',
-      'Telefonas',
-      'Iš viso €',
-      'Depozitas €',
-      'Likutis €',
-      'Nuolaida €',
-      'Pristatymas €',
-      'Pre-order',
-      'Sukurta',
-      'Depozitas sumokėtas',
-      'Likutis sumokėtas'
+      t('admOrders.ordCsvNo'),
+      t('admCommon.statusLabel'),
+      t('admCommon.firstName'),
+      t('admCommon.lastName'),
+      t('admCommon.email'),
+      t('admCommon.phone'),
+      t('admOrders.ordCsvTotal'),
+      t('admOrders.ordCsvDeposit'),
+      t('admOrders.ordCsvBalance'),
+      t('admOrders.ordCsvDiscount'),
+      t('admOrders.ordCsvShipping'),
+      t('products.preOrderLabel'),
+      t('admCommon.created'),
+      t('admAnalytics.dashDepositPaid'),
+      t('admOrders.ordCsvBalancePaid')
     ];
     
     const rows = filteredOrders.map(order => [
@@ -166,7 +168,7 @@ export function OrdersManager() {
       order.balance_total_eur.toFixed(2),
       order.discount_eur.toFixed(2),
       order.shipping_eur.toFixed(2),
-      order.preorder_flag ? 'Taip' : 'Ne',
+      order.preorder_flag ? t('common.yes') : t('common.no'),
       new Date(order.created_at).toISOString().split('T')[0],
       order.paid_at ? new Date(order.paid_at).toISOString().split('T')[0] : '',
       order.balance_paid_at ? new Date(order.balance_paid_at).toISOString().split('T')[0] : ''
@@ -181,11 +183,11 @@ export function OrdersManager() {
     const blob = new Blob([BOM + csvContent], { type: 'text/csv;charset=utf-8;' });
     const link = document.createElement('a');
     link.href = URL.createObjectURL(blob);
-    link.download = `uzsakymai_${new Date().toISOString().split('T')[0]}.csv`;
+    link.download = `${t('admOrders.ordCsvFile')}_${new Date().toISOString().split('T')[0]}.csv`;
     link.click();
     URL.revokeObjectURL(link.href);
     
-    toast.success('CSV failas eksportuotas');
+    toast.success(t('admOrders.ordCsvDone'));
   };
 
   useEffect(() => {
@@ -253,15 +255,15 @@ export function OrdersManager() {
       
       if (data?.success && data?.paymentUrl) {
         setBalancePaymentUrl(data.paymentUrl);
-        toast.success('Mokėjimo nuoroda sukurta!');
+        toast.success(t('admOrders.ordPayLinkDone'));
         await refreshOrderDetails();
         await loadOrders();
       } else {
-        toast.error(data?.error || 'Nepavyko sukurti mokėjimo nuorodos');
+        toast.error(data?.error || t('admOrders.ordPayLinkError'));
       }
     } catch (e: any) {
       console.error('Failed to request balance payment:', e);
-      toast.error(e.message || 'Klaida kuriant mokėjimo nuorodą');
+      toast.error(e.message || t('admOrders.ordPayLinkFail'));
     } finally {
       setRequestingBalance(false);
     }
@@ -269,53 +271,53 @@ export function OrdersManager() {
 
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text);
-    toast.success('Nukopijuota!');
+    toast.success(t('admCommon.copied'));
   };
 
   const getStatusBadge = (status: OrderStatus) => {
     const statusConfig: Record<OrderStatus, { label: string; className: string; icon: React.ReactNode }> = {
       'created': { 
-        label: 'Sukurtas', 
+        label: t('admOrders.ordCreated'), 
         className: 'bg-muted text-muted-foreground',
         icon: <AlertCircle className="w-3 h-3" />
       },
       'deposit_paid': { 
-        label: 'Depozitas sumokėtas', 
+        label: t('admAnalytics.dashDepositPaid'), 
         className: 'bg-green-500/10 text-green-600 border-green-500/30',
         icon: <CreditCard className="w-3 h-3" />
       },
       'awaiting_balance': { 
-        label: 'Laukia likučio', 
+        label: t('admOrders.ordAwaitingBalance'), 
         className: 'bg-yellow-500/10 text-yellow-600 border-yellow-500/30',
         icon: <Clock className="w-3 h-3" />
       },
       'balance_paid': { 
-        label: 'Pilnai apmokėtas', 
+        label: t('admAnalytics.dashFullyPaid'), 
         className: 'bg-green-500/10 text-green-600 border-green-500/30',
         icon: <CheckCircle2 className="w-3 h-3" />
       },
       'packed': { 
-        label: 'Supakuotas', 
+        label: t('admOrders.ordPacked'), 
         className: 'bg-blue-500/10 text-blue-600 border-blue-500/30',
         icon: <Box className="w-3 h-3" />
       },
       'shipped': { 
-        label: 'Išsiųstas', 
+        label: t('admOrders.ordShipped'), 
         className: 'bg-primary/10 text-primary border-primary/30',
         icon: <Truck className="w-3 h-3" />
       },
       'delivered': { 
-        label: 'Pristatytas', 
+        label: t('admOrders.ordDelivered'), 
         className: 'bg-green-500/10 text-green-600 border-green-500/30',
         icon: <CheckCircle2 className="w-3 h-3" />
       },
       'cancelled': { 
-        label: 'Atšauktas', 
+        label: t('admOrders.ordCancelled'), 
         className: 'bg-destructive/10 text-destructive border-destructive/30',
         icon: <XCircle className="w-3 h-3" />
       },
       'refunded': { 
-        label: 'Grąžintas', 
+        label: t('admOrders.ordRefunded'), 
         className: 'bg-muted text-muted-foreground',
         icon: <RefreshCw className="w-3 h-3" />
       },
@@ -333,9 +335,9 @@ export function OrdersManager() {
 
   const getPaymentTypeBadge = (type: Payment['type'], status: Payment['status']) => {
     const typeLabels = {
-      'deposit': 'Depozitas',
-      'balance': 'Likutis',
-      'refund': 'Grąžinimas',
+      'deposit': t('admOrders.ordPayDeposit'),
+      'balance': t('admOrders.ordPayBalance'),
+      'refund': t('admOrders.ordPayRefund'),
     };
     const statusColors = {
       'pending': 'bg-yellow-500/10 text-yellow-600',
@@ -383,7 +385,7 @@ export function OrdersManager() {
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <Input
-              placeholder="Ieškoti..."
+              placeholder={t('admCommon.searchPh')}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="pl-9 w-48"
@@ -392,19 +394,19 @@ export function OrdersManager() {
           
           <Select value={statusFilter} onValueChange={(v) => setStatusFilter(v as OrderStatus | 'all')}>
             <SelectTrigger className="w-44">
-              <SelectValue placeholder="Statusas" />
+              <SelectValue placeholder={t('admCommon.statusLabel')} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">Visi statusai</SelectItem>
-              <SelectItem value="created">Sukurtas</SelectItem>
-              <SelectItem value="deposit_paid">Depozitas sumokėtas</SelectItem>
-              <SelectItem value="awaiting_balance">Laukia likučio</SelectItem>
-              <SelectItem value="balance_paid">Pilnai apmokėtas</SelectItem>
-              <SelectItem value="packed">Supakuotas</SelectItem>
-              <SelectItem value="shipped">Išsiųstas</SelectItem>
-              <SelectItem value="delivered">Pristatytas</SelectItem>
-              <SelectItem value="cancelled">Atšauktas</SelectItem>
-              <SelectItem value="refunded">Grąžintas</SelectItem>
+              <SelectItem value="all">{t('products.allStatuses')}</SelectItem>
+              <SelectItem value="created">{t('admOrders.ordCreated')}</SelectItem>
+              <SelectItem value="deposit_paid">{t('admAnalytics.dashDepositPaid')}</SelectItem>
+              <SelectItem value="awaiting_balance">{t('admOrders.ordAwaitingBalance')}</SelectItem>
+              <SelectItem value="balance_paid">{t('admAnalytics.dashFullyPaid')}</SelectItem>
+              <SelectItem value="packed">{t('admOrders.ordPacked')}</SelectItem>
+              <SelectItem value="shipped">{t('admOrders.ordShipped')}</SelectItem>
+              <SelectItem value="delivered">{t('admOrders.ordDelivered')}</SelectItem>
+              <SelectItem value="cancelled">{t('admOrders.ordCancelled')}</SelectItem>
+              <SelectItem value="refunded">{t('admOrders.ordRefunded')}</SelectItem>
             </SelectContent>
           </Select>
           
@@ -412,13 +414,13 @@ export function OrdersManager() {
             <PopoverTrigger asChild>
               <Button variant="outline" size="sm" className="gap-2">
                 <Filter className="w-4 h-4" />
-                {dateFrom || dateTo ? 'Filtruota' : 'Datos'}
+                {dateFrom || dateTo ? t('admOrders.ordFiltered') : t('admOrders.ordDates')}
               </Button>
             </PopoverTrigger>
             <PopoverContent className="w-auto p-4" align="start">
               <div className="space-y-4">
                 <div>
-                  <p className="text-sm font-medium mb-2">Nuo</p>
+                  <p className="text-sm font-medium mb-2">{t('admOrders.ordFrom')}</p>
                   <Calendar
                     mode="single"
                     selected={dateFrom}
@@ -427,7 +429,7 @@ export function OrdersManager() {
                   />
                 </div>
                 <div>
-                  <p className="text-sm font-medium mb-2">Iki</p>
+                  <p className="text-sm font-medium mb-2">{t('admOrders.ordTo')}</p>
                   <Calendar
                     mode="single"
                     selected={dateTo}
@@ -442,7 +444,7 @@ export function OrdersManager() {
                     className="w-full"
                     onClick={() => { setDateFrom(undefined); setDateTo(undefined); }}
                   >
-                    Išvalyti datas
+                    {t('admOrders.ordClearDates')}
                   </Button>
                 )}
               </div>
@@ -453,11 +455,11 @@ export function OrdersManager() {
         <div className="flex gap-2">
           <Button onClick={exportToCSV} variant="outline" size="sm">
             <Download className="w-4 h-4 mr-2" />
-            Eksportuoti CSV
+            {t('admOrders.ordExportCsv')}
           </Button>
           <Button onClick={loadOrders} variant="outline" size="sm" disabled={loading}>
             <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
-            Atnaujinti
+            {t('admCommon.refresh')}
           </Button>
         </div>
       </div>
@@ -466,18 +468,18 @@ export function OrdersManager() {
       {loading ? (
         <div className="text-center py-12">
           <RefreshCw className="w-8 h-8 animate-spin mx-auto text-muted-foreground" />
-          <p className="text-muted-foreground mt-2">Kraunama...</p>
+          <p className="text-muted-foreground mt-2">{t('common.loading')}</p>
         </div>
       ) : filteredOrders.length === 0 ? (
         <div className="text-center py-12">
           <Package className="w-16 h-16 text-muted-foreground/30 mx-auto mb-4" />
           <h2 className="font-heading text-xl font-semibold mb-2">
-            {orders.length === 0 ? 'Nėra užsakymų' : 'Nerasta užsakymų'}
+            {orders.length === 0 ? t('admOrders.ordEmpty') : t('admOrders.ordNoResults')}
           </h2>
           <p className="text-muted-foreground">
             {orders.length === 0 
-              ? 'Kai klientai pateiks užsakymus, jie bus rodomi čia.' 
-              : 'Pabandykite pakeisti filtrus arba paiešką'}
+              ? t('admOrders.ordEmptyHint') 
+              : t('admOrders.ordTryFilters')}
           </p>
         </div>
       ) : (
@@ -485,12 +487,12 @@ export function OrdersManager() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Užsakymas</TableHead>
-                <TableHead>Klientas</TableHead>
-                <TableHead>Statusas</TableHead>
-                <TableHead>Depozitas / Likutis</TableHead>
-                <TableHead>Data</TableHead>
-                <TableHead className="text-right">Suma</TableHead>
+                <TableHead>{t('admOrders.ordOrder')}</TableHead>
+                <TableHead>{t('admOrders.ordCustomer')}</TableHead>
+                <TableHead>{t('admCommon.statusLabel')}</TableHead>
+                <TableHead>{t('admOrders.ordDepBal')}</TableHead>
+                <TableHead>{t('admCommon.date')}</TableHead>
+                <TableHead className="text-right">{t('common.amount')}</TableHead>
                 <TableHead></TableHead>
               </TableRow>
             </TableHeader>
@@ -548,7 +550,7 @@ export function OrdersManager() {
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="font-heading">
-              Užsakymas {selectedOrder?.order_number}
+              {t('admOrders.ordTitle', { num: selectedOrder?.order_number })}
             </DialogTitle>
             <DialogDescription>
               {selectedOrder && formatDate(selectedOrder.created_at)}
@@ -559,7 +561,7 @@ export function OrdersManager() {
             <div className="space-y-6">
               {/* Status */}
               <div className="flex items-center gap-3">
-                <span className="text-sm text-muted-foreground">Statusas:</span>
+                <span className="text-sm text-muted-foreground">{t('admUsers.inqStatusLabel')}</span>
                 {getStatusBadge(selectedOrder.status)}
                 {selectedOrder.preorder_flag && (
                   <Badge variant="outline" className="bg-primary/10 text-primary">
@@ -572,30 +574,30 @@ export function OrdersManager() {
               <div className="bg-muted/30 rounded-lg p-4">
                 <h3 className="font-semibold mb-3 flex items-center gap-2">
                   <DollarSign className="w-4 h-4" />
-                  Mokėjimo informacija
+                  {t('admOrders.ordPaymentInfo')}
                 </h3>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <span className="text-sm text-muted-foreground">Depozitas</span>
+                    <span className="text-sm text-muted-foreground">{t('admOrders.ordPayDeposit')}</span>
                     <p className="font-semibold text-green-600">{formatPrice(selectedOrder.deposit_total_eur)}</p>
                     {selectedOrder.paid_at && (
                       <p className="text-xs text-muted-foreground">
-                        Sumokėtas: {formatDate(selectedOrder.paid_at)}
+                        {t('admOrders.ordPaidAt', { date: formatDate(selectedOrder.paid_at) })}
                       </p>
                     )}
                   </div>
                   <div>
-                    <span className="text-sm text-muted-foreground">Likutis</span>
+                    <span className="text-sm text-muted-foreground">{t('admOrders.ordPayBalance')}</span>
                     <p className={`font-semibold ${selectedOrder.balance_paid_at ? 'text-green-600' : 'text-yellow-600'}`}>
                       {formatPrice(selectedOrder.balance_total_eur)}
                     </p>
                     {selectedOrder.balance_paid_at ? (
                       <p className="text-xs text-green-600">
-                        ✓ Sumokėtas: {formatDate(selectedOrder.balance_paid_at)}
+                        ✓ {t('admOrders.ordPaidAt', { date: formatDate(selectedOrder.balance_paid_at) })}
                       </p>
                     ) : (
                       <p className="text-xs text-yellow-600">
-                        Nesumokėtas
+                        {t('admOrders.ordUnpaid')}
                       </p>
                     )}
                   </div>
@@ -611,21 +613,21 @@ export function OrdersManager() {
                         onClick={() => setShowMessageInput(true)}
                       >
                         <MessageSquare className="w-4 h-4 mr-2" />
-                        Prašyti apmokėti likutį ({formatPrice(selectedOrder.balance_total_eur)})
+                        {t('admOrders.ordRequestBalance', { amount: formatPrice(selectedOrder.balance_total_eur) })}
                       </Button>
                     ) : (
                       <div className="space-y-3 p-3 bg-muted/50 rounded-lg border border-border">
                         <div>
-                          <p className="text-sm font-medium mb-2">Žinutė klientui (neprivaloma)</p>
+                          <p className="text-sm font-medium mb-2">{t('admOrders.ordMsgLabel')}</p>
                           <Textarea
                             value={balanceMessage}
                             onChange={(e) => setBalanceMessage(e.target.value)}
-                            placeholder="Sveiki! Jūsų prekė paruošta. Apmokėkite likutį, kad galėtume išsiųsti..."
+                            placeholder={t('admOrders.ordMsgPh')}
                             rows={3}
                             className="text-sm"
                           />
                           <p className="text-xs text-muted-foreground mt-1">
-                            Ši žinutė bus įtraukta į el. laišką klientui.
+                            {t('admOrders.ordMsgHint')}
                           </p>
                         </div>
                         <div className="flex gap-2">
@@ -637,7 +639,7 @@ export function OrdersManager() {
                               setBalanceMessage('');
                             }}
                           >
-                            Atšaukti
+                            {t('common.cancel')}
                           </Button>
                           <Button 
                             size="sm" 
@@ -648,12 +650,12 @@ export function OrdersManager() {
                             {requestingBalance ? (
                               <>
                                 <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
-                                Siunčiama...
+                                {t('common.sending')}
                               </>
                             ) : (
                               <>
                                 <CreditCard className="w-4 h-4 mr-2" />
-                                Siųsti prašymą
+                                {t('admOrders.ordSendRequest')}
                               </>
                             )}
                           </Button>
@@ -664,7 +666,7 @@ export function OrdersManager() {
                     {balancePaymentUrl && (
                       <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-3 space-y-2">
                         <p className="text-sm text-green-800 dark:text-green-300 font-medium">
-                          ✓ Mokėjimo nuoroda sukurta ir išsiųsta klientui!
+                          {t('admOrders.ordLinkSent')}
                         </p>
                         <div className="flex gap-2">
                           <Button
@@ -673,7 +675,7 @@ export function OrdersManager() {
                             onClick={() => copyToClipboard(balancePaymentUrl)}
                           >
                             <Copy className="w-3 h-3 mr-1" />
-                            Kopijuoti
+                            {t('admOrders.ordCopy')}
                           </Button>
                           <Button
                             size="sm"
@@ -681,7 +683,7 @@ export function OrdersManager() {
                             onClick={() => window.open(balancePaymentUrl, '_blank')}
                           >
                             <ExternalLink className="w-3 h-3 mr-1" />
-                            Atidaryti
+                            {t('admCommon.open')}
                           </Button>
                         </div>
                       </div>
@@ -693,7 +695,7 @@ export function OrdersManager() {
               {/* Payments History */}
               {orderPayments.length > 0 && (
                 <div>
-                  <h3 className="font-semibold mb-3">Mokėjimų istorija</h3>
+                  <h3 className="font-semibold mb-3">{t('admOrders.ordPayHistory')}</h3>
                   <div className="space-y-2">
                     {orderPayments.map((payment) => (
                       <div key={payment.id} className="flex items-center justify-between p-3 bg-muted/30 rounded-lg">
@@ -715,7 +717,7 @@ export function OrdersManager() {
               {/* Customer Info */}
               <div className="grid grid-cols-2 gap-4 bg-muted/30 rounded-lg p-4">
                 <div>
-                  <h3 className="font-semibold mb-2">Klientas</h3>
+                  <h3 className="font-semibold mb-2">{t('admOrders.ordCustomer')}</h3>
                   <p className="text-sm">{selectedOrder.first_name} {selectedOrder.last_name}</p>
                   <p className="text-sm text-muted-foreground">{selectedOrder.email}</p>
                   {selectedOrder.phone && (
@@ -723,7 +725,7 @@ export function OrdersManager() {
                   )}
                 </div>
                 <div>
-                  <h3 className="font-semibold mb-2">Pristatymo adresas</h3>
+                  <h3 className="font-semibold mb-2">{t('admOrders.ordShipAddress')}</h3>
                   {selectedOrder.shipping_address_json && (
                     <div className="text-sm text-muted-foreground">
                       {selectedOrder.shipping_address_json.lockerName ? (
@@ -753,7 +755,7 @@ export function OrdersManager() {
 
               {/* Order Items */}
               <div>
-                <h3 className="font-semibold mb-3">Prekės</h3>
+                <h3 className="font-semibold mb-3">{t('admCommon.items')}</h3>
                 <div className="space-y-2">
                   {orderItems.map((item) => (
                     <div key={item.id} className="flex items-center justify-between p-3 bg-muted/30 rounded-lg">
@@ -766,7 +768,7 @@ export function OrdersManager() {
                       <div className="text-right">
                         <p className="font-semibold">{formatPrice(item.unit_price_eur * item.quantity)}</p>
                         <p className="text-xs text-primary">
-                          Depozitas: {formatPrice(item.unit_deposit_eur * item.quantity)}
+                          {t('admOrders.ordPayDeposit')}: {formatPrice(item.unit_deposit_eur * item.quantity)}
                         </p>
                       </div>
                     </div>
@@ -776,21 +778,21 @@ export function OrdersManager() {
                 {/* Totals */}
                 <div className="mt-4 pt-4 border-t border-border space-y-1 text-sm">
                   <div className="flex justify-between">
-                    <span className="text-muted-foreground">Tarpinė suma:</span>
+                    <span className="text-muted-foreground">{t('cart.subtotal')}:</span>
                     <span>{formatPrice(selectedOrder.subtotal_eur)}</span>
                   </div>
                   {selectedOrder.discount_eur > 0 && (
                     <div className="flex justify-between text-green-600">
-                      <span>Nuolaida:</span>
+                      <span>{t('cart.discount')}:</span>
                       <span>-{formatPrice(selectedOrder.discount_eur)}</span>
                     </div>
                   )}
                   <div className="flex justify-between">
-                    <span className="text-muted-foreground">Pristatymas:</span>
-                    <span>{selectedOrder.shipping_eur === 0 ? 'Nemokamas' : formatPrice(selectedOrder.shipping_eur)}</span>
+                    <span className="text-muted-foreground">{t('cart.shipping')}:</span>
+                    <span>{selectedOrder.shipping_eur === 0 ? t('common.free') : formatPrice(selectedOrder.shipping_eur)}</span>
                   </div>
                   <div className="flex justify-between font-bold text-lg pt-2">
-                    <span>Iš viso:</span>
+                    <span>{t('cart.total')}:</span>
                     <span>{formatPrice(selectedOrder.total_eur)}</span>
                   </div>
                 </div>
@@ -807,7 +809,7 @@ export function OrdersManager() {
               {/* Notes */}
               {selectedOrder.notes && (
                 <div>
-                  <h3 className="font-semibold mb-2">Pastabos</h3>
+                  <h3 className="font-semibold mb-2">{t('admOrders.ordNotes')}</h3>
                   <p className="text-sm text-muted-foreground bg-muted/30 p-3 rounded-lg">
                     {selectedOrder.notes}
                   </p>

@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
+import i18n from '@/i18n/config';
 
 export function useWishlist() {
   const { user } = useAuth();
@@ -38,7 +39,7 @@ export function useWishlist() {
 
   const toggleWishlist = async (productId: string) => {
     if (!user) {
-      toast.error('Prisijunkite, kad galėtumėte išsaugoti produktus');
+      toast.error(i18n.t('account.loginRequired'));
       return;
     }
 
@@ -58,7 +59,7 @@ export function useWishlist() {
           .insert({ user_id: user.id, product_id: productId });
         
         if (error) throw error;
-        toast.success('Produktas išsaugotas');
+        toast.success(i18n.t('account.productSaved'));
       } else {
         const { error } = await supabase
           .from('wishlists')
@@ -67,7 +68,7 @@ export function useWishlist() {
           .eq('product_id', productId);
         
         if (error) throw error;
-        toast.success('Produktas pašalintas');
+        toast.success(i18n.t('account.productRemoved'));
       }
     } catch (e) {
       // Revert on error
@@ -77,7 +78,7 @@ export function useWishlist() {
         setWishlistIds(prev => [...prev, productId]);
       }
       console.error('Wishlist error:', e);
-      toast.error('Nepavyko atnaujinti norų sąrašo');
+      toast.error(i18n.t('wishlist.removeFailed'));
     }
   };
 

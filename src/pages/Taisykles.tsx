@@ -1,8 +1,10 @@
 import { PageLayout } from "@/components/layout/PageLayout";
 import { RouteSEO } from "@/components/seo/RouteSEO";
+import { useTranslation } from "react-i18next";
 import { COMPANY, companyLine } from "@/config/company";
 
 export default function Taisykles() {
+  const { t } = useTranslation();
   const mailto = `mailto:${COMPANY.email}`;
 
   return (
@@ -10,494 +12,226 @@ export default function Taisykles() {
       <RouteSEO />
       <section className="py-16 md:py-24">
         <div className="container max-w-3xl">
-          <h1 className="font-heading text-4xl font-bold mb-2">Taisyklės</h1>
-          <p className="text-sm text-muted-foreground mb-10">Atnaujinta {COMPANY.updated}</p>
+          <h1 className="font-heading text-4xl font-bold mb-2">{t("legTerms.title")}</h1>
+          <p className="text-sm text-muted-foreground mb-10">{t("legTerms.updated", { date: COMPANY.updated })}</p>
 
           <div className="prose prose-lg max-w-none text-muted-foreground prose-headings:text-foreground prose-headings:font-heading prose-strong:text-foreground">
-            <h2 className="!mt-0">Pirkimo taisyklės</h2>
+            <h2 className="!mt-0">{t("legTerms.purchaseTitle")}</h2>
 
-            <h3>1. Bendrosios nuostatos</h3>
-            <p>
-              1.1. Elektroninė parduotuvė {COMPANY.site} (toliau – Parduotuvė) priklauso ir yra
-              administruojama {companyLine()} (toliau – Pardavėjas).
-            </p>
-            <p>
-              1.2. Šios pirkimo taisyklės (toliau – Taisyklės) yra Pardavėjo ir Pirkėjo teisiškai
-              privalomas dokumentas, kuriame nustatomos šalių teisės, pareigos, prekių įsigijimo,
-              apmokėjimo, pristatymo bei grąžinimo sąlygos ir atsakomybė.
-            </p>
-            <p>
-              1.3. Pirkti Parduotuvėje turi teisę veiksnūs fiziniai asmenys, nepilnamečiai nuo
-              keturiolikos iki aštuoniolikos metų amžiaus, turintys tėvų ar globėjų sutikimą, taip
-              pat juridiniai asmenys.
-            </p>
-            <p>
-              1.4. Pateikdamas užsakymą Pirkėjas patvirtina, kad susipažino su Taisyklėmis ir su
-              jomis sutinka. Su Taisyklėmis nesutinkantis asmuo neturi teisės pirkti Parduotuvėje.
-            </p>
-            <p>
-              1.5. Pardavėjas turi teisę keisti Taisykles. Užsakymui taikoma ta Taisyklių redakcija,
-              kuri galiojo užsakymo pateikimo metu.
-            </p>
+            <h3>{t("legTerms.buyGeneral.title")}</h3>
+            <p>{t("legTerms.buyGeneral.p1", { site: COMPANY.site, company: companyLine() })}</p>
+            <p>{t("legTerms.buyGeneral.p2")}</p>
+            <p>{t("legTerms.buyGeneral.p3")}</p>
+            <p>{t("legTerms.buyGeneral.p4")}</p>
+            <p>{t("legTerms.buyGeneral.p5")}</p>
 
-            <h3>2. Pirkimo–pardavimo sutarties sudarymas</h3>
-            <p>
-              2.1. Sutartis laikoma sudaryta nuo to momento, kai Pirkėjas suformuoja užsakymą, jį
-              apmoka ir gauna Pardavėjo patvirtinimą el. paštu.
-            </p>
-            <p>
-              2.2. Kiekviena sutartis saugoma Parduotuvės duomenų bazėje. Savo užsakymus Pirkėjas
-              mato prisijungęs prie paskyros.
-            </p>
-            <p>
-              2.3. Pardavėjas turi teisę atšaukti užsakymą, jeigu prekės nebeturima, jos kaina ar
-              aprašymas buvo pateikti su akivaizdžia klaida arba užsakymo nepavyksta patvirtinti.
-              Tokiu atveju sumokėta suma grąžinama per 14 (keturiolika) dienų.
-            </p>
+            <h3>{t("legTerms.buyContract.title")}</h3>
+            <p>{t("legTerms.buyContract.p1")}</p>
+            <p>{t("legTerms.buyContract.p2")}</p>
+            <p>{t("legTerms.buyContract.p3")}</p>
 
-            <h3>3. Kainos ir apmokėjimas</h3>
-            <p>
-              3.1. Prekių kainos nurodytos eurais ir apima visus mokesčius. Pristatymo kaina, jeigu
-              ji taikoma, nurodoma atskirai užsakymo formavimo metu.
-            </p>
-            <p>3.2. Užsakymui taikoma kaina, galiojusi užsakymo pateikimo momentu.</p>
-            <p>
-              3.3. Atsiskaitoma per {COMPANY.paymentProcessor} mokėjimų sistemą pasirenkant
-              elektroninę bankininkystę ar kitą siūlomą būdą. Pardavėjas neturi prieigos prie Pirkėjo
-              mokėjimo priemonių duomenų.
-            </p>
-            <p>3.4. Pirkėjo pageidavimu išrašoma sąskaita faktūra, kuri pateikiama el. paštu.</p>
+            <h3>{t("legTerms.buyPrices.title")}</h3>
+            <p>{t("legTerms.buyPrices.p1")}</p>
+            <p>{t("legTerms.buyPrices.p2")}</p>
+            <p>{t("legTerms.buyPrices.p3", { processor: COMPANY.paymentProcessor })}</p>
+            <p>{t("legTerms.buyPrices.p4")}</p>
 
-            <h3>4. Išankstiniai užsakymai (pre-order)</h3>
+            <h3>{t("legTerms.buyPreorder.title")}</h3>
+            <p>{t("legTerms.buyPreorder.p1")}</p>
+            <p>{t("legTerms.buyPreorder.p2")}</p>
+            <p>{t("legTerms.buyPreorder.p3")}</p>
+            <p>{t("legTerms.buyPreorder.p4")}</p>
+
+            <h3>{t("legTerms.buyDelivery.title")}</h3>
             <p>
-              4.1. Dalis prekių parduodama išankstinio užsakymo būdu. Tokios prekės aiškiai
-              pažymėtos, o prie jų nurodomas orientacinis laukimo terminas savaitėmis.
+              {t("legTerms.buyDelivery.p1pre")} <a href="/pristatymas">{t("legTerms.buyDelivery.p1link")}</a>
+              {t("legTerms.buyDelivery.p1post")}
             </p>
+            <p>{t("legTerms.buyDelivery.p2")}</p>
+            <p>{t("legTerms.buyDelivery.p3")}</p>
+            <p>{t("legTerms.buyDelivery.p4")}</p>
+
+            <h3>{t("legTerms.buyWithdrawal.title")}</h3>
+            <p>{t("legTerms.buyWithdrawal.p1")}</p>
             <p>
-              4.2. Pateikdamas išankstinį užsakymą Pirkėjas sumoka avansą. Likusi suma sumokama prieš
-              prekės išsiuntimą, Pardavėjui apie tai pranešus el. paštu.
+              {t("legTerms.buyWithdrawal.p2pre")} <a href={mailto}>{COMPANY.email}</a>
+              {t("legTerms.buyWithdrawal.p2mid")} <a href="/grazinimai">{t("legTerms.buyWithdrawal.p2link")}</a>
+              {t("legTerms.buyWithdrawal.p2post")}
             </p>
+            <p>{t("legTerms.buyWithdrawal.p3")}</p>
+            <p>{t("legTerms.buyWithdrawal.p4")}</p>
+            <p>{t("legTerms.buyWithdrawal.p5")}</p>
+
+            <h3>{t("legTerms.buyQuality.title")}</h3>
+            <p>{t("legTerms.buyQuality.p1")}</p>
+            <p>{t("legTerms.buyQuality.p2")}</p>
+            <p>{t("legTerms.buyQuality.p3")}</p>
+
+            <h3>{t("legTerms.buyMissing.title")}</h3>
             <p>
-              4.3. Nurodomas laukimo terminas yra orientacinis ir priklauso nuo gamintojo. Terminui
-              reikšmingai pailgėjus Pardavėjas informuoja Pirkėją, o Pirkėjas turi teisę atsisakyti
-              užsakymo ir atgauti sumokėtą avansą.
+              {t("legTerms.buyMissing.p1pre")} <a href="/trukstamos-detales">{t("legTerms.buyMissing.p1link")}</a>
+              {t("legTerms.buyMissing.p1post")}
             </p>
+            <p>{t("legTerms.buyMissing.p2")}</p>
+
+            <h3>{t("legTerms.buyLiability.title")}</h3>
+            <p>{t("legTerms.buyLiability.p1")}</p>
+            <p>{t("legTerms.buyLiability.p2")}</p>
+            <p>{t("legTerms.buyLiability.p3")}</p>
+
+            <h3>{t("legTerms.buyPrivacy.title")}</h3>
             <p>
-              4.4. Išankstinį užsakymą Pirkėjas gali atšaukti bet kada iki prekės išsiuntimo.
-              Sumokėtas avansas grąžinamas visas per 14 (keturiolika) dienų.
+              {t("legTerms.buyPrivacy.p1pre")} <a href="/privatumo-politika">{t("legTerms.buyPrivacy.p1link")}</a>{" "}
+              {t("legTerms.buyPrivacy.p1post")}
             </p>
 
-            <h3>5. Prekių pristatymas</h3>
+            <h3>{t("legTerms.buyDisputes.title")}</h3>
             <p>
-              5.1. Prekės pristatomos į Pirkėjo pasirinktą paštomatą arba nurodytu adresu. Pristatymo
-              būdai ir terminai nurodyti skiltyje <a href="/pristatymas">Pristatymas</a>.
+              {t("legTerms.buyDisputes.p1pre")} <a href={mailto}>{COMPANY.email}</a>
+              {t("legTerms.buyDisputes.p1post")}
             </p>
             <p>
-              5.2. Pirkėjas įsipareigoja nurodyti tikslų pristatymo adresą. Dėl neteisingai nurodytų
-              duomenų atsiradusias papildomas išlaidas apmoka Pirkėjas.
-            </p>
-            <p>
-              5.3. Prekės atsitiktinio žuvimo ar sugedimo rizika pereina Pirkėjui nuo prekės
-              atsiėmimo momento.
-            </p>
-            <p>
-              5.4. Pastebėjęs pažeistą siuntos pakuotę, Pirkėjas turi tai pažymėti siuntos perdavimo
-              dokumente arba nedelsdamas informuoti Pardavėją.
-            </p>
-
-            <h3>6. Teisė atsisakyti sutarties</h3>
-            <p>
-              6.1. Pirkėjas (vartotojas) turi teisę per 14 (keturiolika) dienų nuo prekės gavimo
-              atsisakyti sutarties nenurodydamas priežasties.
-            </p>
-            <p>
-              6.2. Apie sutarties atsisakymą pranešama el. paštu <a href={mailto}>{COMPANY.email}</a>
-              . Grąžinimo tvarka aprašyta skiltyje <a href="/grazinimai">Grąžinimai</a>.
-            </p>
-            <p>
-              6.3. Grąžinama prekė turi būti nenaudota, nesugadinta, nepraradusi prekinės išvaizdos
-              ir originalioje pakuotėje. Surinktas konstruktorius nelaikomas nepraradusiu prekinės
-              išvaizdos.
-            </p>
-            <p>
-              6.4. Sumokėtus pinigus Pardavėjas grąžina ne vėliau kaip per 14 (keturiolika) dienų nuo
-              prekės grąžinimo.
-            </p>
-            <p>6.5. Teisė atsisakyti sutarties netaikoma juridiniams asmenims.</p>
-
-            <h3>7. Prekių kokybė ir garantija</h3>
-            <p>
-              7.1. Prekėms taikoma dvejų metų garantija pagal kokybės reikalavimus, numatytus
-              Lietuvos Respublikos civiliniame kodekse.
-            </p>
-            <p>
-              7.2. Nuotraukos yra iliustracinės. Prekės spalvos, forma ar kiti parametrai dėl
-              monitoriaus nustatymų gali nežymiai skirtis nuo realių.
-            </p>
-            <p>
-              7.3. Nustačius kokybės trūkumą Pirkėjas turi teisę reikalauti prekę pakeisti, sumažinti
-              kainą arba nutraukti sutartį ir atgauti sumokėtus pinigus.
-            </p>
-
-            <h3>8. Trūkstamos detalės</h3>
-            <p>
-              8.1. Pastebėjus, kad rinkinyje trūksta detalės, Pardavėjas ją atsiunčia nemokamai.
-              Pakanka nurodyti rinkinio numerį ir detalės numerį iš instrukcijos skiltyje{" "}
-              <a href="/trukstamos-detales">Trūkstamos detalės</a>.
-            </p>
-            <p>
-              8.2. Ši nuostata negali būti aiškinama kaip Pirkėjo teisių pagal 6 ir 7 skyrius
-              ribojimas.
-            </p>
-
-            <h3>9. Šalių atsakomybė</h3>
-            <p>
-              9.1. Pirkėjas atsako už pateiktų duomenų teisingumą ir už prisijungimo duomenų
-              saugojimą.
-            </p>
-            <p>
-              9.2. Pardavėjas neatsako už kitų įmonių tinklalapiuose pateiktą informaciją, net jeigu
-              Pirkėjas juos pasiekia per Parduotuvėje esančias nuorodas.
-            </p>
-            <p>
-              9.3. Atsiradus žalai, kaltoji šalis atlygina kitos šalies patirtus tiesioginius
-              nuostolius Lietuvos Respublikos teisės aktų nustatyta tvarka.
-            </p>
-
-            <h3>10. Asmens duomenys</h3>
-            <p>
-              10.1. Asmens duomenys tvarkomi vadovaujantis{" "}
-              <a href="/privatumo-politika">Privatumo politika</a> ir Bendruoju duomenų apsaugos
-              reglamentu (BDAR).
-            </p>
-
-            <h3>11. Ginčų sprendimas</h3>
-            <p>
-              11.1. Nesutarimai sprendžiami derybomis. Prašymą Pardavėjui galima pateikti el. paštu{" "}
-              <a href={mailto}>{COMPANY.email}</a>; atsakymas pateikiamas per 14 (keturiolika) dienų.
-            </p>
-            <p>
-              11.2. Nepavykus susitarti, vartotojas turi teisę kreiptis į {COMPANY.vvtat} (
+              {t("legTerms.buyDisputes.p2pre", { vvtat: COMPANY.vvtat })}{" "}
               <a href={COMPANY.vvtatUrl} target="_blank" rel="noopener noreferrer">
                 vvtat.lt
-              </a>
-              ) arba pasinaudoti Europos Komisijos elektronine ginčų sprendimo platforma (
+              </a>{" "}
+              {t("legTerms.buyDisputes.p2mid")}{" "}
               <a href={COMPANY.odrUrl} target="_blank" rel="noopener noreferrer">
                 ec.europa.eu/odr
-              </a>
-              ).
+              </a>{" "}
+              {t("legTerms.buyDisputes.p2post")}
             </p>
-            <p>11.3. Ginčams taikoma Lietuvos Respublikos teisė.</p>
+            <p>{t("legTerms.buyDisputes.p3")}</p>
 
-            <h3>12. Pardavėjo rekvizitai</h3>
+            <h3>{t("legTerms.buySeller.title")}</h3>
             <p>
               {COMPANY.legalName}
               <br />
-              Juridinio asmens kodas: {COMPANY.regCode}
+              {t("legTerms.buySeller.codeLabel")} {COMPANY.regCode}
               {COMPANY.vatCode ? (
                 <>
                   <br />
-                  PVM mokėtojo kodas: {COMPANY.vatCode}
+                  {t("legTerms.buySeller.vatLabel")} {COMPANY.vatCode}
                 </>
               ) : null}
               <br />
-              Buveinės adresas: {COMPANY.address}, {COMPANY.country}
+              {t("legTerms.buySeller.addressLabel")} {COMPANY.address}, {COMPANY.country}
               <br />
-              El. paštas: <a href={mailto}>{COMPANY.email}</a>
+              {t("legTerms.buySeller.emailLabel")} <a href={mailto}>{COMPANY.email}</a>
             </p>
 
             <hr className="my-12" />
 
-            <h2 className="!mt-0">Naudojimosi svetaine taisyklės</h2>
-            <h3>1. Bendrosios nuostatos</h3>
+            <h2 className="!mt-0">{t("legTerms.usageTitle")}</h2>
+            <h3>{t("legTerms.useGeneral.title")}</h3>
+            <p>{t("legTerms.useGeneral.p1")}</p>
+            <p>{t("legTerms.useGeneral.p2")}</p>
+            <p>{t("legTerms.useGeneral.p3")}</p>
+            <p>{t("legTerms.useGeneral.p4")}</p>
+            <p>{t("legTerms.useGeneral.p5")}</p>
+            <p>{t("legTerms.useGeneral.p6")}</p>
+            <p>{t("legTerms.useGeneral.p7")}</p>
+
+            <h3>{t("legTerms.useAccount.title")}</h3>
+            <p>{t("legTerms.useAccount.p1")}</p>
+            <p>{t("legTerms.useAccount.p2")}</p>
+            <p>{t("legTerms.useAccount.p3")}</p>
+            <p>{t("legTerms.useAccount.p4")}</p>
             <p>
-              1.1. Šios naudojimosi svetaine taisyklės (toliau – Naudojimosi taisyklės) nustato
-              Parduotuvės lankymo, paskyros naudojimo ir turinio naudojimo sąlygas. Jos taikomos
-              visiems Lankytojams – tiek pirkusiems, tiek tik naršantiems.
-            </p>
-            <p>
-              1.2. Naudodamasis Parduotuve Lankytojas besąlygiškai įsipareigoja laikytis visų
-              Naudojimosi taisyklėse nustatytų reikalavimų. Nesutinkantis asmuo neturi teisės
-              naudotis Parduotuve.
-            </p>
-            <p>
-              1.3. Naudojimosi taisyklėse vartojamos sąvokos turi tą pačią reikšmę kaip ir Pirkimo
-              taisyklėse, išskyrus atvejus, kai jos apibrėžiamos atskirai.
-            </p>
-            <p>
-              1.4. Pardavėjas turi teisę bet kada vienašališkai keisti ir papildyti Naudojimosi
-              taisykles. Pakeitimai įsigalioja juos paskelbus Parduotuvėje.
-            </p>
-            <p>
-              1.5. Jeigu po pakeitimų paskelbimo Lankytojas toliau naudojasi Parduotuve, laikoma,
-              kad jis su pakeitimais sutinka. Nesutinkantis Lankytojas turi nustoti naudotis
-              Parduotuve ir gali prašyti ištrinti savo paskyrą.
-            </p>
-            <p>
-              1.6. Pardavėjas turi teisę bet kada keisti Parduotuvės funkcijas, dizainą, prekių
-              asortimentą, kainas ir bet kokį turinį be atskiro įspėjimo. Tai neturi įtakos jau
-              patvirtintiems užsakymams – jiems galioja užsakymo metu buvusios sąlygos.
-            </p>
-            <p>
-              1.7. Parduotuvė teikiama tokia, kokia yra tuo metu. Pardavėjas nesuteikia garantijos,
-              kad Parduotuvė veiks nepertraukiamai ar be klaidų, tačiau deda pagrįstas pastangas
-              sutrikimams pašalinti.
+              {t("legTerms.useAccount.p5pre")} <a href={mailto}>{COMPANY.email}</a>
+              {t("legTerms.useAccount.p5mid")} <a href="/privatumo-politika">{t("legTerms.useAccount.p5link")}</a>
+              {t("legTerms.useAccount.p5post")}
             </p>
 
-            <h3>2. Registracija ir paskyra</h3>
-            <p>
-              2.1. Dalimi Parduotuvės funkcijų – užsakymų istorija, kreditais, pageidavimų sąrašu –
-              galima naudotis tik susikūrus paskyrą. Registruojantis pateikiami vardas, pavardė,
-              el. pašto adresas, telefono numeris ir slaptažodis.
-            </p>
-            <p>
-              2.2. Lankytojas įsipareigoja pateikti teisingus ir išsamius duomenis, o jiems
-              pasikeitus – nedelsdamas juos atnaujinti. Pardavėjas neatsako už pasekmes, kilusias dėl
-              neteisingų ar pasenusių duomenų.
-            </p>
-            <p>
-              2.3. Lankytojas atsako už savo prisijungimo duomenų slaptumą ir už visus veiksmus,
-              atliktus prisijungus prie jo paskyros. Įtaręs neteisėtą prisijungimą, Lankytojas
-              privalo nedelsdamas pakeisti slaptažodį ir informuoti Pardavėją.
-            </p>
-            <p>
-              2.4. Vienas asmuo gali turėti tik vieną paskyrą. Draudžiama kurti paskyras kito asmens
-              vardu ar naudojantis netikrais duomenimis.
-            </p>
-            <p>
-              2.5. Paskyrą galima bet kada ištrinti parašius el. paštu{" "}
-              <a href={mailto}>{COMPANY.email}</a>. Ištrynus paskyrą duomenys pašalinami, išskyrus
-              tuos, kuriuos privaloma saugoti pagal teisės aktus – tai aprašyta{" "}
-              <a href="/privatumo-politika">Privatumo apsaugos taisyklėse</a>.
-            </p>
-
-            <h3>3. Pardavėjo ir Lankytojo teisės bei pareigos</h3>
-            <p>
-              3.1. Lankytojas įsipareigoja naudotis Parduotuve sąžiningai, teisėtais tikslais ir
-              nepažeisdamas trečiųjų asmenų teisių.
-            </p>
-            <p>3.2. Lankytojui draudžiama:</p>
+            <h3>{t("legTerms.useRights.title")}</h3>
+            <p>{t("legTerms.useRights.fairUse")}</p>
+            <p>{t("legTerms.useRights.banIntro")}</p>
             <ul>
-              <li>
-                trikdyti Parduotuvės veikimą, bandyti gauti neteisėtą prieigą prie sistemų, duomenų
-                bazių ar kitų Lankytojų paskyrų;
-              </li>
-              <li>
-                naudoti automatines duomenų rinkimo, kopijavimo ar užsakymų teikimo priemones be
-                išankstinio rašytinio Pardavėjo sutikimo;
-              </li>
-              <li>
-                platinti kenkėjišką programinę įrangą, brukalą ar kitokį nepageidaujamą turinį;
-              </li>
-              <li>
-                skelbti neteisingus, įžeidžiančius, šmeižiančius ar teisės aktams prieštaraujančius
-                atsiliepimus bei komentarus;
-              </li>
-              <li>
-                naudoti Parduotuvės turinį komerciniais tikslais be Pardavėjo sutikimo.
-              </li>
+              <li>{t("legTerms.useRights.ban1")}</li>
+              <li>{t("legTerms.useRights.ban2")}</li>
+              <li>{t("legTerms.useRights.ban3")}</li>
+              <li>{t("legTerms.useRights.ban4")}</li>
+              <li>{t("legTerms.useRights.ban5")}</li>
             </ul>
+            <p>{t("legTerms.useRights.respInfo")}</p>
+            <p>{t("legTerms.useRights.reviewTrue")}</p>
+            <p>{t("legTerms.useRights.reviewRemove")}</p>
+            <p>{t("legTerms.useRights.restrict")}</p>
+            <p>{t("legTerms.useRights.warnFirst")}</p>
+            <p>{t("legTerms.useRights.restrictOrders")}</p>
+            <p>{t("legTerms.useRights.provideService")}</p>
             <p>
-              3.3. Lankytojas atsako už visą informaciją, kurią pateikia Parduotuvėje – užsakymo
-              duomenis, atsiliepimus, užklausas ir kitą medžiagą.
+              {t("legTerms.useRights.respectPre")} <a href="/privatumo-politika">{t("legTerms.useRights.respectLink")}</a>
+              {t("legTerms.useRights.respectPost")}
             </p>
+            <p>{t("legTerms.useRights.shutdown")}</p>
+            <p>{t("legTerms.useRights.leaveFree")}</p>
+
+            <h3>{t("legTerms.useOrdering.title")}</h3>
+            <p>{t("legTerms.useOrdering.p1")}</p>
+            <p>{t("legTerms.useOrdering.p2")}</p>
+            <p>{t("legTerms.useOrdering.p3")}</p>
+            <p>{t("legTerms.useOrdering.p4")}</p>
+            <p>{t("legTerms.useOrdering.p5")}</p>
+            <p>{t("legTerms.useOrdering.p6")}</p>
+            <p>{t("legTerms.useOrdering.p7")}</p>
+            <p>{t("legTerms.useOrdering.p8")}</p>
+            <p>{t("legTerms.useOrdering.p9")}</p>
             <p>
-              3.4. Pateikdamas atsiliepimą Lankytojas patvirtina, kad jis yra tikras, pagrįstas
-              asmenine patirtimi ir nepažeidžia trečiųjų asmenų teisių.
-            </p>
-            <p>
-              3.5. Pardavėjas turi teisę nepaskelbti arba pašalinti atsiliepimą, kuris neatitinka
-              3.2 ar 3.4 punktų, tačiau neredaguoja atsiliepimų turinio siekdamas pagerinti bendrą
-              vertinimą.
-            </p>
-            <p>
-              3.6. Pardavėjas turi teisę apriboti arba sustabdyti Lankytojo galimybę naudotis
-              Parduotuve, jeigu Lankytojas pažeidžia Taisykles. Apie tai Lankytojas informuojamas
-              jo nurodytu el. paštu, nurodant priežastį.
-            </p>
-            <p>
-              3.7. Prieš apribojant paskyrą dėl neesminio pažeidimo Pardavėjas paprastai kreipiasi
-              į Lankytoją ir suteikia galimybę pažeidimą pašalinti.
-            </p>
-            <p>
-              3.8. Paskyros apribojimas neturi įtakos jau apmokėtiems užsakymams – jie vykdomi
-              įprasta tvarka arba, jeigu tai neįmanoma, sumokėtos sumos grąžinamos.
-            </p>
-            <p>
-              3.9. Pardavėjas įsipareigoja sudaryti sąlygas naudotis Parduotuve, vykdyti priimtus
-              užsakymus ir aptarnauti Lankytojus lietuvių kalba.
-            </p>
-            <p>
-              3.10. Pardavėjas įsipareigoja gerbti Lankytojo privatumą ir tvarkyti asmens duomenis
-              tik taip, kaip aprašyta{" "}
-              <a href="/privatumo-politika">Privatumo apsaugos taisyklėse</a>.
-            </p>
-            <p>
-              3.11. Susidarius svarbioms aplinkybėms Pardavėjas gali laikinai arba visam laikui
-              nutraukti Parduotuvės veiklą, apie tai iš anksto pranešęs Lankytojams ir įvykdęs arba
-              grąžinęs apmokėtus užsakymus.
-            </p>
-            <p>
-              3.12. Lankytojas turi teisę bet kada nustoti naudotis Parduotuve. Tai neatleidžia nuo
-              pareigų, atsiradusių iki tokio sprendimo.
+              {t("legTerms.useOrdering.p10pre")} <a href="/grazinimai">{t("legTerms.useOrdering.returnsLink")}</a>{" "}
+              {t("legTerms.useOrdering.and")} <a href="/garantija">{t("legTerms.useOrdering.warrantyLink")}</a>
+              {t("legTerms.useOrdering.p10post")}
             </p>
 
-            <h3>4. Prekių užsakymas Parduotuvėje</h3>
+            <h3>{t("legTerms.useIp.title")}</h3>
+            <p>{t("legTerms.useIp.p1")}</p>
+            <p>{t("legTerms.useIp.p2")}</p>
+            <p>{t("legTerms.useIp.p3")}</p>
+            <p>{t("legTerms.useIp.p4")}</p>
+            <p>{t("legTerms.useIp.p5")}</p>
+
+            <h3>{t("legTerms.useLiability.title")}</h3>
+            <p>{t("legTerms.useLiability.p1")}</p>
+            <p>{t("legTerms.useLiability.p2")}</p>
+            <p>{t("legTerms.useLiability.p3")}</p>
+            <p>{t("legTerms.useLiability.p4")}</p>
+            <p>{t("legTerms.useLiability.p5")}</p>
             <p>
-              4.1. Norimas prekes Lankytojas randa elektroniniame kataloge, kuriame prekės suskirstytos
-              pagal kategorijas. Prie kiekvienos prekės nurodoma kaina, būklė (sandėlyje ar
-              išankstinis užsakymas) ir pagrindinė informacija.
-            </p>
-            <p>
-              4.2. Kainos nurodomos eurais su visais mokesčiais. Pristatymo kaina į prekės kainą
-              neįskaičiuota ir nurodoma atskirai formuojant užsakymą.
-            </p>
-            <p>
-              4.3. Pasirinktas prekes Lankytojas deda į krepšelį, o užsakymą pateikia paspaudęs
-              atitinkamą mygtuką ir užpildęs privalomus laukus.
-            </p>
-            <p>
-              4.4. Formuodamas užsakymą Lankytojas nurodo pristatymo būdą, paštomatą arba adresą ir
-              pasirenka apmokėjimo būdą. Lankytojas atsako už pateiktų duomenų teisingumą.
-            </p>
-            <p>
-              4.5. Prieš patvirtindamas užsakymą Lankytojas gali peržiūrėti ir pataisyti krepšelio
-              turinį, pristatymo duomenis bei pasirinktą apmokėjimo būdą.
-            </p>
-            <p>
-              4.6. Užsakymas patvirtinamas atlikus mokėjimą. Sandėlyje esančioms prekėms sumokama
-              visa kaina, o išankstinio užsakymo prekėms – avansas, likutį sumokant prieš išsiuntimą.
-            </p>
-            <p>
-              4.7. Pateikdamas išankstinį (pre-order) užsakymą Lankytojas supranta, kad iki prekės
-              gavimo iš gamintojo tarp šalių galioja preliminari sutartis dėl prekės rezervavimo.
-              Galutinė pirkimo–pardavimo sutartis laikoma sudaryta apmokėjus likutį ir išsiuntus
-              prekę.
-            </p>
-            <p>
-              4.8. Gavęs mokėjimą Pardavėjas patvirtina užsakymą el. paštu ir pradeda jį vykdyti.
-              Užsakymo būseną Lankytojas gali stebėti prisijungęs prie paskyros.
-            </p>
-            <p>
-              4.9. Prekių kiekiai ir aprašymai remiasi gamintojo bei tiekėjų pateikta informacija.
-              Retais atvejais kaina, likutis ar aprašymas gali būti pateikti su akivaizdžia klaida –
-              tokiu atveju Pardavėjas turi teisę užsakymo nevykdyti, grąžindamas visas iš Lankytojo
-              gautas sumas.
-            </p>
-            <p>
-              4.10. Prekių kokybės, garantijos ir grąžinimo klausimus reglamentuoja šio dokumento
-              Pirkimo taisyklės bei skiltys{" "}
-              <a href="/grazinimai">Grąžinimai</a> ir <a href="/garantija">Garantija</a>.
+              6.6. <strong>{t("legTerms.useLiability.p6em")}</strong> {t("legTerms.useLiability.p6post")}
             </p>
 
-            <h3>5. Intelektinės nuosavybės apsauga</h3>
+            <h3>{t("legTerms.useNotices.title")}</h3>
+            <p>{t("legTerms.useNotices.p1")}</p>
+            <p>{t("legTerms.useNotices.p2")}</p>
+            <p>{t("legTerms.useNotices.p3")}</p>
             <p>
-              5.1. Visos teisės į Parduotuvės turinį – tekstus, dizainą, programinį kodą,
-              nuotraukas, grafiką, duomenų bazių struktūrą ir kitą medžiagą – priklauso Pardavėjui
-              arba yra naudojamos teisėtai.
+              {t("legTerms.useNotices.p4pre")} <a href={mailto}>{COMPANY.email}</a>
+              {t("legTerms.useNotices.p4post")}
             </p>
             <p>
-              5.2. Draudžiama kopijuoti, atgaminti, platinti, viešai skelbti ar kitaip naudoti
-              Parduotuvės turinį komerciniais tikslais be išankstinio rašytinio Pardavėjo sutikimo.
-            </p>
-            <p>
-              5.3. Lankytojas gali peržiūrėti, atsispausdinti ar išsaugoti turinį asmeniniam,
-              nekomerciniam naudojimui, nepašalindamas autorių teisių žymų.
-            </p>
-            <p>
-              5.4. MOULD KING ir kiti Parduotuvėje minimi prekių ženklai priklauso jų savininkams ir
-              naudojami tik prekėms identifikuoti. Jų naudojimas nereiškia, kad ženklo savininkas
-              remia ar yra susijęs su Pardavėju kitaip nei kaip prekių tiekėjas.
-            </p>
-            <p>
-              5.5. Pateikdamas atsiliepimą ar nuotrauką Lankytojas suteikia Pardavėjui neatlygintinę
-              teisę juos skelbti Parduotuvėje. Šią teisę galima atšaukti paprašius pašalinti turinį.
+              {t("legTerms.useNotices.p5pre")} <a href="/kontaktai">{t("legTerms.useNotices.p5link")}</a>{" "}
+              {t("legTerms.useNotices.p5post")}
             </p>
 
-            <h3>6. Atsakomybės ribojimas</h3>
+            <h3>{t("legTerms.useFinal.title")}</h3>
+            <p>{t("legTerms.useFinal.p1")}</p>
+            <p>{t("legTerms.useFinal.p2")}</p>
+            <p>{t("legTerms.useFinal.p3")}</p>
+            <p>{t("legTerms.useFinal.p4")}</p>
             <p>
-              6.1. Pardavėjas neatsako už Parduotuvės veikimo sutrikimus, kilusius dėl nuo jo
-              nepriklausančių aplinkybių – interneto ryšio, Lankytojo įrangos, trečiųjų asmenų
-              paslaugų teikėjų veiklos ar nenugalimos jėgos aplinkybių.
+              {t("legTerms.useFinal.p5pre")} <a href={mailto}>{COMPANY.email}</a>
+              {t("legTerms.useFinal.p5post")}
             </p>
             <p>
-              6.2. Pardavėjas neatsako už kitų asmenų svetainių, į kurias vedamos nuorodos iš
-              Parduotuvės, turinį, veikimą ar privatumo praktiką.
-            </p>
-            <p>
-              6.3. Pardavėjas neatsako už žalą, kilusią dėl to, kad Lankytojas nesilaikė Taisyklių,
-              pateikė neteisingus duomenis arba neapsaugojo savo prisijungimo duomenų.
-            </p>
-            <p>
-              6.4. Pardavėjas neatsako už kitų Lankytojų paskelbtų atsiliepimų turinį, tačiau
-              pašalina turinį, neatitinkantį 3.2 ir 3.4 punktų, apie jį sužinojęs.
-            </p>
-            <p>
-              6.5. Nuotraukos yra iliustracinės. Prekės spalva, atspalvis ar smulkios detalės dėl
-              monitoriaus nustatymų ar gamintojo pakeitimų gali nežymiai skirtis nuo realių.
-            </p>
-            <p>
-              6.6. <strong>Šiame skyriuje nustatyti atsakomybės ribojimai netaikomi tiek, kiek jie
-              prieštarautų vartotojo teisėms, garantuojamoms imperatyviomis Lietuvos Respublikos ir
-              Europos Sąjungos teisės normomis.</strong> Pardavėjas visais atvejais atsako už žalą,
-              padarytą tyčia ar dėl didelio neatsargumo, taip pat už prekių kokybę ir atitiktį
-              sutarčiai.
-            </p>
-
-            <h3>7. Pranešimų siuntimas</h3>
-            <p>
-              7.1. Pardavėjas siunčia pranešimus Lankytojo registracijos ar užsakymo metu nurodytu
-              el. pašto adresu, o prireikus – telefonu.
-            </p>
-            <p>
-              7.2. Lankytojas atsako už tai, kad nurodytas el. pašto adresas veiktų ir būtų
-              tikrinamas. Pardavėjas neatsako už interneto ryšio ar el. pašto tiekėjų sutrikimus,
-              dėl kurių Lankytojas negauna pranešimų, įskaitant patekimą į brukalo aplanką.
-            </p>
-            <p>
-              7.3. Su užsakymu susiję pranešimai – patvirtinimas, išsiuntimas, kvietimas sumokėti
-              likutį – siunčiami visada, nes yra būtini sutarčiai vykdyti.
-            </p>
-            <p>
-              7.4. Rinkodaros pranešimai siunčiami tik su atskiru sutikimu, kurį galima bet kada
-              atšaukti nuoroda laiške arba parašius <a href={mailto}>{COMPANY.email}</a>.
-            </p>
-            <p>
-              7.5. Visus pranešimus, prašymus ir klausimus Lankytojas siunčia skiltyje{" "}
-              <a href="/kontaktai">Kontaktai</a> nurodytais adresais.
-            </p>
-
-            <h3>8. Baigiamosios nuostatos</h3>
-            <p>8.1. Naudojimosi taisyklėms taikoma Lietuvos Respublikos teisė.</p>
-            <p>
-              8.2. Jeigu kuri nors nuostata pripažįstama negaliojančia, tai neturi įtakos likusių
-              nuostatų galiojimui. Negaliojanti nuostata pakeičiama galiojančia, kiek įmanoma
-              artimesne pradinei prasmei.
-            </p>
-            <p>
-              8.3. Pardavėjas turi teisę perleisti savo teises ir pareigas trečiajam asmeniui
-              reorganizavimo ar verslo perleidimo atveju. Toks perleidimas negali pabloginti
-              vartotojo padėties, o apie jį Lankytojai informuojami iš anksto.
-            </p>
-            <p>
-              8.4. Taisyklės turi viršenybę prieš Parduotuvėje pateiktus paaiškinimus ir aprašymus,
-              išskyrus atvejus, kai konkreti prekės ar akcijos sąlyga yra palankesnė Lankytojui.
-            </p>
-            <p>
-              8.5. Nesutarimai sprendžiami derybomis. Prašymą Pardavėjui galima pateikti el. paštu{" "}
-              <a href={mailto}>{COMPANY.email}</a>; atsakymas pateikiamas per 14 (keturiolika)
-              dienų.
-            </p>
-            <p>
-              8.6. Nepavykus susitarti, vartotojas turi teisę kreiptis į {COMPANY.vvtat} (
+              {t("legTerms.useFinal.p6pre", { vvtat: COMPANY.vvtat })}{" "}
               <a href={COMPANY.vvtatUrl} target="_blank" rel="noopener noreferrer">
                 vvtat.lt
-              </a>
-              ) arba pasinaudoti Europos Komisijos elektronine ginčų sprendimo platforma (
+              </a>{" "}
+              {t("legTerms.useFinal.p6mid")}{" "}
               <a href={COMPANY.odrUrl} target="_blank" rel="noopener noreferrer">
                 ec.europa.eu/odr
-              </a>
-              ). Kreipimasis į šias institucijas neatima teisės kreiptis į teismą.
+              </a>{" "}
+              {t("legTerms.useFinal.p6post")}
             </p>
 
           </div>

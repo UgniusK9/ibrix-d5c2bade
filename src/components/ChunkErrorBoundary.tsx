@@ -1,4 +1,5 @@
 import { Component, ReactNode } from "react";
+import i18n from "@/i18n/config";
 import { safeSessionStorageGetItem, safeSessionStorageRemoveItem, safeSessionStorageSetItem } from "@/lib/browser-storage";
 
 interface Props {
@@ -44,9 +45,9 @@ export class ChunkErrorBoundary extends Component<Props, State> {
       return (
         <div className="min-h-screen flex items-center justify-center bg-background text-foreground p-6">
           <div className="text-center space-y-4 max-w-sm">
-            <h1 className="text-xl font-semibold">Įvyko klaida</h1>
+            <h1 className="text-xl font-semibold">{i18n.t('errorBoundary.title')}</h1>
             <p className="text-sm text-muted-foreground">
-              Atnaujinkite puslapį, kad tęstumėte.
+              {i18n.t('errorBoundary.description')}
             </p>
             <button
               onClick={() => {
@@ -55,7 +56,7 @@ export class ChunkErrorBoundary extends Component<Props, State> {
               }}
               className="px-4 py-2 rounded-md bg-primary text-primary-foreground hover:opacity-90 transition"
             >
-              Atnaujinti
+              {i18n.t('errorBoundary.retry')}
             </button>
           </div>
         </div>

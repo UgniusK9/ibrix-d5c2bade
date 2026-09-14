@@ -301,7 +301,7 @@ export default function Settings() {
         const seconds = Number(responseBody.retryAfter) || 20;
         setEmailCooldownFor(normalizedEmail);
         setEmailCooldownUntil(Date.now() + seconds * 1000);
-        setEmailError(`Per dažnai siunčiate. Bandykite po ${Math.max(1, seconds)}s.`);
+        setEmailError(t('settings.resendTooOften', { seconds: Math.max(1, seconds) }));
         return { success: false, rateLimited: true, retryAfter: seconds };
       }
 
@@ -344,7 +344,7 @@ export default function Settings() {
         const seconds = match ? Number(match[1]) : 20;
         setEmailCooldownFor(normalizedEmail);
         setEmailCooldownUntil(Date.now() + Math.max(1, seconds) * 1000);
-        setEmailError(`Per dažnai siunčiate. Bandykite po ${Math.max(1, seconds)}s.`);
+        setEmailError(t('settings.resendTooOften', { seconds: Math.max(1, seconds) }));
       } else if (msg.toLowerCase().includes('already registered') || msg.toLowerCase().includes('already been registered')) {
         setEmailError(t('settings.emailAlreadyUsed'));
       } else if (msg.toLowerCase().includes('same as')) {

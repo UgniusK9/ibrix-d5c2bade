@@ -11,6 +11,7 @@ import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { ImageUpload } from './ImageUpload';
+import { useTranslation } from 'react-i18next';
 
 interface PromoBanner {
   id: string;
@@ -32,6 +33,7 @@ interface PromoBanner {
 }
 
 export function PromoBannersManager() {
+  const { t } = useTranslation();
   const [banners, setBanners] = useState<PromoBanner[]>([]);
   const [loading, setLoading] = useState(true);
   const [showDialog, setShowDialog] = useState(false);
@@ -42,7 +44,7 @@ export function PromoBannersManager() {
     image_url: '',
     background_color: '#1E4ED8',
     link_url: '/produktai/visi',
-    link_text: 'Pirkti dabar',
+    link_text: t('admContent.bannerCtaDefault'),
     secondary_link_url: '',
     secondary_link_text: '',
     badge_text: '',
@@ -63,7 +65,7 @@ export function PromoBannersManager() {
       setBanners(data || []);
     } catch (e) {
       console.error('Failed to load banners:', e);
-      toast.error('Nepavyko užkrauti banerių');
+      toast.error(t('admContent.bannerLoadError'));
     } finally {
       setLoading(false);
     }
@@ -81,7 +83,7 @@ export function PromoBannersManager() {
       image_url: '',
       background_color: '#1E4ED8',
       link_url: '/produktai/visi',
-      link_text: 'Pirkti dabar',
+      link_text: t('admContent.bannerCtaDefault'),
       secondary_link_url: '',
       secondary_link_text: '',
       badge_text: '',
@@ -100,7 +102,7 @@ export function PromoBannersManager() {
       image_url: banner.image_url || '',
       background_color: banner.background_color || '#1E4ED8',
       link_url: banner.link_url,
-      link_text: banner.link_text || 'Pirkti dabar',
+      link_text: banner.link_text || t('admContent.bannerCtaDefault'),
       secondary_link_url: banner.secondary_link_url || '',
       secondary_link_text: banner.secondary_link_text || '',
       badge_text: banner.badge_text || '',
@@ -113,7 +115,7 @@ export function PromoBannersManager() {
 
   const handleSave = async () => {
     if (!formData.title) {
-      toast.error('Pavadinimas yra privalomas');
+      toast.error(t('admProducts.offerTitleRequired'));
       return;
     }
 
@@ -139,25 +141,25 @@ export function PromoBannersManager() {
           .update(payload)
           .eq('id', editingBanner.id);
         if (error) throw error;
-        toast.success('Baneris atnaujintas');
+        toast.success(t('admContent.bannerUpdated'));
       } else {
         const { error } = await supabase
           .from('promo_banners')
           .insert(payload);
         if (error) throw error;
-        toast.success('Baneris sukurtas');
+        toast.success(t('admContent.bannerCreated'));
       }
 
       setShowDialog(false);
       loadBanners();
     } catch (e: any) {
       console.error('Failed to save banner:', e);
-      toast.error(e.message || 'Nepavyko išsaugoti banerio');
+      toast.error(e.message || t('admContent.bannerSaveError'));
     }
   };
 
   const handleDelete = async (banner: PromoBanner) => {
-    if (!confirm(`Ar tikrai norite ištrinti banerį "${banner.title}"?`)) return;
+    if (!confirm(t('admContent.bannerDeleteConfirm', { title: banner.title }))) return;
 
     try {
       const { error } = await supabase
@@ -165,11 +167,11 @@ export function PromoBannersManager() {
         .delete()
         .eq('id', banner.id);
       if (error) throw error;
-      toast.success('Baneris ištrintas');
+      toast.success(t('admContent.bannerDeleted'));
       loadBanners();
     } catch (e: any) {
       console.error('Failed to delete banner:', e);
-      toast.error(e.message || 'Nepavyko ištrinti banerio');
+      toast.error(e.message || t('admContent.bannerDeleteError'));
     }
   };
 
@@ -180,10 +182,10 @@ export function PromoBannersManager() {
         .update({ active: !banner.active })
         .eq('id', banner.id);
       if (error) throw error;
-      toast.success(banner.active ? 'Baneris išjungtas' : 'Baneris įjungtas');
+      toast.success(banner.active ? t('admContent.bannerDisabled') : t('admContent.bannerEnabled'));
       loadBanners();
     } catch (e: any) {
-      toast.error('Nepavyko pakeisti statuso');
+      toast.error(t('admUsers.inqStatusError'));
     }
   };
 
@@ -194,18 +196,18 @@ export function PromoBannersManager() {
           <div>
             <CardTitle className="font-heading text-lg flex items-center gap-2">
               <Image className="w-5 h-5" />
-              Promo baneriai
+              {t('admContent.bannerTitle')}
             </CardTitle>
-            <CardDescription>Valdykite pagrindinio puslapio banerius</CardDescription>
+            <CardDescription>{t('admContent.bannerSubtitle')}</CardDescription>
           </div>
           <div className="flex gap-2">
             <Button onClick={loadBanners} variant="outline" size="sm" disabled={loading}>
               <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
-              Atnaujinti
+              {t('admCommon.refresh')}
             </Button>
             <Button onClick={openCreateDialog} size="sm">
               <Plus className="w-4 h-4 mr-2" />
-              Naujas baneris
+              {t('admContent.bannerNew')}
             </Button>
           </div>
         </div>
@@ -218,7 +220,7 @@ export function PromoBannersManager() {
         ) : banners.length === 0 ? (
           <div className="text-center py-8 text-muted-foreground">
             <Image className="w-12 h-12 mx-auto mb-2 opacity-50" />
-            <p>Nėra banerių</p>
+            <p>{t('admContent.bannerEmpty')}</p>
           </div>
         ) : (
           <div className="space-y-3">
@@ -250,7 +252,7 @@ export function PromoBannersManager() {
                   <div className="flex items-center gap-2 mb-1">
                     <span className="font-medium truncate">{banner.title}</span>
                     <Badge variant={banner.active ? 'default' : 'secondary'}>
-                      {banner.active ? 'Aktyvus' : 'Neaktyvus'}
+                      {banner.active ? t('admCommon.active') : t('admCommon.inactive')}
                     </Badge>
                     {banner.badge_text && (
                       <Badge variant="outline" className="text-xs">
@@ -273,7 +275,7 @@ export function PromoBannersManager() {
                     variant="ghost" 
                     size="sm" 
                     onClick={() => toggleActive(banner)}
-                    title={banner.active ? 'Išjungti' : 'Įjungti'}
+                    title={banner.active ? t('admContent.bannerDisable') : t('admContent.bannerEnable')}
                   >
                     {banner.active ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                   </Button>
@@ -293,39 +295,39 @@ export function PromoBannersManager() {
           <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>
-                {editingBanner ? 'Redaguoti banerį' : 'Naujas baneris'}
+                {editingBanner ? t('admContent.bannerEdit') : t('admContent.bannerNew')}
               </DialogTitle>
               <DialogDescription>
-                Sukurkite reklaminio banerio turinį
+                {t('admContent.bannerDesc')}
               </DialogDescription>
             </DialogHeader>
 
             <div className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label>Pavadinimas *</Label>
+                  <Label>{t('admCommon.name')} *</Label>
                   <Input
                     value={formData.title}
                     onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                    placeholder="Naujiena!"
+                    placeholder={t('admContent.bannerTitlePh')}
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label>Badge tekstas</Label>
+                  <Label>{t('admContent.bannerBadgeLabel')}</Label>
                   <Input
                     value={formData.badge_text}
                     onChange={(e) => setFormData({ ...formData, badge_text: e.target.value })}
-                    placeholder="Naujiena"
+                    placeholder={t('products.new')}
                   />
                 </div>
               </div>
 
               <div className="space-y-2">
-                <Label>Paantraštė</Label>
+                <Label>{t('admContent.bannerSubtitleLabel')}</Label>
                 <Textarea
                   value={formData.subtitle}
                   onChange={(e) => setFormData({ ...formData, subtitle: e.target.value })}
-                  placeholder="Atraskite naujausius..."
+                  placeholder={t('admContent.bannerSubtitlePh')}
                   rows={2}
                 />
               </div>
@@ -335,10 +337,10 @@ export function PromoBannersManager() {
                   value={formData.image_url}
                   onChange={(url) => setFormData({ ...formData, image_url: url })}
                   folder="banners"
-                  label="Banerio nuotrauka"
+                  label={t('admContent.bannerImageLabel')}
                 />
                 <div className="space-y-2">
-                  <Label>Fono spalva</Label>
+                  <Label>{t('admContent.bannerBgColor')}</Label>
                   <div className="flex gap-2">
                     <Input
                       type="color"
@@ -357,7 +359,7 @@ export function PromoBannersManager() {
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label>Pagrindinis mygtukas URL</Label>
+                  <Label>{t('admContent.bannerMainUrl')}</Label>
                   <Input
                     value={formData.link_url}
                     onChange={(e) => setFormData({ ...formData, link_url: e.target.value })}
@@ -365,18 +367,18 @@ export function PromoBannersManager() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label>Pagrindinis mygtukas tekstas</Label>
+                  <Label>{t('admContent.bannerMainText')}</Label>
                   <Input
                     value={formData.link_text}
                     onChange={(e) => setFormData({ ...formData, link_text: e.target.value })}
-                    placeholder="Pirkti dabar"
+                    placeholder={t('admContent.bannerCtaDefault')}
                   />
                 </div>
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label>Antrinis mygtukas URL</Label>
+                  <Label>{t('admContent.bannerSecondUrl')}</Label>
                   <Input
                     value={formData.secondary_link_url}
                     onChange={(e) => setFormData({ ...formData, secondary_link_url: e.target.value })}
@@ -384,18 +386,18 @@ export function PromoBannersManager() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label>Antrinis mygtukas tekstas</Label>
+                  <Label>{t('admContent.bannerSecondText')}</Label>
                   <Input
                     value={formData.secondary_link_text}
                     onChange={(e) => setFormData({ ...formData, secondary_link_text: e.target.value })}
-                    placeholder="Sužinoti daugiau"
+                    placeholder={t('common.learnMore')}
                   />
                 </div>
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label>Rikiavimo eilė</Label>
+                  <Label>{t('admProducts.catSortOrder')}</Label>
                   <Input
                     type="number"
                     value={formData.sort_order}
@@ -407,14 +409,14 @@ export function PromoBannersManager() {
                     checked={formData.active}
                     onCheckedChange={(checked) => setFormData({ ...formData, active: checked })}
                   />
-                  <Label>Aktyvus baneris</Label>
+                  <Label>{t('admContent.bannerActiveLabel')}</Label>
                 </div>
               </div>
 
               {/* Preview */}
               {formData.title && (
                 <div className="mt-4">
-                  <Label className="text-sm text-muted-foreground mb-2 block">Peržiūra:</Label>
+                  <Label className="text-sm text-muted-foreground mb-2 block">{t('admContent.bannerPreview')}</Label>
                   <div 
                     className="rounded-xl p-6 text-white"
                     style={{ backgroundColor: formData.background_color }}
@@ -431,10 +433,10 @@ export function PromoBannersManager() {
 
             <DialogFooter>
               <Button variant="outline" onClick={() => setShowDialog(false)}>
-                Atšaukti
+                {t('common.cancel')}
               </Button>
               <Button onClick={handleSave}>
-                {editingBanner ? 'Atnaujinti' : 'Sukurti'}
+                {editingBanner ? t('admProducts.catUpdate') : t('admProducts.catCreate')}
               </Button>
             </DialogFooter>
           </DialogContent>

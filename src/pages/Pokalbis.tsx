@@ -9,7 +9,8 @@ import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { Send, MessageSquare, Clock, User, Building2 } from "lucide-react";
 import { format } from "date-fns";
-import { lt } from "date-fns/locale";
+import { lt, enUS } from "date-fns/locale";
+import { useTranslation } from "react-i18next";
 
 interface Inquiry {
   id: string;
@@ -31,16 +32,10 @@ interface InquiryMessage {
   created_at: string;
 }
 
-const topicLabels: Record<string, string> = {
-  uzsakymas: "Klausimas apie užsakymą",
-  preorder: "Pre-order informacija",
-  trukstamos: "Trūkstamos detalės",
-  grazinimai: "Grąžinimai ir keitimai",
-  kita: "Kita",
-};
-
 export default function Pokalbis() {
   const { token } = useParams<{ token: string }>();
+  const { t, i18n } = useTranslation();
+  const dateLocale = i18n.language === 'en' ? enUS : lt;
   const [inquiry, setInquiry] = useState<Inquiry | null>(null);
   const [messages, setMessages] = useState<InquiryMessage[]>([]);
   const [newMessage, setNewMessage] = useState("");
@@ -49,6 +44,14 @@ export default function Pokalbis() {
   const [notFound, setNotFound] = useState(false);
   const [adminTyping, setAdminTyping] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  const topicLabels: Record<string, string> = {
+    uzsakymas: t("contact.topicOrder"),
+    preorder: t("contact.topicPreorder"),
+    trukstamos: t("contact.topicMissing"),
+    grazinimai: t("contact.topicReturns"),
+    kita: t("contact.topicOther"),
+  };
 
   const fetchData = async () => {
     if (!token) {
@@ -159,12 +162,12 @@ export default function Pokalbis() {
         throw new Error(data?.error || "Failed to send message");
       }
 
-      toast.success("Žinutė išsiųsta!");
+      toast.success(t("contact.messageSent"));
       setNewMessage("");
       await fetchData();
     } catch (error: any) {
       console.error("Error sending message:", error);
-      toast.error(error.message || "Nepavyko išsiųsti žinutės");
+      toast.error(error.message || t("pgChat.sendFailed"));
     }
 
     setSending(false);
@@ -192,9 +195,9 @@ export default function Pokalbis() {
         <div className="container py-16">
           <div className="max-w-2xl mx-auto text-center">
             <MessageSquare className="w-16 h-16 mx-auto text-muted-foreground mb-4" />
-            <h1 className="font-heading text-2xl font-bold mb-2">Pokalbis nerastas</h1>
+            <h1 className="font-heading text-2xl font-bold mb-2">{t('pgChat.notFoundTitle')}</h1>
             <p className="text-muted-foreground">
-              Šis pokalbio nuoroda negalioja arba pokalbis buvo ištrintas.
+              {t('pgChat.notFoundDesc')}
             </p>
           </div>
         </div>
@@ -208,7 +211,7 @@ export default function Pokalbis() {
         <div className="max-w-2xl mx-auto">
           {/* Header */}
           <div className="mb-6">
-            <h1 className="font-heading text-2xl font-bold mb-2">Jūsų užklausa</h1>
+            <h1 className="font-heading text-2xl font-bold mb-2">{t('pgChat.inquiryTitle')}</h1>
             <div className="flex items-center gap-3 text-sm text-muted-foreground">
               <span>{topicLabels[inquiry!.topic] || inquiry!.topic}</span>
               {inquiry!.order_number && (
@@ -216,7 +219,7 @@ export default function Pokalbis() {
               )}
               <span className="flex items-center gap-1">
                 <Clock className="w-3 h-3" />
-                {format(new Date(inquiry!.created_at), "yyyy-MM-dd", { locale: lt })}
+                {format(new Date(inquiry!.created_at), "yyyy-MM-dd", { locale: dateLocale })}
               </span>
             </div>
           </div>
@@ -227,7 +230,7 @@ export default function Pokalbis() {
               <User className="w-4 h-4" />
               <span className="font-medium">{inquiry!.name}</span>
               <span>·</span>
-              <span>{format(new Date(inquiry!.created_at), "MMM d, HH:mm", { locale: lt })}</span>
+              <span>{format(new Date(inquiry!.created_at), "MMM d, HH:mm", { locale: dateLocale })}</span>
             </div>
             <p className="whitespace-pre-wrap">{inquiry!.message}</p>
           </Card>
@@ -254,7 +257,7 @@ export default function Pokalbis() {
                       {msg.sender_type === "admin" ? "IBRIX" : inquiry!.name}
                     </span>
                     <span>·</span>
-                    <span>{format(new Date(msg.created_at), "MMM d, HH:mm", { locale: lt })}</span>
+                    <span>{format(new Date(msg.created_at), "MMM d, HH:mm", { locale: dateLocale })}</span>
                   </div>
                   <p className="whitespace-pre-wrap">{msg.message}</p>
                 </Card>
@@ -266,7 +269,7 @@ export default function Pokalbis() {
                     <span className="w-2 h-2 bg-primary rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
                     <span className="w-2 h-2 bg-primary rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
                   </div>
-                  <span>IBRIX rašo...</span>
+                  <span>{t('pgChat.typingIndicator')}</span>
                 </div>
               )}
               <div ref={messagesEndRef} />
@@ -275,9 +278,9 @@ export default function Pokalbis() {
 
           {/* Reply Form */}
           <Card className="p-4">
-            <h3 className="font-medium mb-3">Tęsti pokalbį</h3>
+            <h3 className="font-medium mb-3">{t('pgChat.continueTitle')}</h3>
             <Textarea
-              placeholder="Rašykite žinutę..."
+              placeholder={t('pgChat.replyPlaceholder')}
               value={newMessage}
               onChange={(e) => setNewMessage(e.target.value)}
               rows={4}
@@ -289,18 +292,18 @@ export default function Pokalbis() {
               className="w-full sm:w-auto"
             >
               {sending ? (
-                "Siunčiama..."
+                t('common.sending')
               ) : (
                 <>
                   <Send className="w-4 h-4 mr-2" />
-                  Siųsti žinutę
+                  {t('contact.sendMessage')}
                 </>
               )}
             </Button>
           </Card>
 
           <p className="text-xs text-muted-foreground text-center mt-6">
-            Išsaugokite šią nuorodą, jei norėsite grįžti prie pokalbio vėliau.
+            {t('pgChat.saveLinkHint')}
           </p>
         </div>
       </div>

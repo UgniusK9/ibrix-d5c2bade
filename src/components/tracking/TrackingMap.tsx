@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import { Icon, LatLngExpression } from 'leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -54,11 +55,12 @@ function getCityFromLocation(location: string): { lat: number; lng: number } | n
 }
 
 export function TrackingMap({ location, coordinates, carrierName, lastUpdate }: TrackingMapProps) {
+  const { t } = useTranslation();
   const mapRef = useRef<any>(null);
 
   // Determine position
   let position: LatLngExpression | null = null;
-  let locationLabel = location || 'Lietuva';
+  let locationLabel = location || t('coTrackSum.defaultPlace');
 
   if (coordinates) {
     position = [coordinates.lat, coordinates.lng];
@@ -72,7 +74,7 @@ export function TrackingMap({ location, coordinates, carrierName, lastUpdate }: 
   // Default to Lithuania center if no position
   if (!position) {
     position = [cityCoordinates.lietuva.lat, cityCoordinates.lietuva.lng];
-    locationLabel = 'Lietuva';
+    locationLabel = t('coTrackSum.defaultPlace');
   }
 
   const formatDate = (date: string) => {
@@ -89,17 +91,17 @@ export function TrackingMap({ location, coordinates, carrierName, lastUpdate }: 
       <div className="p-4 border-b border-border">
         <h2 className="font-heading text-lg font-semibold flex items-center gap-2">
           <MapPin className="w-5 h-5 text-primary" />
-          Kur yra siunta dabar?
+          {t('coTrackSum.mapTitle')}
         </h2>
         {location && (
           <p className="text-sm text-muted-foreground mt-1">
-            Paskutinė vieta: {location}
+            {t('coTrackSum.lastLocation', { location })}
             {lastUpdate && ` • ${formatDate(lastUpdate)}`}
           </p>
         )}
         {carrierName && (
           <p className="text-xs text-muted-foreground mt-1">
-            Vežėjas: {carrierName}
+            {t('coTrackSum.carrierLabel', { carrier: carrierName })}
           </p>
         )}
       </div>

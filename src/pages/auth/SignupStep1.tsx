@@ -10,13 +10,13 @@ import { useAuth } from '@/contexts/AuthContext';
 import logo from '@/assets/logo.png';
 
 const COUNTRIES = [
-  { code: 'LT', name: 'Lietuva' },
-  { code: 'LV', name: 'Latvija' },
-  { code: 'EE', name: 'Estija' },
-  { code: 'PL', name: 'Lenkija' },
-  { code: 'DE', name: 'Vokietija' },
-  { code: 'GB', name: 'Jungtinė Karalystė' },
-  { code: 'OTHER', name: 'Kita' },
+  { code: 'LT', key: 'pgAuthX.countryLT' },
+  { code: 'LV', key: 'pgAuthX.countryLV' },
+  { code: 'EE', key: 'pgAuthX.countryEE' },
+  { code: 'PL', key: 'pgAuthX.countryPL' },
+  { code: 'DE', key: 'pgAuthX.countryDE' },
+  { code: 'GB', key: 'pgAuthX.countryGB' },
+  { code: 'OTHER', key: 'pgAuthX.countryOther' },
 ];
 
 export default function SignupStep1() {
@@ -146,7 +146,7 @@ export default function SignupStep1() {
                 <SelectContent>
                   {COUNTRIES.map((c) => (
                     <SelectItem key={c.code} value={c.code}>
-                      {c.name}
+                      {t(c.key)}
                     </SelectItem>
                   ))}
                 </SelectContent>

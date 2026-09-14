@@ -1,6 +1,7 @@
 import { Package, Copy, Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 
 interface OrderItem {
@@ -24,6 +25,7 @@ export function OrderSummaryCard({
   shippingCents,
   totalCents,
 }: OrderSummaryCardProps) {
+  const { t } = useTranslation();
   const [copied, setCopied] = useState(false);
 
   const formatPrice = (cents: number) => {
@@ -36,16 +38,16 @@ export function OrderSummaryCard({
     try {
       await navigator.clipboard.writeText(trackingNumber);
       setCopied(true);
-      toast.success('Sekimo numeris nukopijuotas');
+      toast.success(t('coTrackSum.copiedOk'));
       setTimeout(() => setCopied(false), 2000);
     } catch {
-      toast.error('Nepavyko nukopijuoti');
+      toast.error(t('coTrackSum.copyFailed'));
     }
   };
 
   return (
     <div className="bg-card border border-border rounded-2xl p-5 shadow-premium">
-      <h3 className="font-heading text-lg font-semibold mb-4">Užsakymo turinys</h3>
+      <h3 className="font-heading text-lg font-semibold mb-4">{t('coTrackSum.contentTitle')}</h3>
       
       {/* Items list */}
       <div className="space-y-3 mb-4">
@@ -56,7 +58,7 @@ export function OrderSummaryCard({
             </div>
             <div className="flex-1 min-w-0">
               <p className="font-medium text-sm truncate">{item.title}</p>
-              <p className="text-xs text-muted-foreground">Kiekis: {item.quantity}</p>
+              <p className="text-xs text-muted-foreground">{t('coTrackSum.qtyLabel', { qty: item.quantity })}</p>
             </div>
             {item.unit_price_cents && (
               <span className="text-sm font-medium">
@@ -70,7 +72,7 @@ export function OrderSummaryCard({
       {/* Tracking number */}
       {trackingNumber && (
         <div className="border-t border-border pt-4 mb-4">
-          <p className="text-xs text-muted-foreground mb-1">Sekimo numeris</p>
+          <p className="text-xs text-muted-foreground mb-1">{t('coTrackSum.trackingLabel')}</p>
           <div className="flex items-center gap-2">
             <code className="text-sm font-mono bg-muted px-2 py-1 rounded flex-1 truncate">
               {trackingNumber}
@@ -96,19 +98,19 @@ export function OrderSummaryCard({
         <div className="border-t border-border pt-4 space-y-2">
           {subtotalCents !== undefined && (
             <div className="flex justify-between text-sm">
-              <span className="text-muted-foreground">Tarpinė suma</span>
+              <span className="text-muted-foreground">{t('coTrackSum.subtotalLabel')}</span>
               <span>{formatPrice(subtotalCents)}</span>
             </div>
           )}
           {shippingCents !== undefined && (
             <div className="flex justify-between text-sm">
-              <span className="text-muted-foreground">Pristatymas</span>
-              <span>{shippingCents === 0 ? 'Nemokamas' : formatPrice(shippingCents)}</span>
+              <span className="text-muted-foreground">{t('coTrackSum.shippingLabel')}</span>
+              <span>{shippingCents === 0 ? t('common.free') : formatPrice(shippingCents)}</span>
             </div>
           )}
           {totalCents !== undefined && (
             <div className="flex justify-between text-sm font-semibold pt-2 border-t border-border">
-              <span>Viso</span>
+              <span>{t('coTrackSum.totalLabel')}</span>
               <span>{formatPrice(totalCents)}</span>
             </div>
           )}

@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
+import i18n from '@/i18n/config';
 
 type AppRole = 'admin' | 'customer';
 
@@ -169,7 +170,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // Transform Supabase error message to Lithuanian
     if (error) {
       if (error.message.includes('Signups not allowed') || error.message.includes('not allowed')) {
-        return { error: new Error('Šis el. paštas nėra užregistruotas. Prašome susikurti paskyrą.') };
+        return { error: new Error(i18n.t('auth.emailNotRegistered')) };
       }
       return { error: error as Error };
     }

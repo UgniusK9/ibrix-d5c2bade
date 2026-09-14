@@ -78,7 +78,7 @@ export default function MyBuilders() {
 
   const handleRegisterSerial = async () => {
     if (!serialInput.trim()) {
-      toast.error('Įveskite serijinį numerį');
+      toast.error(t('pgBuilders.toastSerialReq'));
       return;
     }
 
@@ -86,7 +86,7 @@ export default function MyBuilders() {
     try {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) {
-        toast.error('Prisijunkite iš naujo');
+        toast.error(t('pgBuilders.toastRelogin'));
         return;
       }
 
@@ -105,16 +105,16 @@ export default function MyBuilders() {
       const result = await response.json();
 
       if (!response.ok || !result.success) {
-        toast.error(result.error || 'Registracijos klaida');
+        toast.error(result.error || t('pgBuilders.toastRegError'));
         return;
       }
 
-      toast.success(result.message || 'Konstruktorius užregistruotas!');
+      toast.success(result.message || t('pgBuilders.toastRegSuccess'));
       setSerialInput('');
       loadBuilders();
     } catch (e) {
       console.error('Serial registration error:', e);
-      toast.error('Registracijos klaida');
+      toast.error(t('pgBuilders.toastRegError'));
     } finally {
       setRegistering(false);
     }
@@ -144,10 +144,10 @@ export default function MyBuilders() {
         {/* Hero Section */}
         <div className="mb-8">
           <h1 className="font-heading text-2xl md:text-3xl font-bold mb-2">
-            Mano kolekcija
+            {t('pgBuilders.title')}
           </h1>
           <p className="text-muted-foreground">
-            Jūsų surinkti konstruktoriai vienoje vietoje
+            {t('pgBuilders.subtitle')}
           </p>
         </div>
 
@@ -156,7 +156,7 @@ export default function MyBuilders() {
           <Card>
             <CardContent className="p-4 text-center">
               <p className="text-3xl font-bold text-primary">{builders.length}</p>
-              <p className="text-sm text-muted-foreground">Konstruktorių</p>
+              <p className="text-sm text-muted-foreground">{t('pgBuilders.statBuilders')}</p>
             </CardContent>
           </Card>
           <Card>
@@ -164,7 +164,7 @@ export default function MyBuilders() {
               <p className="text-3xl font-bold text-primary">
                 {builders.filter(b => b.source === 'online').length}
               </p>
-              <p className="text-sm text-muted-foreground">Iš e-parduotuvės</p>
+              <p className="text-sm text-muted-foreground">{t('pgBuilders.statOnline')}</p>
             </CardContent>
           </Card>
           <Card>
@@ -172,7 +172,7 @@ export default function MyBuilders() {
               <p className="text-3xl font-bold text-primary">
                 {builders.filter(b => b.source === 'offline').length}
               </p>
-              <p className="text-sm text-muted-foreground">Iš parduotuvių</p>
+              <p className="text-sm text-muted-foreground">{t('pgBuilders.statOffline')}</p>
             </CardContent>
           </Card>
           <Card>
@@ -180,7 +180,7 @@ export default function MyBuilders() {
               <p className="text-3xl font-bold text-primary">
                 {builders.reduce((sum, b) => sum + (b.product?.details_json?.detailsCount as number || 0) * b.quantity, 0)}
               </p>
-              <p className="text-sm text-muted-foreground">Detalių iš viso</p>
+              <p className="text-sm text-muted-foreground">{t('pgBuilders.statParts')}</p>
             </CardContent>
           </Card>
         </div>
@@ -193,15 +193,15 @@ export default function MyBuilders() {
                 <div className="flex items-center gap-2 mb-2">
                   <Store className="w-5 h-5 text-primary" />
                   <h3 className="font-heading font-semibold text-lg">
-                    Pirkote parduotuvėje?
+                    {t('pgBuilders.ctaTitle')}
                   </h3>
                 </div>
                 <p className="text-sm text-muted-foreground mb-4">
-                  Užregistruokite savo konstruktorių įvesdami serijinį numerį iš dėžės
+                  {t('pgBuilders.ctaDesc')}
                 </p>
                 <div className="flex gap-2">
                   <Input
-                    placeholder="Pvz. IBRIX-2024-XXXXX"
+                    placeholder={t('pgBuilders.serialPlaceholder')}
                     value={serialInput}
                     onChange={(e) => setSerialInput(e.target.value.toUpperCase())}
                     className="max-w-xs"
@@ -215,7 +215,7 @@ export default function MyBuilders() {
                     ) : (
                       <Plus className="w-4 h-4" />
                     )}
-                    <span className="hidden sm:inline ml-2">Registruoti</span>
+                    <span className="hidden sm:inline ml-2">{t('pgBuilders.registerBtn')}</span>
                   </Button>
                 </div>
               </div>
@@ -226,7 +226,7 @@ export default function MyBuilders() {
                   className="inline-flex items-center gap-2 text-primary hover:underline"
                 >
                   <Search className="w-4 h-4" />
-                  Ieškoti kitų kolekcijų
+                  {t('pgBuilders.searchOthers')}
                   <ChevronRight className="w-4 h-4" />
                 </Link>
               </div>
@@ -239,7 +239,7 @@ export default function MyBuilders() {
           <CardHeader>
             <CardTitle className="text-lg flex items-center gap-2">
               <Puzzle className="w-5 h-5 text-primary" />
-              Kaip užregistruoti?
+              {t('pgBuilders.howTitle')}
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -248,27 +248,27 @@ export default function MyBuilders() {
                 <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-3">
                   <span className="font-bold text-primary">1</span>
                 </div>
-                <h4 className="font-semibold mb-1">Raskite serijinį numerį</h4>
+                <h4 className="font-semibold mb-1">{t('pgBuilders.step1Title')}</h4>
                 <p className="text-sm text-muted-foreground">
-                  Numeris yra ant dėžės arba instrukcijos
+                  {t('pgBuilders.step1Desc')}
                 </p>
               </div>
               <div className="text-center">
                 <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-3">
                   <span className="font-bold text-primary">2</span>
                 </div>
-                <h4 className="font-semibold mb-1">Įveskite kodą</h4>
+                <h4 className="font-semibold mb-1">{t('pgBuilders.step2Title')}</h4>
                 <p className="text-sm text-muted-foreground">
-                  Užpildykite formą viršuje
+                  {t('pgBuilders.step2Desc')}
                 </p>
               </div>
               <div className="text-center">
                 <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-3">
                   <span className="font-bold text-primary">3</span>
                 </div>
-                <h4 className="font-semibold mb-1">Mėgaukitės!</h4>
+                <h4 className="font-semibold mb-1">{t('pgBuilders.step3Title')}</h4>
                 <p className="text-sm text-muted-foreground">
-                  Konstruktorius atsiras jūsų kolekcijoje
+                  {t('pgBuilders.step3Desc')}
                 </p>
               </div>
             </div>
@@ -288,7 +288,7 @@ export default function MyBuilders() {
                 <div className="relative aspect-square bg-gradient-to-br from-secondary/30 to-muted/20 overflow-hidden">
                   <img
                     src={getProductImage({ images: builder.product?.images || [] } as any)}
-                    alt={builder.product?.title || 'Konstruktorius'}
+                    alt={builder.product?.title || t('pgBuilders.altFallback')}
                     className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                   />
                   {/* Source Badge */}
@@ -301,9 +301,9 @@ export default function MyBuilders() {
                       }`}
                     >
                       {builder.source === 'online' ? (
-                        <><ShoppingBag className="w-3 h-3 mr-1" /> E-parduotuvė</>
+                        <><ShoppingBag className="w-3 h-3 mr-1" /> {t('pgBuilders.sourceOnline')}</>
                       ) : (
-                        <><Store className="w-3 h-3 mr-1" /> Parduotuvė</>
+                        <><Store className="w-3 h-3 mr-1" /> {t('pgBuilders.sourceOffline')}</>
                       )}
                     </Badge>
                   </div>
@@ -319,13 +319,13 @@ export default function MyBuilders() {
                 {/* Content */}
                 <div className="p-5">
                   <h3 className="font-heading font-semibold text-base mb-2 line-clamp-2 group-hover:text-primary transition-colors">
-                    {builder.product?.title || 'Nežinomas produktas'}
+                    {builder.product?.title || t('pgBuilders.unknownProduct')}
                   </h3>
                   <div className="flex items-center gap-3 text-xs text-muted-foreground">
                     {builder.product?.details_json?.detailsCount && (
                       <span className="flex items-center gap-1">
                         <Package className="w-3.5 h-3.5" />
-                        {builder.product.details_json.detailsCount as number} det.
+                        {builder.product.details_json.detailsCount as number} {t('products.pieces')}
                       </span>
                     )}
                     {builder.serial && (
@@ -343,14 +343,14 @@ export default function MyBuilders() {
             <CardContent>
               <Sparkles className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
               <h3 className="font-heading font-semibold text-lg mb-2">
-                Jūsų kolekcija tuščia
+                {t('pgBuilders.emptyTitle')}
               </h3>
               <p className="text-muted-foreground mb-6">
-                Pirkite konstruktorius arba užregistruokite jau turimus
+                {t('pgBuilders.emptyDesc')}
               </p>
               <div className="flex justify-center gap-3">
                 <Button asChild>
-                  <Link to="/produktai/visi">Naršyti konstruktorius</Link>
+                  <Link to="/produktai/visi">{t('pgBuilders.browseBtn')}</Link>
                 </Button>
               </div>
             </CardContent>
@@ -361,11 +361,11 @@ export default function MyBuilders() {
         {builders.length > 0 && (
           <div className="mt-12 text-center">
             <h3 className="font-heading font-semibold text-lg mb-4">
-              Plėsk savo kolekciją!
+              {t('pgBuilders.expandTitle')}
             </h3>
             <Button asChild size="lg">
               <Link to="/produktai/visi">
-                Naršyti konstruktorius
+                {t('pgBuilders.browseBtn')}
                 <ChevronRight className="w-4 h-4 ml-2" />
               </Link>
             </Button>
