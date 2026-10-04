@@ -89,7 +89,7 @@ export function Header() {
             <Link to="/" className="flex-shrink-0">
               <picture>
                 <source srcSet={logo} type="image/webp" />
-                <img src={logoPng} alt="IBRIX" width={120} height={80} className="h-9 md:h-10 w-auto object-contain dark:bg-white dark:rounded-md dark:px-2 dark:py-1" fetchPriority="high" />
+                <img src={logoPng} alt="IBRIX" width={311} height={96} className="h-9 md:h-10 w-auto object-contain dark:bg-white dark:rounded-md dark:px-2 dark:py-1" fetchPriority="high" />
               </picture>
             </Link>
 

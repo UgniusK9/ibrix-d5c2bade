@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { SocialLinks } from "./SocialLinks";
-import { Mail, MapPin, Clock, Truck, RotateCcw, Shield, CreditCard, Cookie, ArrowRight, Loader2, Check } from "lucide-react";
+import { Mail, MapPin, Clock, Truck, RotateCcw, Puzzle, Landmark, Cookie, ArrowRight, Loader2, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
@@ -11,7 +11,9 @@ import logoPng from "@/assets/logo.png";
 import { useCookieConsentStore } from "@/stores/cookieConsentStore";
 import { useTranslation } from "react-i18next";
 
-const paymentMethods = ["Visa", "Mastercard"];
+// The methods the checkout actually offers (Paysera bank links). Cards are
+// switched off in PaymentMethodSelector, so the footer must not promise them.
+const paymentMethods = ["Swedbank", "SEB", "Luminor", "Revolut", "Paysera"];
 const shippingPartners = ["Omniva", "LP EXPRESS", "DPD"];
 
 export function Footer() {
@@ -24,8 +26,8 @@ export function Footer() {
   const footerTrustBadges = [
     { icon: Truck, title: t('misc.trustBadge1'), description: t('header.freeShipping') },
     { icon: RotateCcw, title: t('misc.trustBadge2'), description: t('nav.returns') },
-    { icon: Shield, title: t('checkout.paymentMethod'), description: "SSL" },
-    { icon: CreditCard, title: t('footer.paymentMethods'), description: t('checkout.card') },
+    { icon: Puzzle, title: t('products.missingParts'), description: t('products.freeMissingParts') },
+    { icon: Landmark, title: t('footer.paymentMethods'), description: "Paysera" },
   ];
 
   const footerLinks = {
@@ -155,7 +157,7 @@ export function Footer() {
             <Link to="/" className="inline-block mb-4">
               <picture>
                 <source srcSet={logo} type="image/webp" />
-                <img src={logoPng} alt="IBRIX" width={96} height={32} loading="lazy" className="h-8 w-auto brightness-0 invert" />
+                <img src={logoPng} alt="IBRIX" width={311} height={96} loading="lazy" className="h-8 w-auto brightness-0 invert" />
               </picture>
             </Link>
             <p className="text-footer-foreground/70 text-sm leading-relaxed mb-6">
