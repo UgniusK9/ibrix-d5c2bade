@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { ArrowRight, ShoppingCart, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { useProducts, formatPrice, getProductImage, getProductTitle, Product } from "@/hooks/useProducts";
+import { useProducts, formatPrice, getProductImage, getProductTitle, Product, getDisplayTitle } from "@/hooks/useProducts";
 import { useCartStore } from "@/stores/cartStore";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -145,7 +145,7 @@ export function ProductsSection() {
                 {/* Content - minimal and clean */}
                 <div className="p-4 md:p-5">
                   <h3 className="font-heading font-bold text-base md:text-lg text-foreground mb-3 line-clamp-2 group-hover:text-primary transition-colors">
-                    {getProductTitle(product, i18n.language)}
+                    {getDisplayTitle(getProductTitle(product, i18n.language), product.sku).name}
                   </h3>
                   
                   <div className="flex items-center justify-between">

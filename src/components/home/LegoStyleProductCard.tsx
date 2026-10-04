@@ -3,7 +3,7 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import { ShoppingCart, Heart, Calendar, Package } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Product, formatPrice, getProductImage, getProductTitle } from "@/hooks/useProducts";
+import { Product, formatPrice, getProductImage, getProductTitle, getDisplayTitle } from "@/hooks/useProducts";
 import { useCartStore } from "@/stores/cartStore";
 import { useWishlist } from "@/hooks/useWishlist";
 import { toast } from "sonner";
@@ -25,8 +25,10 @@ export function LegoStyleProductCard({ product }: LegoStyleProductCardProps) {
   
   // Get details count and age from details_json
   const detailsJson = product.details_json as Record<string, unknown> | null;
-  const detailsCount = detailsJson?.detailsCount as number || detailsJson?.piecesCount as number || 0;
-  const ageMin = detailsJson?.ageMin as number || 18;
+  const displayTitle = getDisplayTitle(getProductTitle(product, i18n.language), product.sku);
+  const detailsCount = detailsJson?.detailsCount as number || detailsJson?.piecesCount as number || displayTitle.pieces || 0;
+  // Unknown age stays unknown: the old fallback printed 18+ on flower bouquets.
+  const ageMin = typeof detailsJson?.ageMin === 'number' ? detailsJson.ageMin : null;
   
   // Check for "new" badge
   const badges = product.badges || [];
@@ -106,10 +108,12 @@ export function LegoStyleProductCard({ product }: LegoStyleProductCardProps) {
       <div className="flex flex-col flex-1 p-4">
         {/* Stats row with icons */}
         <div className="flex items-center gap-4 text-xs text-muted-foreground mb-2">
-          <span className="flex items-center gap-1.5">
-            <Calendar className="w-3.5 h-3.5" />
-            {ageMin}+
-          </span>
+          {ageMin !== null && (
+            <span className="flex items-center gap-1.5">
+              <Calendar className="w-3.5 h-3.5" />
+              {ageMin}+
+            </span>
+          )}
           {detailsCount > 0 && (
             <span className="flex items-center gap-1.5">
               <Package className="w-3.5 h-3.5" />
@@ -120,7 +124,7 @@ export function LegoStyleProductCard({ product }: LegoStyleProductCardProps) {
         
         {/* Title - 2 lines max */}
         <h3 className="font-medium text-sm text-foreground mb-2 line-clamp-2 min-h-[2.5rem] leading-tight">
-          {getProductTitle(product, i18n.language)}
+          {displayTitle.name}
         </h3>
 
         {/* Price */}

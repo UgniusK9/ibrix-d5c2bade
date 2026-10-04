@@ -5,7 +5,7 @@ import { Package, Clock, ShoppingCart, Filter, Loader2, Grid3X3, LayoutGrid, Che
 import { PageLayout } from "@/components/layout/PageLayout";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { useProducts, formatPrice, getEtaString, getProductImage, getProductTitle, Product } from "@/hooks/useProducts";
+import { useProducts, formatPrice, getEtaString, getProductImage, getProductTitle, Product, getDisplayTitle } from "@/hooks/useProducts";
 import { useCartStore } from "@/stores/cartStore";
 import { SEOHead } from "@/components/seo/SEOHead";
 import { supabase } from "@/integrations/supabase/client";
@@ -500,7 +500,8 @@ export default function Produktai() {
                     const isPreOrder = product.stock_status === 'preorder';
                     const eta = getEtaString(product);
                     const image = getProductImage(product);
-                    const detailsCount = (product.details_json as Record<string, unknown>)?.detailsCount as number || 0;
+                    const cardTitle = getDisplayTitle(getProductTitle(product, i18n.language), product.sku);
+                    const detailsCount = (product.details_json as Record<string, unknown>)?.detailsCount as number || cardTitle.pieces || 0;
                     
                     return (
                       <Link
@@ -541,14 +542,14 @@ export default function Produktai() {
                             "font-heading font-semibold line-clamp-2 group-hover:text-primary transition-colors",
                             viewMode === 'grid' ? "text-sm mb-2" : "text-xs mb-1.5"
                           )}>
-                            {getProductTitle(product, i18n.language)}
+                            {cardTitle.name}
                           </h3>
                           {viewMode === 'grid' && (
                             <div className="flex items-center gap-2 text-xs text-muted-foreground mb-3">
                               {detailsCount > 0 && (
                                 <span className="flex items-center gap-1">
                                   <Package className="w-3 h-3" />
-                                  {detailsCount}
+                                  {detailsCount.toLocaleString('lt-LT')}
                                 </span>
                               )}
                               <span className="flex items-center gap-1">
@@ -562,7 +563,7 @@ export default function Produktai() {
                               {product.sale_price_eur ? (
                                 <div className="flex items-center gap-2">
                                   <p className={cn(
-                                    "font-heading font-bold text-accent",
+                                    "font-heading font-bold text-foreground",
                                     viewMode === 'grid' ? "text-lg" : "text-sm"
                                   )}>
                                     {formatPrice(product.sale_price_eur)}
@@ -576,7 +577,7 @@ export default function Produktai() {
                                 </div>
                               ) : (
                                 <p className={cn(
-                                  "font-heading font-bold text-accent",
+                                  "font-heading font-bold text-foreground",
                                   viewMode === 'grid' ? "text-lg" : "text-sm"
                                 )}>
                                   {formatPrice(product.price_eur)}
