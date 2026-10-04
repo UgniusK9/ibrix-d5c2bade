@@ -5,6 +5,7 @@ import { Loader2, Package, ArrowRight, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
+import { getProductTitle } from "@/hooks/useProducts";
 import { motion } from "framer-motion";
 
 interface BundleRule {
@@ -22,12 +23,14 @@ interface BundleWithProducts extends BundleRule {
   triggerProduct?: {
     id: string;
     title: string;
+    title_en: string | null;
     price_eur: number;
     images: string[];
   };
   discountProduct?: {
     id: string;
     title: string;
+    title_en: string | null;
     price_eur: number;
     images: string[];
   };
@@ -45,7 +48,7 @@ const formatPrice = (amount: number) => {
 };
 
 export function BundlesSection() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [bundles, setBundles] = useState<BundleWithProducts[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -75,7 +78,7 @@ export function BundlesSection() {
         // Fetch products
         const { data: products } = await supabase
           .from('products')
-          .select('id, title, price_eur, images')
+          .select('id, title, title_en, price_eur, images')
           .in('id', Array.from(productIds));
 
         const productMap = new Map(products?.map(p => [p.id, p]) || []);
@@ -179,7 +182,7 @@ export function BundlesSection() {
                   <div className="w-24 h-24 rounded-xl bg-card border border-border overflow-hidden p-2">
                     <img 
                       src={bundle.triggerProduct?.images[0] || '/placeholder.svg'} 
-                      alt={bundle.triggerProduct?.title}
+                      alt={bundle.triggerProduct ? getProductTitle(bundle.triggerProduct, i18n.language) : ''}
                       className="w-full h-full object-contain"
                     />
                   </div>
@@ -193,7 +196,7 @@ export function BundlesSection() {
                   <div className="w-24 h-24 rounded-xl bg-card border border-border overflow-hidden p-2">
                     <img 
                       src={bundle.discountProduct?.images[0] || '/placeholder.svg'} 
-                      alt={bundle.discountProduct?.title}
+                      alt={bundle.discountProduct ? getProductTitle(bundle.discountProduct, i18n.language) : ''}
                       className="w-full h-full object-contain"
                     />
                   </div>

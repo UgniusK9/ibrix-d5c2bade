@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { formatCartPrice, type CartItem, useCartStore } from '@/stores/cartStore';
-import { useProducts, formatPrice, getProductImage } from '@/hooks/useProducts';
+import { useProducts, formatPrice, getProductImage, getProductTitle } from '@/hooks/useProducts';
 import { cn } from '@/lib/utils';
 
 interface AddToCartModalProps {
@@ -17,7 +17,7 @@ interface AddToCartModalProps {
 }
 
 export function AddToCartModal({ isOpen, onClose, item }: AddToCartModalProps) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const { data: allProducts } = useProducts();
   const { items: cartItems, getTotalPrice, addItem } = useCartStore();
@@ -52,6 +52,12 @@ export function AddToCartModal({ isOpen, onClose, item }: AddToCartModalProps) {
 
   const cartTotal = getTotalPrice();
   const itemCount = cartItems.reduce((sum, i) => sum + i.quantity, 0);
+  // CartItem.title is a snapshot from add time; re-localize from the product
+  // catalogue so language switches are reflected live.
+  const itemProduct = allProducts?.find((p) => p.id === item.productId);
+  const localizedItemTitle = itemProduct
+    ? getProductTitle(itemProduct, i18n.language)
+    : item.title;
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
@@ -80,7 +86,7 @@ export function AddToCartModal({ isOpen, onClose, item }: AddToCartModalProps) {
               {item.image ? (
                 <img
                   src={item.image}
-                  alt={item.title}
+                  alt={localizedItemTitle}
                   className="w-full h-full object-cover"
                 />
               ) : (
@@ -90,7 +96,7 @@ export function AddToCartModal({ isOpen, onClose, item }: AddToCartModalProps) {
               )}
             </div>
             <div className="flex-1 min-w-0">
-              <h3 className="font-heading font-semibold line-clamp-2">{item.title}</h3>
+              <h3 className="font-heading font-semibold line-clamp-2">{localizedItemTitle}</h3>
               <div className="flex items-center gap-2 mt-2">
                 <Badge 
                   variant="outline" 
@@ -161,11 +167,11 @@ export function AddToCartModal({ isOpen, onClose, item }: AddToCartModalProps) {
                       <div className="aspect-square w-full mb-2 bg-secondary rounded-lg overflow-hidden">
                         <img
                           src={getProductImage(product)}
-                          alt={product.title}
+                          alt={getProductTitle(product, i18n.language)}
                           className="w-full h-full object-cover group-hover:scale-105 transition-transform"
                         />
                       </div>
-                      <p className="text-xs font-medium line-clamp-2 min-h-[2.5rem]">{product.title}</p>
+                      <p className="text-xs font-medium line-clamp-2 min-h-[2.5rem]">{getProductTitle(product, i18n.language)}</p>
                       <p className="text-xs text-primary font-bold mt-1">{formatPrice(product.price_eur)}</p>
                       <span className="text-[10px] text-muted-foreground group-hover:text-primary transition-colors">
                         + {t('common.add')}

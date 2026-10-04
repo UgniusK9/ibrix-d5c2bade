@@ -3,7 +3,7 @@ import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/compone
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ShoppingCart, Package, Clock, X, Heart, Bell } from "lucide-react";
-import { Product, formatPrice, getEtaString, getProductImage } from "@/hooks/useProducts";
+import { Product, formatPrice, getEtaString, getProductImage, getProductTitle, getProductShortDesc } from "@/hooks/useProducts";
 import { useCartStore } from "@/stores/cartStore";
 import { useWishlist } from "@/hooks/useWishlist";
 import { toast } from "sonner";
@@ -24,11 +24,14 @@ const BADGE_CONFIG: Record<string, { label: string; className: string }> = {
 };
 
 export function QuickViewModal({ product, open, onOpenChange }: QuickViewModalProps) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const addItem = useCartStore((state) => state.addItem);
   const { isInWishlist, toggleWishlist } = useWishlist();
 
   if (!product) return null;
+
+  const localizedTitle = getProductTitle(product, i18n.language);
+  const localizedShortDesc = getProductShortDesc(product, i18n.language);
 
   const isPreOrder = product.stock_status === 'preorder';
   const isOutOfStock = product.stock_status === 'out_of_stock';
@@ -41,7 +44,7 @@ export function QuickViewModal({ product, open, onOpenChange }: QuickViewModalPr
   const handleAddToCart = () => {
     addItem(product);
     toast.success(t('products.addedToCart'), {
-      description: product.title,
+      description: localizedTitle,
       position: "top-center",
     });
     onOpenChange(false);
@@ -54,9 +57,9 @@ export function QuickViewModal({ product, open, onOpenChange }: QuickViewModalPr
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-3xl p-0 gap-0 overflow-hidden">
-        <DialogTitle className="sr-only">{product.title}</DialogTitle>
+        <DialogTitle className="sr-only">{localizedTitle}</DialogTitle>
         <DialogDescription className="sr-only">
-          {t('products.quickView')}: {product.title}
+          {t('products.quickView')}: {localizedTitle}
         </DialogDescription>
         
         <div className="grid md:grid-cols-2">
@@ -64,7 +67,7 @@ export function QuickViewModal({ product, open, onOpenChange }: QuickViewModalPr
           <div className="relative aspect-square bg-gradient-to-br from-secondary/30 to-muted/20">
             <img
               src={image}
-              alt={product.title}
+              alt={localizedTitle}
               className="w-full h-full object-cover"
             />
             
@@ -100,7 +103,7 @@ export function QuickViewModal({ product, open, onOpenChange }: QuickViewModalPr
             <p className="text-xs text-muted-foreground font-mono mb-1">{product.sku}</p>
             
             {/* Title */}
-            <h3 className="font-heading text-xl font-bold mb-3">{product.title}</h3>
+            <h3 className="font-heading text-xl font-bold mb-3">{localizedTitle}</h3>
 
             {/* Price */}
             <p className="font-heading text-2xl font-bold text-accent mb-4">
@@ -122,9 +125,9 @@ export function QuickViewModal({ product, open, onOpenChange }: QuickViewModalPr
             </div>
 
             {/* Description */}
-            {product.short_desc && (
+            {localizedShortDesc && (
               <p className="text-sm text-muted-foreground mb-6 line-clamp-3">
-                {product.short_desc}
+                {localizedShortDesc}
               </p>
             )}
 

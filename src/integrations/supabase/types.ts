@@ -1393,6 +1393,7 @@ export type Database = {
           credits_cost_eur: number | null
           deposit_eur: number
           description: string | null
+          description_en: string | null
           details_json: Json | null
           id: string
           images: Json
@@ -1405,12 +1406,14 @@ export type Database = {
           price_eur: number
           sale_price_eur: number | null
           short_desc: string | null
+          short_desc_en: string | null
           sku: string
           slug: string
           status: Database["public"]["Enums"]["product_status"]
           stock_status: Database["public"]["Enums"]["stock_status"]
           tags: string[] | null
           title: string
+          title_en: string | null
           updated_at: string
         }
         Insert: {
@@ -1423,6 +1426,7 @@ export type Database = {
           credits_cost_eur?: number | null
           deposit_eur: number
           description?: string | null
+          description_en?: string | null
           details_json?: Json | null
           id?: string
           images?: Json
@@ -1435,12 +1439,14 @@ export type Database = {
           price_eur: number
           sale_price_eur?: number | null
           short_desc?: string | null
+          short_desc_en?: string | null
           sku: string
           slug: string
           status?: Database["public"]["Enums"]["product_status"]
           stock_status?: Database["public"]["Enums"]["stock_status"]
           tags?: string[] | null
           title: string
+          title_en?: string | null
           updated_at?: string
         }
         Update: {
@@ -1453,6 +1459,7 @@ export type Database = {
           credits_cost_eur?: number | null
           deposit_eur?: number
           description?: string | null
+          description_en?: string | null
           details_json?: Json | null
           id?: string
           images?: Json
@@ -1465,12 +1472,14 @@ export type Database = {
           price_eur?: number
           sale_price_eur?: number | null
           short_desc?: string | null
+          short_desc_en?: string | null
           sku?: string
           slug?: string
           status?: Database["public"]["Enums"]["product_status"]
           stock_status?: Database["public"]["Enums"]["stock_status"]
           tags?: string[] | null
           title?: string
+          title_en?: string | null
           updated_at?: string
         }
         Relationships: [

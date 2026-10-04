@@ -38,8 +38,11 @@ interface Product {
   sku: string;
   slug: string;
   title: string;
+  title_en: string | null;
   short_desc: string | null;
+  short_desc_en: string | null;
   description: string | null;
+  description_en: string | null;
   price_eur: number;
   deposit_eur: number;
   sale_price_eur: number | null;
@@ -72,8 +75,11 @@ interface ProductFormData {
   sku: string;
   slug: string;
   title: string;
+  title_en: string;
   short_desc: string;
+  short_desc_en: string;
   description: string;
+  description_en: string;
   price_eur: string;
   deposit_eur: string;
   sale_price_eur: string;
@@ -98,8 +104,11 @@ const emptyFormData: ProductFormData = {
   sku: '',
   slug: '',
   title: '',
+  title_en: '',
   short_desc: '',
+  short_desc_en: '',
   description: '',
+  description_en: '',
   price_eur: '',
   deposit_eur: '',
   sale_price_eur: '',
@@ -239,8 +248,11 @@ export function ProductsManager() {
       sku: product.sku,
       slug: product.slug,
       title: product.title,
+      title_en: product.title_en || '',
       short_desc: product.short_desc || '',
+      short_desc_en: product.short_desc_en || '',
       description: product.description || '',
+      description_en: product.description_en || '',
       price_eur: product.price_eur.toString(),
       deposit_eur: product.deposit_eur.toString(),
       sale_price_eur: product.sale_price_eur?.toString() || '',
@@ -347,8 +359,11 @@ export function ProductsManager() {
         sku: formData.sku.trim(),
         slug: formData.slug.trim(),
         title: formData.title.trim(),
+        title_en: formData.title_en.trim() || null,
         short_desc: formData.short_desc.trim() || null,
+        short_desc_en: formData.short_desc_en.trim() || null,
         description: formData.description.trim() || null,
+        description_en: formData.description_en.trim() || null,
         price_eur: parseFloat(formData.price_eur),
         deposit_eur: parseFloat(formData.deposit_eur),
         sale_price_eur: formData.sale_price_eur ? parseFloat(formData.sale_price_eur) : null,
@@ -665,7 +680,7 @@ export function ProductsManager() {
               </div>
             </div>
 
-            {/* Descriptions */}
+            {/* Descriptions (LT) */}
             <div className="space-y-4">
               <div>
                 <Label htmlFor="short_desc">{t('admProducts.impShortDesc')}</Label>
@@ -683,6 +698,42 @@ export function ProductsManager() {
                   value={formData.description}
                   onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
                   placeholder={t('admProducts.pmDescPh')}
+                  rows={4}
+                />
+              </div>
+            </div>
+
+            {/* English version */}
+            <div className="space-y-4 rounded-xl border border-border bg-muted/30 p-4">
+              <div>
+                <p className="text-sm font-semibold">{t('admProducts.pmEnSection')}</p>
+                <p className="text-xs text-muted-foreground mt-0.5">{t('admProducts.pmEnHint')}</p>
+              </div>
+              <div>
+                <Label htmlFor="title_en">{t('admProducts.pmTitleEn')}</Label>
+                <Input
+                  id="title_en"
+                  value={formData.title_en}
+                  onChange={(e) => setFormData(prev => ({ ...prev, title_en: e.target.value }))}
+                  placeholder={t('admProducts.pmTitleEnPh')}
+                />
+              </div>
+              <div>
+                <Label htmlFor="short_desc_en">{t('admProducts.pmShortEn')}</Label>
+                <Input
+                  id="short_desc_en"
+                  value={formData.short_desc_en}
+                  onChange={(e) => setFormData(prev => ({ ...prev, short_desc_en: e.target.value }))}
+                  placeholder={t('admProducts.pmShortEnPh')}
+                />
+              </div>
+              <div>
+                <Label htmlFor="description_en">{t('admProducts.pmFullDescEn')}</Label>
+                <Textarea
+                  id="description_en"
+                  value={formData.description_en}
+                  onChange={(e) => setFormData(prev => ({ ...prev, description_en: e.target.value }))}
+                  placeholder={t('admProducts.pmDescEnPh')}
                   rows={4}
                 />
               </div>

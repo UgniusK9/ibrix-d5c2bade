@@ -6,7 +6,7 @@ import { ArrowLeft, Package, Clock, Truck, RotateCcw, Shield, ShoppingCart, Puzz
 import { PageLayout } from "@/components/layout/PageLayout";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { useProduct, formatPrice, getEtaString, getProductImage } from "@/hooks/useProducts";
+import { useProduct, formatPrice, getEtaString, getProductImage, getProductTitle, getProductShortDesc, getProductDescription } from "@/hooks/useProducts";
 import { useProductVariants, groupVariantsByType, type ProductVariant } from "@/hooks/useProductVariants";
 import { VariantSelector } from "@/components/products/VariantSelector";
 import { useCartStore } from "@/stores/cartStore";
@@ -39,7 +39,7 @@ const productFAQKeys = [
 
 export default function Produktas() {
   const { handle } = useParams<{ handle: string }>();
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const addItem = useCartStore((state) => state.addItem);
   const { addProduct: addToRecentlyViewed } = useRecentlyViewed();
   const { addProduct: addToComparison, isInComparison, removeProduct: removeFromComparison } = useComparisonStore();
@@ -94,10 +94,11 @@ export default function Produktas() {
   // Track ViewContent and add to recently viewed when product loads
   useEffect(() => {
     if (product) {
+      const localizedTitle = getProductTitle(product, i18n.language);
       trackViewContentEvent({
         // Catalogue feeds key on SKU, so the pixel must report SKU too.
         id: product.sku || product.id,
-        name: product.title,
+        name: localizedTitle,
         price: product.price_eur * 100, // convert to cents
         currency: 'EUR',
         category: product.category,
@@ -105,7 +106,7 @@ export default function Produktas() {
       // Add to recently viewed
       addToRecentlyViewed(product.id);
     }
-  }, [product, addToRecentlyViewed]);
+  }, [product, addToRecentlyViewed, i18n.language]);
 
   const handleVariantChange = (type: string, variantId: string) => {
     setSelectedVariants(prev => ({ ...prev, [type]: variantId }));
@@ -122,8 +123,9 @@ export default function Produktas() {
         : undefined;
       
       addItem(product, 1, variant);
+      const localizedTitle = getProductTitle(product, i18n.language);
       toast.success(t('products.addedToCart'), {
-        description: variant ? `${product.title} - ${variant.name}` : product.title,
+        description: variant ? `${localizedTitle} - ${variant.name}` : localizedTitle,
         position: "top-center",
       });
     }
@@ -131,18 +133,18 @@ export default function Produktas() {
 
   const handleToggleComparison = () => {
     if (!product) return;
-    
+    const localizedTitle = getProductTitle(product, i18n.language);
     if (isInComparison(product.id)) {
       removeFromComparison(product.id);
       toast.info(t('products.removedFromComparison'), {
-        description: product.title,
+        description: localizedTitle,
         position: "top-center",
       });
     } else {
       const added = addToComparison(product);
       if (added) {
         toast.success(t('products.addedToComparison'), {
-          description: product.title,
+          description: localizedTitle,
           position: "top-center",
         });
       } else {
@@ -195,6 +197,9 @@ export default function Produktas() {
   const images: string[] = product.images?.length ? product.images : [image];
   const detailsCount = (product.details_json as Record<string, unknown>)?.detailsCount as number || 0;
   const badges = (product as any).badges as string[] || [];
+  const localizedTitle = getProductTitle(product, i18n.language);
+  const localizedShortDesc = getProductShortDesc(product, i18n.language);
+  const localizedDescription = getProductDescription(product, i18n.language);
   
   // Check if sale price is active
   const hasSalePrice = product.sale_price_eur && product.sale_price_eur < product.price_eur;
@@ -213,24 +218,24 @@ export default function Produktas() {
   return (
     <PageLayout>
       <SEOHead 
-        title={product.title}
-        description={product.short_desc || product.description || t(isPreOrder ? 'pgProductX.seoPreorder' : 'pgProductX.seoInStock', { title: product.title })}
+        title={localizedTitle}
+        description={localizedShortDesc || localizedDescription || t(isPreOrder ? 'pgProductX.seoPreorder' : 'pgProductX.seoInStock', { title: localizedTitle })}
         canonical={`/produktas/${product.slug}`}
         type="product"
         image={image}
         product={{
-          name: product.title,
+          name: localizedTitle,
           price: displayPrice,
           currency: 'EUR',
           availability: isPreOrder ? 'PreOrder' : 'InStock',
           sku: product.sku,
           image: image,
-          description: product.short_desc || product.description,
+          description: localizedShortDesc || localizedDescription,
         }}
         breadcrumbs={[
           { name: t('nav.home'), url: '/' },
           { name: t('nav.constructors'), url: '/produktai/visi' },
-          { name: product.title, url: `/produktas/${product.slug}` },
+          { name: localizedTitle, url: `/produktas/${product.slug}` },
         ]}
       />
       <div className="container py-8 md:py-12">
@@ -251,7 +256,7 @@ export default function Produktas() {
             <div className="relative aspect-square rounded-2xl overflow-hidden bg-gradient-to-br from-secondary/30 to-muted/20 border border-border">
               <img
                 src={images[activeImg]}
-                alt={product.title}
+                alt={localizedTitle}
                 className="w-full h-full object-cover"
               />
               {images.length > 1 && (
@@ -285,7 +290,7 @@ export default function Produktas() {
                       i === activeImg ? "border-primary" : "border-border hover:border-primary/50"
                     )}
                   >
-                    <img src={src} alt={`${product.title} ${i + 1}`} className="w-full h-full object-cover" />
+                    <img src={src} alt={`${localizedTitle} ${i + 1}`} className="w-full h-full object-cover" />
                   </button>
                 ))}
               </div>
@@ -299,7 +304,7 @@ export default function Produktas() {
             
             {/* Title */}
             <h1 className="font-heading text-3xl md:text-4xl font-bold mb-4">
-              {product.title}
+              {localizedTitle}
             </h1>
 
             {/* Price */}
@@ -417,9 +422,9 @@ export default function Produktas() {
             )}
 
             {/* Short Description */}
-            {product.description && (
+            {localizedDescription && (
               <p className="text-muted-foreground mt-6 leading-relaxed">
-                {product.description}
+                {localizedDescription}
               </p>
             )}
           </div>
@@ -493,7 +498,7 @@ export default function Produktas() {
                 {t('nav.reviews')}
               </PremiumAccordionTrigger>
               <PremiumAccordionContent>
-                <ProductReviews productId={product.id} productTitle={product.title} />
+                <ProductReviews productId={product.id} productTitle={localizedTitle} />
               </PremiumAccordionContent>
             </PremiumAccordionItem>
           </PremiumAccordion>

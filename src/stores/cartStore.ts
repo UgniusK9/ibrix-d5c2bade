@@ -2,6 +2,8 @@ import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import { trackAddToCartEvent } from '@/hooks/useAnalytics';
 import type { Product } from '@/hooks/useProducts';
+import { getProductTitle } from '@/hooks/useProducts';
+import i18n from '@/i18n/config';
 import { getLocalStateStorage } from '@/lib/browser-storage';
 
 export interface CartItem {
@@ -95,12 +97,13 @@ export const useCartStore = create<CartStore>()(
         
         const priceAdjustment = variant?.priceAdjustment || 0;
         const finalPriceEur = effectiveBasePriceEur + priceAdjustment;
+        const localizedTitle = getProductTitle(product, i18n.language);
         
         const newItem: CartItem = {
           productId: product.id,
           sku: product.sku,
           productSlug: product.slug,
-          title: variant ? `${product.title} - ${variant.name}` : product.title,
+          title: variant ? `${localizedTitle} - ${variant.name}` : localizedTitle,
           image: getProductImage(product),
           price: Math.round(finalPriceEur * 100),
           deposit: Math.round(product.deposit_eur * 100),
@@ -133,7 +136,7 @@ export const useCartStore = create<CartStore>()(
         // UUID, or Meta cannot match the event to a catalogue product.
         trackAddToCartEvent({
           id: product.sku || product.id,
-          name: variant ? `${product.title} - ${variant.name}` : product.title,
+          name: variant ? `${localizedTitle} - ${variant.name}` : localizedTitle,
           // ProductData.price is in cents; passing euros here reported values
           // 100x too low to Meta and GA.
           price: Math.round(finalPriceEur * 100),

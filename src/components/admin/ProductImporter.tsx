@@ -22,8 +22,11 @@ type StockStatus = 'preorder' | 'in_stock' | 'out_of_stock';
 interface ScrapedProduct {
   handle: string;
   title: string;
+  title_en?: string | null;
   description: string;
+  description_en?: string | null;
   short_desc: string;
+  short_desc_en?: string | null;
   source_price: number;
   source_currency: string;
   sku: string;
@@ -36,8 +39,11 @@ interface ImportDraft {
   sku: string;
   slug: string;
   title: string;
+  title_en: string;
   short_desc: string;
+  short_desc_en: string;
   description: string;
+  description_en: string;
   price_eur: string;
   deposit_eur: string;
   stock_status: StockStatus;
@@ -145,8 +151,11 @@ export function ProductImporter() {
           sku: p.sku,
           slug: slugify(p.handle || p.title),
           title: p.title,
+          title_en: p.title_en || '',
           short_desc: p.short_desc,
+          short_desc_en: p.short_desc_en || '',
           description: p.description,
+          description_en: p.description_en || '',
           price_eur: priceEur.toFixed(2),
           deposit_eur: (Math.round(priceEur * 0.2 * 100) / 100).toFixed(2),
           stock_status: 'preorder',
@@ -265,8 +274,11 @@ export function ProductImporter() {
           sku: d.sku.trim(),
           slug: d.slug.trim(),
           title: d.title.trim(),
+          title_en: d.title_en.trim() || null,
           short_desc: d.short_desc || null,
+          short_desc_en: d.short_desc_en || null,
           description: d.description || null,
+          description_en: d.description_en || null,
           price_eur: price,
           deposit_eur: Number.isFinite(deposit) ? deposit : 0,
           stock_status: d.stock_status,
@@ -366,8 +378,11 @@ export function ProductImporter() {
             sku: d.sku.trim(),
             slug: d.slug.trim(),
             title: d.title.trim(),
+            title_en: d.title_en.trim() || null,
             short_desc: d.short_desc || null,
+            short_desc_en: d.short_desc_en || null,
             description: d.description || null,
+            description_en: d.description_en || null,
             price_eur: price,
             deposit_eur: Number.isFinite(deposit) ? deposit : 0,
             stock_status,
@@ -575,6 +590,32 @@ export function ProductImporter() {
                     onChange={(e) => updateDraft(idx, { description: e.target.value })}
                     rows={6}
                   />
+                </div>
+                <div className="space-y-3 rounded-xl border border-border bg-muted/30 p-3">
+                  <div>
+                    <p className="text-sm font-semibold">{t('admProducts.pmEnSection')}</p>
+                    <p className="text-xs text-muted-foreground mt-0.5">{t('admProducts.pmEnHint')}</p>
+                  </div>
+                  <div className="space-y-1">
+                    <Label>{t('admProducts.pmTitleEn')}</Label>
+                    <Input value={d.title_en} onChange={(e) => updateDraft(idx, { title_en: e.target.value })} />
+                  </div>
+                  <div className="space-y-1">
+                    <Label>{t('admProducts.pmShortEn')}</Label>
+                    <Textarea
+                      value={d.short_desc_en}
+                      onChange={(e) => updateDraft(idx, { short_desc_en: e.target.value })}
+                      rows={2}
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <Label>{t('admProducts.pmFullDescEn')}</Label>
+                    <Textarea
+                      value={d.description_en}
+                      onChange={(e) => updateDraft(idx, { description_en: e.target.value })}
+                      rows={6}
+                    />
+                  </div>
                 </div>
 
                 <div className="space-y-2">

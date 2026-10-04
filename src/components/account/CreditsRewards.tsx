@@ -5,10 +5,12 @@ import { Gift, Loader2, Package, Tag } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { supabase } from '@/integrations/supabase/client';
+import { getProductTitle } from '@/hooks/useProducts';
 
 interface RewardProduct {
   id: string;
   title: string;
+  title_en: string | null;
   slug: string;
   images: string[];
   price_eur: number;
@@ -20,7 +22,7 @@ interface CreditsRewardsProps {
 }
 
 export function CreditsRewards({ userBalance }: CreditsRewardsProps) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [products, setProducts] = useState<RewardProduct[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -29,7 +31,7 @@ export function CreditsRewards({ userBalance }: CreditsRewardsProps) {
       try {
         const { data, error } = await supabase
           .from('products')
-          .select('id, title, slug, images, price_eur, credits_cost_eur')
+          .select('id, title, title_en, slug, images, price_eur, credits_cost_eur')
           .not('credits_cost_eur', 'is', null)
           .gt('credits_cost_eur', 0)
           .eq('status', 'active')
@@ -41,6 +43,7 @@ export function CreditsRewards({ userBalance }: CreditsRewardsProps) {
         setProducts((data || []).map((p: any) => ({
           id: p.id,
           title: p.title,
+          title_en: p.title_en ?? null,
           slug: p.slug,
           price_eur: p.price_eur,
           credits_cost_eur: Number(p.credits_cost_eur),
@@ -108,7 +111,7 @@ export function CreditsRewards({ userBalance }: CreditsRewardsProps) {
                 {product.images[0] ? (
                   <img 
                     src={product.images[0]} 
-                    alt={product.title}
+                    alt={getProductTitle(product, i18n.language)}
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform"
                   />
                 ) : (
@@ -124,7 +127,7 @@ export function CreditsRewards({ userBalance }: CreditsRewardsProps) {
               </div>
               <div className="p-4">
                 <h3 className="font-medium text-sm line-clamp-2 mb-2 group-hover:text-primary transition-colors">
-                  {product.title}
+                  {getProductTitle(product, i18n.language)}
                 </h3>
                 <div className="flex items-center justify-between">
                   <div>

@@ -5,11 +5,11 @@ import { Clock, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useRecentlyViewed } from "@/hooks/useRecentlyViewed";
 import { supabase } from "@/integrations/supabase/client";
-import { Product, getProductImage, formatPrice, transformProduct } from "@/hooks/useProducts";
+import { Product, getProductImage, formatPrice, getProductTitle, transformProduct } from "@/hooks/useProducts";
 import { motion } from "framer-motion";
 
 export function RecentlyViewedSection() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { productIds } = useRecentlyViewed();
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
@@ -94,12 +94,12 @@ export function RecentlyViewedSection() {
                 <div className="aspect-square rounded-lg overflow-hidden bg-gradient-to-br from-secondary/30 to-muted/20 border border-border group-hover:border-primary/30 transition-colors mb-2">
                   <img
                     src={getProductImage(product)}
-                    alt={product.title}
+                    alt={getProductTitle(product, i18n.language)}
                     className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
                   />
                 </div>
                 <h3 className="font-medium text-xs line-clamp-2 group-hover:text-primary transition-colors mb-0.5">
-                  {product.title}
+                  {getProductTitle(product, i18n.language)}
                 </h3>
                 <p className="font-heading font-bold text-sm text-accent">
                   {formatPrice(product.price_eur)}

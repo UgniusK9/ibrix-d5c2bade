@@ -5,7 +5,7 @@ import { Search, X, Loader2, ArrowRight } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { useProducts, formatPrice, getProductImage } from "@/hooks/useProducts";
+import { useProducts, formatPrice, getProductImage, getProductTitle } from "@/hooks/useProducts";
 import { cn } from "@/lib/utils";
 
 interface ProductSearchProps {
@@ -17,7 +17,7 @@ interface ProductSearchProps {
 }
 
 export function ProductSearch({ className, onClose, onSelect, isMobile, autoFocus }: ProductSearchProps) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [query, setQuery] = useState("");
   const [isOpen, setIsOpen] = useState(false);
   const { data: products, isLoading } = useProducts();
@@ -25,12 +25,14 @@ export function ProductSearch({ className, onClose, onSelect, isMobile, autoFocu
   const containerRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
 
-  // Filter products based on query
+  // Filter products based on query (searches both LT and EN copy)
   const filteredProducts = products?.filter(p => 
     query.length >= 2 && (
       p.title.toLowerCase().includes(query.toLowerCase()) ||
+      (p.title_en || '').toLowerCase().includes(query.toLowerCase()) ||
       p.sku.toLowerCase().includes(query.toLowerCase()) ||
-      p.short_desc?.toLowerCase().includes(query.toLowerCase())
+      p.short_desc?.toLowerCase().includes(query.toLowerCase()) ||
+      p.short_desc_en?.toLowerCase().includes(query.toLowerCase())
     )
   ).slice(0, 5) || [];
 
@@ -132,12 +134,12 @@ export function ProductSearch({ className, onClose, onSelect, isMobile, autoFocu
                     <div className="w-12 h-12 rounded-lg bg-secondary/30 overflow-hidden flex-shrink-0">
                       <img 
                         src={getProductImage(product)} 
-                        alt={product.title}
+                        alt={getProductTitle(product, i18n.language)}
                         className="w-full h-full object-cover"
                       />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="font-medium text-sm truncate">{product.title}</p>
+                      <p className="font-medium text-sm truncate">{getProductTitle(product, i18n.language)}</p>
                       <div className="flex items-center gap-2 mt-0.5">
                         <span className="text-sm font-semibold text-accent">
                           {formatPrice(product.price_eur)}

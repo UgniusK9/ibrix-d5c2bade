@@ -4,6 +4,7 @@ import { Wallet, Sparkles, AlertCircle, Check } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
+import { getProductTitle } from '@/hooks/useProducts';
 
 interface CreditsPaymentOptionProps {
   cartItems: Array<{
@@ -35,7 +36,7 @@ export function CreditsPaymentOption({
   onSelect,
   onCreditsInfo 
 }: CreditsPaymentOptionProps) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { user } = useAuth();
   const [loading, setLoading] = useState(true);
   const [creditsInfo, setCreditsInfo] = useState<CreditsInfo | null>(null);
@@ -62,7 +63,7 @@ export function CreditsPaymentOption({
         const productIds = cartItems.map(item => item.productId);
         const { data: products } = await supabase
           .from('products')
-          .select('id, title, credits_cost_eur')
+          .select('id, title, title_en, credits_cost_eur')
           .in('id', productIds)
           .not('credits_cost_eur', 'is', null)
           .gt('credits_cost_eur', 0);
@@ -77,7 +78,7 @@ export function CreditsPaymentOption({
             const creditsForItem = product.credits_cost_eur * cartItem.quantity;
             eligibleItems.push({
               productId: cartItem.productId,
-              title: product.title,
+              title: getProductTitle(product as { title: string; title_en: string | null }, i18n.language),
               creditsRequired: creditsForItem,
             });
             totalCreditsRequired += creditsForItem;
