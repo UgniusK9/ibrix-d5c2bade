@@ -8,7 +8,7 @@ import { getArticle } from "./Patarimai";
 export default function Straipsnis() {
   const { slug } = useParams<{ slug: string }>();
   const { t, i18n } = useTranslation();
-  const article = getArticle(slug);
+  const article = getArticle(slug, i18n.language);
 
   if (!article) return <Navigate to="/patarimai" replace />;
 

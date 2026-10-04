@@ -1,5 +1,5 @@
 {
-  "_comment": "Guide articles for /patarimai. Consumed at runtime by src/pages/Patarimai.tsx and src/pages/Straipsnis.tsx, and at build time by scripts/prerender-static.mjs and scripts/generate-sitemap.mjs. Adding an entry here is enough — routes, sitemap and prerendering all pick it up automatically.",
+  "_comment": "Guide articles for /patarimai. Consumed at runtime by src/pages/Patarimai.tsx and src/pages/Straipsnis.tsx, and at build time by scripts/prerender-static.mjs and scripts/generate-sitemap.mjs. Adding an entry here is enough — routes, sitemap and prerendering all pick it up automatically. Each article carries an \"en\" block with the same text fields in English (slug, dates and links stay shared); a missing English field falls back to Lithuanian.",
   "articles": [
     {
       "slug": "kaip-issirinkti-pirma-konstruktoriu",
@@ -42,6 +42,45 @@
         "note": "Modeliai iki 1 200 detalių",
         "label": "Peržiūrėti",
         "href": "/produktai/visi"
+      },
+      "en": {
+        "title": "How to choose your first MOULD KING set",
+        "description": "When choosing your first technic set, build difficulty matters more than piece count. A practical guide for beginners.",
+        "intro": "Choosing a technic set can look confusing: one has 500 pieces, another 3,000, and prices differ several times over. This guide explains what is actually worth looking at when picking your first set.",
+        "sections": [
+          {
+            "heading": "How many pieces to start with",
+            "body": [
+              "For beginners, sets of 500 to 1,200 pieces usually fit best. A model like that can be built in one or two evenings, and the instructions do not yet demand experience with complex mechanisms.",
+              "Bigger sets of 2,000+ pieces are not harder in themselves, but they take longer. When a build stretches over several weeks, the unfinished model often ends up in a drawer."
+            ]
+          },
+          {
+            "heading": "Is a motorised model worth it",
+            "body": [
+              "Motorised models are more impressive: pistons move, gears turn, the steering works. But they need a more precise build: one gear placed slightly wrong and the mechanism jams.",
+              "For a first build, a mechanical model without electronics is the safer choice. It moves by hand-cranking, so even if you make a mistake, it is easier to find."
+            ]
+          },
+          {
+            "heading": "What to look at besides piece count",
+            "body": [
+              "The age rating on the box tells you less about age than about build difficulty. Model size once built matters if you plan to display it: some models take up more than half a metre.",
+              "It is also worth checking whether the set comes with a display case or stand. For collector models that often matters more than the build itself."
+            ]
+          },
+          {
+            "heading": "What if a piece is missing",
+            "body": [
+              "It is rare, but it happens. When you buy from IBRIX we send missing pieces free of charge: just give us the set number and the part number from the instructions."
+            ]
+          }
+        ],
+        "cta": {
+          "title": "Sets for beginners",
+          "note": "Models up to 1,200 pieces",
+          "label": "Browse"
+        }
       }
     },
     {
@@ -81,7 +120,42 @@
         "label": "Peržiūrėti",
         "href": "/produktai/varikliai"
       },
-      "disclaimer": "LEGO® yra registruotas LEGO Group prekės ženklas. IBRIX nėra susijęs su LEGO Group ir nėra jos įgaliotas atstovas. MOULD KING yra atskiras gamintojas."
+      "disclaimer": "LEGO® yra registruotas LEGO Group prekės ženklas. IBRIX nėra susijęs su LEGO Group ir nėra jos įgaliotas atstovas. MOULD KING yra atskiras gamintojas.",
+      "en": {
+        "title": "Do MOULD KING pieces fit LEGO®?",
+        "description": "The most common question before buying a first MOULD KING set. Do the pieces connect to a LEGO® collection, and where are the limits?",
+        "intro": "The short answer is yes, the pieces physically connect to LEGO®. Both makers use the same standard stud system, whose dimensions are no longer protected by patents. But there are a few details worth knowing before you mix sets.",
+        "sections": [
+          {
+            "heading": "Why the pieces connect at all",
+            "body": [
+              "The patents on the LEGO® stud system expired at the end of the last century. Since then stud pitch, diameter and beam height have become a de facto industry standard used by MOULD KING, CaDA, Mega Bloks and many others.",
+              "In practice this means axles, connectors, beams, gears and drives are interchangeable. The MOULD KING technic line follows LEGO® Technic geometry."
+            ]
+          },
+          {
+            "heading": "Where the limits are",
+            "body": [
+              "Plastic shades differ. It shows most in grey and white pieces, so if the model is for display, mix pieces from different makers with care.",
+              "Clutch is not identical. New pieces start out stiffer and loosen up after a few builds.",
+              "Electronics are not compatible. Motors, controllers and battery boxes differ in connectors and voltage between makers, so choose them from the same maker as the set."
+            ]
+          },
+          {
+            "heading": "What to weigh up before buying",
+            "body": [
+              "If you want to add pieces to an existing LEGO® Technic collection, they will fit. If you are after a standalone model to display, there is no need to mix, and the question answers itself.",
+              "We send missing pieces free of charge, so even if something is short in a set, you will not have to sort it out yourself."
+            ]
+          }
+        ],
+        "cta": {
+          "title": "MOULD KING technic models",
+          "note": "Engines, gearboxes and mechanisms",
+          "label": "Browse"
+        },
+        "disclaimer": "LEGO® is a registered trademark of the LEGO Group. IBRIX is not affiliated with the LEGO Group and is not its authorised representative. MOULD KING is a separate manufacturer."
+      }
     },
     {
       "slug": "kas-yra-pre-order",
@@ -117,6 +191,38 @@
         "note": "Išsamios sąlygos ir terminai",
         "label": "Skaityti daugiau",
         "href": "/pre-order"
+      },
+      "en": {
+        "title": "What pre-order means and why it is worth the wait",
+        "description": "Pre-order lets you reserve a set before it reaches our warehouse. Here is how it works at IBRIX and what to expect.",
+        "intro": "Some MOULD KING models on ibrix.lt are marked as pre-order. That means you can reserve the set before it arrives at our warehouse.",
+        "sections": [
+          {
+            "heading": "How it works",
+            "body": [
+              "When you reserve, you pay a deposit, and the rest before dispatch. Every pre-order model shows the expected wait in weeks, so you know in advance what to expect.",
+              "When the item arrives, we get in touch and confirm shipping."
+            ]
+          },
+          {
+            "heading": "Why some models are pre-order only",
+            "body": [
+              "Popular and newer models sell out fast, and production batches are limited. Pre-order lets you secure a set from the next batch instead of waiting for it to come back in stock.",
+              "For rarer collector models it is often the only way to get them."
+            ]
+          },
+          {
+            "heading": "If you change your mind",
+            "body": [
+              "A pre-order can be cancelled while the item has not shipped yet, and we refund the deposit. Once you receive the parcel, the usual 14-day right of return applies."
+            ]
+          }
+        ],
+        "cta": {
+          "title": "How pre-order works",
+          "note": "Full terms and timelines",
+          "label": "Read more"
+        }
       }
     },
     {
@@ -165,7 +271,51 @@
         "label": "Peržiūrėti",
         "href": "/produktai/varikliai"
       },
-      "disclaimer": "LEGO® yra registruotas LEGO Group prekės ženklas. IBRIX nėra susijęs su LEGO Group ir nėra jos įgaliotas atstovas. MOULD KING yra atskiras gamintojas."
+      "disclaimer": "LEGO® yra registruotas LEGO Group prekės ženklas. IBRIX nėra susijęs su LEGO Group ir nėra jos įgaliotas atstovas. MOULD KING yra atskiras gamintojas.",
+      "en": {
+        "title": "MOULD KING or LEGO®: which to choose",
+        "description": "An honest comparison of price, piece count, quality and licences. When an alternative makes sense, and when it does not.",
+        "intro": "Almost everyone asks this the first time they compare prices of two sets of similar size. The answer depends on what exactly you are after: both have areas where they clearly win.",
+        "sections": [
+          {
+            "heading": "Price per piece",
+            "body": [
+              "This is the most obvious difference. A LEGO® Technic model of similar size usually costs several times more than a MOULD KING set with a similar piece count.",
+              "The reason is simple: the LEGO® price includes licences, marketing, a worldwide distribution network and a brand premium. MOULD KING sells without licences and through a shorter chain."
+            ]
+          },
+          {
+            "heading": "Where LEGO® leads",
+            "body": [
+              "Consistent piece quality. LEGO® manufacturing tolerances are among the tightest in the industry, and you feel it while building: pieces seat the same way, with no difference in clutch between sets.",
+              "Licensed models. Official Ferrari, Porsche or Lamborghini models are LEGO® only, because they hold the licences.",
+              "Resale market. LEGO® sets keep their value and are easy to resell. The resale market for alternatives is much weaker, so they do not work as an investment."
+            ]
+          },
+          {
+            "heading": "Where MOULD KING leads",
+            "body": [
+              "More complexity for the same money. For the price of an average LEGO® set you often get several times more pieces and more complex mechanics.",
+              "Niche models. Engine cutaways, GBC modules, mechanical clocks: LEGO® simply has no such categories.",
+              "Motors are often included in the box instead of being sold separately."
+            ]
+          },
+          {
+            "heading": "What to choose in practice",
+            "body": [
+              "For a child, or a gift where a recognisable brand matters: LEGO®.",
+              "For an adult who wants complex mechanics and does not want to pay a premium for the name, the alternative makes more sense.",
+              "If you already own a LEGO® Technic collection, the pieces are compatible, so there is no need to pick only one maker."
+            ]
+          }
+        ],
+        "cta": {
+          "title": "MOULD KING technic line",
+          "note": "Engines, gearboxes and mechanisms",
+          "label": "Browse"
+        },
+        "disclaimer": "LEGO® is a registered trademark of the LEGO Group. IBRIX is not affiliated with the LEGO Group and is not its authorised representative. MOULD KING is a separate manufacturer."
+      }
     },
     {
       "slug": "lego-alternatyvos-lietuvoje",
@@ -213,7 +363,51 @@
         "label": "Peržiūrėti",
         "href": "/produktai/visi"
       },
-      "disclaimer": "LEGO® yra registruotas LEGO Group prekės ženklas. IBRIX nėra susijęs su LEGO Group ir nėra jos įgaliotas atstovas. MOULD KING yra atskiras gamintojas."
+      "disclaimer": "LEGO® yra registruotas LEGO Group prekės ženklas. IBRIX nėra susijęs su LEGO Group ir nėra jos įgaliotas atstovas. MOULD KING yra atskiras gamintojas.",
+      "en": {
+        "title": "LEGO® alternatives in Lithuania: what to look for",
+        "description": "Which alternatives are available in Lithuania, how they differ, and how not to be disappointed when ordering a cheaper set.",
+        "intro": "The market for alternative makers has grown so much in recent years that choosing has become the problem. Here is what separates a serious set from one you will regret ordering.",
+        "sections": [
+          {
+            "heading": "The main makers",
+            "body": [
+              "MOULD KING: strongest in technic models such as engines, GBC modules and motorised machinery. The most pieces for the price.",
+              "CaDA: focuses on cars and holds some official licences, so it costs more than other alternatives.",
+              "There are also many no-name makers whose quality is hard to predict, and they are where most disappointments come from."
+            ]
+          },
+          {
+            "heading": "What to check before ordering",
+            "body": [
+              "Instructions. A serious set has clear picture instructions, not text you have to translate.",
+              "Missing-piece policy. Any set can be short of a piece. What matters is whether the seller sends it free or you have to hunt for it yourself.",
+              "Warranty and returns. Buying from an EU seller gives you a 14-day right of return and a two-year warranty."
+            ]
+          },
+          {
+            "heading": "Why ordering straight from Asia often costs more",
+            "body": [
+              "The listed price is rarely the final one. Import duties and VAT are added after you order, and the courier charges a handling fee for clearing them.",
+              "Add it all up and the price difference often disappears or turns negative.",
+              "If something breaks or pieces are missing, returning to a non-EU country hardly pays: shipping costs more than the piece."
+            ]
+          },
+          {
+            "heading": "How it works with us",
+            "body": [
+              "Sets arrive in Lithuania, so duty and VAT are already settled: the price on the site is final.",
+              "We send missing pieces free of charge, and the pre-order wait is shown on every product, so you know in advance what to expect."
+            ]
+          }
+        ],
+        "cta": {
+          "title": "All building sets",
+          "note": "The price on the site is final",
+          "label": "Browse"
+        },
+        "disclaimer": "LEGO® is a registered trademark of the LEGO Group. IBRIX is not affiliated with the LEGO Group and is not its authorised representative. MOULD KING is a separate manufacturer."
+      }
     }
   ]
 }
