@@ -179,6 +179,77 @@ export function getEtaString(product: Product): string {
   return `8–10 ${i18n.t('products.weeksShort')}`;
 }
 
+// Titles are imported from supplier feeds as
+// "MOULD KING 24130 Red Rose Bouquet Konstruktorius | 894 dalių".
+// Shoppers read the model name first; brand, model number and piece count
+// are shown beside it, so they are split off here. A title that does not
+// follow the pattern comes back unchanged.
+export function getDisplayTitle(title: string, sku?: string): { name: string; brand: string | null; pieces: number | null } {
+  // No \b after the word: JS treats "ų" as a non-letter, so \b never matches there.
+  const piecesPattern = /\s*\|\s*([\d.,\s]+?)\s*(dalių|dalys|detalių|detalės|pieces|pcs)(?=\s|$).*$/i;
+  // Most imported products carry the piece count only here, so keep it.
+  const piecesMatch = title.match(piecesPattern);
+  const pieces = piecesMatch ? Number(piecesMatch[1].replace(/[^\d]/g, '')) || null : null;
+  let name = title.replace(piecesPattern, '');
+  let brand: string | null = null;
+  const brandMatch = name.match(/^(mould\s*king)\s+/i);
+  if (brandMatch) {
+    brand = 'Mould King';
+    name = name.slice(brandMatch[0].length);
+  }
+  if (sku && name.startsWith(`${sku} `)) name = name.slice(sku.length + 1);
+  name = name.replace(/\s+(konstruktorius|building set|building blocks)$/i, '').trim();
+  return { name: name || title, brand, pieces };
+}
+
+function addBusinessDays(from: Date, days: number): Date {
+  const date = new Date(from);
+  let added = 0;
+  while (added < days) {
+    date.setDate(date.getDate() + 1);
+    const weekday = date.getDay();
+    if (weekday !== 0 && weekday !== 6) added += 1;
+  }
+  return date;
+}
+
+// The same window getEtaString describes, as calendar dates counted from
+// today, so a shopper sees "29 Nov – 13 Dec" instead of doing the sum.
+export function getDeliveryWindow(product: Product, today: Date = new Date()): { from: Date; to: Date } {
+  if (product.stock_status === 'in_stock') {
+    return { from: addBusinessDays(today, 1), to: addBusinessDays(today, 2) };
+  }
+  const hasEta = product.preorder_eta_weeks_min && product.preorder_eta_weeks_max;
+  const minWeeks = hasEta ? product.preorder_eta_weeks_min! : 8;
+  const maxWeeks = hasEta ? product.preorder_eta_weeks_max! : 10;
+  const from = new Date(today);
+  from.setDate(from.getDate() + minWeeks * 7);
+  const to = new Date(today);
+  to.setDate(to.getDate() + maxWeeks * 7);
+  return { from, to };
+}
+
+export function formatDeliveryWindow(window: { from: Date; to: Date }, lang?: string): string {
+  const locale = isEnglishLocale(lang) ? 'en-GB' : 'lt-LT';
+  const format = new Intl.DateTimeFormat(locale, { month: 'long', day: 'numeric' });
+  return `${format.format(window.from)} – ${format.format(window.to)}`;
+}
+
+// Last delivery date that still counts as "before Christmas": a parcel
+// locker pickup on the 22nd leaves time to wrap it.
+// ponytail: fixed date; move to app_settings if the shop wants to tune it.
+const CHRISTMAS_CUTOFF = { month: 11, day: 22 };
+
+// From 1 October to Christmas Eve, says whether the latest promised date
+// lands before the cutoff. Outside that season there is nothing to say.
+export function getChristmasFit(window: { to: Date }, today: Date = new Date()): 'before' | 'after' | null {
+  const seasonStart = new Date(today.getFullYear(), 9, 1);
+  const christmasEve = new Date(today.getFullYear(), 11, 24);
+  if (today < seasonStart || today > christmasEve) return null;
+  const cutoff = new Date(today.getFullYear(), CHRISTMAS_CUTOFF.month, CHRISTMAS_CUTOFF.day, 23, 59);
+  return window.to <= cutoff ? 'before' : 'after';
+}
+
 // Helper to get default product image
 export function getProductImage(product: Product): string {
   if (product.images && product.images.length > 0) {
