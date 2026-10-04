@@ -198,7 +198,10 @@ export function getDisplayTitle(title: string, sku?: string): { name: string; br
     name = name.slice(brandMatch[0].length);
   }
   if (sku && name.startsWith(`${sku} `)) name = name.slice(sku.length + 1);
-  name = name.replace(/\s+(konstruktorius|building set|building blocks)$/i, '').trim();
+  // Some feeds put an adjective in front: "Racing Plane Žaislinis Konstruktorius"
+  // (toy building set), "V8 Engine Kaladėlių Konstruktorius" (block building set).
+  // Both words go, or every language shows "Racing Plane Žaislinis".
+  name = name.replace(/\s+(?:(?:žaislinis|kaladėlių)\s+)?(konstruktorius|building set|building blocks)$/i, '').trim();
   return { name: name || title, brand, pieces };
 }
 
