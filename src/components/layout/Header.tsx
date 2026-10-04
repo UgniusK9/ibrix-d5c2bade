@@ -188,6 +188,7 @@ export function Header() {
                 size="icon"
                 className="relative"
                 onClick={() => setCartOpen(true)}
+                aria-label={totalItems > 0 ? `${t('cart.title')} (${totalItems})` : t('cart.title')}
               >
                 <ShoppingCart className="h-5 w-5" />
                 {totalItems > 0 && (
