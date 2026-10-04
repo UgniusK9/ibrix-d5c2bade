@@ -18,7 +18,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
-import { buildCategoryTree, topLevelCategories, findAncestorIds, getAllDescendantIds, type CategoryNode } from "@/lib/categoryTree";
+import { buildCategoryTree, topLevelCategories, findAncestorIds, getAllDescendantIds, localizeCategories, type CategoryNode } from "@/lib/categoryTree";
 
 type StatusFilter = "all" | "preorder" | "in_stock";
 type SortOption = "recommended" | "newest" | "price_asc" | "price_desc" | "parts" | "name_asc";
@@ -49,7 +49,8 @@ export default function Produktai() {
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
   const [sortBy, setSortBy] = useState<SortOption>("recommended");
   const [viewMode, setViewMode] = useState<'grid' | 'compact'>('grid');
-  const [categories, setCategories] = useState<Category[]>([]);
+  const [dbCategories, setCategories] = useState<Category[]>([]);
+  const categories = useMemo(() => localizeCategories(dbCategories, t), [dbCategories, t]);
   const [loadingCategories, setLoadingCategories] = useState(true);
   const [expandedCategoryIds, setExpandedCategoryIds] = useState<Set<string>>(new Set());
   const [localSearch, setLocalSearch] = useState(searchQuery);

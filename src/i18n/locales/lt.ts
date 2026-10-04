@@ -1290,6 +1290,7 @@ export const lt = {
     edGiftText: 'Nežinai ką padovanoti? Leisk pasirinkti pačiam – dovanų kuponas bet kokiai sumai.',
     edGiftCta: 'Rinkti dovaną',
     hiwBadge: 'PROCESAS',
+    hiwTitle: 'Kaip veikia pre-order',
     hiw1Title: 'Išsirenkate modelį',
     hiw1Desc: 'Pasirenkate pagal tipą, detalių skaičių ir pristatymo statusą: sandėlyje arba pre-order.',
     hiw2Title: 'Užsisakote',

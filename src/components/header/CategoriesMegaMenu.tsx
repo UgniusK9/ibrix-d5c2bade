@@ -4,7 +4,7 @@ import { Link } from "react-router-dom";
 import { ChevronDown, ArrowRight, Grid3X3, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
-import { buildCategoryTree, topLevelCategories, type CategoryNode as TreeNode } from "@/lib/categoryTree";
+import { buildCategoryTree, topLevelCategories, localizeCategories, type CategoryNode as TreeNode } from "@/lib/categoryTree";
 
 interface Category {
   id: string;
@@ -32,7 +32,8 @@ interface CategoriesMegaMenuProps {
 export function CategoriesMegaMenu({ onNavigate }: CategoriesMegaMenuProps) {
   const { t } = useTranslation();
   const [isOpen, setIsOpen] = useState(false);
-  const [categories, setCategories] = useState<Category[]>([]);
+  const [dbCategories, setCategories] = useState<Category[]>([]);
+  const categories = useMemo(() => localizeCategories(dbCategories, t), [dbCategories, t]);
   const [loading, setLoading] = useState(true);
   const menuRef = useRef<HTMLDivElement>(null);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
