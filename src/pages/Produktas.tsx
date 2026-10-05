@@ -209,7 +209,7 @@ export default function Produktas() {
   const finalPrice = displayPrice + selectedVariantDetails.priceAdjustment;
 
   const productSpecs = [
-    { label: t('products.partsCount'), value: detailsCount > 0 ? `${detailsCount} ${t('products.pieces')}` : "—" },
+    { label: t('products.partsCount'), value: detailsCount > 0 ? `${detailsCount} ${t('products.pieces')}` : "-" },
     { label: t('products.difficulty'), value: t('products.advanced') },
     { label: t('products.ageGroup'), value: "16+" },
     { label: t('products.assemblyTime'), value: `~20–30 ${t('products.hours')}` },

@@ -169,7 +169,7 @@ export function ActiveCartsManager() {
     try {
       return formatDistanceToNow(new Date(updatedAt), { addSuffix: true, locale: lt });
     } catch {
-      return "—";
+      return "-";
     }
   };
 

@@ -351,9 +351,9 @@ function getDepositConfirmedEmail(data: any): { subject: string; html: string } 
 
   // Info table cells (top — like FOTO 1)
   const infoCells: InfoCell[] = [
-    { label: s.orderNo, value: orderNumber || '—' },
+    { label: s.orderNo, value: orderNumber || '-' },
     { label: s.date, value: orderDate },
-    { label: s.email, value: email || '—' },
+    { label: s.email, value: email || '-' },
     { label: s.total, value: `${grandTotal.toFixed(2)}€` },
     { label: s.payment, value: paymentMethod || 'Online' },
   ];
@@ -517,8 +517,8 @@ function getDepositConfirmedEmail(data: any): { subject: string; html: string } 
 
   return {
     subject: isFullPayment
-      ? (en ? `Order ${orderNumber} — confirmed` : `Užsakymas ${orderNumber} — patvirtintas`)
-      : (en ? `Order ${orderNumber} — deposit received` : `Užsakymas ${orderNumber} — depozitas gautas`),
+      ? (en ? `Order ${orderNumber}, confirmed` : `Užsakymas ${orderNumber}, patvirtintas`)
+      : (en ? `Order ${orderNumber}, deposit received` : `Užsakymas ${orderNumber}, depozitas gautas`),
     html: getEmailWrapper(content, {
       title: en ? `Order ${orderNumber}` : `Užsakymas ${orderNumber}`,
       preheader: en ? `Thank you, ${firstName || ''}! Order ${orderNumber} received. Total: ${grandTotal.toFixed(2)}€` : `Ačiū ${firstName || ''}! Užsakymas ${orderNumber} priimtas. Viso: ${grandTotal.toFixed(2)}€`,
@@ -533,7 +533,7 @@ function getBalanceRequestEmail(data: any): { subject: string; html: string } {
   const s = strings(lang);
 
   const content = `
-    ${getHeroBlock(en ? 'Balance payment' : 'Likučio apmokėjimas', en ? 'Your order is ready' : 'Jūsų užsakymas paruoštas', (en ? `Hello, ${firstName}. One last step — pay the remaining balance so we can ship your order.` : `Sveiki, ${firstName}. Liko apmokėti likutį, kad pradėtumėme siuntimą.`))}
+    ${getHeroBlock(en ? 'Balance payment' : 'Likučio apmokėjimas', en ? 'Your order is ready' : 'Jūsų užsakymas paruoštas', (en ? `Hello, ${firstName}. One last step, pay the remaining balance so we can ship your order.` : `Sveiki, ${firstName}. Liko apmokėti likutį, kad pradėtumėme siuntimą.`))}
 
     ${getInfoTable([
       { label: s.orderNo, value: orderNumber },
@@ -553,7 +553,7 @@ function getBalanceRequestEmail(data: any): { subject: string; html: string } {
   `;
 
   return {
-    subject: en ? `Order ${orderNumber} — ${Number(balanceEur).toFixed(2)}€ balance due` : `Užsakymas ${orderNumber} — liko apmokėti ${Number(balanceEur).toFixed(2)}€`,
+    subject: en ? `Order ${orderNumber}, ${Number(balanceEur).toFixed(2)}€ balance due` : `Užsakymas ${orderNumber}, liko apmokėti ${Number(balanceEur).toFixed(2)}€`,
     html: getEmailWrapper(content, {
       title: en ? `Balance payment ${orderNumber}` : `Likučio apmokėjimas ${orderNumber}`,
       preheader: en ? `${Number(balanceEur).toFixed(2)}€ balance due for order ${orderNumber}` : `Liko apmokėti ${Number(balanceEur).toFixed(2)}€ už užsakymą ${orderNumber}`,
@@ -584,7 +584,7 @@ function getBalancePaidEmail(data: any): { subject: string; html: string } {
   `;
 
   return {
-    subject: en ? `Order ${orderNumber} — payment received` : `Užsakymas ${orderNumber} — mokėjimas gautas`,
+    subject: en ? `Order ${orderNumber}, payment received` : `Užsakymas ${orderNumber}, mokėjimas gautas`,
     html: getEmailWrapper(content, {
       title: en ? `Payment received ${orderNumber}` : `Mokėjimas gautas ${orderNumber}`,
       preheader: en ? `${Number(amountEur).toFixed(2)}€ paid. We are preparing your shipment.` : `${Number(amountEur).toFixed(2)}€ apmokėta. Pradedame siuntimą.`,
@@ -605,7 +605,7 @@ function getShippedEmail(data: any): { subject: string; html: string } {
     ${getInfoTable([
       { label: s.orderNo, value: orderNumber },
       { label: s.carrier, value: carrier },
-      { label: s.trackingNo, value: trackingNumber || '—' },
+      { label: s.trackingNo, value: trackingNumber || '-' },
     ])}
 
     <div style="text-align:center;margin:40px 0;">
@@ -614,7 +614,7 @@ function getShippedEmail(data: any): { subject: string; html: string } {
   `;
 
   return {
-    subject: en ? `Order ${orderNumber} — shipped` : `Užsakymas ${orderNumber} — išsiųsta`,
+    subject: en ? `Order ${orderNumber}, shipped` : `Užsakymas ${orderNumber}, išsiųsta`,
     html: getEmailWrapper(content, {
       title: en ? `Parcel shipped ${orderNumber}` : `Siunta išsiųsta ${orderNumber}`,
       preheader: en ? `Carrier: ${carrier} · Tracking no.: ${trackingNumber || ''}` : `Vežėjas: ${carrier} · Sekimo nr.: ${trackingNumber || ''}`,
@@ -654,7 +654,7 @@ function getSupportRequestEmail(data: any): { subject: string; html: string } {
   `;
 
   return {
-    subject: en ? `[SUPPORT] Order ${orderNumber} — ${requestTypeLabels[requestType] || requestType}` : `[SUPPORT] Užsakymas ${orderNumber} — ${requestTypeLabels[requestType] || requestType}`,
+    subject: en ? `[SUPPORT] Order ${orderNumber}, ${requestTypeLabels[requestType] || requestType}` : `[SUPPORT] Užsakymas ${orderNumber}, ${requestTypeLabels[requestType] || requestType}`,
     html: getEmailWrapper(content, { title: en ? 'New request' : 'Nauja užklausa' }, lang),
   };
 }
@@ -680,7 +680,7 @@ function getGiftCardEmail(data: any): { subject: string; html: string } {
     ${personalMessage ? `
       <div style="margin-bottom:32px;padding:20px;background:${COLOR_ACCENT};border-left:3px solid ${COLOR_TEXT};">
         <p style="margin:0;font-size:14px;color:${COLOR_TEXT};font-style:italic;line-height:1.6;">"${personalMessage}"</p>
-        <p style="margin:8px 0 0;font-size:12px;color:${COLOR_MUTED};">— ${sender}</p>
+        <p style="margin:8px 0 0;font-size:12px;color:${COLOR_MUTED};">${sender}</p>
       </div>
     ` : ''}
 
@@ -728,7 +728,7 @@ function getGiftCardConfirmationEmail(data: any): { subject: string; html: strin
   `;
 
   return {
-    subject: en ? `Gift card ${amount}€ — purchase confirmed` : `Dovanų kuponas ${amount}€ — pirkimas patvirtintas`,
+    subject: en ? `Gift card ${amount}€, purchase confirmed` : `Dovanų kuponas ${amount}€, pirkimas patvirtintas`,
     html: getEmailWrapper(content, { title: en ? 'Gift card sent' : 'Kuponas išsiųstas' }, lang),
   };
 }
@@ -827,7 +827,7 @@ function getAdminOrderNotificationEmail(data: any): { subject: string; html: str
   `;
 
   return {
-    subject: en ? `New order ${orderNumber} — ${Number(depositEur).toFixed(2)}€` : `Naujas užsakymas ${orderNumber} — ${Number(depositEur).toFixed(2)}€`,
+    subject: en ? `New order ${orderNumber}, ${Number(depositEur).toFixed(2)}€` : `Naujas užsakymas ${orderNumber}, ${Number(depositEur).toFixed(2)}€`,
     html: getEmailWrapper(content, { title: en ? `New order ${orderNumber}` : `Naujas užsakymas ${orderNumber}` }, lang),
   };
 }
@@ -851,7 +851,7 @@ function getInquiryReplyEmail(data: any): { subject: string; html: string } {
   `;
 
   return {
-    subject: en ? `Reply to your inquiry — ${originalTopic}` : `Atsakymas į jūsų užklausą — ${originalTopic}`,
+    subject: en ? `Reply to your inquiry, ${originalTopic}` : `Atsakymas į jūsų užklausą, ${originalTopic}`,
     html: getEmailWrapper(content, { title: en ? 'Reply to inquiry' : 'Atsakymas į užklausą' }, lang),
   };
 }
@@ -882,7 +882,7 @@ function getAdminInquiryNotificationEmail(data: any): { subject: string; html: s
   `;
 
   return {
-    subject: en ? `New reply from ${customerName} — ${topic}` : `Naujas atsakymas nuo ${customerName} — ${topic}`,
+    subject: en ? `New reply from ${customerName}, ${topic}` : `Naujas atsakymas nuo ${customerName}, ${topic}`,
     html: getEmailWrapper(content, { title: en ? 'New reply' : 'Naujas atsakymas' }, lang),
   };
 }
@@ -916,7 +916,7 @@ function getInquiryReceivedEmail(data: any): { subject: string; html: string } {
   `;
 
   return {
-    subject: en ? `We have received your inquiry — ${topic}` : `Gavome jūsų užklausą — ${topic}`,
+    subject: en ? `We have received your inquiry, ${topic}` : `Gavome jūsų užklausą, ${topic}`,
     html: getEmailWrapper(content, { title: en ? 'Inquiry received' : 'Užklausa gauta' }, lang),
   };
 }
@@ -949,7 +949,7 @@ function getPasswordResetEmail(data: any): { subject: string; html: string } {
   `;
 
   return {
-    subject: en ? 'IBRIX — password reset' : 'IBRIX — slaptažodžio atkūrimas',
+    subject: en ? 'IBRIX, password reset' : 'IBRIX, slaptažodžio atkūrimas',
     html: getEmailWrapper(content, {
       title: en ? 'Password reset' : 'Slaptažodžio atkūrimas',
       preheader: en ? 'Reset your IBRIX password within 1 hr.' : 'Atkurkite IBRIX slaptažodį per 1 val.',
@@ -982,7 +982,7 @@ function getVerificationCodeEmail(data: any): { subject: string; html: string } 
   `;
 
   return {
-    subject: en ? `IBRIX — verification code ${code}` : `IBRIX — patvirtinimo kodas ${code}`,
+    subject: en ? `IBRIX, verification code ${code}` : `IBRIX, patvirtinimo kodas ${code}`,
     html: getEmailWrapper(content, {
       title: en ? 'Verification code' : 'Patvirtinimo kodas',
       preheader: en ? `Your verification code: ${code}` : `Jūsų patvirtinimo kodas: ${code}`,
@@ -1000,8 +1000,8 @@ function getWelcomeEmail(data: any): { subject: string; html: string } {
     ${getHeroBlock(en ? 'Welcome!' : 'Sveiki atvykę!', (en ? `Hello, ${firstName}!` : `Sveiki, ${firstName}!`), en ? 'Your IBRIX account has been created.' : 'Jūsų IBRIX paskyra sėkmingai sukurta.')}
 
     ${getInfoTable([
-      { label: s.name, value: `${firstName || ''} ${lastName || ''}`.trim() || '—' },
-      { label: s.email, value: email || '—' },
+      { label: s.name, value: `${firstName || ''} ${lastName || ''}`.trim() || '-' },
+      { label: s.email, value: email || '-' },
       ...(username ? [{ label: s.nickname, value: username }] : []),
     ])}
 
@@ -1057,7 +1057,7 @@ function getEmailChangeEmail(data: any): { subject: string; html: string } {
   `;
 
   return {
-    subject: en ? 'IBRIX — confirm your new email' : 'IBRIX — patvirtinkite naują el. paštą',
+    subject: en ? 'IBRIX, confirm your new email' : 'IBRIX, patvirtinkite naują el. paštą',
     html: getEmailWrapper(content, {
       title: en ? 'Confirm your email' : 'Patvirtinkite el. paštą',
       preheader: en ? `Confirm your new email: ${newEmail}` : `Patvirtinkite naują el. paštą: ${newEmail}`,

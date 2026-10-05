@@ -7,7 +7,7 @@ export type PaymentMethod = {
   id: string;
   code: string;
   provider: 'stripe' | 'paypal' | 'paysera' | 'opay' | 'inbank';
-  titleKey?: string; // i18n key under coPay.* — resolved via t() at render
+  titleKey?: string; // i18n key under coPay.*, resolved via t() at render
   titleVars?: Record<string, string | number>;
   fixedTitle?: string; // brand literal, used when titleKey is absent (never translated)
   subtitleKey: string;

@@ -53,7 +53,7 @@ export function HeroSection() {
               )}
             </div>
 
-            <ul className="flex flex-wrap gap-x-6 gap-y-3 text-sm text-muted-foreground">
+            <ul className="grid max-w-md grid-cols-2 gap-x-6 gap-y-3 text-sm text-muted-foreground">
               {trust.map((item) => (
                 <li key={item.text} className="flex items-center gap-2.5">
                   <item.icon className="w-4 h-4 text-foreground/70 shrink-0" strokeWidth={1.75} />

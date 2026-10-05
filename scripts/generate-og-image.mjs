@@ -125,7 +125,7 @@ function buildHarness(svg) {
 <meta charset="utf-8">
 <title>og-image rasterizer</title>
 <body style="font:14px system-ui;padding:24px">
-<p>Rasterizing to 1200x630 JPEG. The download starts automatically — save it as <code>public/og-image.jpg</code>.</p>
+<p>Rasterizing to 1200x630 JPEG. The download starts automatically, save it as <code>public/og-image.jpg</code>.</p>
 <img id="src" style="display:none" src="data:image/svg+xml;base64,${b64}">
 <canvas id="c" width="1200" height="630" style="width:600px;height:315px;border:1px solid #ccc"></canvas>
 <script>

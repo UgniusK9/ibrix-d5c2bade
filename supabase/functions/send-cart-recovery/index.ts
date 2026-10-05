@@ -188,7 +188,7 @@ Deno.serve(async (req) => {
           <tr>
             <td style="padding:24px 32px;background:#0F172A;text-align:center;border-top:1px solid #334155;">
               <p style="color:#64748B;font-size:12px;margin:0;">
-                © ${new Date().getFullYear()} Ibrix.lt — Premium konstruktoriai
+                © ${new Date().getFullYear()} Ibrix.lt, Premium konstruktoriai
               </p>
             </td>
           </tr>

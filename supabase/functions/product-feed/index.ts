@@ -47,7 +47,7 @@ Deno.serve(async (req) => {
   <channel>
     <title>${escapeXml(STORE_NAME)}</title>
     <link>${SITE_URL}</link>
-    <description>MOULD KING konstruktoriai – oficialus platintojas Lietuvoje</description>
+    <description>MOULD KING konstruktoriai, oficialus platintojas Lietuvoje</description>
     <lastBuildDate>${now}</lastBuildDate>
 `;
 

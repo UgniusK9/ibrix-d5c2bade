@@ -125,7 +125,7 @@ async function main() {
   const out = resolve(ROOT, "public", "sitemap.xml");
   writeFileSync(out, xml, "utf8");
   console.log(
-    `[sitemap] Wrote ${out} — ${staticPages.length} static + ${products.length} products.`
+    `[sitemap] Wrote ${out}, ${staticPages.length} static + ${products.length} products.`
   );
 }
 

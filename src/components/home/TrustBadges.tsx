@@ -24,8 +24,8 @@ export function TrustBadges() {
             >
               <badge.icon className="w-5 h-5 text-accent flex-shrink-0" strokeWidth={1.75} />
               <div className="min-w-0">
-                <span className="font-medium text-foreground">{t(badge.title)}</span>
-                <span className="text-muted-foreground hidden sm:inline"> – {t(badge.description)}</span>
+                <span className="block font-medium leading-tight text-foreground">{t(badge.title)}</span>
+                <span className="hidden text-xs text-muted-foreground sm:block">{t(badge.description)}</span>
               </div>
             </div>
           ))}

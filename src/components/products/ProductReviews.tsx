@@ -74,7 +74,7 @@ export function ProductReviews({ productId, productTitle }: ProductReviewsProps)
       {/* Summary */}
       <div className="flex items-center justify-between flex-wrap gap-4">
         <div className="flex items-center gap-4">
-          <div className="text-4xl font-bold">{averageRating?.toFixed(1) || '—'}</div>
+          <div className="text-4xl font-bold">{averageRating?.toFixed(1) || '-'}</div>
           <div>
             {averageRating && renderStars(averageRating)}
             <p className="text-sm text-muted-foreground mt-1">

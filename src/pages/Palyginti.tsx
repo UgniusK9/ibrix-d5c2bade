@@ -100,7 +100,7 @@ export default function Palyginti() {
       getValue: (p: Product) => (p.details_json as Record<string, unknown>)?.detailsCount as number || 0,
       render: (product: Product) => {
         const count = (product.details_json as Record<string, unknown>)?.detailsCount as number || 0;
-        return <span>{count > 0 ? `${count} ${t('products.pieces')}` : '—'}</span>;
+        return <span>{count > 0 ? `${count} ${t('products.pieces')}` : '-'}</span>;
       },
     },
     {
@@ -109,7 +109,7 @@ export default function Palyginti() {
       getValue: (p: Product) => (p.details_json as Record<string, unknown>)?.assemblyHours as number || 0,
       render: (product: Product) => {
         const hours = (product.details_json as Record<string, unknown>)?.assemblyHours as number || 0;
-        return <span>{hours > 0 ? `${hours} ${t('products.hours')}` : '—'}</span>;
+        return <span>{hours > 0 ? `${hours} ${t('products.hours')}` : '-'}</span>;
       },
     },
     {
@@ -118,7 +118,7 @@ export default function Palyginti() {
       getValue: (p: Product) => (p.details_json as Record<string, unknown>)?.dimensions as string || '',
       render: (product: Product) => {
         const dims = (product.details_json as Record<string, unknown>)?.dimensions as string || '';
-        return <span>{dims || '—'}</span>;
+        return <span>{dims || '-'}</span>;
       },
     },
     {
@@ -127,7 +127,7 @@ export default function Palyginti() {
       getValue: (p: Product) => (p.details_json as Record<string, unknown>)?.weight as string || '',
       render: (product: Product) => {
         const weight = (product.details_json as Record<string, unknown>)?.weight as string || '';
-        return <span>{weight || '—'}</span>;
+        return <span>{weight || '-'}</span>;
       },
     },
     {
@@ -330,7 +330,7 @@ export default function Palyginti() {
                       ))}
                       {Array.from({ length: 3 - products.length }).map((_, i) => (
                         <td key={`empty-${i}`} className="p-4 border-b border-border text-center text-muted-foreground">
-                          —
+                          -
                         </td>
                       ))}
                     </tr>

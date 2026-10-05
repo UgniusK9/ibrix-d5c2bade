@@ -113,7 +113,7 @@ function buildHead(p) {
   // take priority over the raw catalogue title and short_desc.
   const title = `${p.meta_title || p.title} | IBRIX`;
   const desc = truncate(
-    p.meta_description || p.short_desc || p.description || `${p.title} — IBRIX konstruktorius.`
+    p.meta_description || p.short_desc || p.description || `${p.title}, IBRIX konstruktorius.`
   );
   const image = p.og_image_url || firstImage(p.images);
   const price = Number(p.sale_price_eur ?? p.price_eur ?? 0);

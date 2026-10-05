@@ -107,7 +107,7 @@ export function ComparisonDrawer() {
         return (
           <span className="flex items-center gap-1.5 text-sm">
             <Package className="w-4 h-4 text-muted-foreground" />
-            {detailsCount > 0 ? `${detailsCount} ${t('products.pieces')}` : '—'}
+            {detailsCount > 0 ? `${detailsCount} ${t('products.pieces')}` : '-'}
           </span>
         );
       },
@@ -118,7 +118,7 @@ export function ComparisonDrawer() {
       getValue: (p: Product) => (p.details_json as Record<string, unknown>)?.assemblyHours as number || 0,
       render: (product: Product) => {
         const assemblyHours = (product.details_json as Record<string, unknown>)?.assemblyHours as number || 0;
-        return assemblyHours > 0 ? `${assemblyHours} ${t('products.hours')}` : '—';
+        return assemblyHours > 0 ? `${assemblyHours} ${t('products.hours')}` : '-';
       },
     },
     {
@@ -127,7 +127,7 @@ export function ComparisonDrawer() {
       getValue: (p: Product) => (p.details_json as Record<string, unknown>)?.dimensions as string || '',
       render: (product: Product) => {
         const dimensions = (product.details_json as Record<string, unknown>)?.dimensions as string || '';
-        return dimensions || '—';
+        return dimensions || '-';
       },
     },
     {
@@ -136,7 +136,7 @@ export function ComparisonDrawer() {
       getValue: (p: Product) => (p.details_json as Record<string, unknown>)?.weight as string || '',
       render: (product: Product) => {
         const weight = (product.details_json as Record<string, unknown>)?.weight as string || '';
-        return weight || '—';
+        return weight || '-';
       },
     },
     {
@@ -300,7 +300,7 @@ export function ComparisonDrawer() {
                     ))}
                     {Array.from({ length: 3 - products.length }).map((_, i) => (
                       <td key={`empty-${i}`} className="p-4 border-b border-border text-center text-muted-foreground">
-                        —
+                        -
                       </td>
                     ))}
                   </tr>

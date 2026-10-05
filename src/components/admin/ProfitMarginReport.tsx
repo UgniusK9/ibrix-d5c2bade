@@ -239,7 +239,7 @@ export function ProfitMarginReport() {
                     <TableCell className="max-w-[200px] truncate">{product.title}</TableCell>
                     <TableCell className="text-right">
                       {product.hasCost ? formatPrice(product.costPrice) : (
-                        <span className="text-muted-foreground">—</span>
+                        <span className="text-muted-foreground">-</span>
                       )}
                     </TableCell>
                     <TableCell className="text-right">{formatPrice(product.price_eur)}</TableCell>
@@ -247,7 +247,7 @@ export function ProfitMarginReport() {
                       {product.sale_price_eur ? (
                         <span className="text-orange-600">{formatPrice(product.sale_price_eur)}</span>
                       ) : (
-                        <span className="text-muted-foreground">—</span>
+                        <span className="text-muted-foreground">-</span>
                       )}
                     </TableCell>
                     <TableCell className="text-right">
@@ -256,7 +256,7 @@ export function ProfitMarginReport() {
                           {formatPrice(product.profit)}
                         </span>
                       ) : (
-                        <span className="text-muted-foreground">—</span>
+                        <span className="text-muted-foreground">-</span>
                       )}
                     </TableCell>
                     <TableCell className="text-right">
@@ -265,7 +265,7 @@ export function ProfitMarginReport() {
                           {product.margin.toFixed(1)}%
                         </Badge>
                       ) : (
-                        <span className="text-muted-foreground">—</span>
+                        <span className="text-muted-foreground">-</span>
                       )}
                     </TableCell>
                   </TableRow>
