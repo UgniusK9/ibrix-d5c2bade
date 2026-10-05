@@ -74,7 +74,7 @@ export function HeroVideo({ className }: HeroVideoProps) {
     <div className={className} aria-hidden="true">
       <video
         ref={videoRef}
-        className="absolute inset-0 h-full w-full object-cover"
+        className="absolute inset-0 h-full w-full object-cover object-[70%_center]"
         autoPlay
         muted
         loop
@@ -87,7 +87,13 @@ export function HeroVideo({ className }: HeroVideoProps) {
         <source src={HERO_VIDEO_MP4} type="video/mp4" />
       </video>
       {/* Readability scrim — keeps the overlaid copy legible over any footage */}
-      <div className="absolute inset-0 bg-gradient-to-r from-background/95 via-background/60 to-background/10" />
+      <div
+        className="absolute inset-0"
+        style={{
+          background:
+            "linear-gradient(90deg, hsl(var(--background) / 0.95) 0%, hsl(var(--background) / 0.9) 26%, hsl(var(--background) / 0.5) 38%, hsl(var(--background) / 0.12) 48%, hsl(var(--background) / 0) 56%)",
+        }}
+      />
       <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-background to-transparent" />
     </div>
   );
