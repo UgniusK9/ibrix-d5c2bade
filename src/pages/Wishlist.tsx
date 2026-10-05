@@ -7,13 +7,13 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
-import { formatPrice, getProductImage, getEtaString, Product, transformProduct } from '@/hooks/useProducts';
+import { formatPrice, getProductImage, getEtaString, getProductTitle, Product, transformProduct } from '@/hooks/useProducts';
 import { useCartStore } from '@/stores/cartStore';
 import { toast } from 'sonner';
 
 export default function Wishlist() {
   const { user } = useAuth();
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [removingId, setRemovingId] = useState<string | null>(null);
@@ -152,7 +152,7 @@ export default function Wishlist() {
                 <Link to={`/produktas/${product.slug}`} className="block relative aspect-square overflow-hidden">
                   <img
                     src={getProductImage(product)}
-                    alt={product.title}
+                    alt={getProductTitle(product, i18n.language)}
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                   />
                   {product.stock_status === 'preorder' && (
@@ -170,7 +170,7 @@ export default function Wishlist() {
                 {/* Content */}
                 <div className="p-4">
                   <Link to={`/produktas/${product.slug}`} className="block group-hover:text-primary transition-colors">
-                    <h3 className="font-semibold line-clamp-2 mb-1">{product.title}</h3>
+                    <h3 className="font-semibold line-clamp-2 mb-1">{getProductTitle(product, i18n.language)}</h3>
                   </Link>
                   <p className="text-xs text-muted-foreground mb-3">{getEtaString(product)}</p>
                   

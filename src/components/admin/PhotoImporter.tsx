@@ -113,7 +113,7 @@ export function PhotoImporter() {
       dbBySku.set(p.sku, {
         id: p.id,
         title: p.title,
-        images: Array.isArray(p.images) ? p.images : [],
+        images: Array.isArray(p.images) ? p.images.filter((i): i is string => typeof i === 'string') : [],
       });
     }
 

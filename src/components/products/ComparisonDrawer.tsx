@@ -8,12 +8,12 @@ import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { useComparisonStore } from '@/stores/comparisonStore';
 import { useTranslation } from 'react-i18next';
-import { formatPrice, getProductImage, getEtaString, type Product } from '@/hooks/useProducts';
+import { formatPrice, getProductImage, getEtaString, getProductTitle, getProductShortDesc, type Product } from '@/hooks/useProducts';
 import { useCartStore } from '@/stores/cartStore';
 import { toast } from 'sonner';
 
 export function ComparisonDrawer() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { products, removeProduct, clearAll } = useComparisonStore();
   const addItem = useCartStore((state) => state.addItem);
   const [showDifferencesOnly, setShowDifferencesOnly] = useState(false);
@@ -23,7 +23,7 @@ export function ComparisonDrawer() {
   const handleAddToCart = (product: Product) => {
     addItem(product);
     toast.success(t('products.addedToCart'), {
-      description: product.title,
+      description: getProductTitle(product, i18n.language),
       position: "top-center",
     });
   };
@@ -231,11 +231,11 @@ export function ComparisonDrawer() {
                       <Link to={`/produktas/${product.slug}`} className="group block">
                         <img
                           src={getProductImage(product)}
-                          alt={product.title}
+                          alt={getProductTitle(product, i18n.language)}
                           className="w-24 h-24 object-cover rounded-xl mx-auto mb-3 border border-border group-hover:border-primary transition-colors"
                         />
                         <p className="font-semibold text-sm line-clamp-2 group-hover:text-primary transition-colors mb-2">
-                          {product.title}
+                          {getProductTitle(product, i18n.language)}
                         </p>
                       </Link>
                       <div className="flex gap-2 justify-center">
@@ -311,14 +311,14 @@ export function ComparisonDrawer() {
         </div>
 
         {/* Description comparison */}
-        {products.some(p => p.short_desc) && (
+        {products.some(p => getProductShortDesc(p, i18n.language)) && (
           <div className="mt-6 pt-6 border-t">
             <h3 className="font-heading font-semibold mb-4">{t('comparison.shortDescriptions')}</h3>
             <div className="grid gap-4" style={{ gridTemplateColumns: `repeat(${products.length}, minmax(200px, 1fr))` }}>
               {products.map((product) => (
                 <div key={product.id} className="p-4 bg-muted/50 rounded-lg">
-                  <p className="font-medium text-sm mb-2">{product.title}</p>
-                  <p className="text-sm text-muted-foreground">{product.short_desc || t('comparison.noDescription')}</p>
+                  <p className="font-medium text-sm mb-2">{getProductTitle(product, i18n.language)}</p>
+                  <p className="text-sm text-muted-foreground">{getProductShortDesc(product, i18n.language) || t('comparison.noDescription')}</p>
                 </div>
               ))}
             </div>
@@ -332,7 +332,7 @@ export function ComparisonDrawer() {
             <div className="grid gap-4" style={{ gridTemplateColumns: `repeat(${products.length}, minmax(200px, 1fr))` }}>
               {products.map((product) => (
                 <div key={product.id} className="p-4 bg-muted/50 rounded-lg">
-                  <p className="font-medium text-sm mb-2">{product.title}</p>
+                  <p className="font-medium text-sm mb-2">{getProductTitle(product, i18n.language)}</p>
                   <div className="flex flex-wrap gap-1">
                     {(product.tags || []).map((tag) => (
                       <Badge key={tag} variant="outline" className="text-xs">

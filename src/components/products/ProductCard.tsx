@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { ShoppingCart, Package, Clock, Heart, Scale, Eye, Sparkles, Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Product, formatPrice, getEtaString, getProductImage } from "@/hooks/useProducts";
+import { Product, formatPrice, getEtaString, getProductImage, getProductTitle } from "@/hooks/useProducts";
 import { useCartStore } from "@/stores/cartStore";
 import { useComparisonStore } from "@/stores/comparisonStore";
 import { useWishlist } from "@/hooks/useWishlist";
@@ -26,7 +26,8 @@ const BADGE_CONFIG: Record<string, { label: string; className: string }> = {
 };
 
 export function ProductCard({ product, onQuickView, compact = false }: ProductCardProps) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const localizedTitle = getProductTitle(product, i18n.language);
   const addItem = useCartStore((state) => state.addItem);
   const { addProduct, removeProduct, isInComparison } = useComparisonStore();
   const { isInWishlist, toggleWishlist } = useWishlist();
@@ -80,7 +81,7 @@ export function ProductCard({ product, onQuickView, compact = false }: ProductCa
     addItem(product);
 
     toast.success(t('products.addedToCart'), {
-      description: product.title,
+      description: localizedTitle,
       position: "top-center",
     });
   };
@@ -121,7 +122,7 @@ export function ProductCard({ product, onQuickView, compact = false }: ProductCa
       <div className="relative aspect-square bg-white overflow-hidden">
         <img
           src={image}
-          alt={product.title}
+          alt={localizedTitle}
           className="w-full h-full object-contain p-3 transition-transform duration-300 group-hover:scale-[1.04]"
         />
         
@@ -212,7 +213,7 @@ export function ProductCard({ product, onQuickView, compact = false }: ProductCa
           "font-heading font-semibold text-foreground mb-2 line-clamp-2",
           compact ? "text-sm" : "text-base"
         )}>
-          {product.title}
+          {localizedTitle}
         </h3>
 
         {/* Info chips */}

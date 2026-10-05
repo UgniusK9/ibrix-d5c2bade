@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { Sparkles, ShoppingCart, ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { useProducts, formatPrice, getProductImage } from '@/hooks/useProducts';
+import { useProducts, formatPrice, getProductImage, getProductTitle } from '@/hooks/useProducts';
 import { useCartStore } from '@/stores/cartStore';
 import { cn } from '@/lib/utils';
 
@@ -14,7 +14,7 @@ interface CartRecommendationsProps {
 }
 
 export function CartRecommendations({ maxItems = 4, title }: CartRecommendationsProps) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const { data: allProducts } = useProducts();
   const { items: cartItems, addItem } = useCartStore();
@@ -59,7 +59,7 @@ export function CartRecommendations({ maxItems = 4, title }: CartRecommendations
             <div className="aspect-square w-full bg-secondary overflow-hidden relative">
               <img
                 src={getProductImage(product)}
-                alt={product.title}
+                alt={getProductTitle(product, i18n.language)}
                 className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
               />
               <Badge 
@@ -76,7 +76,7 @@ export function CartRecommendations({ maxItems = 4, title }: CartRecommendations
             </div>
             <div className="p-3">
               <p className="text-sm font-medium line-clamp-2 min-h-[2.5rem] group-hover:text-primary transition-colors">
-                {product.title}
+                {getProductTitle(product, i18n.language)}
               </p>
               <div className="flex items-center justify-between mt-2">
                 <span className="font-heading font-bold text-primary">

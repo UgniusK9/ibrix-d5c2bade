@@ -5,11 +5,11 @@ import { Button } from '@/components/ui/button';
 import { useTranslation } from 'react-i18next';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import { formatPrice, getProductImage, Product, getEtaString } from '@/hooks/useProducts';
+import { formatPrice, getProductImage, getProductTitle, Product, getEtaString } from '@/hooks/useProducts';
 import { toast } from 'sonner';
 
 export function WishlistSection() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { user } = useAuth();
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
@@ -99,13 +99,13 @@ export function WishlistSection() {
               <Link to={`/produktas/${product.slug}`}>
                 <img
                   src={getProductImage(product)}
-                  alt={product.title}
+                  alt={getProductTitle(product, i18n.language)}
                   className="w-16 h-16 rounded-lg object-cover"
                 />
               </Link>
               <div className="flex-1 min-w-0">
                 <Link to={`/produktas/${product.slug}`} className="hover:text-primary transition-colors">
-                  <p className="font-medium text-sm line-clamp-1">{product.title}</p>
+                  <p className="font-medium text-sm line-clamp-1">{getProductTitle(product, i18n.language)}</p>
                 </Link>
                 <p className="text-xs text-muted-foreground">{getEtaString(product)}</p>
                 <p className="font-semibold text-accent mt-1">{formatPrice(product.price_eur)}</p>

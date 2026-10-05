@@ -5,7 +5,7 @@ import { Package, Clock, ShoppingCart, Filter, Loader2, Grid3X3, LayoutGrid, Che
 import { PageLayout } from "@/components/layout/PageLayout";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { useProducts, formatPrice, getEtaString, getProductImage, Product } from "@/hooks/useProducts";
+import { useProducts, formatPrice, getEtaString, getProductImage, getProductTitle, Product } from "@/hooks/useProducts";
 import { useCartStore } from "@/stores/cartStore";
 import { SEOHead } from "@/components/seo/SEOHead";
 import { supabase } from "@/integrations/supabase/client";
@@ -43,7 +43,7 @@ const SPECIAL_CATEGORIES = {
 
 export default function Produktai() {
   const { category: categorySlug } = useParams<{ category?: string }>();
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [searchParams, setSearchParams] = useSearchParams();
   const searchQuery = searchParams.get('search') || '';
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
@@ -152,14 +152,17 @@ export default function Produktai() {
     if (!products) return [];
     
     let filtered = products.filter((p) => {
-      // Search filter
+      // Search filter (both LT and EN copy)
       if (searchQuery) {
         const query = searchQuery.toLowerCase();
         const matchesSearch = 
           p.title.toLowerCase().includes(query) ||
+          (p.title_en || '').toLowerCase().includes(query) ||
           p.sku.toLowerCase().includes(query) ||
           p.short_desc?.toLowerCase().includes(query) ||
-          p.description?.toLowerCase().includes(query);
+          (p.short_desc_en || '').toLowerCase().includes(query) ||
+          p.description?.toLowerCase().includes(query) ||
+          (p.description_en || '').toLowerCase().includes(query);
         if (!matchesSearch) return false;
       }
       
@@ -227,7 +230,7 @@ export default function Produktai() {
           const bParts = (b.details_json as Record<string, unknown>)?.detailsCount as number || 0;
           return bParts - aParts;
         case 'name_asc':
-          return a.title.localeCompare(b.title, 'lt');
+          return getProductTitle(a, i18n.language).localeCompare(getProductTitle(b, i18n.language), i18n.language === 'en' ? 'en' : 'lt');
         case 'recommended':
         default:
           // Prioritize popular badge, then new, then by creation date
@@ -237,7 +240,7 @@ export default function Produktai() {
           return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
       }
     });
-  }, [products, currentCategory, categorySlug, categories, statusFilter, searchQuery, sortBy]);
+  }, [products, currentCategory, categorySlug, categories, statusFilter, searchQuery, sortBy, i18n.language]);
 
   const handleQuickView = (product: Product, e: React.MouseEvent) => {
     e.preventDefault();
@@ -508,7 +511,7 @@ export default function Produktai() {
                         <div className="relative aspect-square bg-secondary/30 overflow-hidden">
                           <img
                             src={image}
-                            alt={product.title}
+                            alt={getProductTitle(product, i18n.language)}
                             className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                             loading="lazy"
                           />
@@ -538,7 +541,7 @@ export default function Produktai() {
                             "font-heading font-semibold line-clamp-2 group-hover:text-primary transition-colors",
                             viewMode === 'grid' ? "text-sm mb-2" : "text-xs mb-1.5"
                           )}>
-                            {product.title}
+                            {getProductTitle(product, i18n.language)}
                           </h3>
                           {viewMode === 'grid' && (
                             <div className="flex items-center gap-2 text-xs text-muted-foreground mb-3">

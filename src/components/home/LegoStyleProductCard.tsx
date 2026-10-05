@@ -3,7 +3,7 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import { ShoppingCart, Heart, Calendar, Package } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Product, formatPrice, getProductImage } from "@/hooks/useProducts";
+import { Product, formatPrice, getProductImage, getProductTitle } from "@/hooks/useProducts";
 import { useCartStore } from "@/stores/cartStore";
 import { useWishlist } from "@/hooks/useWishlist";
 import { toast } from "sonner";
@@ -14,7 +14,7 @@ interface LegoStyleProductCardProps {
 }
 
 export function LegoStyleProductCard({ product }: LegoStyleProductCardProps) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const addItem = useCartStore((state) => state.addItem);
   const { isInWishlist, toggleWishlist } = useWishlist();
   const [isAddingToCart, setIsAddingToCart] = useState(false);
@@ -46,7 +46,7 @@ export function LegoStyleProductCard({ product }: LegoStyleProductCardProps) {
     addItem(product);
 
     toast.success(t('products.addedToCart'), {
-      description: product.title,
+      description: getProductTitle(product, i18n.language),
       position: "top-center",
     });
     
@@ -93,7 +93,7 @@ export function LegoStyleProductCard({ product }: LegoStyleProductCardProps) {
         {/* Product image */}
         <img
           src={image}
-          alt={product.title}
+          alt={getProductTitle(product, i18n.language)}
           width={300}
           height={300}
           loading="lazy"
@@ -120,7 +120,7 @@ export function LegoStyleProductCard({ product }: LegoStyleProductCardProps) {
         
         {/* Title - 2 lines max */}
         <h3 className="font-medium text-sm text-foreground mb-2 line-clamp-2 min-h-[2.5rem] leading-tight">
-          {product.title}
+          {getProductTitle(product, i18n.language)}
         </h3>
 
         {/* Price */}

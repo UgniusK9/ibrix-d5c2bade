@@ -135,9 +135,13 @@ async function normalizeProduct(p: any, sourceUrl: string, translate: boolean) {
     ? p.images.map((img: any) => img?.src).filter((s: any) => typeof s === 'string')
     : [];
 
-  let title = String(p.title || '').trim();
-  let description = stripHtml(String(p.body_html || ''));
-  let shortDesc = description.split('\n').find((l: string) => l.trim().length > 0)?.slice(0, 240) || '';
+  const originalTitle = String(p.title || '').trim();
+  const originalDescription = stripHtml(String(p.body_html || ''));
+  const originalShort = originalDescription.split('\n').find((l: string) => l.trim().length > 0)?.slice(0, 240) || '';
+
+  let title = originalTitle;
+  let description = originalDescription;
+  let shortDesc = originalShort;
 
   if (translate && (title || description)) {
     const t = await translateToLithuanian({ title, short: shortDesc, long: description });
@@ -153,6 +157,13 @@ async function normalizeProduct(p: any, sourceUrl: string, translate: boolean) {
     title,
     description,
     short_desc: shortDesc,
+    // English originals — stored in title_en / short_desc_en / description_en
+    // so the storefront can show EN copy when UI language is English.
+    // When translate=false, LT fields already hold the EN text, so EN
+    // mirrors simply equal the (untranslated) values.
+    title_en: originalTitle,
+    description_en: originalDescription,
+    short_desc_en: originalShort,
     source_price: price,
     source_currency: 'USD',
     sku: (variant?.sku && String(variant.sku)) || String(p.handle || '').toUpperCase(),

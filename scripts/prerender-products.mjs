@@ -68,21 +68,35 @@ async function fetchProducts() {
     console.warn("[prerender] Supabase env not set; skipping product prerender.");
     return [];
   }
-  const fields = [
+  const fetchWithFields = async (fields) => {
+    const url = `${SUPABASE_URL}/rest/v1/products?select=${fields}&status=eq.active`;
+    const res = await fetch(url, {
+      headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` },
+    });
+    if (!res.ok) return null;
+    return await res.json();
+  };
+  const fullFields = [
+    "slug", "title", "title_en", "short_desc", "short_desc_en", "description",
+    "description_en",
+    "price_eur", "sale_price_eur", "sku",
+    "stock_status", "inventory_qty", "images", "updated_at",
+    "meta_title", "meta_description", "og_image_url", "canonical_slug",
+  ].join(",");
+  let products = await fetchWithFields(fullFields);
+  if (products) return products;
+  // Fallback for DBs where the *_en migration hasn't been applied yet.
+  console.warn("[prerender] Full field fetch failed (EN columns may be missing); retrying without *_en.");
+  const baseFields = [
     "slug", "title", "short_desc", "description",
     "price_eur", "sale_price_eur", "sku",
     "stock_status", "inventory_qty", "images", "updated_at",
     "meta_title", "meta_description", "og_image_url", "canonical_slug",
   ].join(",");
-  const url = `${SUPABASE_URL}/rest/v1/products?select=${fields}&status=eq.active`;
-  const res = await fetch(url, {
-    headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` },
-  });
-  if (!res.ok) {
-    console.warn(`[prerender] Supabase fetch failed (${res.status}); skipping.`);
-    return [];
-  }
-  return await res.json();
+  products = await fetchWithFields(baseFields);
+  if (products) return products;
+  console.warn("[prerender] Supabase fetch failed; skipping.");
+  return [];
 }
 
 function availability(p) {

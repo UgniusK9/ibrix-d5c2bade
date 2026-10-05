@@ -13,7 +13,7 @@ import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { formatPrice, getProductImage } from '@/hooks/useProducts';
+import { formatPrice, getProductImage, getProductTitle } from '@/hooks/useProducts';
 
 interface BuilderItem {
   id: string;
@@ -24,6 +24,7 @@ interface BuilderItem {
   created_at: string;
   product: {
     title: string;
+    title_en: string | null;
     slug: string;
     images: string[];
     details_json: Record<string, unknown>;
@@ -33,7 +34,7 @@ interface BuilderItem {
 
 export default function MyBuilders() {
   const { user } = useAuth();
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [loading, setLoading] = useState(true);
   const [builders, setBuilders] = useState<BuilderItem[]>([]);
   const [serialInput, setSerialInput] = useState('');
@@ -58,6 +59,7 @@ export default function MyBuilders() {
           created_at,
           product:products (
             title,
+            title_en,
             slug,
             images,
             details_json,
@@ -288,7 +290,7 @@ export default function MyBuilders() {
                 <div className="relative aspect-square bg-gradient-to-br from-secondary/30 to-muted/20 overflow-hidden">
                   <img
                     src={getProductImage({ images: builder.product?.images || [] } as any)}
-                    alt={builder.product?.title || t('pgBuilders.altFallback')}
+                    alt={builder.product ? getProductTitle(builder.product, i18n.language) : t('pgBuilders.altFallback')}
                     className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                   />
                   {/* Source Badge */}
@@ -319,7 +321,7 @@ export default function MyBuilders() {
                 {/* Content */}
                 <div className="p-5">
                   <h3 className="font-heading font-semibold text-base mb-2 line-clamp-2 group-hover:text-primary transition-colors">
-                    {builder.product?.title || t('pgBuilders.unknownProduct')}
+                    {builder.product ? getProductTitle(builder.product, i18n.language) : t('pgBuilders.unknownProduct')}
                   </h3>
                   <div className="flex items-center gap-3 text-xs text-muted-foreground">
                     {builder.product?.details_json?.detailsCount && (

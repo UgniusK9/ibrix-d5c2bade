@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { ArrowRight, ShoppingCart, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { useProducts, formatPrice, getProductImage, Product } from "@/hooks/useProducts";
+import { useProducts, formatPrice, getProductImage, getProductTitle, Product } from "@/hooks/useProducts";
 import { useCartStore } from "@/stores/cartStore";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -24,7 +24,7 @@ const productBadges: Record<string, { label: string; bg: string }> = {
 };
 
 export function ProductsSection() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const addItem = useCartStore((state) => state.addItem);
   const { data: products, isLoading, error } = useProducts();
   
@@ -35,7 +35,7 @@ export function ProductsSection() {
     e.preventDefault();
     addItem(product);
     toast.success(t('products.addedToCart'), {
-      description: product.title,
+      description: getProductTitle(product, i18n.language),
       position: "top-center",
     });
   };
@@ -104,7 +104,7 @@ export function ProductsSection() {
                 <div className="relative aspect-[4/3] bg-white overflow-hidden p-4">
                   <img
                     src={image}
-                    alt={product.title}
+                    alt={getProductTitle(product, i18n.language)}
                     width={400}
                     height={300}
                     loading="lazy"
@@ -145,7 +145,7 @@ export function ProductsSection() {
                 {/* Content - minimal and clean */}
                 <div className="p-4 md:p-5">
                   <h3 className="font-heading font-bold text-base md:text-lg text-foreground mb-3 line-clamp-2 group-hover:text-primary transition-colors">
-                    {product.title}
+                    {getProductTitle(product, i18n.language)}
                   </h3>
                   
                   <div className="flex items-center justify-between">

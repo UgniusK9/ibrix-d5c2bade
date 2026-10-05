@@ -18,6 +18,7 @@ import { lt, enUS } from 'date-fns/locale';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
+import { getProductTitle } from '@/hooks/useProducts';
 
 interface Review {
   id: string;
@@ -31,6 +32,7 @@ interface Review {
   admin_reply_at: string | null;
   product: {
     title: string;
+    title_en: string | null;
     slug: string;
   } | null;
 }
@@ -38,6 +40,7 @@ interface Review {
 interface Product {
   id: string;
   title: string;
+  title_en: string | null;
   slug: string;
 }
 
@@ -83,7 +86,7 @@ export default function Atsiliepimai() {
           image_url,
           admin_reply,
           admin_reply_at,
-          product:products(title, slug)
+          product:products(title, title_en, slug)
         `)
         .eq('status', 'approved')
         .order('created_at', { ascending: false });
@@ -156,7 +159,7 @@ export default function Atsiliepimai() {
       // Get product details
       const { data, error } = await supabase
         .from('products')
-        .select('id, title, slug')
+        .select('id, title, title_en, slug')
         .in('id', availableProductIds)
         .order('title');
 
@@ -340,7 +343,7 @@ export default function Atsiliepimai() {
                     <SelectContent>
                       {products.map((product) => (
                         <SelectItem key={product.id} value={product.id}>
-                          {product.title}
+                          {getProductTitle(product, i18n.language)}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -536,7 +539,7 @@ export default function Atsiliepimai() {
                         href={`/produktas/${review.product.slug}`}
                         className="text-sm text-primary hover:underline"
                       >
-                        {review.product.title}
+                        {getProductTitle(review.product, i18n.language)}
                       </a>
                     )}
 

@@ -6,8 +6,11 @@ export interface Product {
   id: string;
   slug: string;
   title: string;
+  title_en: string | null;
   description: string | null;
+  description_en: string | null;
   short_desc: string | null;
+  short_desc_en: string | null;
   price_eur: number;
   deposit_eur: number;
   sale_price_eur: number | null;
@@ -25,6 +28,42 @@ export interface Product {
   details_json: Record<string, unknown> | null;
   created_at: string;
   updated_at: string;
+}
+
+// Returns true when the UI should show English product copy.
+// LT columns remain the source of truth; *_en is used with fallback to LT.
+export function isEnglishLocale(lang?: string): boolean {
+  const l = lang ?? (typeof i18n.language === 'string' ? i18n.language : 'lt');
+  return l.toLowerCase().startsWith('en');
+}
+
+function pickLocalized(lt: string | null | undefined, en: string | null | undefined, lang?: string): string | null {
+  if (isEnglishLocale(lang) && en && en.trim().length > 0) return en;
+  return lt ?? null;
+}
+
+export function getProductTitle(product: Pick<Product, 'title' | 'title_en'>, lang?: string): string {
+  return pickLocalized(product.title, product.title_en, lang) ?? product.title;
+}
+
+export function getProductShortDesc(product: Pick<Product, 'short_desc' | 'short_desc_en'>, lang?: string): string | null {
+  return pickLocalized(product.short_desc, product.short_desc_en, lang);
+}
+
+export function getProductDescription(product: Pick<Product, 'description' | 'description_en'>, lang?: string): string | null {
+  return pickLocalized(product.description, product.description_en, lang);
+}
+
+// Convenience: localized title + descriptions in one object (with LT fallback).
+export function getLocalizedProduct<T extends Pick<Product, 'title' | 'title_en' | 'short_desc' | 'short_desc_en' | 'description' | 'description_en'>>(
+  product: T,
+  lang?: string,
+): { title: string; short_desc: string | null; description: string | null } {
+  return {
+    title: getProductTitle(product, lang),
+    short_desc: getProductShortDesc(product, lang),
+    description: getProductDescription(product, lang),
+  };
 }
 
 // Transform DB product to our Product interface
@@ -62,8 +101,11 @@ export function transformProduct(dbProduct: Record<string, unknown>): Product {
     id: dbProduct.id as string,
     slug: dbProduct.slug as string,
     title: dbProduct.title as string,
+    title_en: (dbProduct.title_en as string | null) ?? null,
     description: dbProduct.description as string | null,
+    description_en: (dbProduct.description_en as string | null) ?? null,
     short_desc: dbProduct.short_desc as string | null,
+    short_desc_en: (dbProduct.short_desc_en as string | null) ?? null,
     price_eur: Number(dbProduct.price_eur),
     deposit_eur: Number(dbProduct.deposit_eur),
     sale_price_eur: dbProduct.sale_price_eur ? Number(dbProduct.sale_price_eur) : null,
