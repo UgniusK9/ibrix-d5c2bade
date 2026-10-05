@@ -1,0 +1,21 @@
+[
+{"sku":"24070","kind":"truck","name":"Konteinerių vilkikas","p":548,"en":"Container Truck"},
+{"sku":"24071","kind":"truck","name":"Sunkiasvoris autonamis","p":615,"en":"Heavy-Duty Motorhome"},
+{"sku":"24078","kind":"truck","name":"Sportinių automobilių gabenimo sunkvežimis","p":997,"en":"Sports Car Transporter Truck"},
+{"sku":"24079","kind":"truck","name":"Šakinio krautuvo transporto sunkvežimis","p":906,"en":"Forklift Transport Truck"},
+{"sku":"24080","kind":"truck","name":"Žvejybos valties priekaba","p":872,"en":"Fishing Boat Trailer"},
+{"sku":"24082","kind":"truck","name":"Lenktyninis sunkvežimis","p":414,"en":"Racing Truck"},
+{"sku":"24085","kind":"truck","name":"Lenktyninis sunkvežimis","p":491,"en":"Racing Truck"},
+{"sku":"24088","kind":"truck","name":"Ekologiškas šiukšliavežis","p":646,"en":"Eco-Friendly Garbage Truck"},
+{"sku":"24090","kind":"truck","name":"Lėktuvo gabenimo sunkvežimis su platforma","p":1468,"en":"Aircraft Transport Truck with Flatbed Trailer"},
+{"sku":"24094","kind":"truck","name":"Miesto gelbėjimo gaisrinė","p":752,"en":"Urban Rescue Fire Truck"},
+{"sku":"24095","kind":"truck","name":"Žemo profilio lenktyninis sunkvežimis","p":510,"en":"Low-Profile Racing Truck"},
+{"sku":"24102","kind":"truck","name":"Gelbėjimo automobilis","p":510,"en":"Rescue Vehicle"},
+{"sku":"24018","kind":"suv","name":"Bekelės visureigis","p":246,"en":"Off-road SUV"},
+{"sku":"24074","kind":"suv","name":"Fiat 126P nuotykių versija","p":393,"en":"Fiat 126P Outdoor Adventure"},
+{"sku":"24081","kind":"suv","name":"G63 bekelės visureigis","p":394,"en":"G63 Off-Road Vehicle"},
+{"sku":"24103","kind":"suv","name":"Ekspedicinis bekelės kemperis","p":909,"en":"Off-Road Expedition Camper Van"},
+{"sku":"24024","kind":"agri","name":"Ūkio traktorius","p":242,"en":"Farm Tractor"},
+{"sku":"24091","kind":"agri","name":"Mini kombainas","p":510,"en":"Mini Combine Harvester"},
+{"sku":"24093","kind":"agri","name":"Ratinis krautuvas ir žemės ūkio priekaba","p":504,"en":"Wheel Loader & Agricultural Trailer"}
+]
