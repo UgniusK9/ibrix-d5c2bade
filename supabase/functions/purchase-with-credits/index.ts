@@ -1,17 +1,12 @@
 import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { parseCartItems, roundCents, type CartItem } from "./validate.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
-
-interface CartItem {
-  productId: string;
-  quantity: number;
-  variantId?: string;
-}
 
 // Send email via send-email function (fire-and-forget)
 async function sendEmail(supabaseUrl: string, serviceKey: string, type: string, data: any) {
@@ -257,18 +252,24 @@ serve(async (req) => {
       phone,
     } = body;
 
-    // Normalize to items array
-    let cartItems: CartItem[] = [];
-    if (items && Array.isArray(items) && items.length > 0) {
-      cartItems = items;
-    } else if (productId) {
-      cartItems = [{ productId, quantity, variantId }];
-    } else {
+    // Normalize to items array (legacy single-product callers send productId + quantity)
+    const rawItems = items && Array.isArray(items) && items.length > 0
+      ? items
+      : productId ? [{ productId, quantity, variantId }] : null;
+    if (!rawItems) {
       return new Response(JSON.stringify({ error: "items or productId is required" }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
+    const parsed = parseCartItems(rawItems);
+    if ("error" in parsed) {
+      return new Response(JSON.stringify({ error: parsed.error }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    const cartItems: CartItem[] = parsed.items;
 
     // Idempotency check
     if (idempotencyKey) {
@@ -347,9 +348,9 @@ serve(async (req) => {
         }
       }
 
-      const itemCredits = product.credits_cost_eur * cartItem.quantity;
-      totalCreditsRequired += itemCredits;
-      subtotalEur += product.price_eur * cartItem.quantity;
+      const itemCredits = roundCents(product.credits_cost_eur * cartItem.quantity);
+      totalCreditsRequired = roundCents(totalCreditsRequired + itemCredits);
+      subtotalEur = roundCents(subtotalEur + product.price_eur * cartItem.quantity);
 
       orderItems.push({
         product,
@@ -364,6 +365,14 @@ serve(async (req) => {
       return new Response(JSON.stringify({ 
         error: `Šių prekių negalima įsigyti kreditais: ${ineligibleProducts.join(", ")}` 
       }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // Rounding to cents must never turn a purchase into a free one
+    if (totalCreditsRequired <= 0) {
+      return new Response(JSON.stringify({ error: "Invalid credits total" }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
@@ -411,17 +420,21 @@ serve(async (req) => {
     // Check if any item is preorder
     const hasPreorder = orderItems.some(item => item.product.stock_status === "preorder");
 
-    // Start transaction: deduct credits and create order
-    // 1. Deduct credits from wallet
-    const newBalance = userCredits - totalCreditsRequired;
-    const { error: updateWalletError } = await supabaseAdmin
-      .from("wallets")
-      .update({ balance_eur: newBalance })
-      .eq("id", wallet!.id);
+    // 1. Deduct credits atomically. The check above only gives a friendly message;
+    // this is the real guard: it fails when a parallel request already spent the balance.
+    const { data: newBalance, error: updateWalletError } = await supabaseAdmin
+      .rpc("adjust_wallet_balance", { p_wallet_id: wallet!.id, p_delta: -totalCreditsRequired });
 
     if (updateWalletError) {
+      console.error("Wallet deduction failed:", updateWalletError);
       return new Response(JSON.stringify({ error: "Failed to deduct credits" }), {
         status: 500,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    if (newBalance === null) {
+      return new Response(JSON.stringify({ error: "Nepakanka kreditų" }), {
+        status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
@@ -477,11 +490,8 @@ serve(async (req) => {
       .single();
 
     if (orderError || !order) {
-      // Rollback: restore credits
-      await supabaseAdmin
-        .from("wallets")
-        .update({ balance_eur: userCredits })
-        .eq("id", wallet!.id);
+      // Rollback: give the credits back (adds, so it cannot erase a parallel change)
+      await supabaseAdmin.rpc("adjust_wallet_balance", { p_wallet_id: wallet!.id, p_delta: totalCreditsRequired });
 
       console.error("Order creation failed:", orderError);
       return new Response(JSON.stringify({ error: "Failed to create order" }), {
