@@ -208,7 +208,7 @@ async function activateCredits(orderId: string, requestId: string) {
     }
 
     // Create activation transaction
-    await supabase
+    const { error: activationTxError } = await supabase
       .from('wallet_transactions')
       .insert({
         wallet_id: wallet.id,
@@ -218,6 +218,7 @@ async function activateCredits(orderId: string, requestId: string) {
         order_id: orderId,
         reason: `Aktyvuota iš užsakymo #${order.order_number}`,
       });
+    if (activationTxError) log('Ledger insert failed (earn_available)', activationTxError);
 
     // Update pending transaction status
     await supabase
@@ -266,16 +267,20 @@ async function holdCredits(userId: string, amountCents: number, orderId: string,
       return { success: false, error: 'Insufficient balance' };
     }
 
-    // Atomic: reserve credits by reducing balance
-    const { error: updateError } = await supabase
-      .from('wallets')
-      .update({ balance_eur: wallet.balance_eur - amountEur })
-      .eq('id', wallet.id)
-      .gte('balance_eur', amountEur); // Ensure balance hasn't changed
+    // Atomic: reserve credits by reducing balance. The old guarded update could match
+    // zero rows (balance spent by a parallel request) and still report success;
+    // adjust_wallet_balance returns NULL in that case.
+    const { data: newBalance, error: updateError } = await supabase
+      .rpc('adjust_wallet_balance', { p_wallet_id: wallet.id, p_delta: -amountEur });
 
     if (updateError) {
       log('Failed to hold credits', updateError);
       return { success: false, error: 'Failed to hold credits' };
+    }
+
+    if (newBalance === null) {
+      log('Insufficient balance at hold time', { requested: amountEur });
+      return { success: false, error: 'Insufficient balance' };
     }
 
     // Create hold transaction
@@ -291,16 +296,14 @@ async function holdCredits(userId: string, amountCents: number, orderId: string,
       });
 
     if (txError) {
-      // Rollback balance
-      await supabase
-        .from('wallets')
-        .update({ balance_eur: wallet.balance_eur })
-        .eq('id', wallet.id);
+      log('Hold transaction insert failed, giving credits back', txError);
+      // Rollback balance (adds back, cannot erase a parallel change)
+      await supabase.rpc('adjust_wallet_balance', { p_wallet_id: wallet.id, p_delta: amountEur });
       
       return { success: false, error: 'Failed to create hold transaction' };
     }
 
-    log('Credits held', { amountEur, newBalance: wallet.balance_eur - amountEur });
+    log('Credits held', { amountEur, newBalance });
     return { success: true, held: amountCents };
   } catch (err) {
     console.error('Error holding credits:', err);
@@ -446,7 +449,7 @@ async function reverseCredits(orderId: string, requestId: string) {
           .update({ balance_eur: newBalance })
           .eq('id', wallet.id);
 
-        await supabase
+        const { error: reverseTxError } = await supabase
           .from('wallet_transactions')
           .insert({
             wallet_id: wallet.id,
@@ -456,6 +459,7 @@ async function reverseCredits(orderId: string, requestId: string) {
             order_id: orderId,
             reason: 'Grąžinimas',
           });
+        if (reverseTxError) log('Ledger insert failed (earn_reversed)', reverseTxError);
       }
 
       await supabase

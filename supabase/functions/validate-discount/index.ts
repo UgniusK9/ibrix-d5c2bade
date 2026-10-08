@@ -1,5 +1,6 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.49.1';
 import { z } from 'https://deno.land/x/zod@v3.22.4/mod.ts';
+import { countOfferUses, limitMessage } from '../_shared/offer-limits.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -88,32 +89,14 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Check max redemptions
-    if (offer.max_redemptions) {
-      const { count } = await supabase
-        .from('redemptions')
-        .select('*', { count: 'exact', head: true })
-        .eq('offer_id', offer.id);
-
-      if (count && count >= offer.max_redemptions) {
+    // Usage limits, counted from orders (the redemptions table is never filled).
+    // Guests are matched by email at checkout; here only the total and a logged-in user are known.
+    if (offer.max_redemptions || offer.per_user_limit) {
+      const { totalUses, userUses } = await countOfferUses(supabase, offer.id, userId, null);
+      const blocked = limitMessage(offer, totalUses, userUses);
+      if (blocked) {
         return new Response(
-          JSON.stringify({ valid: false, message: 'Akcijos limitas pasiektas' }),
-          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
-      }
-    }
-
-    // Check per-user limit if user is logged in
-    if (userId && offer.per_user_limit) {
-      const { count } = await supabase
-        .from('redemptions')
-        .select('*', { count: 'exact', head: true })
-        .eq('offer_id', offer.id)
-        .eq('user_id', userId);
-
-      if (count && count >= offer.per_user_limit) {
-        return new Response(
-          JSON.stringify({ valid: false, message: 'Jūs jau pasinaudojote šia akcija' }),
+          JSON.stringify({ valid: false, message: blocked }),
           { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       }

@@ -29,9 +29,6 @@ verify_jwt = false
 [functions.tracking]
 verify_jwt = false
 
-[functions.create-payment-intent]
-verify_jwt = false
-
 [functions.stripe-webhook]
 verify_jwt = false
 
@@ -99,4 +96,8 @@ verify_jwt = false
 verify_jwt = false
 
 [functions.purchase-with-credits]
+verify_jwt = false
+
+[functions.redeem-gift-card]
+# token is checked inside the function (getUser), same as purchase-with-credits
 verify_jwt = false

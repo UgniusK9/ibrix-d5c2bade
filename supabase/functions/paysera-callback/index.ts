@@ -2,6 +2,7 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.49.1';
 import { decodeBase64 } from "https://deno.land/std@0.220.1/encoding/base64.ts";
 import { crypto as stdCrypto } from "https://deno.land/std@0.220.1/crypto/mod.ts";
 import { encodeHex } from "https://deno.land/std@0.220.1/encoding/hex.ts";
+import { decideCallback } from './decide.ts';
 
 const log = (step: string, details?: any) => {
   const timestamp = new Date().toISOString();
@@ -167,7 +168,6 @@ Deno.serve(async (req) => {
 
     const orderId = params.orderid;
     const status = params.status; // 0 = pending, 1 = success, 2 = failed, 3 = additional
-    const payAmount = parseInt(params.payamount || params.amount || '0', 10); // Actual paid amount in cents
 
     if (!orderId) {
       log('No order ID in callback');
@@ -181,6 +181,9 @@ Deno.serve(async (req) => {
       .eq('id', orderId)
       .single();
 
+    // No such order (or an id that is not a uuid): nothing a retry could fix.
+    // Any other error is a real DB failure: throw so Paysera retries.
+    if (orderError && orderError.code !== 'PGRST116' && orderError.code !== '22P02') throw orderError;
     if (orderError || !order) {
       log('Order not found', { orderId, error: orderError });
       return new Response('OK', { status: 200 });
@@ -194,73 +197,96 @@ Deno.serve(async (req) => {
       return new Response('OK', { status: 200 });
     }
 
-    // Determine payment type based on amount
-    const paidEur = payAmount / 100;
-    const isDepositPayment = Math.abs(paidEur - order.deposit_total_eur) < 0.01;
-    const isBalancePayment = Math.abs(paidEur - order.balance_total_eur) < 0.01;
+    // Decide from the order's state, never from the amount (a deposit can equal
+    // the balance), and check what was actually paid before booking anything.
+    const decision = decideCallback(order, params);
 
-    log('Payment type detection', { 
-      paidEur, 
-      depositTotal: order.deposit_total_eur,
-      balanceTotal: order.balance_total_eur,
-      isDeposit: isDepositPayment,
-      isBalance: isBalancePayment
-    });
-
-    // Update payment record
-    const { data: payments } = await supabase
-      .from('payments')
-      .select('*')
-      .eq('order_id', orderId)
-      .eq('status', 'pending')
-      .order('created_at', { ascending: false })
-      .limit(1);
-
-    if (payments && payments.length > 0) {
-      await supabase
-        .from('payments')
-        .update({
-          status: 'succeeded',
-          stripe_event_id: `paysera_${params.requestid || Date.now()}`,
-        })
-        .eq('id', payments[0].id);
-      
-      log('Payment record updated', { paymentId: payments[0].id });
-    } else {
-      // Create payment record if not exists
-      await supabase.from('payments').insert({
-        order_id: orderId,
-        type: isBalancePayment ? 'balance' : 'deposit',
-        amount_eur: paidEur,
-        status: 'succeeded',
-        stripe_event_id: `paysera_${params.requestid || Date.now()}`,
+    if (decision.action === 'ignore') {
+      log('Callback ignored, nothing to do', { orderId, reason: decision.reason });
+      return new Response('OK', { status: 200 });
+    }
+    if (decision.action === 'reject') {
+      // Answer OK so Paysera stops retrying, but book nothing: a human must look.
+      console.error('[PAYSERA-CALLBACK] PAYMENT REJECTED, ORDER NOT MARKED PAID', {
+        orderId,
+        orderNumber: order.order_number,
+        reason: decision.reason,
+        requestid: params.requestid,
+        amount: params.amount,
+        currency: params.currency,
+        test: params.test,
       });
-      
-      log('Payment record created');
+      return new Response('OK', { status: 200 });
     }
 
-    // Update order status
-    let newStatus: string;
-    let updateData: Record<string, any> = {};
+    const { kind, paidCents, fromStatuses, newStatus } = decision;
+    const isBalancePayment = kind === 'balance';
+    const paidEur = paidCents / 100;
+    const paymentType = isBalancePayment ? 'balance' : 'deposit';
+    const eventKey = `paysera_${params.requestid || `${orderId}_${paymentType}`}`;
 
-    if (isBalancePayment) {
-      newStatus = 'balance_paid';
-      updateData.balance_paid_at = new Date().toISOString();
-    } else if (order.preorder_flag) {
-      newStatus = 'deposit_paid';
-      updateData.paid_at = new Date().toISOString();
-    } else {
-      // Full payment for in-stock items
-      newStatus = 'balance_paid';
-      updateData.paid_at = new Date().toISOString();
+    log('Payment accepted', { kind, paidEur, newStatus });
+
+    // Payment record first, and idempotent on eventKey: if the order update below
+    // fails and Paysera retries, this step is skipped instead of duplicated.
+    const { data: recorded, error: recordedError } = await supabase
+      .from('payments')
+      .select('id')
+      .eq('order_id', orderId)
+      .eq('stripe_event_id', eventKey)
+      .maybeSingle();
+    if (recordedError) throw recordedError;
+
+    if (!recorded) {
+      const { data: payments, error: pendingError } = await supabase
+        .from('payments')
+        .select('id')
+        .eq('order_id', orderId)
+        .eq('type', paymentType)
+        .eq('status', 'pending')
+        .order('created_at', { ascending: false })
+        .limit(1);
+      if (pendingError) throw pendingError;
+
+      if (payments && payments.length > 0) {
+        const { error } = await supabase
+          .from('payments')
+          .update({ status: 'succeeded', stripe_event_id: eventKey })
+          .eq('id', payments[0].id);
+        if (error) throw error;
+        log('Payment record updated', { paymentId: payments[0].id });
+      } else {
+        const { error } = await supabase.from('payments').insert({
+          order_id: orderId,
+          type: paymentType,
+          amount_eur: paidEur,
+          status: 'succeeded',
+          stripe_event_id: eventKey,
+        });
+        if (error) throw error;
+        log('Payment record created');
+      }
     }
 
-    updateData.status = newStatus;
+    // Move the order forward only if it is still in the status we saw. This is the
+    // idempotency gate: a repeated callback (or a packed/shipped order) changes
+    // no row, so it returns here and never repeats emails, Meta or events.
+    const updateData: Record<string, any> = { status: newStatus };
+    if (isBalancePayment) updateData.balance_paid_at = new Date().toISOString();
+    else updateData.paid_at = new Date().toISOString();
 
-    await supabase
+    const { data: updatedRows, error: updateError } = await supabase
       .from('orders')
       .update(updateData)
-      .eq('id', orderId);
+      .eq('id', orderId)
+      .in('status', fromStatuses)
+      .select('id');
+    if (updateError) throw updateError;
+
+    if (!updatedRows || updatedRows.length === 0) {
+      log('Order already processed, skipping side effects', { orderId });
+      return new Response('OK', { status: 200 });
+    }
 
     log('Order updated', { orderId, newStatus });
 
@@ -291,12 +317,15 @@ Deno.serve(async (req) => {
 
       if (!existingShipment) {
         const trackingToken = crypto.randomUUID();
-        await supabase.from('shipments').insert({
+        // Non-fatal: the order is already marked paid, so a retry would be skipped
+        // by the gate above. Make the failure loud so the shipment is made by hand.
+        const { error: shipmentError } = await supabase.from('shipments').insert({
           order_id: orderId,
           status: 'pending',
           tracking_token: trackingToken,
         });
-        log('Shipment created', { trackingToken });
+        if (shipmentError) console.error('[PAYSERA-CALLBACK] Shipment insert FAILED', { orderId, error: shipmentError });
+        else log('Shipment created', { trackingToken });
       }
     }
 
@@ -421,8 +450,10 @@ Deno.serve(async (req) => {
     return new Response('OK', { status: 200 });
 
   } catch (error) {
-    log('Error', error);
-    // Always return OK to Paysera to prevent retries on our errors
-    return new Response('OK', { status: 200 });
+    // A real failure (DB error etc.) must NOT be answered with OK: Paysera would
+    // never retry and a paid order would stay unpaid. Every step before the order
+    // update is safe to repeat, so a retry is harmless.
+    console.error('[PAYSERA-CALLBACK] FAILED, answering 500 so Paysera retries', error);
+    return new Response('Internal error', { status: 500 });
   }
 });
