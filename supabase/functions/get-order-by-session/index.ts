@@ -30,17 +30,20 @@ Deno.serve(async (req) => {
     );
 
     let orderId = order_id;
-    let stripeSessionId = session_id;
 
-    // If we have a Stripe session_id, look up the order from it
-    if (session_id && !order_id) {
+    // An order id alone travels in URLs (history, Referer headers, analytics page
+    // paths), so it only earns a reduced view. Personal details need the matching
+    // Stripe session id, which only the customer coming back from payment holds.
+    let verified = false;
+    if (session_id) {
       const stripeSecretKey = Deno.env.get('STRIPE_SECRET_KEY') ?? '';
       const stripe = new Stripe(stripeSecretKey, { apiVersion: '2023-10-16' });
       
       try {
         const session = await stripe.checkout.sessions.retrieve(session_id);
-        orderId = session.metadata?.order_id;
-        log(requestId, 'Order ID from Stripe session', { orderId, orderNumber: session.metadata?.order_number });
+        if (!orderId) orderId = session.metadata?.order_id;
+        verified = !!orderId && session.metadata?.order_id === orderId;
+        log(requestId, 'Stripe session checked', { orderId, verified });
       } catch (stripeError) {
         log(requestId, 'Stripe session lookup failed', stripeError);
       }
@@ -98,6 +101,9 @@ Deno.serve(async (req) => {
       hasShipment: !!shipment 
     });
 
+    const maskEmail = (e: string | null) => (e ? e.replace(/^(.).*(@.*)$/, '$1***$2') : e);
+    const { lockerName, lockerCity, city, country } = (order.shipping_address_json ?? {}) as Record<string, unknown>;
+
     // Build response with all data needed for confirmation page
     const response = {
       success: true,
@@ -107,9 +113,9 @@ Deno.serve(async (req) => {
         status: order.status,
         created_at: order.created_at,
         first_name: order.first_name,
-        last_name: order.last_name,
-        email: order.email,
-        phone: order.phone,
+        last_name: verified ? order.last_name : `${String(order.last_name ?? '').charAt(0)}.`,
+        email: verified ? order.email : maskEmail(order.email),
+        phone: verified ? order.phone : null,
         // Financial
         subtotal_eur: order.subtotal_eur,
         discount_eur: order.discount_eur,
@@ -124,7 +130,7 @@ Deno.serve(async (req) => {
         paid_at: order.paid_at,
         balance_paid_at: order.balance_paid_at,
         // Shipping
-        shipping_address_json: order.shipping_address_json,
+        shipping_address_json: verified ? order.shipping_address_json : { lockerName, lockerCity, city, country },
         // Preorder
         preorder_flag: order.preorder_flag,
         preorder_eta_weeks_min: order.preorder_eta_weeks_min,
@@ -142,7 +148,7 @@ Deno.serve(async (req) => {
       })),
       shipment: shipment ? {
         id: shipment.id,
-        tracking_token: shipment.tracking_token,
+        tracking_token: verified ? shipment.tracking_token : null,
         status: shipment.status,
         carrier_code: shipment.carrier_code,
         tracking_number: shipment.tracking_number,

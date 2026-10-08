@@ -2,6 +2,7 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.49.1';
 import { encodeBase64 } from "https://deno.land/std@0.220.1/encoding/base64.ts";
 import { crypto as stdCrypto } from "https://deno.land/std@0.220.1/crypto/mod.ts";
 import { encodeHex } from "https://deno.land/std@0.220.1/encoding/hex.ts";
+import { chooseCharge } from './charge.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -78,21 +79,23 @@ Deno.serve(async (req) => {
 
     log('Order found', { orderNumber: order.order_number, status: order.status });
 
-    // Determine amount based on payment type
-    let amountCents: number;
-    let paymentDescription: string;
-
-    if (paymentType === 'deposit') {
-      amountCents = Math.round(order.deposit_total_eur * 100);
-      paymentDescription = `Depozitas už užsakymą ${order.order_number}`;
-    } else if (paymentType === 'balance') {
-      amountCents = Math.round(order.balance_total_eur * 100);
-      paymentDescription = `Likutis už užsakymą ${order.order_number}`;
-    } else {
-      // Full payment
-      amountCents = Math.round(order.total_eur * 100);
-      paymentDescription = `Užsakymas ${order.order_number}`;
+    // Amount comes from the order's state in the DB, not from the client's
+    // paymentType, and must match what paysera-callback expects to be paid.
+    // Orders that are already paid (or cancelled etc.) cannot be paid again.
+    const charge = chooseCharge(order);
+    if ('error' in charge) {
+      log('Order not payable', { orderId, status: order.status });
+      return new Response(
+        JSON.stringify({ error: 'Šis užsakymas nebegali būti apmokėtas' }),
+        { status: 409, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
+    const amountCents = charge.cents;
+    const paymentDescription = charge.type === 'balance'
+      ? `Likutis už užsakymą ${order.order_number}`
+      : paymentType === 'deposit'
+        ? `Depozitas už užsakymą ${order.order_number}`
+        : `Užsakymas ${order.order_number}`;
 
     if (amountCents <= 0) {
       log('Invalid amount', { amountCents });
@@ -108,7 +111,8 @@ Deno.serve(async (req) => {
     const params: Record<string, string> = {
       projectid: projectId,
       orderid: order.id,
-      accepturl: `https://ibrix.lt/uzsakymas?order_id=${order.id}&payment=paysera`,
+      // PAYSERA_ACCEPT_URL is the thank-you page; falls back to the live shop.
+      accepturl: `${acceptUrl || 'https://ibrix.lt/uzsakymas'}${(acceptUrl || '').includes('?') ? '&' : '?'}order_id=${order.id}&payment=paysera`,
       cancelurl: cancelUrl || `https://ibrix.lt/checkout?cancelled=true`,
       // Derive from SUPABASE_URL rather than hardcoding a project ref. The
       // previous default pointed at a different project entirely, so without
@@ -145,7 +149,7 @@ Deno.serve(async (req) => {
     // Create pending payment record
     await supabase.from('payments').insert({
       order_id: order.id,
-      type: paymentType === 'balance' ? 'balance' : 'deposit',
+      type: charge.type,
       amount_eur: amountCents / 100,
       status: 'pending',
     });

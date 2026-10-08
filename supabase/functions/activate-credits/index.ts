@@ -20,6 +20,18 @@ Deno.serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  // SECURITY: scheduler / internal callers only. Same check as the credits function:
+  // without it anyone on the internet could trigger the job.
+  const authHeader = req.headers.get('authorization') || '';
+  const expected = `Bearer ${Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''}`;
+  if (!authHeader || authHeader !== expected) {
+    console.warn('[ACTIVATE-CREDITS] Unauthorized call rejected');
+    return new Response(JSON.stringify({ success: false, error: 'Unauthorized' }), {
+      status: 401,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
+  }
+
   try {
     log('Starting credits activation job');
 
@@ -79,15 +91,22 @@ Deno.serve(async (req) => {
           if (order?.status === 'refunded' || order?.status === 'cancelled') {
             log('Skipping refunded/cancelled order credits', { orderId: tx.order_id });
             
-            // Mark as reversed
-            await supabase
+            // Mark as reversed (only if still pending, so a parallel run cannot double-handle it)
+            const { error: reverseError } = await supabase
               .from('wallet_transactions')
               .update({ 
                 status: 'reversed',
                 type: 'earn_reversed',
                 reason: 'Order was refunded/cancelled before activation'
               })
-              .eq('id', tx.id);
+              .eq('id', tx.id)
+              .eq('status', 'pending');
+
+            if (reverseError) {
+              log('Error reversing transaction', { txId: tx.id, error: reverseError });
+              errorCount++;
+              continue;
+            }
             
             await supabase
               .from('orders')
@@ -104,46 +123,41 @@ Deno.serve(async (req) => {
           }
         }
 
-        // Update transaction to available
-        const { error: updateTxError } = await supabase
+        // Claim the row: only the run that flips pending -> available gets to credit it,
+        // so two overlapping runs (or a retry) can never credit the same row twice.
+        const { data: claimed, error: claimError } = await supabase
           .from('wallet_transactions')
           .update({
             type: 'earn_available',
             status: 'available',
             reason: `Activated after ${delayDays} days`,
           })
-          .eq('id', tx.id);
+          .eq('id', tx.id)
+          .eq('status', 'pending')
+          .select('id, wallet_id, amount_eur');
 
-        if (updateTxError) {
-          log('Error updating transaction', { txId: tx.id, error: updateTxError });
+        if (claimError) {
+          log('Error claiming transaction', { txId: tx.id, error: claimError });
           errorCount++;
           continue;
         }
 
-        // Add to wallet balance
-        const { data: wallet, error: walletFetchError } = await supabase
-          .from('wallets')
-          .select('balance_eur')
-          .eq('id', tx.wallet_id)
-          .single();
-
-        if (walletFetchError) {
-          log('Error fetching wallet', { walletId: tx.wallet_id, error: walletFetchError });
-          errorCount++;
+        if (!claimed || claimed.length === 0) {
+          log('Already handled by another run, skipping', { txId: tx.id });
           continue;
         }
 
-        const newBalance = (wallet?.balance_eur || 0) + tx.amount_eur;
-        const { error: walletUpdateError } = await supabase
-          .from('wallets')
-          .update({ 
-            balance_eur: newBalance,
-            updated_at: new Date().toISOString()
-          })
-          .eq('id', tx.wallet_id);
+        // Credit only what this run claimed. Atomic add, no read-modify-write.
+        const { data: newBalance, error: creditError } = await supabase
+          .rpc('adjust_wallet_balance', { p_wallet_id: claimed[0].wallet_id, p_delta: claimed[0].amount_eur });
 
-        if (walletUpdateError) {
-          log('Error updating wallet balance', { walletId: tx.wallet_id, error: walletUpdateError });
+        if (creditError || newBalance === null) {
+          log('Error crediting wallet, putting row back to pending', { txId: tx.id, error: creditError });
+          await supabase
+            .from('wallet_transactions')
+            .update({ type: 'earn_pending', status: 'pending' })
+            .eq('id', tx.id)
+            .eq('status', 'available');
           errorCount++;
           continue;
         }

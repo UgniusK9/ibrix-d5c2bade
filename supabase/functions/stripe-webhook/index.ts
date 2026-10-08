@@ -196,6 +196,22 @@ async function earnCreditsForOrder(requestId: string, orderId: string, userId: s
       }
     }
 
+    // Credits are earned on what the customer really paid, not on list price:
+    // scale down by the discount code and by credits spent on this order.
+    const { data: orderTotals } = await supabase
+      .from('orders')
+      .select('subtotal_eur, discount_eur, credits_redeemed_cents')
+      .eq('id', orderId)
+      .maybeSingle();
+    const subtotalCents = Math.round(Number(orderTotals?.subtotal_eur ?? 0) * 100);
+    if (subtotalCents > 0) {
+      const paidCents = Math.max(
+        0,
+        subtotalCents - Math.round(Number(orderTotals?.discount_eur ?? 0) * 100) - Number(orderTotals?.credits_redeemed_cents ?? 0)
+      );
+      eligibleSubtotalCents = Math.floor(eligibleSubtotalCents * Math.min(1, paidCents / subtotalCents));
+    }
+
     log(requestId, 'Eligible subtotal for credits', { 
       orderId, 
       eligibleSubtotalCents,
@@ -443,6 +459,48 @@ async function sendMetaCapi(requestId: string, eventData: {
   }
 }
 
+// Checkout takes wallet credits when the order is created. If the Stripe session
+// then expires or fails without payment, give them back exactly once.
+async function restoreWalletForOrder(requestId: string, orderId: string) {
+  const { data: order } = await supabase
+    .from('orders')
+    .select('status, user_id, credits_redeemed_cents, credits_status')
+    .eq('id', orderId)
+    .maybeSingle();
+
+  const cents = Number(order?.credits_redeemed_cents ?? 0);
+  if (!order || order.status !== 'created' || !order.user_id || cents <= 0 || order.credits_status !== 'captured') return;
+
+  // Claim first: only one delivery of this event gets a row back
+  const { data: claimed } = await supabase
+    .from('orders')
+    .update({ credits_status: 'restored' })
+    .eq('id', orderId)
+    .eq('credits_status', 'captured')
+    .select('id');
+  if (!claimed?.length) return;
+
+  const { data: wallet } = await supabase.from('wallets').select('id').eq('user_id', order.user_id).maybeSingle();
+  if (!wallet) {
+    console.error('[STRIPE-WEBHOOK] CREDITS NOT RESTORED: wallet missing', { orderId });
+    return;
+  }
+  const { error } = await supabase.rpc('adjust_wallet_balance', { p_wallet_id: wallet.id, p_delta: cents / 100 });
+  if (error) {
+    console.error('[STRIPE-WEBHOOK] CREDITS NOT RESTORED', { orderId, cents, error: error.message });
+    return;
+  }
+  await supabase.from('wallet_transactions').insert({
+    wallet_id: wallet.id,
+    type: 'refund',
+    amount_eur: cents / 100,
+    description: 'Kreditai grąžinti: apmokėjimas nebaigtas',
+    reference_type: 'order',
+    reference_id: orderId,
+  });
+  log(requestId, 'Wallet credits restored', { orderId, cents });
+}
+
 Deno.serve(async (req) => {
   const requestId = generateRequestId();
   
@@ -486,13 +544,21 @@ Deno.serve(async (req) => {
 
   try {
     switch (event.type) {
-      case 'checkout.session.completed': {
+      case 'checkout.session.completed':
+      case 'checkout.session.async_payment_succeeded': {
         const session = event.data.object as Stripe.Checkout.Session;
         const orderId = session.metadata?.order_id;
         const paymentType = session.metadata?.payment_type;
         const orderNumber = session.metadata?.order_number;
         const giftCardId = session.metadata?.gift_card_id;
         const sessionType = session.metadata?.type;
+
+        // Delayed methods (SEPA, bank transfer) complete the session before the
+        // money arrives. Wait for async_payment_succeeded, which is handled here too.
+        if (session.payment_status === 'unpaid') {
+          log(requestId, 'Session completed but not paid yet, waiting for async payment', { sessionId: session.id });
+          break;
+        }
 
         // Handle GIFT CARD purchases
         if (sessionType === 'gift_card' && giftCardId) {
@@ -592,7 +658,10 @@ Deno.serve(async (req) => {
               paid_at: new Date().toISOString(),
               ...(isFullPayment ? { balance_paid_at: new Date().toISOString() } : {}),
             })
-            .eq('id', orderId);
+            .eq('id', orderId)
+            // A late or repeated delivery must not move a packed/shipped order back to paid.
+            // Zero rows is fine: a retry after a half-done first run carries on below.
+            .in('status', ['created', 'cancelled']);
 
           if (updateError) {
             log(requestId, 'Failed to update order status', updateError);
@@ -618,6 +687,15 @@ Deno.serve(async (req) => {
               break;
             }
             throw new Error('Failed to create payment record');
+          }
+
+          // Take the stock. Atomic and once-only inside the function, so a retried
+          // webhook cannot deduct twice. Never fail the webhook over stock: the
+          // payment already succeeded and Stripe would keep retrying.
+          const { error: stockError } = await supabase
+            .rpc('decrement_inventory_for_order', { p_order_id: orderId });
+          if (stockError) {
+            console.error('[STRIPE-WEBHOOK] Inventory deduction FAILED', { orderId, error: stockError.message });
           }
 
           // Create shipment with tracking token if not exists
@@ -836,6 +914,18 @@ Deno.serve(async (req) => {
             payment_type: 'balance',
             amount_eur: (session.amount_total || 0) / 100,
           });
+        }
+        break;
+      }
+
+      case 'checkout.session.expired':
+      case 'checkout.session.async_payment_failed': {
+        const session = event.data.object as Stripe.Checkout.Session;
+        const orderId = session.metadata?.order_id;
+        log(requestId, 'Checkout session ended without payment', { type: event.type, orderId, sessionId: session.id });
+        if (orderId) {
+          await restoreWalletForOrder(requestId, orderId);
+          await recordEventProcessed(requestId, event.id, event.type, orderId, { payment_type: session.metadata?.payment_type });
         }
         break;
       }

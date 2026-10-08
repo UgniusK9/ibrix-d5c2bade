@@ -28,145 +28,6 @@ async function sendEmail(supabaseUrl: string, serviceKey: string, type: string, 
   }
 }
 
-// Earn credits for eligible order (same logic as stripe-webhook)
-async function earnCreditsForOrder(supabaseAdmin: any, orderId: string, userId: string | null) {
-  if (!userId) {
-    console.log('No user_id for credits earning, skipping', { orderId });
-    return;
-  }
-
-  try {
-    // Get credits settings
-    const { data: settings } = await supabaseAdmin
-      .from('app_settings')
-      .select('key, value')
-      .in('key', [
-        'credits.earn_rate_percent',
-        'credits.min_order_subtotal_cents',
-        'credits.exclude_categories'
-      ]);
-
-    const settingsMap: Record<string, any> = {};
-    settings?.forEach((s: any) => {
-      settingsMap[s.key] = s.value;
-    });
-
-    const earnRatePercent = settingsMap['credits.earn_rate_percent']?.value ?? 3;
-    const minSubtotalCents = settingsMap['credits.min_order_subtotal_cents']?.value ?? 1000;
-    const excludeCategories = settingsMap['credits.exclude_categories']?.value ?? ['gift_card'];
-
-    // Get order items to calculate eligible subtotal
-    const { data: orderItems } = await supabaseAdmin
-      .from('order_items')
-      .select('unit_price_eur, quantity, category_snapshot')
-      .eq('order_id', orderId);
-
-    if (!orderItems || orderItems.length === 0) {
-      console.log('No order items found for credits', { orderId });
-      return;
-    }
-
-    // Calculate eligible subtotal (exclude gift cards and other excluded categories)
-    let eligibleSubtotalCents = 0;
-    for (const item of orderItems) {
-      const categoryLower = (item.category_snapshot || '').toLowerCase();
-      const isExcluded = excludeCategories.some((cat: string) => 
-        categoryLower.includes(cat.toLowerCase())
-      );
-      
-      if (!isExcluded) {
-        eligibleSubtotalCents += Math.round(item.unit_price_eur * 100) * item.quantity;
-      }
-    }
-
-    // Check minimum subtotal
-    if (eligibleSubtotalCents < minSubtotalCents) {
-      console.log('Subtotal below minimum for credits', { orderId, eligibleSubtotalCents, minSubtotalCents });
-      await supabaseAdmin
-        .from('orders')
-        .update({ 
-          credits_earned_cents: 0,
-          credits_status: 'none'
-        })
-        .eq('id', orderId);
-      return;
-    }
-
-    // Calculate credits to earn
-    const creditsEarnedCents = Math.floor(eligibleSubtotalCents * earnRatePercent / 100);
-    
-    if (creditsEarnedCents <= 0) {
-      console.log('No credits to earn', { orderId });
-      return;
-    }
-
-    // Get or create wallet
-    let { data: wallet } = await supabaseAdmin
-      .from('wallets')
-      .select('id, balance_eur')
-      .eq('user_id', userId)
-      .maybeSingle();
-
-    if (!wallet) {
-      const { data: newWallet, error: walletError } = await supabaseAdmin
-        .from('wallets')
-        .insert({ user_id: userId, balance_eur: 0 })
-        .select('id, balance_eur')
-        .single();
-
-      if (walletError) {
-        console.error('Failed to create wallet:', walletError);
-        return;
-      }
-      wallet = newWallet;
-    }
-
-    // Check if earn_pending already exists for this order
-    const { data: existingTransaction } = await supabaseAdmin
-      .from('wallet_transactions')
-      .select('id')
-      .eq('order_id', orderId)
-      .eq('type', 'earn_pending')
-      .maybeSingle();
-
-    if (existingTransaction) {
-      console.log('Credits already pending for this order', { orderId });
-      return;
-    }
-
-    // Create earn_pending transaction
-    const { error: txError } = await supabaseAdmin
-      .from('wallet_transactions')
-      .insert({
-        wallet_id: wallet.id,
-        type: 'earn_pending',
-        amount_eur: creditsEarnedCents / 100,
-        status: 'pending',
-        order_id: orderId,
-        reason: `Earned ${earnRatePercent}% credits from order`,
-      });
-
-    if (txError) {
-      console.error('Failed to create earn_pending transaction:', txError);
-      return;
-    }
-
-    // Update order with credits earned
-    await supabaseAdmin
-      .from('orders')
-      .update({
-        credits_earned_cents: creditsEarnedCents,
-        credits_status: 'earn_pending',
-      })
-      .eq('id', orderId);
-
-    console.log('Credits earn_pending created', { orderId, userId, creditsEarnedCents, earnRatePercent });
-
-  } catch (err) {
-    console.error('Credits earning failed (non-blocking):', err);
-  }
-}
-
 // Auto-add builders from order
 async function addBuildersFromOrder(supabaseAdmin: any, orderId: string, userId: string, orderItems: any[]) {
   if (!orderItems || orderItems.length === 0) return;
@@ -440,13 +301,15 @@ serve(async (req) => {
     }
 
     // 2. Create wallet transaction for audit
-    await supabaseAdmin.from("wallet_transactions").insert({
+    // The balance is already deducted, so a failed ledger row is logged, not fatal.
+    const { error: ledgerError } = await supabaseAdmin.from("wallet_transactions").insert({
       wallet_id: wallet!.id,
       type: "redeem_captured",
       amount_eur: totalCreditsRequired,
       status: "captured",
       reason: `Credits purchase: ${orderItems.map(i => `${i.product.title} x${i.quantity}`).join(", ")}`,
     });
+    if (ledgerError) console.error("Wallet ledger insert failed:", ledgerError);
 
     // 3. Create order
     const customerEmail = email || user.email;
@@ -589,8 +452,7 @@ serve(async (req) => {
       creditsUsed: totalCreditsRequired,
     });
 
-    // 10. Earn credits for logged-in users (same logic as stripe-webhook)
-    await earnCreditsForOrder(supabaseAdmin, order.id, user.id);
+    // Orders paid entirely with credits do not earn new credits (no money was paid).
 
     // 11. Auto-add builders for logged-in users
     await addBuildersFromOrder(supabaseAdmin, order.id, user.id, orderItemsToInsert);

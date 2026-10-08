@@ -1,6 +1,7 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.49.1';
 import Stripe from 'https://esm.sh/stripe@14.21.0?target=deno';
 import { z } from 'https://deno.land/x/zod@v3.22.4/mod.ts';
+import { countOfferUses, limitMessage } from '../_shared/offer-limits.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -97,6 +98,76 @@ const SHIPPING_COSTS: Record<string, number> = {
   dpd_locker: 0,
   courier: 4.99,
 };
+
+// Orders that need no card payment (discount or credits cover everything) never
+// get a payment webhook, so the steps the webhook would run are done here.
+// deno-lint-ignore no-explicit-any
+async function finishUnchargedOrder(supabase: any, requestId: string, order: any, orderItems: any[], hasPreorder: boolean, etaMin: number, etaMax: number) {
+  const { error: stockError } = await supabase.rpc('decrement_inventory_for_order', { p_order_id: order.id });
+  if (stockError) log(requestId, 'Inventory deduction FAILED', { orderId: order.id, error: stockError.message });
+
+  const { data: shipment } = await supabase
+    .from('shipments')
+    .insert({ order_id: order.id, status: 'pending' })
+    .select('tracking_token')
+    .single();
+
+  await supabase.from('payments').insert({ order_id: order.id, type: 'deposit', status: 'succeeded', amount_eur: 0 });
+
+  const addr = (order.shipping_address_json ?? {}) as Record<string, string>;
+  const shippingMethod = addr.lockerName
+    ? (addr.lockerName.includes('Omniva') ? 'Omniva paštomatas' :
+       addr.lockerName.includes('LP') ? 'LP EXPRESS paštomatas' :
+       addr.lockerName.includes('DPD') ? 'DPD paštomatas' : 'Paštomatas')
+    : 'Kurjeris į namus';
+
+  const send = async (type: string, data: Record<string, unknown>) => {
+    try {
+      const res = await fetch(`${Deno.env.get('SUPABASE_URL')}/functions/v1/send-email`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')}` },
+        body: JSON.stringify({ type, ...data }),
+      });
+      log(requestId, 'Email sent', { type, status: res.status });
+    } catch (err) {
+      log(requestId, 'Email send failed (non-blocking)', err);
+    }
+  };
+
+  await send('deposit_confirmed', {
+    email: order.email,
+    firstName: order.first_name,
+    orderNumber: order.order_number,
+    depositEur: 0,
+    balanceEur: order.balance_total_eur,
+    totalEur: order.total_eur,
+    hasPreorder,
+    etaWeeksMin: etaMin > 0 ? etaMin : null,
+    etaWeeksMax: etaMax > 0 ? etaMax : null,
+    trackingToken: shipment?.tracking_token ?? null,
+    items: orderItems,
+  });
+  await send('admin_order_notification', {
+    orderNumber: order.order_number,
+    customerName: `${order.first_name} ${order.last_name}`,
+    customerEmail: order.email,
+    customerPhone: order.phone,
+    items: orderItems.map((i) => ({ title_snapshot: i.title_snapshot, quantity: i.quantity, unit_price_eur: i.unit_price_eur })),
+    subtotalEur: order.subtotal_eur,
+    discountEur: order.discount_eur || 0,
+    shippingEur: order.shipping_eur,
+    totalEur: order.total_eur,
+    depositEur: 0,
+    balanceEur: order.balance_total_eur,
+    shippingMethod,
+    shippingAddress: order.shipping_address_json,
+    paymentMethod: 'Nuolaida / kreditai',
+    paymentType: 'deposit',
+    hasPreorder,
+    etaWeeksMin: etaMin > 0 ? etaMin : null,
+    etaWeeksMax: etaMax > 0 ? etaMax : null,
+  });
+}
 
 Deno.serve(async (req) => {
   const requestId = generateRequestId();
@@ -211,6 +282,11 @@ Deno.serve(async (req) => {
       }
     }
 
+    // Money is compared and stored in euros, so round every derived figure to
+    // cents — otherwise float drift leaves deposit + balance a fraction off the
+    // order total and the last balance payment can never settle exactly.
+    const round2 = (n: number) => Math.round(n * 100) / 100;
+
     // Calculate totals server-side (TRUST NOTHING FROM CLIENT)
     // in_stock = full price at checkout, preorder = deposit only
     let subtotalEur = 0;
@@ -222,6 +298,10 @@ Deno.serve(async (req) => {
     const orderItemsData = body.items.map(item => {
       const product = productMap.get(item.productId)!;
       const variant = item.variantId ? variantsMap.get(item.variantId) : null;
+      // A variant id from another product (maybe a cheaper adjustment) must not be priced against this one
+      if (item.variantId && (!variant || variant.product_id !== item.productId || variant.status !== 'active')) {
+        throw new Error('Netinkamas prekės variantas');
+      }
       
       // Use effective price: sale_price_eur if lower than price_eur
       const effectivePriceEur = (product.sale_price_eur && Number(product.sale_price_eur) < Number(product.price_eur))
@@ -274,6 +354,8 @@ Deno.serve(async (req) => {
       };
     });
 
+    subtotalEur = round2(subtotalEur);
+
     // Calculate shipping
     const shippingEur = SHIPPING_COSTS[body.shippingMethod] ?? 0;
     log(requestId, 'Shipping calculated', { method: body.shippingMethod, cost: shippingEur });
@@ -291,13 +373,24 @@ Deno.serve(async (req) => {
         .eq('active', true)
         .maybeSingle();
       
-      if (offer) {
+      // A code the customer saw applied must not silently vanish: they would
+      // be sent to the card form with the full price. Stop with a message instead.
+      if (!offer) throw new Error('Kodas nerastas arba nebegalioja');
+
+      {
         const now = new Date();
         const isValid = (!offer.starts_at || new Date(offer.starts_at) <= now) &&
                         (!offer.ends_at || new Date(offer.ends_at) >= now) &&
                         (!offer.min_cart_total || subtotalEur >= Number(offer.min_cart_total));
-        
-        if (isValid) {
+        if (!isValid) throw new Error('Kodas nerastas arba nebegalioja');
+
+        if (offer.max_redemptions || offer.per_user_limit) {
+          const { totalUses, userUses } = await countOfferUses(supabase, offer.id, userId, body.email);
+          const blocked = limitMessage(offer, totalUses, userUses);
+          if (blocked) throw new Error(blocked);
+        }
+
+        {
           if (offer.type === 'percent') {
             // Percent applies to the goods value, not to the deposit. Taking it
             // from immediatePaymentEur meant "20% off" on a 100 EUR preorder
@@ -312,7 +405,7 @@ Deno.serve(async (req) => {
           // front and carry the rest over to the balance. Capping at the
           // deposit instead, as before, silently shrank every fixed-amount code
           // on a preorder — 50 EUR off became 30 EUR off.
-          discountEur = Math.min(discountEur, subtotalEur + shippingEur);
+          discountEur = round2(Math.min(discountEur, subtotalEur + shippingEur));
           offerId = offer.id;
           offerCode = offer.code;
           log(requestId, 'Discount applied', { code: offer.code, discountEur });
@@ -322,7 +415,9 @@ Deno.serve(async (req) => {
 
     // Apply wallet deduction (server-side validation)
     let walletDeductionEur = 0;
-    if (userId && body.useWalletBalance) {
+    // Only with Stripe: its session-expired event is what gives the credits back
+    // if the customer never pays. Paysera has no such signal, so credits are not taken there.
+    if (userId && body.useWalletBalance && !body.skipStripe) {
       const { data: wallet } = await supabase
         .from('wallets')
         .select('id, balance_eur')
@@ -336,11 +431,6 @@ Deno.serve(async (req) => {
         log(requestId, 'Wallet deduction', { available: wallet.balance_eur, deducting: walletDeductionEur });
       }
     }
-
-    // Money is compared and stored in euros, so round every derived figure to
-    // cents — otherwise float drift leaves deposit + balance a fraction off the
-    // order total and the last balance payment can never settle exactly.
-    const round2 = (n: number) => Math.round(n * 100) / 100;
 
     // Calculate final totals.
     //
@@ -464,16 +554,24 @@ Deno.serve(async (req) => {
     if (walletDeductionEur > 0 && userId) {
       const { data: wallet } = await supabase
         .from('wallets')
-        .select('id, balance_eur')
+        .select('id')
         .eq('user_id', userId)
         .single();
       
       if (wallet) {
-        const newBalance = wallet.balance_eur - walletDeductionEur;
+        // Atomic: returns null if a parallel checkout already spent the balance
+        const { data: newBalance, error: walletError } = await supabase
+          .rpc('adjust_wallet_balance', { p_wallet_id: wallet.id, p_delta: -walletDeductionEur });
+        if (walletError || newBalance === null) {
+          log(requestId, 'Wallet deduction failed', walletError);
+          await supabase.from('orders').delete().eq('id', order.id);
+          throw new Error('Nepakanka kreditų');
+        }
+        // Remember how much was taken so an expired payment can give it back
         await supabase
-          .from('wallets')
-          .update({ balance_eur: newBalance })
-          .eq('id', wallet.id);
+          .from('orders')
+          .update({ credits_redeemed_cents: Math.round(walletDeductionEur * 100), credits_status: 'captured' })
+          .eq('id', order.id);
         
         // Log wallet transaction
         await supabase.from('wallet_transactions').insert({
@@ -496,6 +594,7 @@ Deno.serve(async (req) => {
         .update({ status: hasPreorder ? 'deposit_paid' : 'balance_paid', paid_at: new Date().toISOString() })
         .eq('id', order.id);
       
+      await finishUnchargedOrder(supabase, requestId, order, orderItems, hasPreorder, maxEtaWeeksMin, maxEtaWeeksMax);
       log(requestId, 'Order fully paid by wallet');
       
       const origin = req.headers.get('origin') || 'https://ibrix.lt';
