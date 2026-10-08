@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
+import { FunctionsHttpError } from '@supabase/supabase-js';
 
 interface RedeemGiftCardProps {
   onSuccess?: (amount: number) => void;
@@ -19,118 +20,53 @@ export function RedeemGiftCard({ onSuccess }: RedeemGiftCardProps) {
   const [code, setCode] = useState('');
   const [isRedeeming, setIsRedeeming] = useState(false);
   const [redeemResult, setRedeemResult] = useState<{ success: boolean; amount?: number } | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   const formatPrice = (amount: number) => {
     return new Intl.NumberFormat('lt-LT', { style: 'currency', currency: 'EUR' }).format(amount);
   };
 
   const handleRedeem = async () => {
+    setError(null);
+
     if (!code.trim()) {
-      toast.error(t('redeem.enterCode'));
+      setError(t('redeem.enterCode'));
       return;
     }
 
     if (!user) {
-      toast.error(t('redeem.loginRequired'));
+      setError(t('redeem.loginRequired'));
       return;
     }
 
     setIsRedeeming(true);
     try {
-      // Find the gift card
-      const { data: giftCard, error: findError } = await supabase
-        .from('gift_cards')
-        .select('*')
-        .eq('code', code.toUpperCase().trim())
-        .single();
+      // The server checks the code and credits the wallet; the browser cannot (RLS).
+      const { data, error: fnError } = await supabase.functions.invoke('redeem-gift-card', {
+        body: { code },
+      });
 
-      if (findError || !giftCard) {
-        toast.error(t('redeem.notFound'));
+      if (fnError) {
+        if (fnError instanceof FunctionsHttpError) {
+          const body = await fnError.context.json().catch(() => null);
+          if (body?.error === 'invalid_code') setError(t('redeem.alreadyUsed'));
+          else if (body?.error === 'too_many_attempts') setError(t('redeem.tooManyAttempts'));
+          else if (body?.error === 'unauthorized') setError(t('redeem.loginRequired'));
+          else setError(t('redeem.activateFailed'));
+        } else {
+          setError(t('redeem.networkError'));
+        }
         return;
       }
 
-      if (giftCard.status !== 'active') {
-        toast.error(t('redeem.alreadyUsed'));
-        return;
-      }
-
-      if (giftCard.current_balance_eur <= 0) {
-        toast.error(t('redeem.zeroBalance'));
-        return;
-      }
-
-      // Check or create wallet
-      let wallet = await supabase
-        .from('wallets')
-        .select('id, balance_eur')
-        .eq('user_id', user.id)
-        .maybeSingle();
-
-      let walletId: string;
-      let currentBalance: number;
-
-      if (!wallet.data) {
-        // Create wallet
-        const { data: newWallet, error: walletError } = await supabase
-          .from('wallets')
-          .insert({ user_id: user.id, balance_eur: 0 })
-          .select()
-          .single();
-
-        if (walletError) throw walletError;
-        walletId = newWallet.id;
-        currentBalance = 0;
-      } else {
-        walletId = wallet.data.id;
-        currentBalance = wallet.data.balance_eur;
-      }
-
-      const amountToAdd = giftCard.current_balance_eur;
-      const newBalance = currentBalance + amountToAdd;
-
-      // Update wallet balance
-      const { error: updateWalletError } = await supabase
-        .from('wallets')
-        .update({ balance_eur: newBalance })
-        .eq('id', walletId);
-
-      if (updateWalletError) throw updateWalletError;
-
-      // Record transaction
-      const { error: transactionError } = await supabase
-        .from('wallet_transactions')
-        .insert({
-          wallet_id: walletId,
-          type: 'gift_card_redeem',
-          amount_eur: amountToAdd,
-          description: t('redeem.description', { code: giftCard.code }),
-          reference_type: 'gift_card',
-          reference_id: giftCard.id,
-        });
-
-      if (transactionError) throw transactionError;
-
-      // Mark gift card as redeemed
-      const { error: redeemError } = await supabase
-        .from('gift_cards')
-        .update({
-          status: 'redeemed',
-          current_balance_eur: 0,
-          redeemed_at: new Date().toISOString(),
-          redeemed_by_user_id: user.id,
-        })
-        .eq('id', giftCard.id);
-
-      if (redeemError) throw redeemError;
-
-      setRedeemResult({ success: true, amount: amountToAdd });
-      toast.success(t('redeem.activated', { amount: formatPrice(amountToAdd) }));
-      onSuccess?.(amountToAdd);
+      const amountAdded = Number(data?.amount ?? 0);
+      setRedeemResult({ success: true, amount: amountAdded });
+      toast.success(t('redeem.activated', { amount: formatPrice(amountAdded) }));
+      onSuccess?.(amountAdded);
       setCode('');
-    } catch (e: any) {
+    } catch (e) {
       console.error('Redeem error:', e);
-      toast.error(e.message || t('redeem.activateFailed'));
-      setRedeemResult({ success: false });
+      setError(t('redeem.networkError'));
     } finally {
       setIsRedeeming(false);
     }
@@ -175,6 +111,11 @@ export function RedeemGiftCard({ onSuccess }: RedeemGiftCardProps) {
                 placeholder="IBGC-XXXX-XXXX"
                 className="mt-1 font-mono uppercase"
               />
+              {error && (
+                <p role="alert" className="mt-2 text-sm text-destructive">
+                  {error}
+                </p>
+              )}
             </div>
             <Button 
               onClick={handleRedeem} 

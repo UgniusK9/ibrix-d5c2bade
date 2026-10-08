@@ -1362,6 +1362,8 @@ export const lt = {
     activated: 'Kuponas aktyvuotas! +{{amount}} pridėta į piniginę',
     activateFailed: 'Nepavyko aktyvuoti kupono',
     description: 'Dovanų kuponas: {{code}}',
+    tooManyAttempts: 'Per daug bandymų. Bandykite dar kartą po 15 min.',
+    networkError: 'Nepavyko susisiekti su serveriu. Patikrinkite ryšį ir bandykite dar kartą.',
   },
   // Theme
   theme: {
@@ -2401,6 +2403,7 @@ export const lt = {
     statusPlaceholder: "Statusas",
   },
   pgCheckoutX: {
+    paymentCancelled: "Apmokėjimas atšauktas, pinigai nenuskaičiuoti. Jūsų krepšelis išsaugotas.",
     valFirstName: "Vardas privalomas",
     valLastName: "Pavardė privaloma",
     valEmail: "Neteisingas el. pašto adresas",

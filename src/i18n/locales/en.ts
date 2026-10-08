@@ -1362,6 +1362,8 @@ export const en = {
     activated: 'Coupon activated! +{{amount}} added to wallet',
     activateFailed: 'Failed to redeem coupon',
     description: 'Gift card: {{code}}',
+    tooManyAttempts: 'Too many attempts. Try again in 15 minutes.',
+    networkError: 'Could not reach the server. Check your connection and try again.',
   },
   // Theme
   theme: {
@@ -2402,6 +2404,7 @@ export const en = {
     statusPlaceholder: "Status",
   },
   pgCheckoutX: {
+    paymentCancelled: "Payment was cancelled and nothing was charged. Your cart is still here.",
     valFirstName: "First name is required",
     valLastName: "Last name is required",
     valEmail: "Invalid email address",

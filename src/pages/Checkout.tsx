@@ -53,6 +53,17 @@ const getShippingMethods = (t: (key: string) => string) => [
   { id: "courier", label: t('checkout.courier'), price: 4.99, icon: Truck },
 ];
 
+// supabase.functions.invoke hides the server's message behind a generic
+// "non-2xx status" error; read the body so the customer sees the real reason
+// (sold out, code already used, ...).
+async function serverMessage(error: { context?: Response; message?: string } | null): Promise<string | undefined> {
+  try {
+    const body = await error?.context?.json();
+    if (body?.error) return body.error;
+  } catch { /* body was not JSON */ }
+  return error?.message;
+}
+
 export default function Checkout() {
   const navigate = useNavigate();
   const { t } = useTranslation();
@@ -154,6 +165,14 @@ export default function Checkout() {
       navigate("/produktai/visi");
     }
   }, [items, navigate]);
+
+  // Back from a cancelled payment page: say so, the customer left a payment screen
+  useEffect(() => {
+    if (new URLSearchParams(window.location.search).get("cancelled") === "true") {
+      toast.info(t('pgCheckoutX.paymentCancelled'));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Auto-apply cart recovery discount from email link (?recovery=TOKEN)
   useEffect(() => {
@@ -358,8 +377,9 @@ export default function Checkout() {
 
         if (error) throw error;
 
+        // The cart is emptied on the confirmation page once the order is paid, so
+        // a cancelled or failed payment does not leave the customer with nothing.
         if (result?.checkoutUrl) {
-          clearCart();
           window.location.href = result.checkoutUrl;
         } else {
           throw new Error(t('pgCheckoutX.stripeFailed'));
@@ -392,6 +412,12 @@ export default function Checkout() {
 
         if (error) throw error;
 
+        // Discount or credits covered everything: the order is already paid, go to it
+        if (result?.checkoutUrl) {
+          window.location.href = result.checkoutUrl;
+          return;
+        }
+
         // Now call Paysera payment creation
         const { data: payseraResult, error: payseraError } = await supabase.functions.invoke("create-paysera-payment", {
           body: {
@@ -404,7 +430,6 @@ export default function Checkout() {
         if (payseraError) throw payseraError;
 
         if (payseraResult?.redirectUrl) {
-          clearCart();
           window.location.href = payseraResult.redirectUrl;
         } else {
           throw new Error(t('pgCheckoutX.payseraFailed'));
@@ -446,7 +471,6 @@ export default function Checkout() {
         if (opayError) throw opayError;
 
         if (opayResult?.redirectUrl) {
-          clearCart();
           window.location.href = opayResult.redirectUrl;
         } else {
           throw new Error(opayResult?.error || t('pgCheckoutX.opayFailed'));
@@ -487,7 +511,6 @@ export default function Checkout() {
         if (inbankError) throw inbankError;
 
         if (inbankResult?.redirectUrl) {
-          clearCart();
           window.location.href = inbankResult.redirectUrl;
         } else {
           throw new Error(inbankResult?.error || t('pgCheckoutX.inbankFailed'));
@@ -497,7 +520,7 @@ export default function Checkout() {
       }
     } catch (error: any) {
       console.error("Checkout error:", error);
-      toast.error(error.message || t('pgCheckoutX.orderError'));
+      toast.error((await serverMessage(error)) || t('pgCheckoutX.orderError'));
     } finally {
       setIsLoading(false);
     }

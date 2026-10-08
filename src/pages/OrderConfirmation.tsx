@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { trackPurchaseEvent } from "@/hooks/useAnalytics";
+import { useCartStore } from "@/stores/cartStore";
 import { format } from "date-fns";
 import { lt, enUS } from "date-fns/locale";
 import { useTranslation } from "react-i18next";
@@ -80,11 +81,18 @@ export default function OrderConfirmation() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const purchaseTracked = useRef(false);
+  const clearCart = useCartStore((s) => s.clearCart);
 
-  // Track purchase event once order is loaded
+  // Track the purchase once per order, and only when it is really paid: this page
+  // also opens for unpaid orders and on every reload of the link.
   useEffect(() => {
-    if (order && items.length > 0 && !purchaseTracked.current) {
+    if (order && order.status !== 'created' && items.length > 0 && !purchaseTracked.current) {
       purchaseTracked.current = true;
+      const seenKey = `purchase_tracked_${order.id}`;
+      try {
+        if (localStorage.getItem(seenKey)) return;
+        localStorage.setItem(seenKey, '1');
+      } catch { /* storage blocked: track anyway */ }
       trackPurchaseEvent({
         orderId: order.id,
         orderNumber: order.order_number,
@@ -152,6 +160,35 @@ export default function OrderConfirmation() {
     loadOrder();
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sessionId, orderId, legacyToken]);
+
+  // The cart is kept through payment (a cancelled payment must not lose it); once
+  // the order is paid, empty it.
+  useEffect(() => {
+    if (order && order.status !== 'created') clearCart();
+  }, [order?.status, order?.id, clearCart]);
+
+  // The payment confirmation can arrive a moment after the browser is sent back
+  // here. An order still reading "created" is re-checked for up to 20 s instead of
+  // showing "awaiting payment" forever to someone who already paid.
+  useEffect(() => {
+    if (!order || order.status !== 'created') return;
+    let tries = 0;
+    const timer = setInterval(async () => {
+      tries += 1;
+      const { data } = await supabase.functions.invoke('get-order-by-session', {
+        body: { session_id: sessionId, order_id: orderId },
+      });
+      if (data?.success && data.order) {
+        setOrder(data.order);
+        setItems(data.items || []);
+        setShipment(data.shipment);
+        setPayments(data.payments || []);
+      }
+      if (tries >= 10) clearInterval(timer);
+    }, 2000);
+    return () => clearInterval(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [order?.status, order?.id]);
 
   const hasPreorder = order?.preorder_flag || false;
   const maxEtaWeeks = order?.preorder_eta_weeks_max || 0;
