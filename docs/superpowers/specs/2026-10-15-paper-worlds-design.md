@@ -173,8 +173,10 @@ branches or worktrees; the `Metro-ui` worktree is removed once merged (unlink it
 ### Go-live, all at once
 
 1. The client approves the preview.
-2. The 8 Oct payment fixes (migrations and edge functions) are installed in
-   Supabase, once Darius has access.
+2. Every pending migration is applied in Supabase, oldest first, once Darius has
+   access: `20260914000000` (English title/description columns: `redesign`
+   already selects `title_en`, and those reads fail without it), `20261005000000`
+   (product copy), the 8 Oct payment migrations; then the 8 Oct edge functions.
 3. The client adds the Paysera secrets and the callback URL.
 4. `redesign` is merged into `main`; Vercel deploys production.
 5. One real order for the cheapest item, then a refund.

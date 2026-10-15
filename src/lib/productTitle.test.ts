@@ -21,3 +21,7 @@ test('keeps words that only look like noise', () => {
 test('never returns an empty name', () => {
   assert.equal(cleanTitle('MOULD KING'), 'MOULD KING');
 });
+
+test('English titles from the 5 Oct copy migration clean the same way', () => {
+  assert.equal(cleanTitle('MOULD KING 13153 App-Controlled Tracked Racer | 836 pcs', '13153'), 'App-Controlled Tracked Racer');
+});
