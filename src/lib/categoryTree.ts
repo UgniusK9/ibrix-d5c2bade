@@ -1,3 +1,20 @@
+import type { TFunction } from 'i18next';
+
+// Category rows are written in Lithuanian in the database. English names live in
+// the locale files keyed by slug (categoryNames / categoryDescriptions), so a
+// shopper reading in English never meets "Karinė technika". A slug with no entry,
+// e.g. one the shop adds in the admin tomorrow, keeps its Lithuanian name.
+export function localizeCategories<T extends { slug: string; name: string; description?: string | null }>(
+  categories: T[],
+  t: TFunction,
+): T[] {
+  return categories.map((c) => ({
+    ...c,
+    name: t(`categoryNames.${c.slug}`, { defaultValue: c.name }),
+    description: c.description ? t(`categoryDescriptions.${c.slug}`, { defaultValue: c.description }) : c.description,
+  }));
+}
+
 export interface CategoryTreeInput {
   id: string;
   parent_id: string | null;

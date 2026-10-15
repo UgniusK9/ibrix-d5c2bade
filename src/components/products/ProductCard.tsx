@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { ShoppingCart, Package, Clock, Heart, Scale, Eye, Sparkles, Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Product, formatPrice, getEtaString, getProductImage, getProductTitle } from "@/hooks/useProducts";
+import { Product, formatPrice, getEtaString, getProductImage, getProductTitle, getDisplayTitle } from "@/hooks/useProducts";
 import { useCartStore } from "@/stores/cartStore";
 import { useComparisonStore } from "@/stores/comparisonStore";
 import { useWishlist } from "@/hooks/useWishlist";
@@ -37,7 +37,8 @@ export function ProductCard({ product, onQuickView, compact = false }: ProductCa
   const isOutOfStock = product.stock_status === 'out_of_stock';
   const eta = getEtaString(product);
   const image = getProductImage(product);
-  const detailsCount = (product.details_json as Record<string, unknown>)?.detailsCount as number || 0;
+  const displayTitle = getDisplayTitle(localizedTitle, product.sku);
+  const detailsCount = (product.details_json as Record<string, unknown>)?.detailsCount as number || displayTitle.pieces || 0;
   const badges = (product as any).badges as string[] || [];
   const inComparison = isInComparison(product.id);
   const inWishlist = isInWishlist(product.id);
@@ -213,7 +214,7 @@ export function ProductCard({ product, onQuickView, compact = false }: ProductCa
           "font-heading font-semibold text-foreground mb-2 line-clamp-2",
           compact ? "text-sm" : "text-base"
         )}>
-          {localizedTitle}
+          {displayTitle.name}
         </h3>
 
         {/* Info chips */}

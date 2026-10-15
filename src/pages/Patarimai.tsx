@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next";
 import { PageLayout } from "@/components/layout/PageLayout";
 import { RouteSEO } from "@/components/seo/RouteSEO";
 import articlesData from "@/content/articles.json";
+import { isEnglishLocale } from "@/hooks/useProducts";
 
 export interface Article {
   slug: string;
@@ -15,16 +16,30 @@ export interface Article {
   sections: Array<{ heading: string; body: string[] }>;
   cta?: { title: string; note: string; label: string; href: string };
   disclaimer?: string;
+  en?: Partial<Omit<Article, 'slug' | 'published' | 'readMinutes' | 'cta' | 'en'>> & {
+    cta?: { title: string; note: string; label: string };
+  };
 }
 
-export const articles = articlesData.articles as Article[];
+const articles = articlesData.articles as Article[];
 
-export function getArticle(slug?: string) {
-  return articles.find((a) => a.slug === slug);
+// English readers get each article's "en" block laid over the Lithuanian
+// original. Slug, date and link stay shared; a field the block leaves out
+// stays Lithuanian rather than going blank.
+export function getArticles(lang?: string): Article[] {
+  if (!isEnglishLocale(lang)) return articles;
+  return articles.map(({ en, ...article }) =>
+    en ? { ...article, ...en, cta: article.cta && { ...article.cta, ...en.cta } } : article,
+  );
+}
+
+export function getArticle(slug: string | undefined, lang?: string) {
+  return getArticles(lang).find((a) => a.slug === slug);
 }
 
 export default function Patarimai() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const articles = getArticles(i18n.language);
 
   return (
     <PageLayout>

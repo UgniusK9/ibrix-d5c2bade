@@ -2,11 +2,12 @@ import { useEffect, useState, useMemo } from "react";
 import { useParams, Link } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { useTranslation } from "react-i18next";
-import { ArrowLeft, Package, Clock, Truck, RotateCcw, Shield, ShoppingCart, Puzzle, HelpCircle, Loader2, Star, Scale, Check } from "lucide-react";
+import { ArrowLeft, Package, Clock, Truck, RotateCcw, Shield, ShoppingCart, Puzzle, HelpCircle, Loader2, Star, Scale, Check, Gift, Landmark } from "lucide-react";
 import { PageLayout } from "@/components/layout/PageLayout";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { useProduct, formatPrice, getEtaString, getProductImage, getProductTitle, getProductShortDesc, getProductDescription } from "@/hooks/useProducts";
+import { useProduct, formatPrice, getProductImage, getProductTitle, getProductShortDesc, getProductDescription, getDisplayTitle, getDeliveryWindow, formatDeliveryWindow, getChristmasFit } from "@/hooks/useProducts";
+import { useProductReviews } from "@/hooks/useProductReviews";
 import { useProductVariants, groupVariantsByType, type ProductVariant } from "@/hooks/useProductVariants";
 import { VariantSelector } from "@/components/products/VariantSelector";
 import { useCartStore } from "@/stores/cartStore";
@@ -48,6 +49,11 @@ export default function Produktas() {
   
   // Image carousel state
   const [activeImg, setActiveImg] = useState(0);
+
+  // Open accordion section, so the rating near the title can open the reviews.
+  const [openSection, setOpenSection] = useState<string>("");
+  // ponytail: ProductReviews loads the same rows again; share them if it ever shows up as slow.
+  const { averageRating, reviewCount } = useProductReviews(product?.id || '');
 
   // Variant selection state
   const [selectedVariants, setSelectedVariants] = useState<Record<string, string>>({});
@@ -192,12 +198,19 @@ export default function Produktas() {
   }
 
   const isPreOrder = product.stock_status === 'preorder';
-  const eta = getEtaString(product);
   const image = getProductImage(product);
   const images: string[] = product.images?.length ? product.images : [image];
-  const detailsCount = (product.details_json as Record<string, unknown>)?.detailsCount as number || 0;
-  const badges = (product as any).badges as string[] || [];
+  const details = (product.details_json ?? {}) as Record<string, unknown>;
+  const ageMin = typeof details.ageMin === 'number' ? details.ageMin : null;
   const localizedTitle = getProductTitle(product, i18n.language);
+  const displayTitle = getDisplayTitle(localizedTitle, product.sku);
+  const detailsCount = (details.detailsCount as number) || (details.piecesCount as number) || displayTitle.pieces || 0;
+  const deliveryWindow = getDeliveryWindow(product);
+  const deliveryDates = formatDeliveryWindow(deliveryWindow, i18n.language);
+  const christmasFit = getChristmasFit(deliveryWindow);
+  const piecesLabel = detailsCount > 0
+    ? t('products.piecesCountShort', { n: detailsCount.toLocaleString(i18n.language === 'en' ? 'en-GB' : 'lt-LT') })
+    : null;
   const localizedShortDesc = getProductShortDesc(product, i18n.language);
   const localizedDescription = getProductDescription(product, i18n.language);
   
@@ -208,12 +221,14 @@ export default function Produktas() {
   // Calculate final price with variant adjustments
   const finalPrice = displayPrice + selectedVariantDetails.priceAdjustment;
 
+  // Only what we actually know about this set. Difficulty and build time used
+  // to be the same fixed text on every product, flower bouquets included.
   const productSpecs = [
-    { label: t('products.partsCount'), value: detailsCount > 0 ? `${detailsCount} ${t('products.pieces')}` : "-" },
-    { label: t('products.difficulty'), value: t('products.advanced') },
-    { label: t('products.ageGroup'), value: "16+" },
-    { label: t('products.assemblyTime'), value: `~20–30 ${t('products.hours')}` },
-  ];
+    piecesLabel && { label: t('products.partsCount'), value: piecesLabel },
+    ageMin !== null && { label: t('products.ageGroup'), value: t('products.ageFrom', { age: ageMin }) },
+    displayTitle.brand && { label: t('products.brand'), value: displayTitle.brand },
+    { label: t('products.model'), value: product.sku },
+  ].filter(Boolean) as { label: string; value: string }[];
 
   return (
     <PageLayout>
@@ -299,29 +314,48 @@ export default function Produktas() {
 
           {/* Product Info */}
           <div>
-            {/* SKU */}
-            <p className="text-sm text-muted-foreground font-mono mb-2">{product.sku}</p>
-            
-            {/* Title */}
-            <h1 className="font-heading text-3xl md:text-4xl font-bold mb-4">
-              {localizedTitle}
+            {/* Brand and model number above the name people actually search for */}
+            <p className="text-sm text-muted-foreground mb-2">
+              {[displayTitle.brand, product.sku].filter(Boolean).join(' · ')}
+            </p>
+            <h1 className="font-heading text-3xl md:text-4xl font-bold tracking-tight mb-3">
+              {displayTitle.name}
             </h1>
 
-            {/* Price */}
-            <div className="flex items-center gap-3 mb-4">
+            {/* Rating and the facts that decide a purchase, on one quiet line */}
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted-foreground mb-5">
+              {averageRating !== null && reviewCount > 0 && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setOpenSection('reviews');
+                    document.getElementById('product-details')?.scrollIntoView({ behavior: 'smooth' });
+                  }}
+                  className="inline-flex items-center gap-1 text-foreground hover:underline underline-offset-4"
+                >
+                  <Star className="w-4 h-4 fill-current" aria-hidden="true" />
+                  <span>{averageRating.toFixed(1)}</span>
+                  <span className="text-muted-foreground">({t('products.reviewsCount', { count: reviewCount })})</span>
+                </button>
+              )}
+              {piecesLabel && <span>{piecesLabel}</span>}
+              {ageMin !== null && <span>{t('products.ageFrom', { age: ageMin })}</span>}
+            </div>
+
+            {/* Price: plain foreground; colour is kept for the one button that matters */}
+            <div className="flex items-baseline gap-3 mb-6">
               {hasSalePrice ? (
                 <>
-                  <p className="font-heading text-3xl font-bold text-red-500">
+                  <p className="font-heading text-3xl font-bold text-red-600">
                     {formatPrice(finalPrice)}
                   </p>
                   <span className="text-lg text-muted-foreground line-through">
                     {formatPrice(product.price_eur + selectedVariantDetails.priceAdjustment)}
                   </span>
-                  <Badge className="bg-red-500 text-white font-bold">{t('products.sale')}</Badge>
                 </>
               ) : (
                 <>
-                  <p className="font-heading text-3xl font-bold text-accent">
+                  <p className="font-heading text-3xl font-bold">
                     {formatPrice(finalPrice)}
                   </p>
                   {selectedVariantDetails.priceAdjustment !== 0 && (
@@ -333,48 +367,31 @@ export default function Produktas() {
               )}
             </div>
 
-            {/* Status Badge */}
-            <div className="flex items-center gap-3 mb-6">
-              <Badge className={`text-sm px-3 py-1 ${isPreOrder ? "bg-primary text-primary-foreground" : "bg-success text-success-foreground"}`}>
-                {isPreOrder ? t('products.preOrder') : t('products.inStock')}
-              </Badge>
-              {detailsCount > 0 && (
-                <span className="flex items-center gap-1.5 text-sm text-muted-foreground">
-                  <Package className="w-4 h-4" />
-                  {detailsCount} {t('products.details')}
-                </span>
-              )}
-            </div>
-
-            {/* ETA Block */}
-            {isPreOrder && (
-              <div className="bg-primary/5 border border-primary/20 rounded-xl p-4 mb-6">
-                <div className="flex items-center gap-3 mb-2">
-                  <Clock className="w-5 h-5 text-primary" />
-                  <span className="font-heading font-semibold">
-                    {t('products.preOrderEta')} {eta}
-                  </span>
+            {/* Delivery as dates, not as weeks the shopper has to count */}
+            <div className="rounded-xl border border-border p-4 mb-6 space-y-2">
+              <div className="flex items-start gap-3">
+                {isPreOrder
+                  ? <Clock className="w-5 h-5 mt-0.5 text-muted-foreground" aria-hidden="true" />
+                  : <Truck className="w-5 h-5 mt-0.5 text-muted-foreground" aria-hidden="true" />}
+                <div>
+                  <p className="text-sm text-muted-foreground">
+                    {isPreOrder ? t('products.preOrder') : t('products.inStock')} · {t('products.estDelivery')}
+                  </p>
+                  <p className="font-semibold">{deliveryDates}</p>
                 </div>
-                <p className="text-sm text-muted-foreground">
-                  {t('products.cancelAnytime')}
-                </p>
               </div>
-            )}
-
-            {/* Trust Row */}
-            <div className="flex flex-wrap gap-4 mb-6">
-              <span className="flex items-center gap-2 text-sm text-muted-foreground">
-                <Truck className="w-4 h-4 text-primary" />
-                {t('products.freeShipping')}
-              </span>
-              <span className="flex items-center gap-2 text-sm text-muted-foreground">
-                <RotateCcw className="w-4 h-4 text-primary" />
-                {t('products.returns14days')}
-              </span>
-              <span className="flex items-center gap-2 text-sm text-muted-foreground">
-                <Puzzle className="w-4 h-4 text-primary" />
-                {t('products.freeMissingParts')}
-              </span>
+              {christmasFit && (
+                <p className={cn(
+                  "flex items-center gap-2 text-sm pl-8",
+                  christmasFit === 'before' ? "text-success font-medium" : "text-muted-foreground"
+                )}>
+                  <Gift className="w-4 h-4" aria-hidden="true" />
+                  {christmasFit === 'before' ? t('products.beforeChristmas') : t('products.afterChristmas')}
+                </p>
+              )}
+              {isPreOrder && (
+                <p className="text-sm text-muted-foreground pl-8">{t('products.cancelAnytime')}</p>
+              )}
             </div>
 
             {/* Variant Selector */}
@@ -389,22 +406,23 @@ export default function Produktas() {
 
             {/* CTA Buttons */}
             <div className="flex gap-3">
-              <Button 
-                size="lg" 
+              <Button
+                size="lg"
                 className="flex-1 bg-accent hover:bg-accent/90 text-accent-foreground h-14 text-base"
                 onClick={handleAddToCart}
               >
                 <ShoppingCart className="w-5 h-5 mr-2" />
                 {isPreOrder ? t('products.orderPreOrder') : t('products.addToCart')}
               </Button>
-              
+
               {/* Comparison button */}
-              <Button 
-                size="lg" 
+              <Button
+                size="lg"
                 variant={isInComparison(product.id) ? "secondary" : "outline"}
                 className="h-14"
                 onClick={handleToggleComparison}
                 title={isInComparison(product.id) ? t('products.removeFromCompare') : t('products.addToCompare')}
+                aria-label={isInComparison(product.id) ? t('products.removeFromCompare') : t('products.addToCompare')}
               >
                 {isInComparison(product.id) ? (
                   <Check className="w-5 h-5" />
@@ -413,13 +431,28 @@ export default function Produktas() {
                 )}
               </Button>
             </div>
-            
-            {/* CTA subtext */}
-            {isPreOrder && (
-              <p className="text-center text-sm text-muted-foreground mt-3">
-                {t('products.cancelAnytime')}
-              </p>
-            )}
+
+            {/* What happens after the click, answered before it */}
+            <ul className="mt-5 space-y-2 text-sm text-muted-foreground">
+              <li className="flex items-center gap-2">
+                <Truck className="w-4 h-4 shrink-0" aria-hidden="true" />
+                {t('products.freeShipping')}
+              </li>
+              <li className="flex items-center gap-2">
+                <RotateCcw className="w-4 h-4 shrink-0" aria-hidden="true" />
+                <Link to="/grazinimai" className="hover:text-foreground hover:underline underline-offset-4">
+                  {t('products.returnsPolicyLink')}
+                </Link>
+              </li>
+              <li className="flex items-center gap-2">
+                <Puzzle className="w-4 h-4 shrink-0" aria-hidden="true" />
+                {t('products.freeMissingParts')}
+              </li>
+              <li className="flex items-center gap-2">
+                <Landmark className="w-4 h-4 shrink-0" aria-hidden="true" />
+                {t('products.payByBank')}
+              </li>
+            </ul>
 
             {/* Short Description */}
             {localizedDescription && (
@@ -431,8 +464,8 @@ export default function Produktas() {
         </div>
 
         {/* Below the fold content */}
-        <div className="max-w-4xl">
-          <PremiumAccordion type="single" collapsible className="space-y-3">
+        <div id="product-details" className="max-w-4xl scroll-mt-24">
+          <PremiumAccordion type="single" collapsible value={openSection} onValueChange={setOpenSection} className="space-y-3">
             {/* Specs */}
             <PremiumAccordionItem value="specs">
               <PremiumAccordionTrigger icon={<Package className="w-4 h-4 text-primary" />}>
@@ -453,7 +486,6 @@ export default function Produktas() {
                   <AccordionListItem>{t('products.boxContentsItems.allParts')}</AccordionListItem>
                   <AccordionListItem>{t('products.boxContentsItems.instructions')}</AccordionListItem>
                   <AccordionListItem>{t('products.boxContentsItems.spareParts')}</AccordionListItem>
-                  <AccordionListItem>{t('products.boxContentsItems.displayStand')}</AccordionListItem>
                 </AccordionList>
               </PremiumAccordionContent>
             </PremiumAccordionItem>

@@ -32,7 +32,7 @@ export function HowItWorks() {
             {t('home.hiwBadge')}
           </span>
           <h2 className="font-heading text-3xl md:text-4xl font-bold whitespace-nowrap">
-            Kaip veikia pre-order
+            {t('home.hiwTitle')}
           </h2>
         </div>
 
