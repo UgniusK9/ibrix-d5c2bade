@@ -413,7 +413,7 @@ export function OrderCard({
                           {order.payment_plan === 'full_payment' ? t('ordCard.fullPayment') : t('ordCard.stepDeposit')}
                         </p>
                         <p className="text-xs text-muted-foreground">
-                          {t('ordCard.payMethodCard')}
+                          {t('ordCard.payMethodPaysera')}
                         </p>
                       </div>
                       <span className="font-bold">{formatPrice(order.deposit_total_eur)}</span>
@@ -446,7 +446,7 @@ export function OrderCard({
                           <p className="font-medium">{t('ordCard.balanceLabel')}</p>
                           {balancePayment && (
                             <p className="text-xs text-muted-foreground">
-                          {t('ordCard.payMethodCard')}
+                          {t('ordCard.payMethodPaysera')}
                             </p>
                           )}
                         </div>

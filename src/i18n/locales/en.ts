@@ -1457,7 +1457,7 @@ export const en = {
     remainingLabel: "Remaining",
     payHistory: "Payment history",
     fullPayment: "Full payment",
-    payMethodCard: "Payment method: Card / Stripe",
+    payMethodPaysera: "Payment method: Paysera",
     paidOn: "Paid {{date}}",
     awaitingPayment: "Awaiting payment",
     balanceLabel: "Balance",

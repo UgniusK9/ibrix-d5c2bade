@@ -1456,7 +1456,7 @@ export const lt = {
     remainingLabel: "Liko mokėti",
     payHistory: "Mokėjimų istorija",
     fullPayment: "Pilnas mokėjimas",
-    payMethodCard: "Mokėjimo būdas: Kortelė / Stripe",
+    payMethodPaysera: "Mokėjimo būdas: Paysera",
     paidOn: "Apmokėta {{date}}",
     awaitingPayment: "Laukiama apmokėjimo",
     balanceLabel: "Likutis",
