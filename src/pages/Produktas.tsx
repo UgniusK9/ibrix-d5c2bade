@@ -6,7 +6,7 @@ import { ArrowLeft, Package, Clock, Truck, RotateCcw, Shield, ShoppingCart, Puzz
 import { PageLayout } from "@/components/layout/PageLayout";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { useProduct, formatPrice, getProductImage, getProductTitle, getProductShortDesc, getProductDescription, getDisplayTitle, getDeliveryWindow, formatDeliveryWindow, getChristmasFit } from "@/hooks/useProducts";
+import { useProduct, formatPrice, getProductImage, getProductTitle, getProductShortDesc, getProductDescription, getDisplayTitle, getDeliveryWindow, formatDeliveryWindow, getChristmasFit, getProductName } from "@/hooks/useProducts";
 import { useProductReviews } from "@/hooks/useProductReviews";
 import { useProductVariants, groupVariantsByType, type ProductVariant } from "@/hooks/useProductVariants";
 import { VariantSelector } from "@/components/products/VariantSelector";
@@ -129,7 +129,7 @@ export default function Produktas() {
         : undefined;
       
       addItem(product, 1, variant);
-      const localizedTitle = getProductTitle(product, i18n.language);
+      const localizedTitle = getProductName(product, i18n.language);
       toast.success(t('products.addedToCart'), {
         description: variant ? `${localizedTitle} - ${variant.name}` : localizedTitle,
         position: "top-center",
@@ -139,7 +139,7 @@ export default function Produktas() {
 
   const handleToggleComparison = () => {
     if (!product) return;
-    const localizedTitle = getProductTitle(product, i18n.language);
+    const localizedTitle = getProductName(product, i18n.language);
     if (isInComparison(product.id)) {
       removeFromComparison(product.id);
       toast.info(t('products.removedFromComparison'), {

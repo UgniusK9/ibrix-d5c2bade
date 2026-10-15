@@ -103,6 +103,10 @@ test('cart and checkout show the clean product name, not the supplier string', a
   await page.getByRole('button', { name: /Užsisakyti|Į krepšelį/ }).first().click();
   const added = page.getByRole('dialog', { name: /Pridėta į krepšelį/ });
   await expect(added).toBeVisible();
+  // The small notice at the top says it too.
+  const notice = page.locator('[data-sonner-toast]').first();
+  await expect(notice).toContainText(/Motorised Hypercar W16 Engine/);
+  await expect(notice).not.toContainText(/MOULD KING 10168/);
   await expect(added.getByText(/Motorised Hypercar W16 Engine/).first()).toBeVisible();
   await expect(added.getByText(/MOULD KING 10168/)).toHaveCount(0);
   await added.getByRole('button', { name: 'Tęsti apsipirkimą' }).click();
@@ -137,4 +141,16 @@ test('the test product still opens by its own link (the go-live payment test buy
   await page.goto('/produktas/test-checkout-1-cent');
   await dismissCookies(page);
   await expect(page.getByRole('heading', { level: 1 })).toContainText(/test produktas/i);
+});
+
+test('quick view shows the clean product name', async ({ page }) => {
+  await page.goto('/produktai/visi?search=W16');
+  await dismissCookies(page);
+  const card = page.locator('a[href="/produktas/10168-motorised-hypercar-w16-engine"]').first();
+  await expect(card).toBeVisible();
+  await card.hover();
+  await page.getByRole('button', { name: 'Peržiūrėti' }).first().click();
+  const dialog = page.getByRole('dialog');
+  await expect(dialog.getByRole('heading', { name: /Motorised Hypercar W16 Engine/ }).first()).toBeVisible();
+  await expect(dialog.getByText(/MOULD KING \d/)).toHaveCount(0);
 });

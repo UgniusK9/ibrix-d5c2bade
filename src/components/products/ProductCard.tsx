@@ -82,7 +82,7 @@ export function ProductCard({ product, onQuickView, compact = false }: ProductCa
     addItem(product);
 
     toast.success(t('products.addedToCart'), {
-      description: localizedTitle,
+      description: displayTitle.name,
       position: "top-center",
     });
   };
@@ -123,7 +123,7 @@ export function ProductCard({ product, onQuickView, compact = false }: ProductCa
       <div className="relative aspect-square bg-white overflow-hidden">
         <img
           src={image}
-          alt={localizedTitle}
+          alt={displayTitle.name}
           className="w-full h-full object-contain p-3 transition-transform duration-300 group-hover:scale-[1.04]"
         />
         

@@ -528,6 +528,7 @@ export default function Produktai() {
                             size="icon"
                             variant="secondary"
                             className="absolute top-2 right-2 h-8 w-8 bg-background/90 opacity-0 group-hover:opacity-100 transition-opacity"
+                            aria-label={t('products.quickView')}
                             onClick={(e) => handleQuickView(product, e)}
                           >
                             <Eye className="h-4 w-4" />

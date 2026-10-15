@@ -3,7 +3,7 @@ import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/compone
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ShoppingCart, Package, Clock, X, Heart, Bell } from "lucide-react";
-import { Product, formatPrice, getEtaString, getProductImage, getProductTitle, getProductShortDesc } from "@/hooks/useProducts";
+import { Product, formatPrice, getEtaString, getProductImage, getProductShortDesc, getProductName } from "@/hooks/useProducts";
 import { useCartStore } from "@/stores/cartStore";
 import { useWishlist } from "@/hooks/useWishlist";
 import { toast } from "sonner";
@@ -30,7 +30,7 @@ export function QuickViewModal({ product, open, onOpenChange }: QuickViewModalPr
 
   if (!product) return null;
 
-  const localizedTitle = getProductTitle(product, i18n.language);
+  const localizedTitle = getProductName(product, i18n.language);
   const localizedShortDesc = getProductShortDesc(product, i18n.language);
 
   const isPreOrder = product.stock_status === 'preorder';
