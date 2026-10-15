@@ -5,7 +5,7 @@ import { Gift, Loader2, Package, Tag } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { supabase } from '@/integrations/supabase/client';
-import { getProductTitle } from '@/hooks/useProducts';
+import { getProductName } from '@/hooks/useProducts';
 
 interface RewardProduct {
   id: string;
@@ -111,7 +111,7 @@ export function CreditsRewards({ userBalance }: CreditsRewardsProps) {
                 {product.images[0] ? (
                   <img 
                     src={product.images[0]} 
-                    alt={getProductTitle(product, i18n.language)}
+                    alt={getProductName(product, i18n.language)}
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform"
                   />
                 ) : (
@@ -127,7 +127,7 @@ export function CreditsRewards({ userBalance }: CreditsRewardsProps) {
               </div>
               <div className="p-4">
                 <h3 className="font-medium text-sm line-clamp-2 mb-2 group-hover:text-primary transition-colors">
-                  {getProductTitle(product, i18n.language)}
+                  {getProductName(product, i18n.language)}
                 </h3>
                 <div className="flex items-center justify-between">
                   <div>

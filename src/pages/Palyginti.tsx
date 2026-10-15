@@ -7,7 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { useComparisonStore } from '@/stores/comparisonStore';
-import { formatPrice, getProductImage, getEtaString, getProductTitle, getProductShortDesc, type Product } from '@/hooks/useProducts';
+import { formatPrice, getProductImage, getEtaString, getProductShortDesc, type Product, getProductName } from '@/hooks/useProducts';
 import { useCartStore } from '@/stores/cartStore';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
@@ -22,7 +22,7 @@ export default function Palyginti() {
   const handleAddToCart = (product: Product) => {
     addItem(product);
     toast.success(t("products.addedToCart"), {
-      description: getProductTitle(product, i18n.language),
+      description: getProductName(product, i18n.language),
       position: "top-center",
     });
   };
@@ -260,11 +260,11 @@ export default function Palyginti() {
                         <Link to={`/produktas/${product.slug}`} className="group block">
                           <img
                             src={getProductImage(product)}
-                            alt={getProductTitle(product, i18n.language)}
+                            alt={getProductName(product, i18n.language)}
                             className="w-32 h-32 object-cover rounded-xl mx-auto mb-3 border border-border group-hover:border-primary transition-colors"
                           />
                           <p className="font-semibold text-base line-clamp-2 group-hover:text-primary transition-colors mb-3">
-                            {getProductTitle(product, i18n.language)}
+                            {getProductName(product, i18n.language)}
                           </p>
                         </Link>
                         <div className="flex gap-2 justify-center">
@@ -348,7 +348,7 @@ export default function Palyginti() {
             <div className="grid gap-4" style={{ gridTemplateColumns: `repeat(${Math.min(products.length, 3)}, minmax(200px, 1fr))` }}>
               {products.map((product) => (
                 <div key={product.id} className="p-4 bg-muted/50 rounded-xl">
-                  <p className="font-medium text-sm mb-2">{getProductTitle(product, i18n.language)}</p>
+                  <p className="font-medium text-sm mb-2">{getProductName(product, i18n.language)}</p>
                   <p className="text-sm text-muted-foreground">{getProductShortDesc(product, i18n.language) || t('comparison.noDescription')}</p>
                 </div>
               ))}
@@ -363,7 +363,7 @@ export default function Palyginti() {
             <div className="grid gap-4" style={{ gridTemplateColumns: `repeat(${Math.min(products.length, 3)}, minmax(200px, 1fr))` }}>
               {products.map((product) => (
                 <div key={product.id} className="p-4 bg-muted/50 rounded-xl">
-                  <p className="font-medium text-sm mb-2">{getProductTitle(product, i18n.language)}</p>
+                  <p className="font-medium text-sm mb-2">{getProductName(product, i18n.language)}</p>
                   <div className="flex flex-wrap gap-1">
                     {(product.tags || []).map((tag) => (
                       <Badge key={tag} variant="outline" className="text-xs">

@@ -18,7 +18,7 @@ import { lt, enUS } from 'date-fns/locale';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
-import { getProductTitle } from '@/hooks/useProducts';
+import { getProductName } from '@/hooks/useProducts';
 
 interface Review {
   id: string;
@@ -86,7 +86,7 @@ export default function Atsiliepimai() {
           image_url,
           admin_reply,
           admin_reply_at,
-          product:products(title, title_en, slug)
+          product:products(title, title_en, slug, sku)
         `)
         .eq('status', 'approved')
         .order('created_at', { ascending: false });
@@ -159,7 +159,7 @@ export default function Atsiliepimai() {
       // Get product details
       const { data, error } = await supabase
         .from('products')
-        .select('id, title, title_en, slug')
+        .select('id, title, title_en, slug, sku')
         .in('id', availableProductIds)
         .order('title');
 
@@ -343,7 +343,7 @@ export default function Atsiliepimai() {
                     <SelectContent>
                       {products.map((product) => (
                         <SelectItem key={product.id} value={product.id}>
-                          {getProductTitle(product, i18n.language)}
+                          {getProductName(product, i18n.language)}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -539,7 +539,7 @@ export default function Atsiliepimai() {
                         href={`/produktas/${review.product.slug}`}
                         className="text-sm text-primary hover:underline"
                       >
-                        {getProductTitle(review.product, i18n.language)}
+                        {getProductName(review.product, i18n.language)}
                       </a>
                     )}
 

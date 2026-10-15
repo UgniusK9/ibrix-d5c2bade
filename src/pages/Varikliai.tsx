@@ -4,7 +4,7 @@ import { Package, Clock, ShoppingCart, Filter, Loader2 } from "lucide-react";
 import { PageLayout } from "@/components/layout/PageLayout";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { useProducts, formatPrice, getEtaString, getProductImage, getProductTitle, Product } from "@/hooks/useProducts";
+import { useProducts, formatPrice, getEtaString, getProductImage, Product, getProductName } from "@/hooks/useProducts";
 import { useCartStore } from "@/stores/cartStore";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
@@ -36,7 +36,7 @@ export default function Varikliai() {
     e.preventDefault();
     addItem(product);
     toast.success(t("products.addedToCart"), {
-      description: getProductTitle(product, i18n.language),
+      description: getProductName(product, i18n.language),
       position: "top-center",
     });
   };
@@ -106,7 +106,7 @@ export default function Varikliai() {
                     <div className="relative aspect-square bg-gradient-to-br from-secondary/30 to-muted/20 overflow-hidden">
                       <img
                         src={image}
-                        alt={getProductTitle(product, i18n.language)}
+                        alt={getProductName(product, i18n.language)}
                         className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                       />
                       <Badge className={`absolute top-3 left-3 text-xs font-semibold px-2.5 py-1 ${isPreOrder ? "bg-primary text-primary-foreground" : "bg-success text-success-foreground"}`}>
@@ -118,7 +118,7 @@ export default function Varikliai() {
                         {product.sku}
                       </p>
                       <h3 className="font-heading font-semibold text-base mb-3 line-clamp-2 group-hover:text-primary transition-colors">
-                        {getProductTitle(product, i18n.language)}
+                        {getProductName(product, i18n.language)}
                       </h3>
                       <div className="flex items-center gap-3 text-xs text-muted-foreground mb-4">
                         {detailsCount > 0 && (

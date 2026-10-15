@@ -13,7 +13,7 @@ import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { formatPrice, getProductImage, getProductTitle } from '@/hooks/useProducts';
+import { formatPrice, getProductImage, getProductName } from '@/hooks/useProducts';
 
 interface BuilderItem {
   id: string;
@@ -61,6 +61,7 @@ export default function MyBuilders() {
             title,
             title_en,
             slug,
+            sku,
             images,
             details_json,
             price_eur
@@ -290,7 +291,7 @@ export default function MyBuilders() {
                 <div className="relative aspect-square bg-gradient-to-br from-secondary/30 to-muted/20 overflow-hidden">
                   <img
                     src={getProductImage({ images: builder.product?.images || [] } as any)}
-                    alt={builder.product ? getProductTitle(builder.product, i18n.language) : t('pgBuilders.altFallback')}
+                    alt={builder.product ? getProductName(builder.product, i18n.language) : t('pgBuilders.altFallback')}
                     className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                   />
                   {/* Source Badge */}
@@ -321,7 +322,7 @@ export default function MyBuilders() {
                 {/* Content */}
                 <div className="p-5">
                   <h3 className="font-heading font-semibold text-base mb-2 line-clamp-2 group-hover:text-primary transition-colors">
-                    {builder.product ? getProductTitle(builder.product, i18n.language) : t('pgBuilders.unknownProduct')}
+                    {builder.product ? getProductName(builder.product, i18n.language) : t('pgBuilders.unknownProduct')}
                   </h3>
                   <div className="flex items-center gap-3 text-xs text-muted-foreground">
                     {builder.product?.details_json?.detailsCount && (

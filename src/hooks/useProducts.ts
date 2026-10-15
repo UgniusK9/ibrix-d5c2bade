@@ -183,8 +183,8 @@ export function getEtaString(product: Product): string {
 export { getDisplayTitle, cleanTitle };
 
 /** The name a shopper reads, in their language: localised title, then cleaned. */
-export function getProductName(product: Pick<Product, 'title' | 'title_en' | 'sku'>, lang?: string): string {
-  return cleanTitle(getProductTitle(product, lang), product.sku);
+export function getProductName(product: Pick<Product, 'title' | 'title_en'> & { sku?: string | null }, lang?: string): string {
+  return cleanTitle(getProductTitle(product, lang), product.sku ?? undefined);
 }
 
 function addBusinessDays(from: Date, days: number): Date {

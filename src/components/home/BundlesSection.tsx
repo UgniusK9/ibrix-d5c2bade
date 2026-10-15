@@ -5,7 +5,7 @@ import { Loader2, Package, ArrowRight, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
-import { getProductTitle } from "@/hooks/useProducts";
+import { getProductName } from "@/hooks/useProducts";
 import { motion } from "framer-motion";
 
 interface BundleRule {
@@ -182,7 +182,7 @@ export function BundlesSection() {
                   <div className="w-24 h-24 rounded-xl bg-card border border-border overflow-hidden p-2">
                     <img 
                       src={bundle.triggerProduct?.images[0] || '/placeholder.svg'} 
-                      alt={bundle.triggerProduct ? getProductTitle(bundle.triggerProduct, i18n.language) : ''}
+                      alt={bundle.triggerProduct ? getProductName(bundle.triggerProduct, i18n.language) : ''}
                       className="w-full h-full object-contain"
                     />
                   </div>
@@ -196,7 +196,7 @@ export function BundlesSection() {
                   <div className="w-24 h-24 rounded-xl bg-card border border-border overflow-hidden p-2">
                     <img 
                       src={bundle.discountProduct?.images[0] || '/placeholder.svg'} 
-                      alt={bundle.discountProduct ? getProductTitle(bundle.discountProduct, i18n.language) : ''}
+                      alt={bundle.discountProduct ? getProductName(bundle.discountProduct, i18n.language) : ''}
                       className="w-full h-full object-contain"
                     />
                   </div>

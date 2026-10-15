@@ -3,7 +3,7 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import { ShoppingCart, Heart, Calendar, Package } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Product, formatPrice, getProductImage, getProductTitle, getDisplayTitle } from "@/hooks/useProducts";
+import { Product, formatPrice, getProductImage, getProductTitle, getDisplayTitle, getProductName } from "@/hooks/useProducts";
 import { useCartStore } from "@/stores/cartStore";
 import { useWishlist } from "@/hooks/useWishlist";
 import { toast } from "sonner";
@@ -48,7 +48,7 @@ export function LegoStyleProductCard({ product }: LegoStyleProductCardProps) {
     addItem(product);
 
     toast.success(t('products.addedToCart'), {
-      description: getProductTitle(product, i18n.language),
+      description: getProductName(product, i18n.language),
       position: "top-center",
     });
     
@@ -95,7 +95,7 @@ export function LegoStyleProductCard({ product }: LegoStyleProductCardProps) {
         {/* Product image */}
         <img
           src={image}
-          alt={getProductTitle(product, i18n.language)}
+          alt={getProductName(product, i18n.language)}
           width={300}
           height={300}
           loading="lazy"

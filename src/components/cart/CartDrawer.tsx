@@ -12,6 +12,7 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { useCartStore, formatCartPrice } from "@/stores/cartStore";
 import { useNavigate, Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
+import { cleanTitle } from "@/lib/productTitle";
 
 export function CartDrawer() {
   const navigate = useNavigate();
@@ -88,7 +89,7 @@ export function CartDrawer() {
                         {item.image ? (
                           <img
                             src={item.image}
-                            alt={item.title}
+                            alt={cleanTitle(item.title, item.sku)}
                             className="w-full h-full object-cover"
                           />
                         ) : (
@@ -104,7 +105,7 @@ export function CartDrawer() {
                           onClick={() => setOpen(false)}
                           className="font-medium text-sm line-clamp-2 hover:text-primary transition-colors"
                         >
-                          {item.title}
+                          {cleanTitle(item.title, item.sku)}
                         </Link>
                         
                         <div className="flex items-center gap-2 mt-1.5">

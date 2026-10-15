@@ -96,3 +96,17 @@ test('catalogue shows no test products to shoppers', async ({ page }) => {
   await expect(page.locator('a[href^="/produktas/"]').first()).toBeVisible();
   await expect(page.locator('a[href^="/produktas/"]').filter({ hasText: /test produktas/i })).toHaveCount(0);
 });
+
+test('cart and checkout show the clean product name, not the supplier string', async ({ page }) => {
+  await page.goto('/produktas/10168-motorised-hypercar-w16-engine');
+  await dismissCookies(page);
+  await page.getByRole('button', { name: /Užsisakyti|Į krepšelį/ }).first().click();
+  const added = page.getByRole('dialog', { name: /Pridėta į krepšelį/ });
+  await expect(added).toBeVisible();
+  await expect(added.getByText(/Motorised Hypercar W16 Engine/).first()).toBeVisible();
+  await expect(added.getByText(/MOULD KING 10168/)).toHaveCount(0);
+  await added.getByRole('button', { name: 'Tęsti apsipirkimą' }).click();
+  await page.goto('/checkout');
+  await expect(page.getByText(/Motorised Hypercar W16 Engine/).first()).toBeVisible();
+  await expect(page.getByText(/MOULD KING 10168/)).toHaveCount(0);
+});

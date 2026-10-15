@@ -3,7 +3,7 @@ import { ArrowRight, Truck, RotateCcw, Shield, Wrench, ChevronDown } from "lucid
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useTranslation } from "react-i18next";
-import { useProducts, getProductImage, getEtaString, formatPrice, getProductTitle } from "@/hooks/useProducts";
+import { useProducts, getProductImage, getEtaString, formatPrice, getProductName } from "@/hooks/useProducts";
 import { HeroVideo, useHeroVideoAvailable } from "./HeroVideo";
 
 const trust = [
@@ -47,7 +47,7 @@ export function HeroSection() {
               {featuredProduct && (
                 <Button asChild size="lg" variant="outline">
                   <Link to={`/produktas/${featuredProduct.slug}`}>
-                    {getProductTitle(featuredProduct, i18n.language)} · {formatPrice(featuredProduct.price_eur)}
+                    {getProductName(featuredProduct, i18n.language)} · {formatPrice(featuredProduct.price_eur)}
                   </Link>
                 </Button>
               )}
@@ -130,7 +130,7 @@ export function HeroSection() {
                   </Badge>
                   <img
                     src={getProductImage(featuredProduct)}
-                    alt={getProductTitle(featuredProduct, i18n.language)}
+                    alt={getProductName(featuredProduct, i18n.language)}
                     width={600}
                     height={450}
                     loading="eager"
@@ -142,7 +142,7 @@ export function HeroSection() {
                 <div className="p-5 flex items-center justify-between gap-4 border-t border-border">
                   <div className="min-w-0">
                     <h3 className="font-heading font-semibold text-base truncate">
-                      {getProductTitle(featuredProduct, i18n.language)}
+                      {getProductName(featuredProduct, i18n.language)}
                     </h3>
                     <p className="text-sm text-muted-foreground">
                       {featuredProduct.stock_status === "preorder" ? t('products.preOrderLabel') : t('products.inStockLabel')} · {getEtaString(featuredProduct)}

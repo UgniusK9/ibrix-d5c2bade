@@ -24,6 +24,7 @@ import { ManualLockerInput, ManualLockerData } from "@/components/checkout/Manua
 import { PhoneInput } from "@/components/checkout/PhoneInput";
 import { PaymentMethodSelector, PaymentMethod, PAYMENT_METHODS } from "@/components/checkout/PaymentMethodSelector";
 import { CreditsPaymentOption, CreditsInfo } from "@/components/checkout/CreditsPaymentOption";
+import { cleanTitle } from "@/lib/productTitle";
 
 
 const getCheckoutSchema = (t: (key: string) => string) => z.object({
@@ -775,11 +776,11 @@ export default function Checkout() {
                   <div key={item.productId} className="flex gap-3">
                     <img
                       src={item.image}
-                      alt={item.title}
+                      alt={cleanTitle(item.title, item.sku)}
                       className="w-16 h-16 object-cover rounded-lg"
                     />
                     <div className="flex-1 min-w-0">
-                      <p className="font-medium text-sm truncate">{item.title}</p>
+                      <p className="font-medium text-sm truncate">{cleanTitle(item.title, item.sku)}</p>
                       <p className="text-xs text-muted-foreground">
                         {t('cart.quantity')}: {item.quantity}
                       </p>

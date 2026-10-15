@@ -5,7 +5,7 @@ import { Search, X, Loader2, ArrowRight } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { useProducts, formatPrice, getProductImage, getProductTitle } from "@/hooks/useProducts";
+import { useProducts, formatPrice, getProductImage, getProductName } from "@/hooks/useProducts";
 import { cn } from "@/lib/utils";
 
 interface ProductSearchProps {
@@ -134,12 +134,12 @@ export function ProductSearch({ className, onClose, onSelect, isMobile, autoFocu
                     <div className="w-12 h-12 rounded-lg bg-secondary/30 overflow-hidden flex-shrink-0">
                       <img 
                         src={getProductImage(product)} 
-                        alt={getProductTitle(product, i18n.language)}
+                        alt={getProductName(product, i18n.language)}
                         className="w-full h-full object-cover"
                       />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="font-medium text-sm truncate">{getProductTitle(product, i18n.language)}</p>
+                      <p className="font-medium text-sm truncate">{getProductName(product, i18n.language)}</p>
                       <div className="flex items-center gap-2 mt-0.5">
                         <span className="text-sm font-semibold text-accent">
                           {formatPrice(product.price_eur)}

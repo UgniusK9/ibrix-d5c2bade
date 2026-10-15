@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { formatCartPrice, type CartItem, useCartStore } from '@/stores/cartStore';
-import { useProducts, formatPrice, getProductImage, getProductTitle } from '@/hooks/useProducts';
+import { useProducts, formatPrice, getProductImage, cleanTitle, getProductName } from '@/hooks/useProducts';
 import { cn } from '@/lib/utils';
 
 interface AddToCartModalProps {
@@ -56,8 +56,8 @@ export function AddToCartModal({ isOpen, onClose, item }: AddToCartModalProps) {
   // catalogue so language switches are reflected live.
   const itemProduct = allProducts?.find((p) => p.id === item.productId);
   const localizedItemTitle = itemProduct
-    ? getProductTitle(itemProduct, i18n.language)
-    : item.title;
+    ? getProductName(itemProduct, i18n.language)
+    : cleanTitle(item.title, item.sku);
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
@@ -167,11 +167,11 @@ export function AddToCartModal({ isOpen, onClose, item }: AddToCartModalProps) {
                       <div className="aspect-square w-full mb-2 bg-secondary rounded-lg overflow-hidden">
                         <img
                           src={getProductImage(product)}
-                          alt={getProductTitle(product, i18n.language)}
+                          alt={getProductName(product, i18n.language)}
                           className="w-full h-full object-cover group-hover:scale-105 transition-transform"
                         />
                       </div>
-                      <p className="text-xs font-medium line-clamp-2 min-h-[2.5rem]">{getProductTitle(product, i18n.language)}</p>
+                      <p className="text-xs font-medium line-clamp-2 min-h-[2.5rem]">{getProductName(product, i18n.language)}</p>
                       <p className="text-xs text-primary font-bold mt-1">{formatPrice(product.price_eur)}</p>
                       <span className="text-[10px] text-muted-foreground group-hover:text-primary transition-colors">
                         + {t('common.add')}

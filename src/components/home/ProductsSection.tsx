@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { ArrowRight, ShoppingCart, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { useProducts, formatPrice, getProductImage, getProductTitle, Product, getDisplayTitle } from "@/hooks/useProducts";
+import { useProducts, formatPrice, getProductImage, getProductTitle, Product, getDisplayTitle, getProductName } from "@/hooks/useProducts";
 import { useCartStore } from "@/stores/cartStore";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -35,7 +35,7 @@ export function ProductsSection() {
     e.preventDefault();
     addItem(product);
     toast.success(t('products.addedToCart'), {
-      description: getProductTitle(product, i18n.language),
+      description: getProductName(product, i18n.language),
       position: "top-center",
     });
   };
@@ -104,7 +104,7 @@ export function ProductsSection() {
                 <div className="relative aspect-[4/3] bg-white overflow-hidden p-4">
                   <img
                     src={image}
-                    alt={getProductTitle(product, i18n.language)}
+                    alt={getProductName(product, i18n.language)}
                     width={400}
                     height={300}
                     loading="lazy"
