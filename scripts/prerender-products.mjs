@@ -69,7 +69,7 @@ async function fetchProducts() {
     return [];
   }
   const fetchWithFields = async (fields) => {
-    const url = `${SUPABASE_URL}/rest/v1/products?select=${fields}&status=eq.active`;
+    const url = `${SUPABASE_URL}/rest/v1/products?select=${fields}&status=eq.active&sku=not.ilike.TEST*`;
     const res = await fetch(url, {
       headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` },
     });

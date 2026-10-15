@@ -110,3 +110,31 @@ test('cart and checkout show the clean product name, not the supplier string', a
   await expect(page.getByText(/Motorised Hypercar W16 Engine/).first()).toBeVisible();
   await expect(page.getByText(/MOULD KING 10168/)).toHaveCount(0);
 });
+
+// Below 1024 px the search box sits behind the header's search button.
+async function openSearch(page: Page) {
+  const box = page.getByRole('searchbox').first();
+  if ((page.viewportSize()?.width ?? 0) < 1024) {
+    await page.getByRole('button', { name: 'Ieškoti', exact: true }).first().click();
+  }
+  await expect(box).toBeVisible();
+  return box;
+}
+
+test('home and search never offer the test product', async ({ page }) => {
+  await page.goto('/');
+  await dismissCookies(page);
+  // Products load after the page: "none shown" only means something once they are in.
+  await expect(page.locator('a[href^="/produktas/"]').first()).toBeVisible();
+  await expect(page.getByText(/test produktas/i)).toHaveCount(0);
+  const search = await openSearch(page);
+  await search.fill('test');
+  await expect(page.getByText(/testarossa/i).first()).toBeVisible();
+  await expect(page.getByText(/test produktas/i)).toHaveCount(0);
+});
+
+test('the test product still opens by its own link (the go-live payment test buys it)', async ({ page }) => {
+  await page.goto('/produktas/test-checkout-1-cent');
+  await dismissCookies(page);
+  await expect(page.getByRole('heading', { level: 1 })).toContainText(/test produktas/i);
+});

@@ -145,6 +145,7 @@ export function Header() {
                 variant="ghost"
                 size="icon"
                 className="lg:hidden"
+                aria-label={t('common.search')}
                 onClick={() => setMobileSearchOpen(true)}
               >
                 <Search className="h-5 w-5" />

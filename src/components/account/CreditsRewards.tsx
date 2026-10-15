@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { supabase } from '@/integrations/supabase/client';
 import { getProductName } from '@/hooks/useProducts';
+import { withoutTestProducts } from "@/lib/catalogFilters";
 
 interface RewardProduct {
   id: string;
@@ -29,9 +30,9 @@ export function CreditsRewards({ userBalance }: CreditsRewardsProps) {
   useEffect(() => {
     const loadProducts = async () => {
       try {
-        const { data, error } = await supabase
+        const { data, error } = await withoutTestProducts(supabase
           .from('products')
-          .select('id, title, title_en, slug, images, price_eur, credits_cost_eur')
+          .select('id, title, title_en, slug, images, price_eur, credits_cost_eur'))
           .not('credits_cost_eur', 'is', null)
           .gt('credits_cost_eur', 0)
           .eq('status', 'active')

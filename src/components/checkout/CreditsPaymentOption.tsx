@@ -5,6 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { getProductName } from '@/hooks/useProducts';
+import { withoutTestProducts } from "@/lib/catalogFilters";
 
 interface CreditsPaymentOptionProps {
   cartItems: Array<{
@@ -61,9 +62,9 @@ export function CreditsPaymentOption({
 
         // Load products with credits_cost_eur
         const productIds = cartItems.map(item => item.productId);
-        const { data: products } = await supabase
+        const { data: products } = await withoutTestProducts(supabase
           .from('products')
-          .select('id, title, title_en, sku, credits_cost_eur')
+          .select('id, title, title_en, sku, credits_cost_eur'))
           .in('id', productIds)
           .not('credits_cost_eur', 'is', null)
           .gt('credits_cost_eur', 0);

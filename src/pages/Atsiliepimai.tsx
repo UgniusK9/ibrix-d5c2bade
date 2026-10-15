@@ -19,6 +19,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import { getProductName } from '@/hooks/useProducts';
+import { withoutTestProducts } from "@/lib/catalogFilters";
 
 interface Review {
   id: string;
@@ -157,9 +158,9 @@ export default function Atsiliepimai() {
       }
 
       // Get product details
-      const { data, error } = await supabase
+      const { data, error } = await withoutTestProducts(supabase
         .from('products')
-        .select('id, title, title_en, slug, sku')
+        .select('id, title, title_en, slug, sku'))
         .in('id', availableProductIds)
         .order('title');
 

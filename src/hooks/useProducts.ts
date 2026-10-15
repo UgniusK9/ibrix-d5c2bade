@@ -2,6 +2,7 @@ import i18n from '@/i18n/config';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { getDisplayTitle, cleanTitle } from '@/lib/productTitle';
+import { withoutTestProducts } from "@/lib/catalogFilters";
 
 export interface Product {
   id: string;
@@ -131,9 +132,9 @@ export function useProducts() {
   return useQuery({
     queryKey: ['products'],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data, error } = await withoutTestProducts(supabase
         .from('products')
-        .select('*')
+        .select('*'))
         .eq('status', 'active')
         .order('created_at', { ascending: false });
       

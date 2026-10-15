@@ -7,6 +7,7 @@ import { useRecentlyViewed } from "@/hooks/useRecentlyViewed";
 import { supabase } from "@/integrations/supabase/client";
 import { Product, getProductImage, formatPrice, transformProduct, getProductName } from "@/hooks/useProducts";
 import { motion } from "framer-motion";
+import { withoutTestProducts } from "@/lib/catalogFilters";
 
 export function RecentlyViewedSection() {
   const { t, i18n } = useTranslation();
@@ -29,9 +30,9 @@ export function RecentlyViewedSection() {
       }
 
       try {
-        const { data, error } = await supabase
+        const { data, error } = await withoutTestProducts(supabase
           .from('products')
-          .select('*')
+          .select('*'))
           .in('id', productIds)
           .eq('status', 'active');
 

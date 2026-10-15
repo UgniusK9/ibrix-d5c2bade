@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { getProductName } from "@/hooks/useProducts";
 import { motion } from "framer-motion";
+import { withoutTestProducts } from "@/lib/catalogFilters";
 
 interface BundleRule {
   id: string;
@@ -76,9 +77,9 @@ export function BundlesSection() {
         });
 
         // Fetch products
-        const { data: products } = await supabase
+        const { data: products } = await withoutTestProducts(supabase
           .from('products')
-          .select('id, title, title_en, price_eur, images')
+          .select('id, title, title_en, price_eur, images'))
           .in('id', Array.from(productIds));
 
         const productMap = new Map(products?.map(p => [p.id, p]) || []);

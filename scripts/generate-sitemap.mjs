@@ -65,7 +65,7 @@ async function fetchProducts() {
     console.warn("[sitemap] Supabase env not set; writing static-only sitemap.");
     return [];
   }
-  const url = `${SUPABASE_URL}/rest/v1/products?select=slug,updated_at&status=eq.active`;
+  const url = `${SUPABASE_URL}/rest/v1/products?select=slug,updated_at&status=eq.active&sku=not.ilike.TEST*`;
   const res = await fetch(url, {
     headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` },
   });
